@@ -10,7 +10,7 @@ seed:
 	@echo "seed: not yet implemented"
 
 fixtures:
-	@echo "fixtures: not yet implemented"
+	uv run --project packages/contracts python scripts/make_fixtures_terrain.py
 
 types:
 	@echo "types: not yet implemented"

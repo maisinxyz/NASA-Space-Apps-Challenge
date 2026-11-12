@@ -1,0 +1,24 @@
+[project]
+name = "fieldtwin-contracts"
+version = "1.0.0"
+description = "FieldTwin contract fixtures, fixture generators, and contract tests"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema==4.26.0",
+    "numpy==2.5.4",
+    "pillow==13.0.0",
+    "pyyaml==6.0.3",
+    "referencing==0.37.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+]
