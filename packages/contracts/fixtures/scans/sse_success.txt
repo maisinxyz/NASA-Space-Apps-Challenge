@@ -1,0 +1,30 @@
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"queued","pct":0,"message":"Waiting to start","ts":"2026-11-14T18:00:00Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"reading_inputs","pct":5,"message":"Reading your photos","ts":"2026-11-14T18:00:02Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"locating","pct":12,"message":"Locating the land","ts":"2026-11-14T18:00:04Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"fetching_elevation","pct":25,"message":"Fetching elevation","ts":"2026-11-14T18:00:06Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"building_mesh","pct":45,"message":"Building terrain mesh","ts":"2026-11-14T18:00:08Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"classifying_cover","pct":60,"message":"Reading the ground cover","ts":"2026-11-14T18:00:10Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"analyzing_drainage","pct":75,"message":"Tracing the drainage","ts":"2026-11-14T18:00:12Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"fetching_weather","pct":88,"message":"Fetching weather history","ts":"2026-11-14T18:00:14Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"packaging","pct":95,"message":"Packaging the terrain","ts":"2026-11-14T18:00:16Z"}
+
+event: progress
+data: {"scan_id":"scan_mock_001","stage":"ready","pct":100,"message":"Ready","ts":"2026-11-14T18:00:18Z","terrain_id":"terr_mock_hills"}
+

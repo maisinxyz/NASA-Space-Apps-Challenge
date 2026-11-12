@@ -11,6 +11,7 @@ seed:
 
 fixtures:
 	uv run --project packages/contracts python scripts/make_fixtures_terrain.py
+	uv run --project packages/contracts python scripts/make_fixtures_json.py
 
 types:
 	@echo "types: not yet implemented"

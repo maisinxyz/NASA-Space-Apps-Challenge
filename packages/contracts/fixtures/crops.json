@@ -1,0 +1,242 @@
+[
+  {
+    "id": "crop_corn_silage",
+    "name": "Silage corn",
+    "family": "Poaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 135,
+      "terminate_doy": 260
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        30,
+        0.2
+      ],
+      [
+        70,
+        0.8
+      ],
+      [
+        125,
+        0.9
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_wheat_winter",
+    "name": "Winter wheat",
+    "family": "Poaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 280,
+      "terminate_doy": 210
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        45,
+        0.3
+      ],
+      [
+        180,
+        0.4
+      ],
+      [
+        240,
+        0.9
+      ],
+      [
+        295,
+        0.8
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_potato",
+    "name": "Potato",
+    "family": "Solanaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 120,
+      "terminate_doy": 260
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        35,
+        0.3
+      ],
+      [
+        70,
+        0.8
+      ],
+      [
+        140,
+        0.6
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_pea_field",
+    "name": "Field pea",
+    "family": "Fabaceae",
+    "n_fixing": true,
+    "season_window": {
+      "plant_doy": 105,
+      "terminate_doy": 210
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        30,
+        0.4
+      ],
+      [
+        70,
+        0.9
+      ],
+      [
+        105,
+        0.7
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_alfalfa",
+    "name": "Alfalfa (forage)",
+    "family": "Fabaceae",
+    "n_fixing": true,
+    "season_window": {
+      "plant_doy": 120,
+      "terminate_doy": 300
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        45,
+        0.6
+      ],
+      [
+        90,
+        0.95
+      ],
+      [
+        180,
+        0.9
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_rye_cover",
+    "name": "Cereal rye (cover crop)",
+    "family": "Poaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 260,
+      "terminate_doy": 120
+    },
+    "cover_curve": [
+      [
+        0,
+        0.1
+      ],
+      [
+        60,
+        0.5
+      ],
+      [
+        120,
+        0.9
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_oats",
+    "name": "Oats",
+    "family": "Poaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 100,
+      "terminate_doy": 220
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        30,
+        0.4
+      ],
+      [
+        70,
+        0.9
+      ],
+      [
+        120,
+        0.7
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  },
+  {
+    "id": "crop_canola",
+    "name": "Canola",
+    "family": "Brassicaceae",
+    "n_fixing": false,
+    "season_window": {
+      "plant_doy": 125,
+      "terminate_doy": 240
+    },
+    "cover_curve": [
+      [
+        0,
+        0.0
+      ],
+      [
+        30,
+        0.3
+      ],
+      [
+        70,
+        0.9
+      ],
+      [
+        115,
+        0.7
+      ]
+    ],
+    "notes": "Mock parameters for development. Values are placeholders.",
+    "source": "to_verify"
+  }
+]

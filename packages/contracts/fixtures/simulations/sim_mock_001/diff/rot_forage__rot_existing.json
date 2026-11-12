@@ -1,0 +1,10 @@
+{
+  "a": "rot_forage",
+  "b": "rot_existing",
+  "quantity": "peak_water_depth",
+  "unit": "mm",
+  "max_abs_diff_mm": 614.601,
+  "mean_diff_mm": 3.907,
+  "changed_area_ha": 1.943,
+  "basis": "modeled"
+}
