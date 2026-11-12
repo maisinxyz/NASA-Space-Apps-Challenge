@@ -53,9 +53,9 @@ d. Remind the user to merge their branch and to message the people under "WHEN D
 e. Stop and wait for the user.
 
 ## Commands (fill in as they become real)
-- `make dev` — start the API (not yet implemented)
-- `make test` — run all tests (not yet implemented)
+- `make dev` — start the API on :8000 (serves fixtures; docs at /api/v1/docs). `OFFLINE=1 make dev` for offline mode
+- `make test` — pytest for packages/contracts and services/api
 - `make seed` — build curated-site seed data (not yet implemented)
-- `make fixtures` — build mock fixtures (not yet implemented)
+- `make fixtures` — regenerate mock fixtures (deterministic; terrain/frames then JSON/SSE)
 - `make types` — generate front-end types from OpenAPI (not yet implemented)
 - `pnpm dev` (in `apps/web`) — start the web app (not yet scaffolded)

@@ -1,10 +1,11 @@
 .PHONY: dev test seed fixtures types
 
 dev:
-	@echo "dev: not yet implemented"
+	cd services/api && uv run uvicorn app.main:app --reload --port 8000
 
 test:
-	@echo "test: not yet implemented"
+	uv run --project packages/contracts pytest packages/contracts -q
+	cd services/api && uv run pytest -q
 
 seed:
 	@echo "seed: not yet implemented"
