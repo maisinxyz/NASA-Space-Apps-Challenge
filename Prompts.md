@@ -1,3 +1,5 @@
+# FieldTwin — Claude Code Prompt Playbook
+
 Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one short Claude Code session.
 
 ## How to use
@@ -7,7 +9,8 @@ Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one shor
 3. **Start a fresh Claude Code session for each prompt** (`/clear` or a new terminal). Each prompt is self-contained and tells Claude what to read. This keeps sessions short and avoids drift.
 4. **Review between prompts.** Look at the result, run it, ask for tweaks in the same session, and commit when happy. Then `/clear` and paste the next one.
 5. **Pull `main` before each prompt.** Merge your branch after each prompt (or every few prompts) so others get your work.
-6. **Progress log:** every prompt writes a short note to `docs/progress/<prompt-number>.md`. The next session reads these instead of guessing.
+6. **STEP 0 in every prompt** tells you who to pull from and who to coordinate with. Read it before Claude starts coding.
+7. **Progress log:** every prompt writes a short note to `docs/progress/<prompt-number>.md`. The next session reads these instead of guessing.
 
 > Heads-up (PRD §12.3 Q3): check with the Vancouver organizers whether writing code before Nov 14 is allowed. Prompt R1 (data research) is likely fine before the event; code prompts may not be.
 
@@ -28,6 +31,26 @@ Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one shor
 | **BE-E — Simulation & insights**    | Back-end person 1 or 4                | 42 → 47 |
 | **BE-F — Orchestration & tests**    | Back-end person 2 (after 36)          | 48 → 49 |
 | **Phase I — Integration & demo**    | whoever is free, mostly in order      | 50 → 62 |
+
+### Track owners (fill in names — Claude reads this table)
+
+| Track | Owner name | Contact (Discord/phone) |
+| --- | --- | --- |
+| Phase 0 — Foundation | ______ | ______ |
+| R — Research | ______ | ______ |
+| FE-A — Shell & content pages | ______ | ______ |
+| FE-B — 3D viewer | ______ | ______ |
+| FE-C — Land Scan | ______ | ______ |
+| FE-D — Simulator & Rotation Lab | ______ | ______ |
+| BE-A — Terrain | ______ | ______ |
+| BE-B — Imagery & cover | ______ | ______ |
+| BE-C — Weather | ______ | ______ |
+| BE-D — Crops & rotations | ______ | ______ |
+| BE-E — Simulation & insights | ______ | ______ |
+| BE-F — Orchestration & tests | ______ | ______ |
+| Phase I — Integration & demo | ______ | ______ |
+
+Each prompt starts with **STEP 0**: Claude reads this table and tells you who to pull from, who to talk to, and who to tell when you finish. Commit names here early so everyone's copy has them.
 
 ### Full index
 
@@ -101,11 +124,31 @@ Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one shor
 
 ---
 
-## Phase 0 — Foundation (run in order)
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  PHASE 0 — FOUNDATION
+════════════════════════════════════════════════════════════
+```
+
+## Phase 0 — Foundation
+
+> 🧩 **Prompts:** 01 → 06 · ▶️ **Start after:** nothing (start here) · 👤 **Owner:** see Track owners table
+> 📝 1–2 people, in order. 03+04 and 05+06 can run in pairs.
+
 
 ### Prompt 01 — Repo scaffold and shared rules
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: None. Nothing to pull yet.. Name the owner of each from the table.
+  COORDINATE WITH: nobody yet; you are first. Name the owners.
+  WHEN DONE, TELL: EVERYONE: the repo layout and CLAUDE.md now exist. Name the owners.
+If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 You are setting up the FieldTwin repo for a 48-hour NASA Space Apps hackathon. The full spec is in prd.md at the repo root. Read ONLY these PRD sections now: §0, §2.7, §6.1, §8 (the "Recommended stack" paragraph and BE-00 card), §9.
 
 Do this, and nothing else:
@@ -120,7 +163,7 @@ Do this, and nothing else:
    - Scope rules: only do the task in the current prompt; do not start the next task; do not refactor unrelated code; do not touch files owned by other tracks unless the prompt says so.
    - Honesty rules from PRD §2.4 and §6.7 (basis labels, relative metrics, pre-built badges, roadmap-only drone features, support-not-replace line).
    - Git rules: work on a branch named `fe/<ID>-<slug>` or `be/<ID>-<slug>`; small commits; never commit secrets or restricted imagery.
-   - End-of-task checklist: (a) run the relevant tests/lint/build and show results; (b) tick the acceptance criteria from the PRD card, saying which pass and which don't; (c) write docs/progress/<prompt-number>.md with: what was built, files touched, how to run it, known gaps, anything the next prompt must know; (d) stop and wait for the user.
+   - End-of-task checklist: (a) run the relevant tests/lint/build and show results; (b) tick the acceptance criteria from the PRD card, saying which pass and which don't; (c) write docs/progress/<prompt-number>.md with: what was built, files touched, how to run it, known gaps, anything the next prompt must know; (d) remind the user to merge their branch and to message the people listed under "WHEN DONE, TELL" in STEP 0; (e) stop and wait for the user.
    - Commands section with placeholders to fill later: `make dev`, `make test`, `make seed`, `pnpm dev`.
 5. Create a root Makefile with stub targets dev, test, seed, fixtures, types that just echo "not yet implemented".
 6. Replace README.md with a short overview, the layout, and a "Contract change process" section from PRD §9.1 (message the team, bump version, update fixtures).
@@ -131,6 +174,14 @@ Then follow the end-of-task checklist in CLAUDE.md (progress file: docs/progress
 ### Prompt 02 — OpenAPI contract
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 01 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: ALL track owners: they must review the 'Decisions' list in docs/progress/02.md before the contract freeze. Name the owners.
+  WHEN DONE, TELL: EVERYONE: contract is frozen (v1.0.0). Name the owners.
+Check that docs/progress/01.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/01.md, and prd.md §6 (all of it). Branch: be/BE-00-contract.
 
 Task: write packages/contracts/openapi.yaml (OpenAPI 3.1) that encodes PRD §6 EXACTLY.
@@ -153,6 +204,14 @@ Do not write any server or client code. Follow the end-of-task checklist in CLAU
 ### Prompt 03 — Procedural terrain and frame fixtures
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 02 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: whoever runs Prompt 04 (Phase 0) at the same time: do not touch each other's fixture folders. Name the owners.
+  WHEN DONE, TELL: FE-B (terrain + frame fixtures) and BE-E (ftw1 writer). Name the owners.
+Check that docs/progress/02.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/02.md, packages/contracts/openapi.yaml, packages/contracts/README.md, and prd.md §6.2 (heightmap/layer encodings), §6.4, §6.8. Branch: be/BE-00-fixtures-terrain.
 
 Task: a Python script scripts/make_fixtures_terrain.py (deterministic, fixed seed) that writes into packages/contracts/fixtures/terrain/:
@@ -173,6 +232,14 @@ Do not write JSON fixtures for other schemas (Prompt 04 does that). Follow the e
 ### Prompt 04 — JSON and SSE fixtures
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 02 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: whoever runs Prompt 03 (Phase 0) at the same time. Name the owners.
+  WHEN DONE, TELL: FE-A, FE-C, FE-D (JSON + SSE fixtures). Name the owners.
+Check that docs/progress/02.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/02.md, packages/contracts/openapi.yaml, and prd.md §6.2, §6.5, §6.8. Branch: be/BE-00-fixtures-json.
 (Prompt 03 may be running in parallel and owns fixtures/terrain and fixtures/simulations/*/frames|risk. Do not touch those.)
 
@@ -196,6 +263,14 @@ Follow the end-of-task checklist in CLAUDE.md (progress file: docs/progress/04.m
 ### Prompt 05 — FastAPI skeleton serving fixtures
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 03 (Phase 0), 04 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: whoever runs Prompt 06 (Phase 0) at the same time. Name the owners.
+  WHEN DONE, TELL: ALL back-end tracks (BE-A to BE-F): the API skeleton is ready. Name the owners.
+Check that docs/progress/03.md, docs/progress/04.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/02.md–04.md, packages/contracts/openapi.yaml, and prd.md §6.3, §6.6, §6.7, and the BE-00 card in §8. Branch: be/BE-00-api-skeleton.
 
 Task: scaffold services/api as a FastAPI app that serves every endpoint in openapi.yaml from packages/contracts/fixtures/.
@@ -215,6 +290,14 @@ Update CLAUDE.md "Commands" section with the real commands. Follow the end-of-ta
 ### Prompt 06 — Next.js scaffold, types, mock/live API client
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 03 (Phase 0), 04 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: whoever runs Prompt 05 (Phase 0) at the same time. Name the owners.
+  WHEN DONE, TELL: ALL front-end tracks (FE-A to FE-D): the web app and API client are ready. Name the owners.
+Check that docs/progress/03.md, docs/progress/04.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/02.md–04.md, packages/contracts/openapi.yaml, and prd.md §6.1, §6.8, §7 (stack paragraph, "Rules for every FE task", and the FE-00 card). Branch: fe/FE-00-scaffold.
 
 Task: scaffold apps/web and its data layer. No UI design yet.
@@ -235,11 +318,31 @@ Do not build the design system, nav, or real pages (Prompts 07–08 do that). Up
 
 ---
 
-## R — Research (anyone, can start right away)
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK R — RESEARCH
+════════════════════════════════════════════════════════════
+```
+
+## Track R — Research
+
+> 🧩 **Prompts:** R1 · ▶️ **Start after:** nothing (start any time) · 👤 **Owner:** see Track owners table
+> 📝 Findings feed BE-A, BE-B, BE-C, and Prompt 50.
+
 
 ### Prompt R1 — Verify curated sites, data access, and licenses
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: None. Nothing to pull yet.. Name the owner of each from the table.
+  COORDINATE WITH: BE-A (elevation), BE-B (imagery), BE-C (NASA POWER): ask what they need confirmed. Name the owners.
+  WHEN DONE, TELL: BE-A, BE-B, BE-C, FE-A (Methods page facts), and Phase I (final site list for Prompt 50). Name the owners.
+If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md and prd.md §2.4, §8 ("External data sources" table), §12.3. Do NOT write application code.
 
 Task: research and write docs/research/data-sources.md. Use web search and cite a URL for every claim. If you cannot confirm something, write "UNVERIFIED" — never guess.
@@ -256,11 +359,31 @@ End with a short "Decisions needed from the team" list. Write docs/progress/R1.m
 
 ---
 
-## FE-A — Shell and content pages
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK FE-A — SHELL & CONTENT PAGES
+════════════════════════════════════════════════════════════
+```
+
+## Track FE-A — Shell & Content Pages
+
+> 🧩 **Prompts:** 07 → 13 · ▶️ **Start after:** Prompt 06 merged · 👤 **Owner:** see Track owners table
+> 📝 Builds components every other FE track uses.
+
 
 ### Prompt 07 — Design tokens, base components, styleguide
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 06 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: other FE tracks: tell them which components exist so nobody builds duplicates. Name the owners.
+  WHEN DONE, TELL: ALL front-end tracks: base components are ready. Name the owners.
+Check that docs/progress/06.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/06.md, and prd.md §7.0 and the FE-00 card. Branch: fe/FE-00-design-system.
 
 Task: build the design system in apps/web.
@@ -275,6 +398,14 @@ Do not build nav, footer, or pages. Follow the end-of-task checklist (progress f
 ### Prompt 08 — App shell, routes, store
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 07 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (store shape they will use). Name the owners.
+  WHEN DONE, TELL: FE-C and FE-D: shell, routes, and store are ready. Name the owners.
+Check that docs/progress/07.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/06.md–07.md, and prd.md §4.1, §4.2, and the FE-00 card. Branch: fe/FE-00-shell.
 
 Task:
@@ -292,6 +423,14 @@ Follow the end-of-task checklist (progress file: docs/progress/08.md).
 ### Prompt 09 — Explore Sites page
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: Phase I owner of Prompt 50 (real /sites data shape). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 52 swaps this page to live). Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md the FE-02 card. Branch: fe/FE-02-sites.
 
 Build /sites per FE-02: card grid on the left, MapLibre map of BC on the right with one pin per site (use a free style that needs no API key, e.g. a demotiles or OSM raster style; credit it). Hovering a card highlights its pin and vice-versa. Filters by region and terrain type (flat < 15 m relief, rolling < 60 m, steep otherwise — put thresholds in one constant). Card: preview image (fallback to a gradient if missing), name, region, area, relief, Pre-built badge, storm count, "Open in simulator" → /sim/[id]. Extra card "Scan a new location" → /scan. Loading skeletons, empty state, error card with retry. Fully keyboard usable.
@@ -302,6 +441,14 @@ Data only from getSites() in the API client. Follow the end-of-task checklist (p
 ### Prompt 10 — Data & Methods page
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Optional: R1 (R) — use it if merged, else continue. Name the owner of each from the table.
+  COORDINATE WITH: Track R (data facts and licenses). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 52). Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, docs/research/data-sources.md if it exists, and prd.md §2.4, §6.7, §8 (external sources table), §13.2 (verification limit), and the FE-08 card. Branch: fe/FE-08-methods.
 
 Build /methods per FE-08:
@@ -318,6 +465,14 @@ Follow the end-of-task checklist (progress file: docs/progress/10.md).
 ### Prompt 11 — Landing page (static sections)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: FE-B (the hero will reuse the viewer later). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 55 fills the hero and teaser). Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md §1 (pitch), §2.4, and the FE-01 card. Branch: fe/FE-01-landing.
 
 Build / per FE-01, sections 1–7, but for the hero background and the "See the storm" teaser use clearly marked placeholders (a still image or gradient + a <div data-slot="hero-3d"> and <div data-slot="storm-teaser">). Prompt 55 will fill them with the 3D viewer later — make them easy to swap (separate components HeroBackground and StormTeaser).
@@ -332,6 +487,14 @@ Follow the end-of-task checklist (progress file: docs/progress/11.md).
 ### Prompt 12 — Learn page (P1)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (they can use the <Term> tooltip). Name the owners.
+  WHEN DONE, TELL: FE-D: the <Term> tooltip is available. Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md the FE-09 card. Branch: fe/FE-09-learn.
 
 Build /learn: a card glossary for the 10 terms in FE-09. Content in apps/web/content/glossary.ts: id, term, one-sentence plain definition, a simple inline SVG illustration, and "where you see this in FieldTwin" links. Each card has an anchor (/learn#runoff). Export a <Term id="runoff">runoff</Term> component that shows a tooltip with the definition and links to the entry, for other pages to use. Keep definitions cautious and correct; if unsure about a definition, write it conservatively and flag it in the progress file for review.
@@ -342,6 +505,14 @@ Follow the end-of-task checklist (progress file: docs/progress/12.md).
 ### Prompt 13 — About & Roadmap page (P1)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: nobody required. Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md §2.6 and the FE-10 card. Branch: fe/FE-10-about.
 
 Build /about per FE-10: problem and motivation; team placeholders; Roadmap timeline (Now / Next / Later) with Roadmap badges; a Capture Studio explainer (simple animated SVG of the drone workflow) labeled "Concept, not available yet"; a contact form that opens a mailto link (no backend). Nothing on this page may look like a working drone feature.
@@ -351,11 +522,31 @@ Follow the end-of-task checklist (progress file: docs/progress/13.md).
 
 ---
 
-## FE-B — 3D Land Viewer
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK FE-B — 3D LAND VIEWER
+════════════════════════════════════════════════════════════
+```
+
+## Track FE-B — 3D Land Viewer
+
+> 🧩 **Prompts:** 14 → 18 · ▶️ **Start after:** Prompt 06 merged · 👤 **Owner:** see Track owners table
+> 📝 Highest-risk FE track. Start early.
+
 
 ### Prompt 14 — Viewer: terrain mesh, texture, orbit
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 06 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: Phase 0 (fixture terrain format) and BE-A (heightmap encoding, Prompt 33). Name the owners.
+  WHEN DONE, TELL: FE-C: the viewer exists for the terraform (Prompt 20). Name the owners.
+Check that docs/progress/06.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/06.md, apps/web/lib/decode/heightmap.ts, and prd.md §6.2 (TerrainPackage, heightmap decoding) and the FE-04 card. Branch: fe/FE-04-viewer-core.
 
 Build apps/web/components/viewer/LandViewer.tsx (react-three-fiber) — the core only:
@@ -372,6 +563,14 @@ Verify visually on the tilted plane (must look like a flat ramp) and the bowl. D
 ### Prompt 15 — Viewer: analysis layers
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 14 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: BE-A (layer encodings and legends, Prompt 33). Name the owners.
+  WHEN DONE, TELL: FE-D: layer toggles are ready. Name the owners.
+Check that docs/progress/14.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/14.md, the LandViewer component, and prd.md §6.2 (layer PNGs, cover_class values) and the FE-04 card (Layers). Branch: fe/FE-04-viewer-layers.
 
 Add a `layers` prop: { imagery, slope, drainage, depressions, cover, risk } booleans. Implement as one custom shader material (or stacked materials) that blends layer textures over the imagery without reloading assets on toggle. Color ramps: slope (sequential), drainage (water hue, only where flow is high), depressions (water hue by depth), cover (categorical using cover_class indices), risk (amber→red, plus a hatch pattern so it is not color-only). Load the layer catalog via getLayers and render a LayerLegend component from it. Add layer toggles to /dev/viewer.
@@ -382,6 +581,14 @@ Follow the end-of-task checklist (progress file: docs/progress/15.md).
 ### Prompt 16 — Viewer: water frames and risk overlay
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 15 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (frame file format, Prompt 45). Name the owners.
+  WHEN DONE, TELL: FE-D: water frames work (Prompt 21 can start). Name the owners.
+Check that docs/progress/15.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/15.md, apps/web/lib/decode/ftw1.ts, and prd.md §6.4 and the FE-04 card (Water overlay). Branch: fe/FE-04-viewer-water.
 
 Add props: waterFrames (decoded FTW1 object), frameIndex (number, may be fractional), riskGridUrl (optional).
@@ -397,6 +604,14 @@ Follow the end-of-task checklist (progress file: docs/progress/16.md).
 ### Prompt 17 — Viewer: picking, scale bar, camera modes, performance
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 16 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (they will sync two viewers and place insight pins). Name the owners.
+  WHEN DONE, TELL: FE-D: cameraState sync and projectToScreen exist (Prompts 23, 24). Name the owners.
+Check that docs/progress/16.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/16.md, and the FE-04 card (Camera modes, Picking, Performance). Branch: fe/FE-04-viewer-ux.
 
 Add:
@@ -412,6 +627,14 @@ Ground view and instanced crops are P1 — skip them. Follow the end-of-task che
 ### Prompt 18 — Viewer: 2D fallback
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 16 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (fallback must keep the same props). Name the owners.
+  WHEN DONE, TELL: FE-D and FE-A: <LandView> wrapper exists. Name the owners.
+Check that docs/progress/16.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/16.md, and the FE-04 card (Fallback). Branch: fe/FE-04-viewer-fallback.
 
 Build LandViewer2D: a canvas view showing the texture, the same layers (from the layer PNGs), and water frames drawn per frameIndex, with the same props as LandViewer. Wrap both in <LandView> that detects WebGL support (and a ?nowebgl=1 query for testing) and picks one. Picking works in 2D as well.
@@ -421,11 +644,31 @@ Follow the end-of-task checklist (progress file: docs/progress/18.md).
 
 ---
 
-## FE-C — Land Scan
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK FE-C — LAND SCAN
+════════════════════════════════════════════════════════════
+```
+
+## Track FE-C — Land Scan
+
+> 🧩 **Prompts:** 19 → 20 · ▶️ **Start after:** Prompt 08 (FE-A); Prompt 20 also needs 14 (FE-B) · 👤 **Owner:** see Track owners table
+> 📝 Can be done by FE-A owner after 13.
+
 
 ### Prompt 19 — Scan wizard steps 1–2
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-B (upload size and type limits, Prompt 34). Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md §2.6 and the FE-03 card. Branch: fe/FE-03-scan-input.
 
 Build /scan steps 1 and 2 with a visible 3-step progress indicator:
@@ -441,6 +684,14 @@ Follow the end-of-task checklist (progress file: docs/progress/19.md).
 ### Prompt 20 — Scan terraform sequence
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 14 (FE-B), 19 (FE-C). Name the owner of each from the table.
+  COORDINATE WITH: FE-B (viewer) and BE-F (SSE stages, Prompt 48). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 53 swaps scan to live). Name the owners.
+Check that docs/progress/14.md, docs/progress/19.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/14.md and 19.md, the LandViewer component, and prd.md §6.5 and the FE-03 card (Step 3, Error handling). Branch: fe/FE-03-terraform.
 
 Build step 3 of /scan: a full-screen sequence driven ONLY by subscribeScanEvents():
@@ -455,11 +706,31 @@ Follow the end-of-task checklist (progress file: docs/progress/20.md).
 
 ---
 
-## FE-D — Simulator and Rotation Lab
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK FE-D — SIMULATOR & ROTATION LAB
+════════════════════════════════════════════════════════════
+```
+
+## Track FE-D — Simulator & Rotation Lab
+
+> 🧩 **Prompts:** 21 → 28 · ▶️ **Start after:** Prompt 08 (FE-A) and 16 (FE-B) · 👤 **Owner:** see Track owners table
+> 📝 26 and 28 can start right after 08.
+
 
 ### Prompt 21 — Simulator layout and controls
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A), 16 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-B (viewer props) and BE-E (simulation API, Prompt 45). Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/08.md, docs/progress/16.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md and 16.md, apps/web/lib/store.ts, and prd.md the FE-05 card. Branch: fe/FE-05-sim-layout.
 
 Build /sim/[siteId] layout: left rail, center viewer (LandView), right panel (empty tabs Insights / Metrics / Layers for now), bottom bar placeholder.
@@ -472,6 +743,14 @@ No timeline, HUD, or A/B yet. Follow the end-of-task checklist (progress file: d
 ### Prompt 22 — Timeline, playback, HUD
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 21 (FE-D). Name the owner of each from the table.
+  COORDINATE WITH: BE-C (hyetograph and frame_times shape, Prompt 38). Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/21.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/21.md, and the FE-05 card (HUD, Bottom timeline, Interactions). Branch: fe/FE-05-sim-timeline.
 
 Add:
@@ -486,6 +765,14 @@ Follow the end-of-task checklist (progress file: docs/progress/22.md).
 ### Prompt 23 — A/B split and difference overlay
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 22 (FE-D), 17 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-B (camera sync). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 54). Name the owners.
+Check that docs/progress/22.md, docs/progress/17.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/17.md and 22.md, and the FE-05 card (A/B mode, Difference). Branch: fe/FE-05-sim-ab.
 
 Add A/B mode: two synchronized LandViews side by side (shared camera via cameraState/onCameraChange, shared frameIndex), each with its own rotation selector. Key B toggles A/B, key A swaps sides, key D toggles a Difference overlay (compute per-cell depth difference A−B in the browser from the two frame sets, or call getDiff in live mode) with a legend that is not color-only. Switching a cached rotation updates in about a second. Keep ≥30 fps target; reuse the auto-quality from Prompt 17.
@@ -496,6 +783,14 @@ Follow the end-of-task checklist (progress file: docs/progress/23.md).
 ### Prompt 24 — Insight pins and pop-ups
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 22 (FE-D), 17 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (insight anchors and timing, Prompt 46). Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/22.md, docs/progress/17.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/17.md and 22.md, and prd.md §6.2 (Insight) and the FE-07 card. Branch: fe/FE-07-insights.
 
 Build insight pins: load getInsights(terrainId) and the insights in getEvidence(simId). Show numbered pins positioned with projectToScreen(lon, lat) that follow the camera. A pop-up card shows title, body, "Why it matters", "Try this" tip, confidence chip, and a "see data" link that turns on the referenced layer. Only one pop-up open at a time; Escape closes it. During playback, insights with at_time_min auto-open when the timeline passes that time (at most one). Respect the FE-07 content rules (no absolute claims shown without a "verify locally" cue).
@@ -506,6 +801,14 @@ Follow the end-of-task checklist (progress file: docs/progress/24.md).
 ### Prompt 25 — Right panel tabs
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 24 (FE-D). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (tips and metrics, Prompt 47). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 54). Name the owners.
+Check that docs/progress/24.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/24.md, and the FE-07 card (Tips panel) and FE-05 (Right panel). Branch: fe/FE-07-panel.
 
 Fill the simulator right panel:
@@ -519,6 +822,14 @@ Follow the end-of-task checklist (progress file: docs/progress/25.md).
 ### Prompt 26 — Rotation Lab core
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-D (rotations, Prompt 40) and BE-E (evidence cards, Prompt 47). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 54). Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md §6.2 (Rotation, EvidenceCard, Metrics) and the FE-06 card. Branch: fe/FE-06-rotation-lab.
 
 Build /sim/[siteId]/rotations: three columns (existing first, marked). Each: name; cover calendar strip (months × years, colored by cover fraction, bare periods hatched); key metrics with units and basis chips; evidence card with the five labeled sections (Why suggested, Supporting evidence, Benefits, Information gaps, Risks needing local review). Below: a comparison table using the same numbers. A persistent banner "This tool supports, and does not replace, local agronomic expertise." "Open replay" → /sim/[siteId]?rotation=<id> (make the simulator read that param). Cards expand to show assumptions.
@@ -529,6 +840,14 @@ Data from getRotationPresets, getCrops, getEvidence (use the latest sim id for t
 ### Prompt 27 — Rotation Lab crop swap and sliders (P1)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 26 (FE-D). Name the owner of each from the table.
+  COORDINATE WITH: BE-D (validate endpoint, Prompt 41). Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/26.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/26.md, and the FE-06 card (Interactions). Branch: fe/FE-06-rotation-edit.
 
 Add: a crop dropdown per year in each alternative rotation (not the existing one) that calls validateRotation, shows warnings inline, and on confirm re-runs runSimulation for that rotation. Priority sliders (water conservation, erosion control, soil cover, income suitability) that re-rank the alternative columns using a transparent weighted score shown in a tooltip. Income suitability has no data yet — show it as "assumed / not modeled" and keep its weight at 0 by default.
@@ -539,6 +858,14 @@ Follow the end-of-task checklist (progress file: docs/progress/27.md).
 ### Prompt 28 — Trends view (P1)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 08 (FE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-C (weather summary, Prompt 39). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 52). Name the owners.
+Check that docs/progress/08.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md the FE-11 card and BE-06 card (Trends). Branch: fe/FE-11-trends.
 
 Build /sim/[siteId]/trends with Recharts: annual precipitation, heavy-rain days, temperature, root-zone soil wetness (1981–present) with trend line and uncertainty band, units and "NASA POWER" source under each chart plus a one-line plain summary from the API. State the ~55 km resolution limit near the charts. Climate-shift sliders (rainfall intensity ±%, longer dry spells) update a "what changes" preview client-side; label it "illustrative". Data from getWeatherSummary.
@@ -548,11 +875,30 @@ Follow the end-of-task checklist (progress file: docs/progress/28.md).
 
 ---
 
-## BE-A — Terrain
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-A — TERRAIN
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-A — Terrain
+
+> 🧩 **Prompts:** 29 → 33 · ▶️ **Start after:** Prompt 05 merged; 30 also needs R1 · 👤 **Owner:** see Track owners table
+
 
 ### Prompt 29 — Terrain interface, grid utils, PrecomputedSource
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (they will consume ElevationGrid). Name the owners.
+  WHEN DONE, TELL: BE-A teammates and BE-E: terrain core exists. Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, and prd.md §6.1 (CRS), §6.2 (TerrainPackage) and the BE-01 card. Branch: be/BE-01-terrain-core.
 
 In services/api/app/terrain/:
@@ -569,6 +915,14 @@ No network sources yet. Follow the end-of-task checklist (progress file: docs/pr
 ### Prompt 30 — HRDEM adapter
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 29 (BE-A), R1 (R). Name the owner of each from the table.
+  COORDINATE WITH: Track R (HRDEM access findings). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 50 needs real terrain). Name the owners.
+Check that docs/progress/29.md, docs/progress/R1.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/29.md, docs/research/data-sources.md (from R1), and the BE-01 card. Branch: be/BE-01-hrdem.
 
 FIRST: confirm from data-sources.md (or the official docs, cited) the exact access method for NRCan HRDEM. If it is not confirmed, STOP and tell me what is missing — do not guess URLs.
@@ -582,6 +936,14 @@ Follow the end-of-task checklist (progress file: docs/progress/30.md).
 ### Prompt 31 — NASADEM fallback and chain
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 29 (BE-A). Name the owner of each from the table.
+  COORDINATE WITH: Track R (NASADEM access findings). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 50). Name the owners.
+Check that docs/progress/29.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/29.md, docs/research/data-sources.md, and the BE-01 card. Branch: be/BE-01-nasadem.
 
 FIRST confirm the NASADEM download method from data-sources.md or cited official docs; STOP and ask if unclear.
@@ -593,6 +955,14 @@ Follow the end-of-task checklist (progress file: docs/progress/31.md).
 ### Prompt 32 — Terrain analysis
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 29 (BE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (routing uses D8 and depressions, Prompt 43). Name the owners.
+  WHEN DONE, TELL: BE-E: analysis module is merged. Name the owners.
+Check that docs/progress/29.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/29.md, and prd.md the BE-04 card. Branch: be/BE-04-analysis.
 
 In services/api/app/analysis/: slope and aspect; D8 flow direction; flow accumulation; drainage network (threshold as a named constant); depressions via priority-flood fill returning ponding depth per cell; summary stats (steepest 10% slope, largest low spot area+depth+centroid lon/lat, drainage density, main drainage line coordinates). Handle nodata. Vectorize with NumPy; use Numba only if a loop is too slow (measure first). Cite the algorithm source (e.g. Barnes et al. priority-flood) in a comment.
@@ -604,6 +974,14 @@ Follow the end-of-task checklist (progress file: docs/progress/32.md).
 ### Prompt 33 — Rendering packaging
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 32 (BE-A). Name the owner of each from the table.
+  COORDINATE WITH: FE-B (decode formulas must match). Name the owners.
+  WHEN DONE, TELL: FE-B and BE-E: packaging and write_frames() are ready. Name the owners.
+Check that docs/progress/32.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/29.md and 32.md, packages/contracts/README.md, and prd.md §6.2, §6.4 and the BE-10 card. Branch: be/BE-10-packaging.
 
 In services/api/app/packaging/: write a TerrainPackage folder data/packages/<terrain_id>/ containing heightmap.png (16-bit, §6.2 formula), normal.png, texture.jpg (passed in), layers/*.png (8-bit, encodings from the contract), layers.json legends, terrain.json. Reuse packages/contracts/fixtures_lib/ftw1.py for frames (expose write_frames()). Enforce size budgets (warn/log). Update the terrain router service to serve real packages from data/packages/ first, fixtures second, with immutable cache headers.
@@ -614,11 +992,30 @@ Follow the end-of-task checklist (progress file: docs/progress/33.md).
 
 ---
 
-## BE-B — Imagery and cover
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-B — IMAGERY & COVER
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-B — Imagery & Cover
+
+> 🧩 **Prompts:** 34 → 36 · ▶️ **Start after:** Prompt 05 merged; 35 also needs R1 · 👤 **Owner:** see Track owners table
+
 
 ### Prompt 34 — Upload validation and storage
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: FE-C (limits shown in the drop zone, Prompt 19). Name the owners.
+  WHEN DONE, TELL: BE-F (scan orchestration uses uploads). Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, and prd.md the BE-02 card and NFR-08, NFR-09 (§13.1). Branch: be/BE-02-uploads.
 
 In services/api/app/imagery/uploads.py: validate images by content (Pillow open + verify), allowed formats jpg/png/webp, size cap and pixel-dimension cap as config constants, max 6 files. Read EXIF GPS and orientation first, return them, then save a stripped copy (no EXIF) under data/uploads/<sha256>.jpg. Errors UNSUPPORTED_FILE / FILE_TOO_LARGE / INVALID_INPUT in the §6.6 format. Tests: good jpg, png renamed as .jpg, text file named .jpg, oversized file, EXIF stripped.
@@ -629,6 +1026,14 @@ Follow the end-of-task checklist (progress file: docs/progress/34.md).
 ### Prompt 35 — Image placement and fallback texture
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 34 (BE-B), R1 (R). Name the owner of each from the table.
+  COORDINATE WITH: Track R (imagery source and license). Name the owners.
+  WHEN DONE, TELL: BE-F and Phase I. Name the owners.
+Check that docs/progress/34.md, docs/progress/R1.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/34.md, docs/research/data-sources.md, and the BE-02 card (Behavior 2–4). Branch: be/BE-02-placement.
 
 Implement build_texture(bbox, uploads, site_seed=None):
@@ -644,6 +1049,14 @@ Follow the end-of-task checklist (progress file: docs/progress/35.md).
 ### Prompt 36 — Cover classification
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 35 (BE-B). Name the owner of each from the table.
+  COORDINATE WITH: BE-E (cover feeds the erosion index, Prompt 44). Name the owners.
+  WHEN DONE, TELL: BE-E and BE-F: cover module is merged. Name the owners.
+Check that docs/progress/35.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/35.md, and prd.md §6.2 (cover_class values) and the BE-05 card. Branch: be/BE-05-cover.
 
 In services/api/app/cover/: excess-green index for RGB (NDVI if a NIR band exists), Otsu threshold, simple water detection (document the rule), morphological clean-up, classes 0 other / 1 vegetation / 2 bare / 3 water / 255 nodata. Output cover_class array, class percentages (sum to 100), persistent_bare mask (bare clusters ≥ min area constant), confidence from class separation, and a low_confidence flag. Document the limits from BE-05 in a module docstring.
@@ -654,11 +1067,30 @@ Follow the end-of-task checklist (progress file: docs/progress/36.md).
 
 ---
 
-## BE-C — Weather
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-C — WEATHER
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-C — Weather
+
+> 🧩 **Prompts:** 37 → 39 · ▶️ **Start after:** Prompt 05 merged and R1 · 👤 **Owner:** see Track owners table
+
 
 ### Prompt 37 — NASA POWER client and cache
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0), R1 (R). Name the owner of each from the table.
+  COORDINATE WITH: Track R (POWER endpoint and parameter names). Name the owners.
+  WHEN DONE, TELL: BE-E (wetness for runoff) and BE-F. Name the owners.
+Check that docs/progress/05.md, docs/progress/R1.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, docs/research/data-sources.md, and prd.md the BE-06 card and NFR-08. Branch: be/BE-06-power-client.
 
 FIRST confirm the POWER daily point endpoint and parameter names from data-sources.md or the official docs (https://power.larc.nasa.gov/docs/services/api/), and cite them in a comment. If anything is unclear, STOP and ask.
@@ -671,6 +1103,14 @@ Follow the end-of-task checklist (progress file: docs/progress/37.md).
 ### Prompt 38 — Storm ranking and hyetograph
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 37 (BE-C). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (timeline uses hyetograph, Prompt 22). Name the owners.
+  WHEN DONE, TELL: FE-D and BE-E: real storms are available. Name the owners.
+Check that docs/progress/37.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/37.md, and prd.md §6.2 (Storm) and the BE-06 card (Rank storms, Hyetograph). Branch: be/BE-06-storms.
 
 Implement rank_storms(df, n=3): 1/2/3-day rolling rainfall; top-N distinct events separated ≥ 7 days; total, peak day, antecedent wetness (mean root-zone wetness over prior 5 days). Hyetograph: spread daily totals hourly with an SCS Type IA style profile — look up and cite the dimensionless table (TODO(verify) if no source found), flag synthetic: true. Wire GET /weather/storms?terrain_id to it (resolve terrain → centroid), keeping the fixture fallback for mock terrain ids.
@@ -682,6 +1122,14 @@ Follow the end-of-task checklist (progress file: docs/progress/38.md).
 ### Prompt 39 — Trends and weather summary
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 37 (BE-C). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (Trends view, Prompt 28). Name the owners.
+  WHEN DONE, TELL: FE-D and Phase I (Prompt 52). Name the owners.
+Check that docs/progress/37.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/37.md, and the BE-06 card (Trends) and FE-11 card. Branch: be/BE-06-trends.
 
 Implement weather summary: annual and seasonal series for precipitation, heavy-rain days (threshold constant), mean temperature, root-zone wetness; Theil–Sen slope with confidence interval (scipy.stats.theilslopes); one plain-language summary sentence per series with cautious wording and the ~55 km resolution caveat. Wire GET /weather/summary?lat&lon. Response must validate against the contract schema.
@@ -692,11 +1140,30 @@ Follow the end-of-task checklist (progress file: docs/progress/39.md).
 
 ---
 
-## BE-D — Crops and rotations
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-D — CROPS & ROTATIONS
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-D — Crops & Rotations
+
+> 🧩 **Prompts:** 40 → 41 · ▶️ **Start after:** Prompt 05 merged · 👤 **Owner:** see Track owners table
+
 
 ### Prompt 40 — Crop library, presets, cover calendar
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (Rotation Lab, Prompt 26) and BE-E (cover factor, Prompt 44). Name the owners.
+  WHEN DONE, TELL: FE-D and BE-E: crops and presets are live. Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, and prd.md §6.2 (CropTemplate, Rotation) and the BE-07 card. Branch: be/BE-07-crops.
 
 Create data/crops.yaml with the 8 BE-07 crops: family, n_fixing, season_window (plant/terminate day of year), cover_curve, notes, source. Use web search for public agronomy references (e.g. BC Ministry of Agriculture, provincial/university extension) and cite URLs in `source`; any value you cannot source gets source: "to_verify". Do not invent citations.
@@ -709,6 +1176,14 @@ Follow the end-of-task checklist (progress file: docs/progress/40.md).
 ### Prompt 41 — Rotation validation
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 40 (BE-D). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (crop swap, Prompt 27). Name the owners.
+  WHEN DONE, TELL: FE-D. Name the owners.
+Check that docs/progress/40.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/40.md, and the BE-07 card (Validation rules). Branch: be/BE-07-validate.
 
 Implement POST /rotations/validate: warnings for same-family crops in consecutive years and for crops outside the location's season window (use latitude-based simple rule, document it as assumed). Return {valid, warnings[]} per contract. Tests for each warning type and a clean rotation.
@@ -718,11 +1193,31 @@ Follow the end-of-task checklist (progress file: docs/progress/41.md).
 
 ---
 
-## BE-E — Simulation and insights
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-E — SIMULATION & INSIGHTS
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-E — Simulation & Insights
+
+> 🧩 **Prompts:** 42 → 47 · ▶️ **Start after:** Prompt 05 merged (42–44 run on synthetic data) · 👤 **Owner:** see Track owners table
+> 📝 Biggest BE track. Start early.
+
 
 ### Prompt 42 — Simulation: SCS runoff
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: BE-C (soil wetness values) and BE-D (crop stages). Name the owners.
+  WHEN DONE, TELL: BE-E teammates. Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, and prd.md the BE-08 card (Inputs, Method 1, tests). Branch: be/BE-08-runoff.
 
 In services/api/app/sim/runoff.py: SCS Curve Number runoff exactly as in BE-08 (S = 25400/CN − 254 mm, Ia = 0.2·S, Q formula). Curve-number table in data/curve_numbers.yaml by cover class × crop stage × soil group (A–D) — look up and cite a USDA NRCS TR-55 / NEH Part 630 source; mark unsourced values TODO(verify). Antecedent moisture adjustment (dry/normal/wet thresholds on POWER wetness as documented assumptions; cite the AMC conversion formula). Function works per cell on NumPy arrays, cumulative over the hyetograph to get incremental runoff per time step.
@@ -734,6 +1229,14 @@ Use synthetic inputs only; no other modules required. Follow the end-of-task che
 ### Prompt 43 — Simulation: routing and ponding
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 42 (BE-E). Optional: 32 (BE-A) — use it if merged, else use synthetic D8. Name the owner of each from the table.
+  COORDINATE WITH: BE-A (D8 and depression outputs). Name the owners.
+  WHEN DONE, TELL: BE-E teammates. Name the owners.
+Check that docs/progress/42.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/42.md, the analysis module from Prompt 32 if merged (else use simple D8 on synthetic grids), and the BE-08 card (Method 2, mass balance test). Branch: be/BE-08-routing.
 
 In services/api/app/sim/routing.py: time-stepped transfer of surface water along D8 with a slope-dependent fraction per step, depressions store ponded water with slow infiltration, edge cells outflow. Track a mass ledger (rain excess in, infiltration, outflow, storage). This is a visualization-oriented approximation — say so in the docstring. Record depth snapshots for later frame sampling.
@@ -745,6 +1248,14 @@ Follow the end-of-task checklist (progress file: docs/progress/43.md).
 ### Prompt 44 — Simulation: erosion index and metrics
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 43 (BE-E). Name the owner of each from the table.
+  COORDINATE WITH: BE-B (cover classes) and BE-D (cover calendar). Name the owners.
+  WHEN DONE, TELL: BE-E teammates. Name the owners.
+Check that docs/progress/43.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/43.md, and prd.md §6.2 (Metrics) and the BE-08 card (Method 3–4). Branch: be/BE-08-erosion.
 
 In services/api/app/sim/erosion.py: relative erosion index = rainfall intensity factor × constant soil factor × topographic factor (slope + upslope area; cite the LS formula you use) × cover factor from the rotation's cover on the storm date; persistent-bare cells keep reduced cover in all rotations; non-field cells masked. Normalize to 0–100 relative using a fixed reference (not per-run min/max, so rotations stay comparable). Compute Metrics per §6.2 (runoff_volume_m3, runoff_depth_mm_mean, ponded_area_ha, ponded_peak_depth_cm, erosion_index_mean, erosion_high_share_pct, bare_days_per_year, basis).
@@ -756,6 +1267,14 @@ Follow the end-of-task checklist (progress file: docs/progress/44.md).
 ### Prompt 45 — Simulation: frames, job API, caching
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 44 (BE-E), 33 (BE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-A (packaging) and FE-D (simulation API consumers). Name the owners.
+  WHEN DONE, TELL: FE-B, FE-D and Phase I: real simulations are live. Name the owners.
+Check that docs/progress/44.md, docs/progress/33.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/33.md and 44.md, and prd.md §6.2 (SimulationRequest/Status), §6.4, and the BE-08 card (Frames, Caching, Failure). Branch: be/BE-08-sim-api.
 
 Implement services/api/app/sim/run.py: run(terrain, storm, rotations, options) → per-rotation frames (~60, sampled from routing snapshots, encoded with write_frames), risk PNG, metrics. Job runner: in-process thread pool, small concurrency limit; cache by hash of (terrain_id, storm_id, rotation_id, options) under data/sims/; deterministic sim ids from the hash; per-run timeout → SIMULATION_TIMEOUT with hint; never mark partial results done; if over the time budget, retry at a lower grid with a flag. Wire POST /simulations, GET /simulations/{id}, frames, risk, and /diff (PNG + stats). Keep fixture responses for mock ids.
@@ -767,6 +1286,14 @@ Follow the end-of-task checklist (progress file: docs/progress/45.md).
 ### Prompt 46 — Insight rule engine
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 45 (BE-E), 32 (BE-A), 36 (BE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (insight pins, Prompt 24). Name the owners.
+  WHEN DONE, TELL: FE-D. Name the owners.
+Check that docs/progress/45.md, docs/progress/32.md, docs/progress/36.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/32.md, 36.md, 45.md, and prd.md §6.2 (Insight) and the BE-09 card. Branch: be/BE-09-insights.
 
 In services/api/app/insights/: a rule engine of templates with thresholds (thresholds in data/insight_rules.yaml), each rule producing an Insight with anchor lon/lat (and at_time_min for storm rules), confidence, data_refs, severity. Rules: terrain (largest low spot, steepest section, strongest drainage line), cover (% bare, persistent patches, low confidence), storm (first water at main low spot, peak ponding time, biggest rotation difference), data quality (coarse elevation, assumed alignment, assumed soil group, coarse weather). No LLM. Wire GET /terrain/{id}/insights and the insights part of /simulations/{id}/evidence.
@@ -778,6 +1305,14 @@ Follow the end-of-task checklist (progress file: docs/progress/46.md).
 ### Prompt 47 — Tips library and evidence cards
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 46 (BE-E). Name the owner of each from the table.
+  COORDINATE WITH: FE-D (evidence cards, Prompts 25, 26); someone should review tip wording. Name the owners.
+  WHEN DONE, TELL: FE-D and Phase I. Name the owners.
+Check that docs/progress/46.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/46.md, and prd.md §6.2 (EvidenceCard) and the BE-09 card (Tips library, Evidence cards). Branch: be/BE-09-evidence.
 
 Create data/tips.yaml: plain-language tips keyed by condition, each with basis and verify_locally. Wording must be conditional ("consider", "may", "ask a local agronomist"); no guarantees, no financial or medical claims. Implement evidence card generation for each rotation: why_suggested, evidence (numbers pulled directly from metrics — format them, never recompute), benefits, information_gaps, risks_for_local_review, support_not_replace text. Wire GET /simulations/{id}/evidence.
@@ -788,11 +1323,31 @@ List every tip in the progress file so a human can review the wording. Follow th
 
 ---
 
-## BE-F — Orchestration and tests
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  TRACK BE-F — ORCHESTRATION & TESTS
+════════════════════════════════════════════════════════════
+```
+
+## Track BE-F — Orchestration & Tests
+
+> 🧩 **Prompts:** 48 → 49 · ▶️ **Start after:** Prompt 05 merged · 👤 **Owner:** see Track owners table
+> 📝 Wires in other BE modules as they land.
+
 
 ### Prompt 48 — Scan orchestration and SSE
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: BE-A, BE-B, BE-C (stage modules) and FE-C (SSE consumer). Name the owners.
+  WHEN DONE, TELL: FE-C and Phase I (Prompt 53). Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md and any of 29–39 that exist, and prd.md §6.5 and the BE-03 card. Branch: be/BE-03-orchestration.
 
 Implement services/api/app/scans/: POST /scans validates input (via the uploads module if merged), creates a job, returns scan_id at once. Stages run in §6.5 order, each calling the real module if it exists or a clearly-named stub that returns fixture data (log "STUB" loudly). Emit progress events at stage boundaries over SSE; final ready includes terrain_id; failures emit failed with a §6.5/§6.6 error. Cache by hash(bbox, grid size, source versions, image hashes); resubmission returns the existing job. Per-stage timeouts; small concurrency limit; OFFLINE=1 allows only curated sites.
@@ -804,6 +1359,14 @@ List which stages are still stubs in the progress file. Follow the end-of-task c
 ### Prompt 49 — Contract tests and smoke script
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 05 (Phase 0). Name the owner of each from the table.
+  COORDINATE WITH: ALL back-end tracks (tests may fail on their endpoints). Name the owners.
+  WHEN DONE, TELL: ALL back-end tracks: contract tests run in `make test`. Name the owners.
+Check that docs/progress/05.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/05.md, packages/contracts/openapi.yaml, and prd.md the BE-12 card and §13.2. Branch: be/BE-12-tests.
 
 Add: contract tests that call every endpoint on a running test app and validate responses against openapi.yaml (schemathesis or openapi-core); scripts/smoke.py that runs the API journey (health → sites → scan a curated site → storms → simulate 3 rotations → evidence) and prints a pass/fail table with timings; scripts/bench.py for scan + sim timing; failure-injection tests (network off, bad upload, missing tile) using monkeypatch. Add `make smoke` and `make bench`.
@@ -813,11 +1376,31 @@ Follow the end-of-task checklist (progress file: docs/progress/49.md).
 
 ---
 
-## Phase I — Integration and demo
+<br>
+
+```
+════════════════════════════════════════════════════════════
+  PHASE I — INTEGRATION & DEMO
+════════════════════════════════════════════════════════════
+```
+
+## Phase I — Integration & Demo
+
+> 🧩 **Prompts:** 50 → 62 · ▶️ **Start after:** see each prompt's STEP 0 · 👤 **Owner:** see Track owners table
+> 📝 Mostly in order. 58–60 are optional (P1/P2).
+
 
 ### Prompt 50 — sites.yaml and seed script
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 30–33 (BE-A), 34–36 (BE-B), 37–39 (BE-C), 40–41 (BE-D), 42–47 (BE-E), R1 (R). Name the owner of each from the table.
+  COORDINATE WITH: ALL back-end tracks and Track R (final site list). Name the owners.
+  WHEN DONE, TELL: EVERYONE: seed data exists. Name the owners.
+Check that docs/progress/R1.md and docs/progress/30.md through 47.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/research/data-sources.md, all docs/progress/*.md for BE prompts, and prd.md the BE-11 card. Branch: be/BE-11-seed.
 
 Create data/sites.yaml for the three chosen sites (from R1's recommendation — ask me to confirm the list before writing). Fields: id, name, region, bbox, summary, image files + bounds, license, attribution, existing rotation, storm count. Implement `make seed` (scripts/seed.py): for each site build terrain package → texture → cover → analysis → weather cache → top 3 storms → 3 rotations → all simulations → evidence, writing everything under data/seed/ and data/packages/. Idempotent and reproducible. Print sizes per site and total. Make /sites serve sites.yaml-backed data instead of fixtures (fixtures still used in mock mode on the front-end).
@@ -828,6 +1411,14 @@ Do not commit imagery whose license forbids redistribution; if unsure, ask. Foll
 ### Prompt 51 — Offline mode and seed verifier
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 50 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: ALL back-end tracks. Name the owners.
+  WHEN DONE, TELL: ALL front-end tracks: offline live API is ready for mock-to-live swaps. Name the owners.
+Check that docs/progress/50.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/50.md, and prd.md §6.7 (offline), the BE-11 card, and §11.4. Branch: be/BE-11-offline.
 
 Enforce OFFLINE=1: a single guard in the HTTP layer that raises if any external call is attempted; all services read seed data only. scripts/verify_seed.py loads every seed asset, decodes heightmaps and frames, validates JSON against the contract, and fails loudly on anything missing. Add `make verify-seed`. Run `make smoke` with OFFLINE=1 and network disabled (or a blocked HTTP transport) and show it passes. Document how to ship seed data (repo vs release asset) in README.
@@ -838,6 +1429,14 @@ Follow the end-of-task checklist (progress file: docs/progress/51.md).
 ### Prompt 52 — Mock→live: Sites, Methods, Trends
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 09 (FE-A), 10 (FE-A), 28 (FE-D, optional P1 — skip Trends if not merged), 51 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: FE-A (page owners) and BE-C (weather). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 56). Name the owners.
+Check that docs/progress/09.md, docs/progress/10.md, docs/progress/51.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/09.md, 10.md, 28.md (if done), 51.md, and prd.md §9.2. Branch: fe/INT-pages-live.
 
 Run the API (`make dev`, OFFLINE=1) and the web app with NEXT_PUBLIC_API_MODE=live. For /sites, /methods (with ?site=), and /sim/[siteId]/trends: compare live vs mock behaviour, fix whichever side breaks the contract (smallest change; if the contract itself is wrong, STOP and tell me), make sure no "mock" badge or mock text appears in live mode. Record a short mock-vs-live table in the progress file.
@@ -848,6 +1447,14 @@ Follow the end-of-task checklist (progress file: docs/progress/52.md).
 ### Prompt 53 — Mock→live: Land Scan
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 20 (FE-C), 48 (BE-F), 51 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: FE-C and BE-F. Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 56). Name the owners.
+Check that docs/progress/20.md, docs/progress/48.md, docs/progress/51.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/20.md, 48.md, 51.md, and prd.md §9.2 and the FE-03 acceptance criteria. Branch: fe/INT-scan-live.
 
 Swap /scan to live against the local API. Verify: sample-farm scan for each curated site runs every real stage and ends in the simulator; SSE works through the dev proxy; coverage failure shows the right recovery (test a bbox outside coverage with OFFLINE=0, or the offline curated-only error with OFFLINE=1). Fix mismatches per §9.2. Report any stage that is still a stub.
@@ -858,6 +1465,14 @@ Follow the end-of-task checklist (progress file: docs/progress/53.md).
 ### Prompt 54 — Mock→live: Simulator and Rotation Lab
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 23 (FE-D), 25 (FE-D), 26 (FE-D), 51 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: FE-D and BE-E. Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 56). Name the owners.
+Check that docs/progress/23.md, docs/progress/25.md, docs/progress/26.md, docs/progress/51.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/23.md, 25.md, 26.md, 45.md, 47.md, 51.md, and the FE-05, FE-06, FE-07 acceptance criteria. Branch: fe/INT-sim-live.
 
 Swap /sim/[siteId] and /sim/[siteId]/rotations to live for every curated site and at least two storms. Check: frames decode, A/B sync, difference overlay, HUD numbers with units and basis, insight pins at the right places and times, evidence numbers equal table numbers, cached chip shows on the second run, rotations visibly differ for at least two storms (if not, report it — that is a BE-08 tuning issue, do not fake it). Fix mismatches per §9.2.
@@ -868,6 +1483,14 @@ Follow the end-of-task checklist (progress file: docs/progress/54.md).
 ### Prompt 55 — Landing hero 3D and storm teaser
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 11 (FE-A), 16 (FE-B). Name the owner of each from the table.
+  COORDINATE WITH: FE-A (landing) and FE-B (viewer). Name the owners.
+  WHEN DONE, TELL: Phase I (Prompt 56). Name the owners.
+Check that docs/progress/11.md, docs/progress/16.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/11.md, 16.md, 17.md, and the FE-01 card. Branch: fe/FE-01-hero.
 
 Replace the HeroBackground placeholder with a looping LandViewer scene of a curated site: flat plane rises into terrain, imagery fades in, water flows (reuse real seed frames), slow orbit, no controls. Replace StormTeaser with a mini A/B comparison (two rotations, swipe handle, play/pause) labeled "Pre-built example". WebGL off → still image. Measure LCP on the landing page and report it (target < ~3 s).
@@ -878,6 +1501,14 @@ Follow the end-of-task checklist (progress file: docs/progress/55.md).
 ### Prompt 56 — Guided demo tour
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 52 (Phase I), 53 (Phase I), 54 (Phase I), 55 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: ALL front-end tracks. Name the owners.
+  WHEN DONE, TELL: whoever runs Prompt 57. Name the owners.
+Check that docs/progress/52.md, docs/progress/53.md, docs/progress/54.md, docs/progress/55.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/52.md–55.md, and prd.md §11.1–11.2 and the FE-12 card (Guided tour, Rules). Branch: fe/FE-12-tour.
 
 Build a guided tour (toggle with T) that drives the real UI through: landing → sample photos → pin → terraform → simulator → pick storm → A/B replay → insight pop-up → Rotation Lab → Methods. Steps defined in one config file (selector/route, action, caption, min duration). Arrow keys advance/back, Esc exits. Only real features on pre-built data; pre-built content stays labeled. Must finish in < 90 s per site; add a site picker to start the tour on any curated site.
@@ -888,6 +1519,14 @@ Follow the end-of-task checklist (progress file: docs/progress/56.md).
 ### Prompt 57 — Presentation mode and reset
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 56 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: ALL front-end tracks. Name the owners.
+  WHEN DONE, TELL: whoever runs Prompt 61 and the pitch presenter. Name the owners.
+Check that docs/progress/56.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/56.md, and the FE-12 card (Presentation mode). Branch: fe/FE-12-present.
 
 Add presentation mode (toggle P, persisted in the store): hide dev tooling and dev badges, larger type scale, cursor highlight, network indicator (live / cached / offline from /health). Add a one-key reset (Shift+R) that clears local state, browser caches used by the app, and returns to / with the tour ready. Verify the full tour with the network disabled and OFFLINE=1, three times in a row from reset.
@@ -898,6 +1537,14 @@ Follow the end-of-task checklist (progress file: docs/progress/57.md).
 ### Prompt 58 — Yield-stress index (P1)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 39 (BE-C), 40 (BE-D). Name the owner of each from the table.
+  COORDINATE WITH: BE-C and BE-D. Name the owners.
+  WHEN DONE, TELL: FE-D (index appears in evidence cards and Trends). Name the owners.
+Check that docs/progress/39.md, docs/progress/40.md exist on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/39.md and 40.md, and prd.md the BE-14 card. Branch: be/BE-14-stress.
 
 Implement a daily soil-water bucket per rotation-year using Hargreaves reference ET (temperature + latitude; cite the formula), crop coefficients by stage from data/crops.yaml (add fields with sources or TODO(verify)), → 0–1 relative water-stress index at sensitive stages and a dry-year exposure count 1981–present. Expose it in evidence cards and the weather summary, always labeled "relative index, not a yield forecast". Test: a rotation with better-timed water use scores lower stress.
@@ -908,6 +1555,14 @@ Follow the end-of-task checklist (progress file: docs/progress/58.md).
 ### Prompt 59 — Drone map upload adapter (P2)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 29 (BE-A). Name the owner of each from the table.
+  COORDINATE WITH: BE-A and FE-C (tab stays Roadmap). Name the owners.
+  WHEN DONE, TELL: FE-C. Name the owners.
+Check that docs/progress/29.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/29.md and 33.md, and prd.md §2.6 and the BE-13 card. Branch: be/BE-13-drone-upload.
 
 Implement capture adapter A3 only: accept an orthophoto GeoTIFF + elevation GeoTIFF, validate CRS and overlapping extent, resample into a TerrainPackage via the existing packaging code. Add it behind a feature flag; the front-end tab stays "Roadmap" unless the team decides otherwise. Test with a small synthetic GeoTIFF pair. Do not implement A4 or A5.
@@ -918,6 +1573,14 @@ Follow the end-of-task checklist (progress file: docs/progress/59.md).
 ### Prompt 60 — Field notes (P2)
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 24 (FE-D). Name the owner of each from the table.
+  COORDINATE WITH: FE-D. Name the owners.
+  WHEN DONE, TELL: nobody required. Name the owners.
+Check that docs/progress/24.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/progress/24.md, and the FE-07 card (Field notes). Branch: fe/FE-07-notes.
 
 Add note pins: click "Add note" then a spot on the terrain, write text, reply in a thread. Store in localStorage keyed by terrain id (wrap all storage access in try/catch). "Copy share link" encodes camera view + note ids in the URL. Notes persist across reloads.
@@ -928,6 +1591,14 @@ Follow the end-of-task checklist (progress file: docs/progress/60.md).
 ### Prompt 61 — QA, accessibility, E2E
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 57 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: ALL track owners (fixes may land in their code). Name the owners.
+  WHEN DONE, TELL: EVERYONE: QA checklist is posted. Name the owners.
+Check that docs/progress/57.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, all docs/progress/*.md, and prd.md the FE-13 card, §13.1 NFRs, and §16. Branch: fe/FE-13-qa.
 
 1. Write a Playwright E2E test for the primary journey on each curated site (open site, run storm for 3 rotations, A/B, Rotation Lab, Methods) against the live API in offline mode.
@@ -941,6 +1612,14 @@ Follow the end-of-task checklist (progress file: docs/progress/61.md).
 ### Prompt 62 — Submission pack and README
 
 ```text
+STEP 0 — COORDINATION (do this before any work):
+Read the "Track owners" table near the top of Prompts.md to get real names. Then print this to me as a short block:
+  PULL FIRST: `git checkout main && git pull`. This prompt needs: Prompts 61 (Phase I). Name the owner of each from the table.
+  COORDINATE WITH: EVERYONE (check facts about their part). Name the owners.
+  WHEN DONE, TELL: EVERYONE and the pitch presenter. Name the owners.
+Check that docs/progress/61.md exists on main. If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
+
+TASK:
 Read CLAUDE.md, docs/research/data-sources.md, docs/qa-checklist.md, and prd.md §2.4, §3 (submission logistics), §11, §16. Do not change app code. Branch: docs/submission.
 
 Write:
