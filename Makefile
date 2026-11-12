@@ -6,6 +6,7 @@ dev:
 test:
 	uv run --project packages/contracts pytest packages/contracts -q
 	cd services/api && uv run pytest -q
+	cd apps/web && pnpm test
 
 seed:
 	@echo "seed: not yet implemented"
@@ -15,4 +16,4 @@ fixtures:
 	uv run --project packages/contracts python scripts/make_fixtures_json.py
 
 types:
-	@echo "types: not yet implemented"
+	cd apps/web && pnpm types

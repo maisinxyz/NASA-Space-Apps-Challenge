@@ -54,8 +54,9 @@ e. Stop and wait for the user.
 
 ## Commands (fill in as they become real)
 - `make dev` — start the API on :8000 (serves fixtures; docs at /api/v1/docs). `OFFLINE=1 make dev` for offline mode
-- `make test` — pytest for packages/contracts and services/api
+- `make test` — pytest (packages/contracts, services/api) + Vitest (apps/web)
 - `make seed` — build curated-site seed data (not yet implemented)
 - `make fixtures` — regenerate mock fixtures (deterministic; terrain/frames then JSON/SSE)
-- `make types` — generate front-end types from OpenAPI (not yet implemented)
-- `pnpm dev` (in `apps/web`) — start the web app (not yet scaffolded)
+- `make types` — regenerate `apps/web/lib/api/schema.d.ts` from openapi.yaml (commit the result)
+- `pnpm dev` (in `apps/web`) — web app on :3000; syncs fixtures to `public/mock` first. `NEXT_PUBLIC_API_MODE=live` to use the API
+- `pnpm build` / `pnpm lint` / `pnpm typecheck` / `pnpm test` (in `apps/web`)
