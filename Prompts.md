@@ -34,21 +34,21 @@ Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one shor
 
 ### Track owners (fill in names — Claude reads this table)
 
-| Track | Owner name | Contact (Discord/phone) |
-| --- | --- | --- |
-| Phase 0 — Foundation | ______ | ______ |
-| R — Research | ______ | ______ |
-| FE-A — Shell & content pages | ______ | ______ |
-| FE-B — 3D viewer | ______ | ______ |
-| FE-C — Land Scan | ______ | ______ |
-| FE-D — Simulator & Rotation Lab | ______ | ______ |
-| BE-A — Terrain | ______ | ______ |
-| BE-B — Imagery & cover | ______ | ______ |
-| BE-C — Weather | ______ | ______ |
-| BE-D — Crops & rotations | ______ | ______ |
-| BE-E — Simulation & insights | ______ | ______ |
-| BE-F — Orchestration & tests | ______ | ______ |
-| Phase I — Integration & demo | ______ | ______ |
+| Track                           | Owner name   | Contact (Discord/phone) |
+| ------------------------------- | ------------ | ----------------------- |
+| Phase 0 — Foundation            | Already done | **\_\_**                |
+| R — Research                    | Westley      | **\_\_**                |
+| FE-A — Shell & content pages    | Westley      | **\_\_**                |
+| FE-B — 3D viewer                | Vince        | **\_\_**                |
+| FE-C — Land Scan                | Max          | **\_\_**                |
+| FE-D — Simulator & Rotation Lab | Vince        | **\_\_**                |
+| BE-A — Terrain                  | Hansini      | **\_\_**                |
+| BE-B — Imagery & cover          | Hansini      | **\_\_**                |
+| BE-C — Weather                  | Rio          | **\_\_**                |
+| BE-D — Crops & rotations        | Rio          | **\_\_**                |
+| BE-E — Simulation & insights    | Vince        | **\_\_**                |
+| BE-F — Orchestration & tests    | Max          | **\_\_**                |
+| Phase I — Integration & demo    | Max          | **\_\_**                |
 
 Each prompt starts with **STEP 0**: Claude reads this table and tells you who to pull from, who to talk to, and who to tell when you finish. Commit names here early so everyone's copy has them.
 
@@ -136,7 +136,6 @@ Each prompt starts with **STEP 0**: Claude reads this table and tells you who to
 
 > 🧩 **Prompts:** 01 → 06 · ▶️ **Start after:** nothing (start here) · 👤 **Owner:** see Track owners table
 > 📝 1–2 people, in order. 03+04 and 05+06 can run in pairs.
-
 
 ### Prompt 01 — Repo scaffold and shared rules
 
@@ -331,7 +330,6 @@ Do not build the design system, nav, or real pages (Prompts 07–08 do that). Up
 > 🧩 **Prompts:** R1 · ▶️ **Start after:** nothing (start any time) · 👤 **Owner:** see Track owners table
 > 📝 Findings feed BE-A, BE-B, BE-C, and Prompt 50.
 
-
 ### Prompt R1 — Verify curated sites, data access, and licenses
 
 ```text
@@ -371,7 +369,6 @@ End with a short "Decisions needed from the team" list. Write docs/progress/R1.m
 
 > 🧩 **Prompts:** 07 → 13 · ▶️ **Start after:** Prompt 06 merged · 👤 **Owner:** see Track owners table
 > 📝 Builds components every other FE track uses.
-
 
 ### Prompt 07 — Design tokens, base components, styleguide
 
@@ -535,7 +532,6 @@ Follow the end-of-task checklist (progress file: docs/progress/13.md).
 > 🧩 **Prompts:** 14 → 18 · ▶️ **Start after:** Prompt 06 merged · 👤 **Owner:** see Track owners table
 > 📝 Highest-risk FE track. Start early.
 
-
 ### Prompt 14 — Viewer: terrain mesh, texture, orbit
 
 ```text
@@ -657,7 +653,6 @@ Follow the end-of-task checklist (progress file: docs/progress/18.md).
 > 🧩 **Prompts:** 19 → 20 · ▶️ **Start after:** Prompt 08 (FE-A); Prompt 20 also needs 14 (FE-B) · 👤 **Owner:** see Track owners table
 > 📝 Can be done by FE-A owner after 13.
 
-
 ### Prompt 19 — Scan wizard steps 1–2
 
 ```text
@@ -718,7 +713,6 @@ Follow the end-of-task checklist (progress file: docs/progress/20.md).
 
 > 🧩 **Prompts:** 21 → 28 · ▶️ **Start after:** Prompt 08 (FE-A) and 16 (FE-B) · 👤 **Owner:** see Track owners table
 > 📝 26 and 28 can start right after 08.
-
 
 ### Prompt 21 — Simulator layout and controls
 
@@ -887,7 +881,6 @@ Follow the end-of-task checklist (progress file: docs/progress/28.md).
 
 > 🧩 **Prompts:** 29 → 33 · ▶️ **Start after:** Prompt 05 merged; 30 also needs R1 · 👤 **Owner:** see Track owners table
 
-
 ### Prompt 29 — Terrain interface, grid utils, PrecomputedSource
 
 ```text
@@ -1004,7 +997,6 @@ Follow the end-of-task checklist (progress file: docs/progress/33.md).
 
 > 🧩 **Prompts:** 34 → 36 · ▶️ **Start after:** Prompt 05 merged; 35 also needs R1 · 👤 **Owner:** see Track owners table
 
-
 ### Prompt 34 — Upload validation and storage
 
 ```text
@@ -1079,7 +1071,6 @@ Follow the end-of-task checklist (progress file: docs/progress/36.md).
 
 > 🧩 **Prompts:** 37 → 39 · ▶️ **Start after:** Prompt 05 merged and R1 · 👤 **Owner:** see Track owners table
 
-
 ### Prompt 37 — NASA POWER client and cache
 
 ```text
@@ -1152,7 +1143,6 @@ Follow the end-of-task checklist (progress file: docs/progress/39.md).
 
 > 🧩 **Prompts:** 40 → 41 · ▶️ **Start after:** Prompt 05 merged · 👤 **Owner:** see Track owners table
 
-
 ### Prompt 40 — Crop library, presets, cover calendar
 
 ```text
@@ -1205,7 +1195,6 @@ Follow the end-of-task checklist (progress file: docs/progress/41.md).
 
 > 🧩 **Prompts:** 42 → 47 · ▶️ **Start after:** Prompt 05 merged (42–44 run on synthetic data) · 👤 **Owner:** see Track owners table
 > 📝 Biggest BE track. Start early.
-
 
 ### Prompt 42 — Simulation: SCS runoff
 
@@ -1336,7 +1325,6 @@ List every tip in the progress file so a human can review the wording. Follow th
 > 🧩 **Prompts:** 48 → 49 · ▶️ **Start after:** Prompt 05 merged · 👤 **Owner:** see Track owners table
 > 📝 Wires in other BE modules as they land.
 
-
 ### Prompt 48 — Scan orchestration and SSE
 
 ```text
@@ -1388,7 +1376,6 @@ Follow the end-of-task checklist (progress file: docs/progress/49.md).
 
 > 🧩 **Prompts:** 50 → 62 · ▶️ **Start after:** see each prompt's STEP 0 · 👤 **Owner:** see Track owners table
 > 📝 Mostly in order. 58–60 are optional (P1/P2).
-
 
 ### Prompt 50 — sites.yaml and seed script
 
