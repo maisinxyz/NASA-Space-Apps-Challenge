@@ -207,7 +207,7 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 
 > **Detailed plans live in [`../Databases.md`](../Databases.md)** (v0.1): per dataset, why we need it, how to get it, how to implement it, what it needs, outputs, fallback, and which team owns it. This table is the summary; if the two disagree, fix both and log it. Section 2 owns ingestion (S2-A) and use (S2-B); Section 1 only consumes derived outputs (terrain package, zones, markers, provenance).
 
-**Everything in this table is `TODO(verify)` until S2-01 confirms the product name, version, variables, resolution, coverage, access method, license, and a working sample request (recorded URL).** Values in brackets are what we believe and must check. Rows 1 to 4 and 11 have names and URLs from an unofficial catalog (see `Databases.md`); the official Resources list has not been read yet.
+**Everything in this table is `TODO(verify)` until S2-A1 confirms the product name, version, variables, resolution, coverage, access method, license, and a working sample request (recorded URL).** Values in brackets are what we believe and must check. Rows 1 to 4 and 11 have names and URLs from an unofficial catalog (see `Databases.md`); the official Resources list has not been read yet.
 
 | # | Dataset | Owner | Role in FieldTwin | Variables we need | Believed resolution / coverage | Access (verify) | Basis label |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -224,14 +224,14 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 | 11 | **ECOSTRESS evapotranspiration** (P2, optional) | NASA | Independent check on the summer-dry axis; never feeds a score | Evapotranspiration (`ECO_L3T_JET` V003) | [~70 m, irregular ISS passes] | Earthdata login (LP DAAC) | measured |
 
 Decisions recorded from the data review (2026-11-13):
-- **SMAP product (open):** row 3 assumes L4 root-zone moisture, but the challenge catalog lists L3 enhanced `SPL3SMP_E` (surface moisture). Root zone is what matters for runoff and crop stress. Default L4; fall back to L3 with the caveat "surface moisture used as a proxy". Decide in S2-01.
+- **SMAP product (open):** row 3 assumes L4 root-zone moisture, but the challenge catalog lists L3 enhanced `SPL3SMP_E` (surface moisture). Root zone is what matters for runoff and crop stress. Default L4; fall back to L3 with the caveat "surface moisture used as a proxy". Decide in S2-A1.
 - **Not used:** NASA GRACE/GRACE-FO (monthly, hundreds of km, no farm-scale signal), crop-yield data (forbidden by D-04 and the non-goals), disaster-event catalogs (hazard odds come from our own fused record plus the Nov 2021 backtest). Reasons in `Databases.md` §4.
 
 Rules:
 - NASA data must do the core work (POWER, IMERG, SMAP, HLS, NASADEM). Non-NASA sources (6–10) are labeled and licensed in the UI's data credits.
 - Earthdata credentials live in `.env` (never committed); `.env.example` lists the variable names only.
 - Imagery is only redistributed in `data/seed/` if its license allows it; otherwise we ship derived products (e.g. weekly bare-fraction tables) only.
-- The official 2026 challenge **Resources** list must be read and copied into `data-sources.md` during S2-01. Any dataset NASA lists there that fits a role above should be preferred.
+- The official 2026 challenge **Resources** list must be read and copied into `data-sources.md` during S2-A1. Any dataset NASA lists there that fits a role above should be preferred.
 
 ---
 
@@ -458,14 +458,14 @@ Each curated site shows a "Pre-built" badge in the UI.
 
 | Step | Delivers | Features unlocked | Prompt |
 | --- | --- | --- | --- |
-| 0 | Verify data, accounts, contract request sent | — | S2-01, S2-02 |
-| 1 | Real terrain (LidarBC/NASADEM) + layers | F1–F4, F9 | S2-03 |
-| 2 | Real storm library (POWER + IMERG), real storm replay | F11, F15, F22 | S2-04, S2-05 |
-| 3 | Fusion, hazard calendar, hazard catalog, climate fingerprint | F10, F12–F14, F16 | S2-06 |
-| 4 | HLS + AAFC calendars, rotation comparison | F6–F8, F18, F21 | S2-07, S2-08 |
-| 5 | Zones, optimizer pins, suitability layers, zone table, scorecard | F5, F17, F24–F32 | S2-09 |
-| 6 | Field Shift scenarios | F19, F20, F23, F39 | S2-10 |
-| 7 | Backtest, Lite mode, seed, offline, provenance, write-up | F34, F41, F42 | S2-11, S2-12 |
+| 0 | Verify data, accounts, contract request sent | — | A1, B1 |
+| 1 | Real terrain (LidarBC/NASADEM) + layers | F1–F4, F9 | A2 |
+| 2 | Real storm library (POWER + IMERG), real storm replay | F11, F15, F22 | A3, B2 |
+| 3 | Fusion, hazard calendar, hazard catalog, climate fingerprint | F10, F12–F14, F16 | B3 |
+| 4 | HLS + AAFC calendars, rotation comparison | F6–F8, F18, F21 | A4, B4 |
+| 5 | Zones, optimizer pins, suitability layers, zone table, scorecard | F5, F17, F24–F32 | A5, B5 |
+| 6 | Field Shift scenarios | F19, F20, F23, F39 | B6 |
+| 7 | Backtest, Lite mode, seed, offline, provenance, write-up | F34, F41, F42 | A6, A7, A8, B7 |
 
 | When | S2-A (Data) | S2-B (Algorithm) |
 | --- | --- | --- |
@@ -476,11 +476,11 @@ Each curated site shows a "Pre-built" badge in the UI.
 | Event, Sun AM | Step 7: backtest data, Lite mode | Step 6; sensitivity table |
 | Event, Sun PM | Sites 2–3 if time; provenance | Write-up; freeze by Sun 21:00 |
 
-`Prompts.md` follows this order (S2-01…S2-12). Each data task maps to a `../Databases.md` section (DB-1…DB-14).
+`Prompts.md` runs this order as two parallel lanes: A1–A9 (Data) and B1–B8 (Algorithm), joined by frozen seed-table schemas (`services/api/app/tables.py`, B1) so neither lane waits; B runs on synthetic tables until A's real ones land. Each data task maps to a `../Databases.md` section (DB-1…DB-14).
 
 ---
 
-## 13. Prior art (to be expanded into `prior-art.md` in S2-01)
+## 13. Prior art (to be expanded into `prior-art.md` in S2-A1)
 
 | Project | What it does | How we differ |
 | --- | --- | --- |
@@ -523,7 +523,7 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | 6 | Choose `τ_bare`, default percentiles, and smoothing width from literature; record sources | S2-B |
 | 7 | Define the 3 curated Fraser Valley rotations with the owner (e.g. silage corn with/without winter cover; perennial grass) | S2-B + owner |
 | 8 | Apply `../contract-request-v1.1.md` to `openapi.yaml`, fixtures and types; announce | Integrator |
-| 9 | ~~Rewrite `Prompts.md` for v0.2~~ Done 2026-11-13 (see `Databases.md` for the data tasks) | S2-B |
+| 9 | ~~Rewrite `Prompts.md` for v0.2~~ Done 2026-11-13; rewritten 2026-11-13 as parallel lanes A1–A9 / B1–B8 | S2-B |
 | 10 | Fill in owners (§2) | Team |
 | 11 | Decide SMAP L4 vs L3 (`Databases.md` DB-5) | S2-A + S2-B |
 | 12 | ~~New `GET /sites/{id}/terrain`~~ Use the existing `GET /terrain/{id}` package (v1.0.0). Agree grid size for the 1.4 km square with S1-A, and how the terrain drapes on Cesium | S2-A + S1-A |
@@ -541,3 +541,4 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | 2026-11-12 | Claude + product owner | v0.2: design interview decisions D-01…D-22; Risk Window Calendar spec; data table; marker output; validation incl. Nov 2021 backtest; prior art; plan |
 | 2026-11-13 | Claude + product owner | v0.2.1: added `../Databases.md` as the detailed data plan; ECOSTRESS row (P2); SMAP L4 vs L3 open decision; GRACE, yield and disaster data recorded as not used; proposed `GET /sites/{id}/terrain`; `/provenance` tied to `Databases.md`; `Prompts.md` rewritten |
 | 2026-11-13 | Claude + product owner | v0.3: feature interview. Decisions D-23…D-36 (historical first, realistic aesthetic, space-to-farm hero on Cesium, four modes, side-panel analytics, mini-game, contract v1.1 replacing D-19, Agassiz as P0 farm, storm library and IMERG half-hourly shape, build order). Feature catalog §4.1 (F1–F44 with priority, mode, UI form, data, step, endpoint). §9 rewritten around contract v1.1 (`../contract-request-v1.1.md`). §11 Agassiz + Lite pins. §12 build order. Risks and open items updated |
+| 2026-11-13 | Claude | v0.3.1: `Prompts.md` rewritten as two parallel lanes (A1–A9 Data, B1–B8 Algorithm) with frozen internal seed-table schemas (`services/api/app/tables.py`), synthetic tables for B, per-card file ownership, and feature coverage for every backend F-id. Progress notes move to `docs/progress/s2-<id>.md` (one file per card, no merge conflicts). §12 prompt column updated |

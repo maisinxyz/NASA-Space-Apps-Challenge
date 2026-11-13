@@ -155,15 +155,15 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 ## S1-14 Real Agassiz data swap (Cesium card C6)
 
 **Read:**
-- Section 2 `progress.md` (latest S2-03…S2-09 entries)
+- Section 2 progress notes `docs/progress/s2-{A2,B2,B3,B4,B5}.md`
 - `PRD.md` §7.1
 
 **Task:** switch Agassiz from mock to live in the order Section 2 delivers it:
-1. terrain and layers (S2-03)
-2. real storms and replay (S2-05)
-3. hazards (S2-06)
-4. calendars and compare (S2-07, S2-08)
-5. pins and zones (S2-09)
+1. terrain and layers (S2-A2)
+2. real storms and replay (S2-B2)
+3. hazards (S2-B3)
+4. calendars and compare (S2-A4, S2-B4)
+5. pins and zones (S2-A5, S2-B5)
 
 After each switch, check:
 - basis chips are present

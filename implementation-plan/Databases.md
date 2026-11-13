@@ -2,7 +2,7 @@
 
 > Living document. This is the single place that says **which data we use, why, how we get it, and which team owns it**. Both section PRDs and both `Prompts.md` files point here. Change a row only together with a change-log entry (bottom).
 >
-> **Verification status.** The official 2026 challenge page could not be read when this was written (it only returned a third-party redirect notice). Dataset names and access URLs marked `catalog` come from the unofficial [Space Data Atlas](https://spacedata.swapniltamse.com/challenges/field-shift-adapting-farms/). Everything else is `TODO(verify)`: the team must confirm each row against the official Resources list and the provider's own page in S2-01 (see §5). Never code against an unverified parameter name.
+> **Verification status.** The official 2026 challenge page could not be read when this was written (it only returned a third-party redirect notice). Dataset names and access URLs marked `catalog` come from the unofficial [Space Data Atlas](https://spacedata.swapniltamse.com/challenges/field-shift-adapting-farms/). Everything else is `TODO(verify)`: the team must confirm each row against the official Resources list and the provider's own page in S2-A1 (see §5). Never code against an unverified parameter name.
 
 ---
 
@@ -188,7 +188,7 @@ Every section answers the same questions: **why we need it, what exactly we take
 #### DB-5 SMAP soil moisture (defines "wet ground")
 
 - **Why:** a storm only erodes or floods when the ground is already wet. SMAP gives an independent, satellite-based wetness to correct POWER's wetness, which keeps the "heavy rain on wet soil" condition honest.
-- **Which product (decision needed in S2-01):** our PRD assumes **SMAP L4 root-zone moisture** (modeled, 9 km, 3-hourly, since 2015). The catalog lists **L3 enhanced `SPL3SMP_E` V006** (surface moisture, 9 km, daily, since 2015). Surface and root-zone moisture behave differently: root zone is what matters for runoff and crop stress. Default: L4 if it is available and practical; otherwise L3 with the caveat "surface moisture used as a proxy". `TODO(verify)` L4 short name, version, variable name and access.
+- **Which product (decision needed in S2-A1):** our PRD assumes **SMAP L4 root-zone moisture** (modeled, 9 km, 3-hourly, since 2015). The catalog lists **L3 enhanced `SPL3SMP_E` V006** (surface moisture, 9 km, daily, since 2015). Surface and root-zone moisture behave differently: root zone is what matters for runoff and crop stress. Default: L4 if it is available and practical; otherwise L3 with the caveat "surface moisture used as a proxy". `TODO(verify)` L4 short name, version, variable name and access.
 - **How to get it:** Earthdata login via NSIDC DAAC. L3 page (`catalog`): `https://nsidc.org/data/spl3smp_e/versions/6`. Use `earthaccess` with a bounding box.
 - **Implementation (S2-A `ingest/smap.py`, S2-B `fusion/`):**
   1. Subset to the farm's 9 km cell(s) and 2015 to present; cache in `data/cache/smap/`.
@@ -337,7 +337,7 @@ Rules:
 | Disaster-event catalogs | Not used | Hazard odds come from our own fused record plus the Nov 2021 backtest. `TODO(verify)` any NASA catalog before adding |
 | NASA climate projections (e.g. NEX-GDDP-CMIP6, mentioned by other teams, unverified) | Not used | Our Field Shift scenarios replay real observed years; projections would be forecasts (decision D-04) |
 
-## 5. Verification checklist (S2-01 must complete)
+## 5. Verification checklist (S2-A1 must complete)
 
 For each P0 row, record in `data-sources.md`: exact product name and version; variable names and units; resolution and coverage; access method and a **working sample request URL**; license and attribution text; rate limits; and whether the farm location (~49°N) is covered. Also:
 

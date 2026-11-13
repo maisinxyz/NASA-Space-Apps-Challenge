@@ -1,17 +1,5 @@
-# Section 2 progress log (append-only)
+# Section 2 progress log
 
-Each finished prompt adds one entry, max 10 lines, newest at the bottom. The next prompt reads only the last 3 entries.
+Moved: each Section 2 card writes its own note to `docs/progress/s2-<id>.md` (e.g. `s2-A2.md`, `s2-B1.md`), per `CLAUDE.md` and Prompts.md rule R11. One file per card means two parallel lanes never conflict on this log.
 
-Format:
-
-```
-## S2-xx name | date | commit
-Built:
-Files:
-How to run:
-Gaps:
-Next prompt must know:
-Contract requests (if any):
-```
-
-(no entries yet)
+Format (≤ 12 lines): Built / Files / How to run / Gaps / Next must know / Contract requests.
