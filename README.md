@@ -19,7 +19,7 @@ Built for NASA Space Apps Challenge 2026 (Vancouver), challenge "Field Shift: Ad
 | `scripts/` | Fixture, seed, smoke, and benchmark scripts |
 | `docs/progress/` | One note per finished prompt |
 
-Setup instructions will be added as the apps are scaffolded (Prompts 05 and 06).
+Section 1 is implemented. See [web setup and verification](apps/web/README.md), the [current Section 1 spec](docs/prd/section1-web-3d.md), and [completion notes](docs/progress/s1-local-completion.md). All bundled data is synthetic mock data, including offline mode.
 
 ## Contract change process
 
@@ -32,6 +32,6 @@ The contract (`prd.md` §6 and `packages/contracts/openapi.yaml`) is frozen arou
 ## Working agreements (PRD §9.1)
 
 - Contract first; front-end builds against mocks, back-end against the API.
-- Short-lived branches named `fe/FE-xx-slug` or `be/BE-xx-slug`; merge to `main` every few hours; keep `main` runnable.
+- Commit directly to `main`, pull with `git pull --rebase`, and include the prompt ID. Keep commits small and `main` runnable.
 - Mode switches: front-end `NEXT_PUBLIC_API_MODE=mock|live`; back-end `OFFLINE=1`.
 - One owner per task. Blocked for more than about 30 minutes? Post the blocker.

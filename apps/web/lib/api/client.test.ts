@@ -69,3 +69,26 @@ describe("parseSse", () => {
     expect(parseSse(text)).toEqual([{ scan_id: "scan_a", stage: "queued", pct: 0, message: "m", ts: "2026-11-14T18:00:00Z" }]);
   });
 });
+
+describe("offline mode", () => {
+  it("uses only local files even when live mode is requested", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_OFFLINE", "1");
+    vi.stubEnv("NEXT_PUBLIC_API_MODE", "live");
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      urls.push(url);
+      return new Response("[]");
+    });
+    try {
+      const c = await import("./client");
+      expect(c.offline).toBe(true);
+      expect(c.apiMode).toBe("mock");
+      await c.getSites();
+      expect(urls).toEqual(["/mock/sites.json"]);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+});

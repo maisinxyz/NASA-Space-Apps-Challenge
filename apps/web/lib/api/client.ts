@@ -26,7 +26,10 @@ import type {
   WeatherSummary,
 } from "./types";
 
-export const apiMode: "mock" | "live" = process.env.NEXT_PUBLIC_API_MODE === "live" ? "live" : "mock";
+//   NEXT_PUBLIC_OFFLINE=1 (from OFFLINE=1 via next.config.ts): forces the local files under /mock, never the API.
+/** True when built with OFFLINE=1: only local data is used. */
+export const offline = process.env.NEXT_PUBLIC_OFFLINE === "1";
+export const apiMode: "mock" | "live" = !offline && process.env.NEXT_PUBLIC_API_MODE === "live" ? "live" : "mock";
 /** True when the UI is showing fixture data; show a "mock" badge. */
 export const isMock = apiMode === "mock";
 export const apiBase = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api/v1").replace(/\/$/, "");

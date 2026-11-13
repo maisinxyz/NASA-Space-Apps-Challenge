@@ -3,5 +3,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
-  test: { environment: "node", include: ["lib/**/*.test.ts"] },
+  // tsconfig has jsx: "preserve" for Next; component tests need JSX compiled.
+  oxc: { jsx: { runtime: "automatic" } },
+  test: { environment: "node", include: ["lib/**/*.test.ts", "components/**/*.test.{ts,tsx}"] },
 });

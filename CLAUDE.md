@@ -38,7 +38,7 @@ FieldTwin: a website that turns a farm photo + location into a 3D model, replays
 - Every dataset listed with source, license, attribution.
 
 ## Git
-- Branch: `fe/<ID>-<slug>` or `be/<ID>-<slug>` (e.g. `fe/FE-03-scan-page`, `be/BE-08-sim-engine`).
+- Commit directly to `main`; `git pull --rebase` before work and before pushing. Include the prompt ID. This supersedes historical branch instructions (implementation-plan/README.md).
 - Small commits. Keep `main` runnable.
 - Never commit secrets (`.env`) or imagery whose license forbids redistribution.
 

@@ -1,0 +1,191 @@
+{
+ "type": "FeatureCollection",
+ "note": "MOCK for contract request R1 (not in openapi v1.0.0). Illustrative (synthetic) fields on terr_mock_hills.",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "field_mock_1",
+    "name": "North-west field",
+    "area_ha": 2.63,
+    "illustrative_crop": "potato",
+    "data_status": "synthetic"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -119.5993,
+       49.1028
+      ],
+      [
+       -119.5968,
+       49.1029
+      ],
+      [
+       -119.5967,
+       49.1042
+      ],
+      [
+       -119.5992,
+       49.1041
+      ],
+      [
+       -119.5993,
+       49.1028
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "field_mock_2",
+    "name": "North-east field",
+    "area_ha": 3.18,
+    "illustrative_crop": "corn",
+    "data_status": "synthetic"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -119.5963,
+       49.1027
+      ],
+      [
+       -119.5934,
+       49.1029
+      ],
+      [
+       -119.5935,
+       49.1042
+      ],
+      [
+       -119.5962,
+       49.1042
+      ],
+      [
+       -119.5963,
+       49.1027
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "field_mock_3",
+    "name": "Valley field",
+    "area_ha": 1.78,
+    "illustrative_crop": "forage grass",
+    "data_status": "synthetic"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -119.5986,
+       49.1013
+      ],
+      [
+       -119.5966,
+       49.1014
+      ],
+      [
+       -119.5965,
+       49.1024
+      ],
+      [
+       -119.5985,
+       49.1025
+      ],
+      [
+       -119.5986,
+       49.1013
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "field_mock_4",
+    "name": "South-west field",
+    "area_ha": 1.64,
+    "illustrative_crop": "winter wheat",
+    "data_status": "synthetic"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -119.5994,
+       49.1003
+      ],
+      [
+       -119.5966,
+       49.1003
+      ],
+      [
+       -119.5967,
+       49.101
+      ],
+      [
+       -119.5993,
+       49.1011
+      ],
+      [
+       -119.5994,
+       49.1003
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "field_mock_5",
+    "name": "East slope field",
+    "area_ha": 4.16,
+    "illustrative_crop": "alfalfa",
+    "data_status": "synthetic"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -119.5961,
+       49.1003
+      ],
+      [
+       -119.5933,
+       49.1004
+      ],
+      [
+       -119.5934,
+       49.1022
+      ],
+      [
+       -119.596,
+       49.1023
+      ],
+      [
+       -119.5961,
+       49.1003
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}
