@@ -24,10 +24,55 @@ export type Farm = {
 
 export type GlobeView = "globe" | "farm";
 
-/** Which imagery/tiles tier actually loaded: A Google photoreal via ion, B ion terrain + Sentinel-2, C keyless imagery. */
+/** Which imagery/tiles tier actually loaded: A Google photoreal via ion, B ion World Terrain + Bing Aerial (+ OSM Buildings), C keyless imagery. */
 export type TileTier = "A" | "B" | "C";
 
-export type GlobeProps = {
+/** Ground cover drawn on a field in the twin. Illustrative look only, not a measured crop map. */
+export type CropLook = "grass" | "corn" | "cereal" | "legume" | "cover" | "berry" | "bare";
+
+/** One field of a twin farm. Boundaries are approximate; crops are illustrative (not public data). */
+export type FarmField = {
+  id: string;
+  name: string;
+  /** Closed ring of [lon, lat] degrees (first point need not repeat). */
+  ring: [number, number][];
+  areaHa: number;
+  crop: CropLook;
+};
+
+/**
+ * Generic overlay draped on the farm ground (water depth, heat, frost, risk zones…). Any climate scenario
+ * renders into `canvas` (north-up, covering `bbox`) and bumps `version` when the pixels change; the globe
+ * re-uploads the texture only when `version` changes. Transparent pixels show the ground underneath.
+ */
+export type GroundOverlay = {
+  id: string;
+  /** [west, south, east, north] degrees. */
+  bbox: [number, number, number, number];
+  canvas: HTMLCanvasElement;
+  version: number;
+  opacity: number;
+};
+
+/** Farm-view inputs. All optional: the globe works without a twin (explore-only farms). */
+export type FarmTwinProps = {
+  fields?: FarmField[];
+  selectedFieldId?: string | null;
+  onSelectField?(id: string | null): void;
+  /** Per-field crop override, e.g. the season shown for a chosen rotation. Falls back to field.crop. */
+  cropByField?: Record<string, CropLook>;
+  /** Drapes, bottom first. Empty/undefined = none. */
+  overlays?: GroundOverlay[];
+  /**
+   * false (default) = farm view on terrain + aerial imagery (+ OSM buildings): sharp, unmetered, overlays sit
+   * on the ground only. true = Google Photorealistic 3D Tiles (real trees/buildings; spends ion quota).
+   */
+  photoreal?: boolean;
+  /** Terrain vertical exaggeration in farm view, 1 = true scale. */
+  exaggeration?: number;
+};
+
+export type GlobeProps = FarmTwinProps & {
   farms: Farm[];
   /** Highlighted farm (card open). */
   selectedId: string | null;

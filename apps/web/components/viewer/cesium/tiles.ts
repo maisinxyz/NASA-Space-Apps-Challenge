@@ -5,6 +5,7 @@ import {
   Cartographic,
   type Cesium3DTileset,
   createGooglePhotorealistic3DTileset,
+  createOsmBuildingsAsync,
   createWorldImageryAsync,
   createWorldTerrainAsync,
   ImageryLayer,
@@ -64,6 +65,9 @@ export function createViewer(container: HTMLElement): Viewer {
   });
   // Viewer's default double-click handler tracks the clicked entity; we drive the camera ourselves.
   viewer.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+  // Cesium renders at CSS pixels by default, which looks soft on HiDPI laptop screens. Cap at 2x for fps.
+  viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 2);
+  viewer.scene.postProcessStages.fxaa.enabled = true;
   return viewer;
 }
 
@@ -108,7 +112,11 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
         // onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google geocoder;
         // this app has no geocoder at all. TODO(verify): confirm that "no geocoder" satisfies the ion/Google terms.
         // enableCollision: needed for tileset.getHeight() (camera clamp) and for clamping pins to the tiles.
-        const tileset = await createGooglePhotorealistic3DTileset({ onlyUsingWithGoogleGeocoder: true }, { enableCollision: true });
+        // maximumScreenSpaceError 8 (Cesium default 16) streams finer tiles, so the farm view is sharper.
+        const tileset = await createGooglePhotorealistic3DTileset(
+          { onlyUsingWithGoogleGeocoder: true },
+          { enableCollision: true, maximumScreenSpaceError: 8 },
+        );
         alive();
         scene.primitives.add(tileset);
         // Whole-Earth look: Google's tiles cover the planet at every distance, so they replace the globe
@@ -138,6 +146,13 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
         viewer.terrainProvider = terrainProvider;
         viewer.imageryLayers.add(new ImageryLayer(imagery));
         terrain = Promise.resolve(terrainProvider);
+        // 3D buildings from OpenStreetMap via ion (Cesium OSM Buildings). Optional: terrain stays usable without it.
+        // TODO(verify): the asset is enabled on the team's ion account.
+        createOsmBuildingsAsync()
+          .then((osm) => {
+            if (!viewer.isDestroyed()) scene.primitives.add(osm);
+          })
+          .catch((e) => console.warn("[globe] OSM Buildings unavailable", e instanceof Error ? e.message : e));
       }
       return { tier, groundAt: (c) => scene.globe.getHeight(c), sampleGround };
     } catch (e) {
