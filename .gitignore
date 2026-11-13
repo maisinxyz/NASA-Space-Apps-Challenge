@@ -31,3 +31,6 @@ htmlcov/
 # Data (generated / downloaded / user uploads)
 data/cache/
 data/uploads/
+
+# Playwright MCP screenshots/logs (may contain ion URLs)
+.playwright-mcp/

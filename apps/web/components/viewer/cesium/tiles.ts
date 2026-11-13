@@ -17,7 +17,7 @@ import {
   TileMapServiceImageryProvider,
   Viewer,
 } from "cesium";
-import type { TileTier } from "@/components/globe/types";
+import type { GlobeView, TileTier } from "@/components/globe/types";
 
 const TIERS: readonly TileTier[] = ["A", "B", "C"];
 /** ion asset "Google Maps 2D Satellite", id as listed for the team's ion account (see tier B below). */
@@ -71,10 +71,34 @@ export function createViewer(container: HTMLElement): Viewer {
   return viewer;
 }
 
+/**
+ * What draws the ground: "google" = Google Photorealistic 3D Tiles (globe surface hidden), "terrain" = ion
+ * World Terrain + world imagery (+ OSM Buildings), "base" = keyless Natural Earth globe (tier C).
+ */
+export type Surface = "google" | "terrain" | "base";
+
+/**
+ * Pure: which surface to show. Globe view keeps the loaded tier's look (A google, B terrain). Farm view shows
+ * google only when photoreal is asked for, terrain otherwise. A surface that failed to load falls back to the
+ * other ion surface, then to base. Tier C never touches ion.
+ */
+export function pickSurface(i: { tier: TileTier; view: GlobeView; photoreal: boolean; failed: ReadonlySet<Surface> }): Surface {
+  if (i.tier === "C") return "base";
+  const want: Surface = i.view === "globe" ? (i.tier === "A" ? "google" : "terrain") : i.photoreal ? "google" : "terrain";
+  const other: Surface = want === "google" ? "terrain" : "google";
+  return !i.failed.has(want) ? want : !i.failed.has(other) ? other : "base";
+}
+
 export type LoadedTier = {
   tier: TileTier;
-  /** Tier A only: the Google Photorealistic 3D tileset (the globe surface is hidden once it has loaded). */
-  tileset?: Cesium3DTileset;
+  /** The Google Photorealistic 3D tileset once it has been loaded (tier A at start, else lazily on photoreal). */
+  readonly tileset?: Cesium3DTileset;
+  /** Surface currently shown. */
+  readonly surface: Surface;
+  /** Surfaces whose sources failed to load (never retried: each source is requested at most once per viewer). */
+  readonly failed: ReadonlySet<Surface>;
+  /** Load the surface's sources if needed (at most once per viewer) and show it. False if loading failed. */
+  setSurface(s: Surface): Promise<boolean>;
   /** Ellipsoid height of the rendered surface at a point, metres; undefined until that area has loaded. Sync. */
   groundAt(c: Cartographic): number | undefined;
   /** Terrain height at a point, metres (async, most detailed). 0 when no terrain source is available (tier C). */
@@ -97,67 +121,135 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
   const token = ionToken();
   if (token) Ion.defaultAccessToken = token;
 
-  let terrain: Promise<TerrainProvider> | undefined;
+  // Every ion source is requested at most once per viewer (memoised promises, failures included): quota.
+  let ionUsable = false;
+  let terrainP: Promise<TerrainProvider> | undefined;
+  const worldTerrain = () => (terrainP ??= createWorldTerrainAsync());
   const sampleGround = async (lon: number, lat: number) => {
-    if (!terrain) return 0;
-    const [c] = await sampleTerrainMostDetailed(await terrain, [Cartographic.fromDegrees(lon, lat)]);
-    return c.height ?? 0;
+    if (!ionUsable) return 0;
+    try {
+      const [c] = await sampleTerrainMostDetailed(await worldTerrain(), [Cartographic.fromDegrees(lon, lat)]);
+      return c.height ?? 0;
+    } catch {
+      return 0;
+    }
   };
+
+  let surface: Surface = "base";
+  let tileset: Cesium3DTileset | undefined;
+  let osm: Cesium3DTileset | undefined;
+  let googleShowing = false; // true once the tileset's first view has loaded: only then hide the globe
+  const failed = new Set<Surface>();
+
+  const show = (s: Surface) => {
+    surface = s;
+    if (tileset) tileset.show = s === "google";
+    if (osm) osm.show = s === "terrain";
+    // Google's tiles replace the globe surface (keeping both gives z-fighting). The globe stays visible until
+    // the tileset's first view has loaded, so the Earth is never blank.
+    scene.globe.show = !(s === "google" && googleShowing);
+    scene.requestRender();
+  };
+
+  let googleP: Promise<unknown> | undefined;
+  const loadGoogle = () =>
+    (googleP ??= (async () => {
+      // Cesium resolves the Google Photorealistic 3D Tiles ion asset itself (no asset id in our code).
+      // onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google geocoder;
+      // this app has no geocoder at all. TODO(verify): confirm that "no geocoder" satisfies the ion/Google terms.
+      // enableCollision: needed for tileset.getHeight() (camera clamp) and for clamping pins to the tiles.
+      // maximumScreenSpaceError 8 (Cesium default 16) streams finer tiles, so the farm view is sharper.
+      const ts = await createGooglePhotorealistic3DTileset({ onlyUsingWithGoogleGeocoder: true }, { enableCollision: true, maximumScreenSpaceError: 8 });
+      alive();
+      ts.show = false;
+      scene.primitives.add(ts);
+      ts.initialTilesLoaded.addEventListener(() => {
+        googleShowing = true;
+        if (!viewer.isDestroyed()) show(surface);
+      });
+      tileset = ts;
+    })());
+
+  let terrainBundleP: Promise<unknown> | undefined;
+  const loadTerrain = () =>
+    (terrainBundleP ??= (async () => {
+      // Cesium's documented helpers resolve ion's Cesium World Terrain and default world imagery (Bing Maps
+      // Aerial through ion; the account has it as of 2026-11-13 per the lead) without asset ids in our code.
+      // Fallback kept for accounts without Bing: "Google Maps 2D Satellite" from the account's asset list
+      // (GET https://api.cesium.com/v1/assets, read 2026-11-13).
+      // TODO(verify): Google Map Tiles terms for that fallback imagery (overlays, quota) before the demo.
+      const [terrainProvider, imagery] = await Promise.all([
+        worldTerrain(),
+        createWorldImageryAsync().catch(() => IonImageryProvider.fromAssetId(ION_GOOGLE_2D_SATELLITE)),
+      ]);
+      alive();
+      viewer.terrainProvider = terrainProvider;
+      viewer.imageryLayers.add(new ImageryLayer(imagery));
+      // 3D buildings from OpenStreetMap via ion (Cesium OSM Buildings). Optional: terrain stays usable without it.
+      // TODO(verify): the asset is enabled on the team's ion account.
+      createOsmBuildingsAsync()
+        .then((b) => {
+          if (viewer.isDestroyed()) return;
+          osm = b;
+          scene.primitives.add(b);
+          show(surface);
+        })
+        .catch((e) => console.warn("[globe] OSM Buildings unavailable", e instanceof Error ? e.message : e));
+    })());
+
+  // Last request wins when calls overlap (e.g. photoreal toggled twice while a load is in flight).
+  let wanted: Surface = "base";
+  const setSurface = async (s: Surface): Promise<boolean> => {
+    wanted = s;
+    try {
+      if (s === "google") await loadGoogle();
+      else if (s === "terrain") await loadTerrain();
+    } catch (e) {
+      if (viewer.isDestroyed()) return false;
+      failed.add(s);
+      console.warn(`[globe] surface ${s} unavailable`, e instanceof Error ? e.message : e);
+      return false;
+    }
+    if (!viewer.isDestroyed() && wanted === s) show(s);
+    return true;
+  };
+
+  const loaded = (tier: TileTier): LoadedTier => ({
+    tier,
+    get tileset() {
+      return tileset;
+    },
+    get surface() {
+      return surface;
+    },
+    failed,
+    setSurface,
+    groundAt: (c) => (surface === "google" && tileset ? tileset.getHeight(c, scene) : scene.globe.getHeight(c)),
+    sampleGround,
+  });
 
   let lastError: unknown;
   for (const tier of order) {
     try {
       if (tier === "A") {
-        // Cesium resolves the Google Photorealistic 3D Tiles ion asset itself (no asset id in our code).
-        // onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google geocoder;
-        // this app has no geocoder at all. TODO(verify): confirm that "no geocoder" satisfies the ion/Google terms.
-        // enableCollision: needed for tileset.getHeight() (camera clamp) and for clamping pins to the tiles.
-        // maximumScreenSpaceError 8 (Cesium default 16) streams finer tiles, so the farm view is sharper.
-        const tileset = await createGooglePhotorealistic3DTileset(
-          { onlyUsingWithGoogleGeocoder: true },
-          { enableCollision: true, maximumScreenSpaceError: 8 },
-        );
-        alive();
-        scene.primitives.add(tileset);
-        // Whole-Earth look: Google's tiles cover the planet at every distance, so they replace the globe
-        // surface entirely (keeping both gives z-fighting). The Natural Earth globe stays visible only until
-        // the first view of tiles has loaded, so the Earth is never blank.
-        tileset.initialTilesLoaded.addEventListener(() => {
-          scene.globe.show = false;
-          scene.requestRender();
-        });
-        // Height source for fly-in targets only (not rendered): ion Cesium World Terrain.
-        const worldTerrain = createWorldTerrainAsync();
-        terrain = worldTerrain;
-        worldTerrain.catch(() => (terrain = undefined));
-        return { tier, tileset, groundAt: (c) => tileset.getHeight(c, scene), sampleGround };
+        await loadGoogle();
+        ionUsable = true;
+        void worldTerrain().catch(() => undefined); // fly-in heights; also reused if terrain is shown later
+        show("google");
+      } else if (tier === "B") {
+        await loadTerrain();
+        ionUsable = true;
+        show("terrain");
+      } else {
+        failed.add("google").add("terrain"); // tier C: never call ion
+        show("base");
       }
-      if (tier === "B") {
-        // Cesium's documented helpers; they resolve ion's Cesium World Terrain and default world imagery
-        // (Bing Maps Aerial through ion) without asset ids in our code.
-        // Fallback: the team's ion account has no Bing/Sentinel-2 asset (ion answers 404); its asset list
-        // (GET https://api.cesium.com/v1/assets, read 2026-11-13) offers "Google Maps 2D Satellite" instead.
-        // TODO(verify): Google Map Tiles terms for this imagery (overlays, quota) before the demo.
-        const [terrainProvider, imagery] = await Promise.all([
-          createWorldTerrainAsync(),
-          createWorldImageryAsync().catch(() => IonImageryProvider.fromAssetId(ION_GOOGLE_2D_SATELLITE)),
-        ]);
-        alive();
-        viewer.terrainProvider = terrainProvider;
-        viewer.imageryLayers.add(new ImageryLayer(imagery));
-        terrain = Promise.resolve(terrainProvider);
-        // 3D buildings from OpenStreetMap via ion (Cesium OSM Buildings). Optional: terrain stays usable without it.
-        // TODO(verify): the asset is enabled on the team's ion account.
-        createOsmBuildingsAsync()
-          .then((osm) => {
-            if (!viewer.isDestroyed()) scene.primitives.add(osm);
-          })
-          .catch((e) => console.warn("[globe] OSM Buildings unavailable", e instanceof Error ? e.message : e));
-      }
-      return { tier, groundAt: (c) => scene.globe.getHeight(c), sampleGround };
+      return loaded(tier);
     } catch (e) {
       alive();
       lastError = e;
+      if (tier === "A") failed.add("google");
+      if (tier === "B") failed.add("terrain");
       console.warn(`[globe] tile tier ${tier} failed, falling back`, e instanceof Error ? e.message : e);
     }
   }

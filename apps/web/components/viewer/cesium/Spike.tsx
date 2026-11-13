@@ -5,7 +5,7 @@ import type { Viewer } from "cesium";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GlobeDev } from "@/components/globe/Globe";
-import type { Farm, GlobeHandle, GlobeView, TileTier } from "@/components/globe/types";
+import type { CropLook, Farm, FarmField, GlobeHandle, GlobeView, GroundOverlay, TileTier } from "@/components/globe/types";
 
 import { createDrape, type Drape, type DrapeMethod, type DrapeSource } from "./drape";
 import type { LoadedTier } from "./tiles";
@@ -23,6 +23,31 @@ const test = (id: string, n: number, lon: number, lat: number, tier: Farm["tier"
   radiusM: 1500,
 });
 const FARMS: Farm[] = [test("test-1", 1, -121.76, 49.24, "twin"), test("test-2", 2, 121.257, 14.17, "explore")];
+
+// Dev-only sample twin around test location 1: a 3 x 2 grid of made-up fields (not real boundaries or crops).
+const LOOKS: CropLook[] = ["corn", "cereal", "grass", "legume", "berry", "cover"];
+const SAMPLE_FIELDS: FarmField[] = LOOKS.map((crop, i) => {
+  const dLon = 0.0034; // ~250 m east-west at 49.24 N
+  const dLat = 0.0018; // ~200 m north-south
+  const x0 = FARMS[0].lon + (i % 3 - 1.5) * dLon * 1.04;
+  const y0 = FARMS[0].lat + (Math.floor(i / 3) - 1) * dLat * 1.06;
+  return { id: `f${i + 1}`, name: `Sample field ${i + 1}`, crop, areaHa: 5, ring: [[x0, y0], [x0 + dLon, y0], [x0 + dLon, y0 + dLat], [x0, y0 + dLat]] };
+});
+/** "Swap crops" override: every field takes the next look (exercises cropByField). */
+const SWAPPED: Record<string, CropLook> = Object.fromEntries(SAMPLE_FIELDS.map((f, i) => [f.id, LOOKS[(i + 1) % LOOKS.length]]));
+
+/** Test overlay: a moving blue blob on a 128 px canvas (not data). */
+function paintBlob(canvas: HTMLCanvasElement, t: number) {
+  const g = canvas.getContext("2d")!;
+  g.clearRect(0, 0, 128, 128);
+  const cx = 64 + 40 * Math.cos(t);
+  const cy = 64 + 40 * Math.sin(t);
+  const grad = g.createRadialGradient(cx, cy, 0, cx, cy, 40);
+  grad.addColorStop(0, "rgba(30,90,220,0.95)");
+  grad.addColorStop(1, "rgba(30,90,220,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+}
 
 const W = 256;
 const H = 256;
@@ -77,6 +102,15 @@ export default function Spike() {
   const [split, setSplit] = useState(false);
   const [divider, setDivider] = useState(0.5);
   const [fps, setFps] = useState<number | null>(null);
+  const [fieldsOn, setFieldsOn] = useState(true);
+  const [swap, setSwap] = useState(false);
+  const [fieldId, setFieldId] = useState<string | null>(null);
+  const [photoreal, setPhotoreal] = useState(false);
+  const [exaggeration, setExaggeration] = useState(1);
+  const [overlayOn, setOverlayOn] = useState(false);
+  const [overlayAnim, setOverlayAnim] = useState(false);
+  const [opacity, setOpacity] = useState(0.8);
+  const [overlay, setOverlay] = useState<GroundOverlay | null>(null);
   const globe = useRef<GlobeHandle>(null);
   const drapes = useRef<Drape[]>([]);
   const patterns = useMemo(() => [testFrames(128, 128, 1), testFrames(90, 150, 0.55)], []);
@@ -85,6 +119,26 @@ export default function Spike() {
   useEffect(() => {
     window.__ftCesium = live;
   }, [live]);
+
+  // Sample overlay: redraw the canvas and bump `version`; the globe re-uploads only on a version change.
+  useEffect(() => {
+    if (!overlayOn) return setOverlay(null);
+    const canvas = Object.assign(document.createElement("canvas"), { width: 128, height: 128 });
+    let version = 0;
+    let t = 0;
+    const draw = () => {
+      paintBlob(canvas, t);
+      setOverlay({ id: "test-blob", bbox: bboxAround(FARMS[0]), canvas, version: ++version, opacity: 0 });
+    };
+    draw();
+    if (!overlayAnim) return;
+    const timer = setInterval(() => {
+      t += 0.2;
+      draw();
+    }, 100);
+    return () => clearInterval(timer);
+  }, [overlayOn, overlayAnim]);
+  const overlays = useMemo(() => (overlay ? [{ ...overlay, opacity }] : []), [overlay, opacity]);
 
   // Build the drape(s) for the selected test location.
   useEffect(() => {
@@ -150,9 +204,16 @@ export default function Spike() {
         onReady={(i) => setTier(i.tier)}
         onError={(e) => setError(e.message)}
         onViewer={setLive}
+        fields={fieldsOn ? SAMPLE_FIELDS : undefined}
+        cropByField={swap ? SWAPPED : undefined}
+        selectedFieldId={fieldId}
+        onSelectField={setFieldId}
+        overlays={overlays}
+        photoreal={photoreal}
+        exaggeration={exaggeration}
       />
       {split && drapeOn && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80" style={{ left: `${divider * 100}%` }} />}
-      <div className="absolute left-3 top-3 flex max-w-xs flex-col gap-2 rounded-md bg-surface/95 p-3 text-sm text-ink shadow">
+      <div className="absolute left-3 top-3 flex max-h-[calc(100%-1.5rem)] max-w-xs flex-col gap-2 overflow-y-auto rounded-md bg-surface/95 p-3 text-sm text-ink shadow">
         <p className="font-semibold">Cesium spike (dev only, test pattern, not data)</p>
         <p data-testid="tier">
           Tier loaded: <strong>{tier ?? "loading…"}</strong> {tierOrder ? `(forced order ${tierOrder.join(">")})` : "(from env)"}
@@ -187,6 +248,31 @@ export default function Spike() {
             Reset
           </button>
         </div>
+        <p className="font-semibold">Farm twin (dev sample fields, made up)</p>
+        <label className={label}>
+          <input type="checkbox" checked={fieldsOn} onChange={(e) => setFieldsOn(e.target.checked)} /> Fields
+        </label>
+        <label className={label}>
+          <input type="checkbox" checked={swap} onChange={(e) => setSwap(e.target.checked)} /> Swap crops (cropByField)
+        </label>
+        <p data-testid="field">Selected field: {fieldId ?? "none"}</p>
+        <label className={label}>
+          <input type="checkbox" checked={photoreal} onChange={(e) => setPhotoreal(e.target.checked)} /> Photoreal (Google tiles, spends quota)
+        </label>
+        <label className={label}>
+          Exaggeration {exaggeration.toFixed(1)}x
+          <input type="range" min={1} max={5} step={0.5} value={exaggeration} onChange={(e) => setExaggeration(Number(e.target.value))} />
+        </label>
+        <label className={label}>
+          <input type="checkbox" checked={overlayOn} onChange={(e) => setOverlayOn(e.target.checked)} /> Overlay blob
+        </label>
+        <label className={label}>
+          <input type="checkbox" checked={overlayAnim} onChange={(e) => setOverlayAnim(e.target.checked)} /> Animate overlay (version bumps)
+        </label>
+        <label className={label}>
+          Overlay opacity {opacity.toFixed(2)}
+          <input type="range" min={0} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} />
+        </label>
         <label className={label}>
           <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} /> Reduced motion
         </label>

@@ -7,6 +7,7 @@ import {
   BoundingSphere,
   Cartesian2,
   Cartesian3,
+  ClassificationType,
   Color,
   ConstantProperty,
   Ellipsoid,
@@ -16,15 +17,17 @@ import {
   HeightReference,
   LabelStyle,
   Math as CesiumMath,
+  PrimitiveCollection,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   VerticalOrigin,
   type Viewer,
 } from "cesium";
-import { forwardRef, type ForwardRefExoticComponent, type RefAttributes, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, type ForwardRefExoticComponent, type RefAttributes, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { clampCamera, easeToward, horizontalDistanceM } from "@/components/viewer/cesium/clamp";
-import { createViewer, type LoadedTier, loadTier, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
+import { createViewer, type LoadedTier, loadTier, pickSurface, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
+import { createFieldLayer, createOverlayLayer, type FieldLayer, fieldIdFromPick, type OverlayLayer } from "@/components/viewer/cesium/twin";
 
 import type { Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
 
@@ -42,6 +45,9 @@ const HOME = { lon: -100, lat: 25 };
 const AUTO_ROTATE_RAD_S = CesiumMath.toRadians(2);
 /** Stops the wheel from zooming the Earth out to a dot (globe view), metres. */
 const MAX_ZOOM_OUT_M = 4.0e7;
+/** Globe tile detail: Cesium's default 2 px; finer in farm view for a sharper ground (costs some fps). */
+const GLOBE_SSE_DEFAULT = 2;
+const GLOBE_SSE_FARM = 1.5;
 
 /** Dev-only extras used by /dev/cesium. Not part of the shared contract; the exported `Globe` type hides them. */
 export type GlobeDevProps = {
@@ -58,7 +64,31 @@ type Runtime = {
   flightSeq: number;
   interacted: boolean;
   farmGround: number | undefined;
+  fields: FieldLayer;
+  overlays: OverlayLayer;
+  twinLayers: PrimitiveCollection;
+  warnedPhotoreal: boolean;
 };
+
+/** Twin layers classify terrain only (not OSM buildings); on Google's tiles they must classify the tiles too. */
+const classificationFor = (s: Surface | null) => (s === "google" ? ClassificationType.BOTH : ClassificationType.TERRAIN);
+
+/** Show the surface the current props ask for (tiles.ts pickSurface), falling back if a source fails to load. */
+function syncSurface(r: Runtime, props: () => GlobeProps, onShown: (s: Surface) => void) {
+  const t = r.tier;
+  if (!t) return;
+  const p = props();
+  const want = pickSurface({ tier: t.tier, view: p.view, photoreal: !!p.photoreal, failed: t.failed });
+  if (p.view === "farm" && p.photoreal && want !== "google" && !r.warnedPhotoreal) {
+    r.warnedPhotoreal = true;
+    console.warn("[globe] photoreal requested but Google Photorealistic 3D Tiles are unavailable; showing terrain");
+  }
+  void t.setSurface(want).then((ok) => {
+    if (r.viewer.isDestroyed()) return;
+    if (ok) onShown(t.surface);
+    else syncSurface(r, props, onShown); // `failed` grew; pick again ("base" always succeeds)
+  });
+}
 
 const toError = (e: unknown) => (e instanceof Error ? e : new Error(String(e)));
 
@@ -145,6 +175,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   const containerRef = useRef<HTMLDivElement>(null);
   const rt = useRef<Runtime | null>(null);
   const prev = useRef<{ view: string; selectedId: string | null } | null>(null);
+  const [surface, setSurface] = useState<Surface | null>(null);
   // Latest props for long-lived Cesium callbacks (the viewer is created once).
   const live = useRef(props);
   useEffect(() => {
@@ -174,7 +205,24 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       live.current.onError(toError(e)); // WebGL unavailable
       return;
     }
-    const r: Runtime = { viewer, tier: null, pins: new Map(), hoverId: null, flying: false, flightSeq: 0, interacted: false, farmGround: undefined };
+    // Twin layers: fields under overlays (draw order = add order); shown in farm view only.
+    const twinLayers = viewer.scene.primitives.add(new PrimitiveCollection({ show: false })) as PrimitiveCollection;
+    const fieldsCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
+    const overlaysCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
+    const r: Runtime = {
+      viewer,
+      tier: null,
+      pins: new Map(),
+      hoverId: null,
+      flying: false,
+      flightSeq: 0,
+      interacted: false,
+      farmGround: undefined,
+      fields: createFieldLayer(fieldsCol),
+      overlays: createOverlayLayer(overlaysCol),
+      twinLayers,
+      warnedPhotoreal: false,
+    };
     rt.current = r;
     prev.current = null;
     const { scene } = viewer;
@@ -189,6 +237,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         r.tier = tier;
         live.current.onReady({ tier: tier.tier });
         live.current.onViewer?.({ viewer, tier });
+        setSurface(tier.surface);
+        syncSurface(r, () => live.current, setSurface);
         if (live.current.view === "farm") resetRef.current(); // redo the fly-in now that ground heights are known
       },
       (e) => {
@@ -210,17 +260,27 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const offRenderError = scene.renderError.addEventListener((_scene: unknown, e: unknown) => live.current.onError(toError(e)));
 
     // Pins: hover shows the label, click selects, click on empty space clears.
-    const pinAt = (p: Cartesian2): string | null => {
-      const id: unknown = (scene.pick(p) as { id?: { id?: unknown } } | undefined)?.id?.id;
+    // Farm view: click a field selects it, empty ground clears the field (the farm stays selected).
+    const pinOf = (picked: unknown): string | null => {
+      const id: unknown = (picked as { id?: { id?: unknown } } | undefined)?.id?.id;
       return typeof id === "string" && r.pins.has(id) ? id : null;
     };
+    const inFarm = () => live.current.view === "farm" && live.current.selectedId != null;
     const handler = new ScreenSpaceEventHandler(canvas);
-    handler.setInputAction((e: { position: Cartesian2 }) => live.current.onSelect(pinAt(e.position)), ScreenSpaceEventType.LEFT_CLICK);
+    handler.setInputAction((e: { position: Cartesian2 }) => {
+      const picked: unknown = scene.pick(e.position);
+      const pin = pinOf(picked);
+      const p = live.current;
+      if (!inFarm()) p.onSelect(pin);
+      else if (pin && pin !== p.selectedId) p.onSelect(pin);
+      else p.onSelectField?.(fieldIdFromPick(picked));
+    }, ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction((e: { endPosition: Cartesian2 }) => {
-      const id = pinAt(e.endPosition);
+      const picked: unknown = scene.pick(e.endPosition);
+      const id = pinOf(picked);
+      canvas.style.cursor = id || (inFarm() && live.current.onSelectField && fieldIdFromPick(picked)) ? "pointer" : "";
       if (id === r.hoverId) return;
       r.hoverId = id;
-      canvas.style.cursor = id ? "pointer" : "";
       stylePins(r, live.current.selectedId);
     }, ScreenSpaceEventType.MOUSE_MOVE);
 
@@ -232,6 +292,10 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       const p = live.current;
+
+      // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
+      if (r.fields.flush()) scene.requestRender();
+      if (r.tier && r.overlays.sync(p.overlays ?? [], classificationFor(r.tier.surface))) scene.requestRender();
 
       // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth.
       const occluder = new EllipsoidalOccluder(Ellipsoid.WGS84, camera.positionWC);
@@ -305,6 +369,37 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     }
     stylePins(r, selectedId);
   }, [farms, selectedId]);
+
+  // Surface (terrain vs Google photoreal) follows view + photoreal; the first sync runs when the tier loads.
+  const { fields, cropByField, selectedFieldId, photoreal, exaggeration } = props;
+  useEffect(() => {
+    const r = rt.current;
+    if (r) syncSurface(r, () => live.current, setSurface);
+  }, [view, photoreal]);
+
+  // Farm view only: twin layers, finer globe tiles, vertical exaggeration (pivoting at the farm's ground height).
+  useEffect(() => {
+    const r = rt.current;
+    if (!r) return;
+    const farm = view === "farm";
+    const { scene } = r.viewer;
+    r.twinLayers.show = farm;
+    scene.globe.maximumScreenSpaceError = farm ? GLOBE_SSE_FARM : GLOBE_SSE_DEFAULT;
+    scene.verticalExaggeration = farm ? Math.max(0, exaggeration ?? 1) : 1;
+    scene.verticalExaggerationRelativeHeight = farm ? (r.farmGround ?? 0) : 0;
+    scene.requestRender();
+  }, [view, exaggeration]);
+
+  // Fields: rebuild when the list or the surface (classification target) changes; recolour otherwise.
+  useEffect(() => {
+    const r = rt.current;
+    if (!r || !surface) return;
+    r.fields.setFields(fields ?? [], classificationFor(surface));
+    r.viewer.scene.requestRender();
+  }, [fields, surface]);
+  useEffect(() => {
+    rt.current?.fields.paint(cropByField, selectedFieldId);
+  }, [fields, surface, cropByField, selectedFieldId]);
 
   // Camera: fly in / out / to the selected pin's region.
   useEffect(() => {
