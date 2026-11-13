@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "SIMULATION_TIMEOUT",
+    "message": "The simulation took too long.",
+    "hint": "Lower the grid resolution and run it again.",
+    "retryable": true
+  }
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ins_001",
+    "kind": "terrain",
+    "title": "Largest low spot (mock)",
+    "body": "Water collects here during heavy rain.",
+    "why_it_matters": "Low spots stay wet longer and can flood crops.",
+    "tip": "Ask a local agronomist whether a drainage check is worthwhile.",
+    "confidence": "medium",
+    "anchor": {
+      "lon": -119.594772,
+      "lat": 49.103338,
+      "at_time_min": null
+    },
+    "data_refs": [
+      "layers.depressions"
+    ],
+    "severity": 4
+  },
+  {
+    "id": "ins_002",
+    "kind": "terrain",
+    "title": "Main drainage line (mock)",
+    "body": "Runoff from most of the field drains along this valley.",
+    "why_it_matters": "Concentrated flow can carry soil away.",
+    "tip": "Consider a grassed waterway here. Verify locally.",
+    "confidence": "medium",
+    "anchor": {
+      "lon": -119.596968,
+      "lat": 49.102295,
+      "at_time_min": null
+    },
+    "data_refs": [
+      "layers.flow_accumulation"
+    ],
+    "severity": 3
+  },
+  {
+    "id": "ins_003",
+    "kind": "cover",
+    "title": "Persistent bare patch (mock)",
+    "body": "This patch looks bare in the imagery.",
+    "why_it_matters": "Bare soil erodes faster in heavy rain.",
+    "tip": "Consider whether this patch could carry a cover crop.",
+    "confidence": "low",
+    "anchor": {
+      "lon": -119.598546,
+      "lat": 49.101674,
+      "at_time_min": null
+    },
+    "data_refs": [
+      "layers.cover_class"
+    ],
+    "severity": 3
+  },
+  {
+    "id": "ins_004",
+    "kind": "data_quality",
+    "title": "Texture alignment assumed (mock)",
+    "body": "The photo is stretched to the selected rectangle.",
+    "why_it_matters": "Cover classes near the edges may be slightly off.",
+    "tip": "Check edges against what you know of the field.",
+    "confidence": "high",
+    "anchor": {
+      "lon": -119.599712,
+      "lat": 49.104418,
+      "at_time_min": null
+    },
+    "data_refs": [
+      "quality_flags.texture_alignment_assumed"
+    ],
+    "severity": 1
+  }
+]

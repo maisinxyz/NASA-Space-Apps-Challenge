@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "WEATHER_UNAVAILABLE",
+    "message": "Weather data is unavailable and nothing is cached for this location.",
+    "hint": "Try again later or use a curated site.",
+    "retryable": true
+  }
+}
