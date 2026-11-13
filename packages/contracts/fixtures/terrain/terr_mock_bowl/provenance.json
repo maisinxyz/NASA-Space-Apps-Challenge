@@ -1,0 +1,60 @@
+{
+  "terrain_id": "terr_mock_bowl",
+  "datasets": [
+    {
+      "name": "Procedural mock terrain (fixtures_lib.terrain)",
+      "role": "elevation",
+      "resolution_m": 2.0,
+      "license": "mock (generated, no license restrictions)",
+      "url": "packages/contracts/fixtures_lib/terrain.py",
+      "basis": "assumed",
+      "attribution": "FieldTwin mock fixtures"
+    },
+    {
+      "name": "Mock weather (placeholder for NASA POWER)",
+      "role": "weather",
+      "license": "mock (generated, no license restrictions)",
+      "basis": "assumed",
+      "attribution": "FieldTwin mock fixtures",
+      "date_range": {
+        "start": "1981-01-01",
+        "end": "2025-12-31"
+      }
+    }
+  ],
+  "texture": {
+    "bounds_wgs84": [
+      -119.6,
+      49.1,
+      -119.592975,
+      49.104607
+    ],
+    "source": "user_upload",
+    "resolution_m": 1.0,
+    "license": "mock (generated, no license restrictions)",
+    "attribution": "Procedurally generated mock texture"
+  },
+  "quality_flags": [
+    "mock_data",
+    "texture_alignment_assumed"
+  ],
+  "assumptions": [
+    {
+      "statement": "Soil hydrologic group B assumed everywhere.",
+      "basis": "assumed"
+    },
+    {
+      "statement": "Texture is stretched to the bounding box.",
+      "basis": "assumed"
+    },
+    {
+      "statement": "Storm timing within each day uses a design-storm profile.",
+      "basis": "assumed"
+    }
+  ],
+  "limitations": [
+    "MOCK DATA: every value here is generated for development.",
+    "Weather resolution is coarse (about 55 km) and may understate local extremes.",
+    "Results are relative comparisons, not predictions."
+  ]
+}

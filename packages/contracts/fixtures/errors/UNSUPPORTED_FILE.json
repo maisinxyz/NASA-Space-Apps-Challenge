@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "UNSUPPORTED_FILE",
+    "message": "This file is not a JPG, PNG, or WEBP image.",
+    "hint": "Upload a photo in one of those formats.",
+    "retryable": false
+  }
+}

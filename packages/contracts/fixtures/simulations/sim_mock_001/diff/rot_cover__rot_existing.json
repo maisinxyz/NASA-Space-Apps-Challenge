@@ -1,0 +1,10 @@
+{
+  "a": "rot_cover",
+  "b": "rot_existing",
+  "quantity": "peak_water_depth",
+  "unit": "mm",
+  "max_abs_diff_mm": 424.634,
+  "mean_diff_mm": 2.742,
+  "changed_area_ha": 1.943,
+  "basis": "modeled"
+}

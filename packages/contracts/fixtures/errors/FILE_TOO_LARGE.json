@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "FILE_TOO_LARGE",
+    "message": "This image is larger than the upload limit.",
+    "hint": "Resize the photo and try again.",
+    "retryable": false
+  }
+}
