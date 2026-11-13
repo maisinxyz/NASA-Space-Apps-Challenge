@@ -4,17 +4,16 @@
 import { useReducedMotion } from "framer-motion";
 import { useShallow } from "zustand/react/shallow";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { TwinPanel, twinFields } from "@/components/farm/TwinPanel";
 import { FARMS, farmById } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { useAppStore } from "@/lib/store";
-import { AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "@/lib/twin/agassiz";
+import { AGASSIZ_BUILDINGS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "@/lib/twin/agassiz";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
-import { EXPLORE_NOTE, FarmCard, SimLink } from "./FarmCard";
+import { EXPLORE_NOTE, FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
 import type { GlobeHandle, TileTier } from "./types";
 
@@ -23,7 +22,7 @@ const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Glo
   loading: () => <p className="grid h-full place-items-center text-sm text-ink-muted">Loading the 3D globe…</p>,
 });
 
-/** Same idea as ViewerStage's VIEWPORT_H: the viewport minus the sticky header and banner. */
+/** The viewport minus the sticky header and banner. */
 const GLOBE_H = "h-[calc(100dvh-5.5rem)] min-h-[34rem]";
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
 const PITCH = "See how the same storm moves across real farmland under different crop rotations.";
@@ -75,8 +74,8 @@ export function GlobeHome() {
   // Farm twin (only "twin" farms with field data): fields + the season of the rotation chosen in Compare.
   const fields = view === "farm" && farm?.tier === "twin" ? twinFields(farm.id) : undefined;
   const inTwin = inFarm && !!fields;
-  const { twinFieldId, twinRotationId, twinYear, twinMonth, exaggeration } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration })),
+  const { twinFieldId, twinRotationId, twinYear, twinMonth, exaggeration, twinSurface } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface })),
   );
   const cropByField = useMemo(() => {
     const r = rotationById(twinRotationId ?? "");
@@ -117,12 +116,7 @@ export function GlobeHome() {
           {wide ? (
             <div role="alert" className="rounded-lg border border-line bg-surface p-4">
               <p className="font-semibold">The 3D globe could not load</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                You can still pick a farm from the list below.{" "}
-                <Link href="/viewer" className="text-accent underline underline-offset-2">
-                  Open the offline view
-                </Link>
-              </p>
+              <p className="mt-1 text-sm text-ink-muted">You can still pick a farm from the list below.</p>
             </div>
           ) : (
             <p className="rounded-lg border border-line bg-surface p-3 text-sm">Best on a larger screen: the 3D globe is shown on screens at least 768 px wide.</p>
@@ -158,6 +152,8 @@ export function GlobeHome() {
           cropByField={cropByField}
           simBbox={inTwin ? AGASSIZ_SIM_BBOX : undefined}
           exaggeration={inTwin ? exaggeration : 1}
+          surface={twinSurface}
+          overlayMask={inTwin ? AGASSIZ_BUILDINGS : undefined}
         />
       </GlobeBoundary>
 
@@ -174,7 +170,7 @@ export function GlobeHome() {
               Reset view
             </button>
             <h1 className="font-display text-lg">{farm.name}</h1>
-            {farm.tier === "twin" ? <SimLink /> : <p className="basis-full text-sm text-ink-muted">Explore only: {EXPLORE_NOTE.toLowerCase()}</p>}
+            {farm.tier !== "twin" && <p className="basis-full text-sm text-ink-muted">Explore only: {EXPLORE_NOTE.toLowerCase()}</p>}
           </div>
         ) : (
           <div className="!pointer-events-none absolute top-4 left-4 max-w-md">

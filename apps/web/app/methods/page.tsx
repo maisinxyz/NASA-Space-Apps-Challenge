@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { getProvenance, getSites, isMock } from "@/lib/api/client";
 import type { BasisOrRelative, Provenance } from "@/lib/api/types";
-import { useAppStore } from "@/lib/store";
 
 // Regex, not the literal marker, so this file itself never trips scripts/check-build.mjs.
 const UNVERIFIED = /(TODO\(verify\))/;
@@ -58,12 +57,12 @@ function Section({ id, title, children }: { id: string; title: string; children:
 type State = { kind: "loading" } | { kind: "error"; error: unknown } | { kind: "ok"; prov: Provenance };
 
 export default function MethodsPage() {
-  const storeTerrain = useAppStore((s) => s.terrainId);
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(() => {
     setState({ kind: "loading" });
-    (async () => storeTerrain ?? (await getSites())[0]?.terrain_id)()
+    getSites()
+      .then((sites) => sites[0]?.terrain_id)
       .then((tid) => {
         if (!tid) throw new Error("No terrain is available to describe yet.");
         return getProvenance(tid);
@@ -72,7 +71,7 @@ export default function MethodsPage() {
         (prov) => setState({ kind: "ok", prov }),
         (error) => setState({ kind: "error", error }),
       );
-  }, [storeTerrain]);
+  }, []);
   useEffect(load, [load]);
 
   return (
@@ -253,8 +252,8 @@ export default function MethodsPage() {
         </ul>
         <p className="mt-6 rounded-md border border-line bg-surface-2 px-4 py-3 text-ink">{SUPPORT_SENTENCE}</p>
         <p className="mt-6 text-sm text-ink-muted">
-          <Link href="/explore" className="text-accent underline underline-offset-2">
-            Back to the sites
+          <Link href="/" className="text-accent underline underline-offset-2">
+            Back to the farm globe
           </Link>
         </p>
       </Section>

@@ -53,3 +53,13 @@ export const ROTATING_FIELDS: Record<string, number> = { f2: 2, f4: 0 };
  */
 export const AGASSIZ_SIM_BBOX: [number, number, number, number] = [-121.77543, 49.24461, -121.75617, 49.25719];
 export const SIM_AREA_LABEL = "Simulation area (~1.4 km square)";
+
+/**
+ * Building footprints (rings of [lon, lat]) inside AGASSIZ_SIM_BBOX, passed to the globe as `overlayMask` so water/risk
+ * overlays do not cover roofs on the photoreal surface.
+ * TODO(verify): empty on purpose. overpass-api.de was unreachable on 2026-11-13 (connection timeouts, 5 tries). Fetch
+ *   [out:json][timeout:60];way["building"](49.24461,-121.77543,49.25719,-121.75617);out geom;
+ * from https://overpass-api.de/api/interpreter, store the rings here with the date and OSM base timestamp, and credit
+ * "© OpenStreetMap contributors, ODbL". Never draw footprints by hand.
+ */
+export const AGASSIZ_BUILDINGS: [number, number][][] = [];

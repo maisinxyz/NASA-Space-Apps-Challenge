@@ -24,8 +24,14 @@ export type Farm = {
 
 export type GlobeView = "globe" | "farm";
 
-/** Which imagery/tiles tier actually loaded: B ion World Terrain + Bing Aerial (+ OSM Buildings), C keyless imagery. (Google tier A removed by product decision.) */
-export type TileTier = "B" | "C";
+/**
+ * Which imagery/tiles tier actually loaded: A Google Photorealistic 3D Tiles via Cesium ion (product direction:
+ * God's-eye look, used in farm view), B ion World Terrain + Bing Aerial (+ OSM Buildings), C keyless imagery.
+ */
+export type TileTier = "A" | "B" | "C";
+
+/** Which surface the farm view draws. "google" falls back to "terrain" when tier A is unavailable. */
+export type FarmSurface = "google" | "terrain";
 
 /** Ground cover drawn on a field in the twin. Illustrative look only, not a measured crop map. */
 export type CropLook = "grass" | "corn" | "cereal" | "legume" | "cover" | "berry" | "bare";
@@ -69,6 +75,13 @@ export type FarmTwinProps = {
    * The farm-view camera orbits its centre and the screen centre cannot leave it. Undefined = whole farm radius.
    */
   simBbox?: [number, number, number, number];
+  /** Farm-view surface. Default "google" (photoreal, real trees/buildings); "terrain" = World Terrain + Bing, overlays only on the ground. */
+  surface?: FarmSurface;
+  /**
+   * Polygons (rings of [lon, lat]) where overlays must NOT draw, e.g. OSM building footprints, so water/risk
+   * layers do not cover roofs on the photoreal surface.
+   */
+  overlayMask?: [number, number][][];
   /** Terrain vertical exaggeration in farm view, 1 = true scale. */
   exaggeration?: number;
 };

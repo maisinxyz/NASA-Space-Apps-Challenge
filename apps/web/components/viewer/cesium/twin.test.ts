@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CropLook } from "@/components/globe/types";
 
-import { CROP_COLORS, fieldIdFromPick, fieldStyle, planOverlays } from "./twin";
+import { CROP_COLORS, fieldIdFromPick, fieldStyle, lonLatToPx, planOverlays } from "./twin";
 
 describe("fieldStyle", () => {
   it("gives every crop look its own colour", () => {
@@ -42,5 +42,19 @@ describe("planOverlays", () => {
     expect(planOverlays([o("a", 1)], [o("a", 1), o("b", 1)], false)).toEqual({ rebuild: true, upload: ["a", "b"] });
     expect(planOverlays([o("a", 1)], [o("a", 1, [0, 0, 2, 1])], false)).toEqual({ rebuild: true, upload: ["a"] });
     expect(planOverlays([o("a", 1)], [o("a", 1)], true)).toEqual({ rebuild: true, upload: ["a"] });
+  });
+});
+
+describe("lonLatToPx", () => {
+  const bbox: [number, number, number, number] = [-122, 49, -121, 50];
+  it("maps the bbox corners and centre to a north-up canvas", () => {
+    expect(lonLatToPx(bbox, 200, 100, -122, 50)).toEqual([0, 0]); // north-west = top-left
+    expect(lonLatToPx(bbox, 200, 100, -121, 49)).toEqual([200, 100]); // south-east = bottom-right
+    expect(lonLatToPx(bbox, 200, 100, -121.5, 49.5)).toEqual([100, 50]);
+  });
+  it("puts points outside the bbox outside the canvas", () => {
+    const [x, y] = lonLatToPx(bbox, 200, 100, -123, 51);
+    expect(x).toBeLessThan(0);
+    expect(y).toBeLessThan(0);
   });
 });

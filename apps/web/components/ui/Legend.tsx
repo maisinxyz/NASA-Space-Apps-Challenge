@@ -1,4 +1,4 @@
-import type { ViewerLegend } from "@/components/viewer";
+import type { ViewerLegend } from "@/components/viewer/meta";
 
 import { BasisChip } from "./BasisChip";
 

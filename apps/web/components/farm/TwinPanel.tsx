@@ -3,7 +3,7 @@
 // Rendering lives in components/globe/Globe.tsx; this file only writes the store (lib/store.ts).
 import { type KeyboardEvent, useId } from "react";
 
-import type { Farm } from "@/components/globe/types";
+import type { Farm, FarmSurface } from "@/components/globe/types";
 import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
 import { BasisChip } from "@/components/ui/BasisChip";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
@@ -23,6 +23,10 @@ const MODES: { id: TwinMode; label: string }[] = [
 ];
 const WIDTH: Record<TwinMode, string> = { explore: "w-[22rem]", simulate: "w-[22rem]", compare: "w-[44rem]", evidence: "w-[30rem]" };
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
+const SURFACES: { id: FarmSurface; label: string }[] = [
+  { id: "google", label: "Photoreal 3D (Google)" },
+  { id: "terrain", label: "Terrain only" },
+];
 
 /** The twin's fields for a farm; only Agassiz has one so far. */
 export const twinFields = (farmId: string | null) => (farmId === "agassiz" ? AGASSIZ_FIELDS : undefined);
@@ -102,6 +106,7 @@ export function TwinPanel({ farm, onBack, onReset }: { farm: Farm; onBack(): voi
 
 function Explore() {
   const exaggeration = useAppStore((s) => s.exaggeration);
+  const surface = useAppStore((s) => s.twinSurface);
   const fieldId = useAppStore((s) => s.twinFieldId);
   const crops = useAppStore((s) => s.twinRotationId);
   const field = AGASSIZ_FIELDS.find((f) => f.id === fieldId);
@@ -116,8 +121,17 @@ function Explore() {
           <span className="font-semibold">{SIM_AREA_LABEL}</span>
           <span className="block text-xs text-ink-muted">The thin outline on the map marks where simulation layers apply; they only cover this area.</span>
         </p>
+        <fieldset className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <legend className="sr-only">Map surface</legend>
+          {SURFACES.map((s) => (
+            <label key={s.id} className="flex items-center gap-1.5">
+              <input type="radio" name="twin-surface" checked={surface === s.id} onChange={() => useAppStore.setState({ twinSurface: s.id })} className="accent-accent" />
+              {s.label}
+            </label>
+          ))}
+        </fieldset>
         <label className="grid grid-cols-[auto_1fr_2.5rem] items-center gap-2 text-sm">
-          Vertical exaggeration
+          Vertical exaggeration (1× = true scale)
           <input type="range" min={1} max={3} step={0.5} value={exaggeration} onChange={(e) => useAppStore.setState({ exaggeration: Number(e.target.value) })} className="accent-accent" />
           <output className="text-right tabular-nums">{exaggeration}×</output>
         </label>

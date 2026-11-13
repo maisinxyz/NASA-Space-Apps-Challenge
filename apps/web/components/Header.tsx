@@ -1,4 +1,5 @@
 "use client";
+// Product header: wordmark, Methods & data, data badges, About, Presenter.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,17 +10,8 @@ import { usePresenter } from "@/lib/store";
 
 import { AboutPanel } from "./globe/AboutPanel";
 
-const NAV = [
-  { href: "/explore", label: "Sites" },
-  { href: "/scan", label: "Land Scan" },
-  { href: "/viewer", label: "Viewer" },
-  { href: "/simulate", label: "Simulate" },
-  { href: "/lab", label: "Rotation Lab" },
-  { href: "/methods", label: "Data & Methods" },
-];
-
 export function Header() {
-  const path = usePathname();
+  const onMethods = usePathname().startsWith("/methods");
   const presenter = usePresenter((s) => s.presenter);
   return (
     <header className="border-b border-line bg-surface">
@@ -28,14 +20,9 @@ export function Header() {
           FieldTwin
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-wrap gap-x-4 gap-y-1 text-sm">
-          {NAV.map((n) => {
-            const current = path === n.href || path.startsWith(`${n.href}/`);
-            return (
-              <Link key={n.href} href={n.href} aria-current={current ? "page" : undefined} className={`border-b-2 py-0.5 ${current ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
-                {n.label}
-              </Link>
-            );
-          })}
+          <Link href="/methods" aria-current={onMethods ? "page" : undefined} className={`border-b-2 py-0.5 ${onMethods ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
+            Methods &amp; data
+          </Link>
         </nav>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           {offline && <span className="rounded border border-ink-muted px-2 py-0.5 text-xs font-medium text-ink">Offline: pre-built data</span>}

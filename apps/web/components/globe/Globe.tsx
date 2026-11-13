@@ -78,8 +78,11 @@ const MAX_ZOOM_OUT_M = 4.0e7;
 /** Globe tile detail: Cesium's default 2 px; finer in farm view for a sharper ground (costs some fps). */
 const GLOBE_SSE_DEFAULT = 2;
 const GLOBE_SSE_FARM = 1.5;
-/** Fields, overlays and the square outline classify terrain only, so OSM buildings stay unpainted. */
-const TERRAIN_CLASS = ClassificationType.TERRAIN;
+/**
+ * Fields, overlays and the square outline: on terrain they classify the ground only (OSM buildings stay unpainted);
+ * on Google's tiles they must classify the tiles (BOTH); overlays then rely on overlayMask to stay off roofs.
+ */
+const classificationFor = (s: Surface | null | undefined) => (s === "google" ? ClassificationType.BOTH : ClassificationType.TERRAIN);
 
 /** Dev-only extras used by /dev/cesium. Not part of the shared contract; the exported `Globe` type hides them. */
 export type GlobeDevProps = {
@@ -113,14 +116,19 @@ type Runtime = {
 /** The area the farm-view camera is confined to: the simulation square, else a box inscribed in the farm radius. */
 const boxOf = (p: GlobeProps, farm: Farm): Box => (p.simBbox ? boxOfBbox(p.simBbox) : boxOfRadius(farm, farm.radiusM));
 
-/** Show the surface the tier asks for (tiles.ts pickSurface), falling back to the base globe if a source fails to load. */
-function syncSurface(r: Runtime, onShown: (s: Surface) => void) {
+/**
+ * Show the surface tiles.ts pickSurface asks for, falling back if a source fails to load. Google counts as
+ * "farm view" only once the fly-in has landed (r.orbit), so the tileset never streams the whole Earth mid-flight.
+ */
+function syncSurface(r: Runtime, p: GlobeProps, onShown: (s: Surface) => void, onGoogleFailed: () => void) {
   const t = r.tier;
   if (!t) return;
-  void t.setSurface(pickSurface({ tier: t.tier, failed: t.failed })).then((ok) => {
+  const want = pickSurface({ tier: t.tier, view: p.view === "farm" && r.orbit ? "farm" : "globe", want: p.surface ?? "google", failed: t.failed });
+  void t.setSurface(want).then((ok) => {
     if (r.viewer.isDestroyed()) return;
-    if (ok) onShown(t.surface);
-    else syncSurface(r, onShown); // `failed` grew; pick again ("base" always succeeds)
+    if (ok) return onShown(t.surface);
+    if (want === "google") onGoogleFailed();
+    syncSurface(r, p, onShown, onGoogleFailed); // `failed` grew; pick again ("base" always succeeds)
   });
 }
 
@@ -250,6 +258,14 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   const rt = useRef<Runtime | null>(null);
   const prev = useRef<{ view: string; selectedId: string | null } | null>(null);
   const [surface, setSurface] = useState<Surface | null>(null);
+  // Re-pick the surface from the latest props (view, surface, landed or not). Google failing reports tier B.
+  const syncRef = useRef(() => {});
+  useEffect(() => {
+    syncRef.current = () => {
+      const r = rt.current;
+      if (r) syncSurface(r, live.current, setSurface, () => live.current.onReady({ tier: "B" }));
+    };
+  });
   // Latest props for long-lived Cesium callbacks (the viewer is created once).
   const live = useRef(props);
   useEffect(() => {
@@ -317,7 +333,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         live.current.onReady({ tier: tier.tier });
         live.current.onViewer?.({ viewer, tier });
         setSurface(tier.surface);
-        syncSurface(r, setSurface);
+        syncRef.current();
         if (live.current.view === "farm") resetRef.current(); // redo the fly-in now that ground heights are known
       },
       (e) => {
@@ -438,6 +454,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     // makes Cesium render, so an idle globe costs nothing.
     let last = performance.now();
     let tilesWereLoaded = true;
+    let landed = false;
     const offPreUpdate = scene.preUpdate.addEventListener(() => {
       const now = performance.now();
       const dt = Math.min(0.1, (now - last) / 1000);
@@ -447,15 +464,21 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       // requestRenderMode can stop rendering before the last globe tiles are drawn (seen after the farm fly-in: the
       // camera had landed but the screen kept the coarse mid-flight tiles until something else asked for a frame).
       // Keep rendering while tiles load, plus one frame after they finish.
-      const tilesLoaded = scene.globe.tilesLoaded;
+      const ts = r.tier?.tileset;
+      const tilesLoaded = (!scene.globe.show || scene.globe.tilesLoaded) && (!ts?.show || ts.tilesLoaded);
       if (!tilesLoaded || !tilesWereLoaded) scene.requestRender();
       tilesWereLoaded = tilesLoaded;
+      // Landing in / leaving farm view switches the surface (Google only after the fly-in).
+      if (!!r.orbit !== landed) {
+        landed = !!r.orbit;
+        syncRef.current();
+      }
       // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
       if (r.fields.flush()) scene.requestRender();
-      if (r.tier && r.overlays.sync(p.overlays ?? [], TERRAIN_CLASS)) scene.requestRender();
+      if (r.tier && r.overlays.sync(p.overlays ?? [], classificationFor(r.tier.surface), p.overlayMask)) scene.requestRender();
 
       // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth.
       const occluder = new EllipsoidalOccluder(Ellipsoid.WGS84, camera.positionWC);
@@ -548,12 +571,11 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     stylePins(r, selectedId);
   }, [farms, selectedId]);
 
-  // The surface (terrain vs base globe) is fixed by the tier; re-sync on view changes in case a source failed meanwhile.
-  const { fields, cropByField, selectedFieldId, simBbox, exaggeration } = props;
+  // Surface (Google vs terrain vs base) follows view + the surface prop; switching never reloads a loaded source.
+  const { fields, cropByField, selectedFieldId, simBbox, exaggeration, surface: wantSurface } = props;
   useEffect(() => {
-    const r = rt.current;
-    if (r) syncSurface(r, setSurface);
-  }, [view]);
+    syncRef.current();
+  }, [view, wantSurface]);
 
   // Farm view only: twin layers, finer globe tiles, vertical exaggeration (pivoting at the farm's ground height),
   // sun lighting at a fixed mid-morning local time, our own camera controls instead of Cesium's.
@@ -569,6 +591,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     scene.screenSpaceCameraController.enableCollisionDetection = !farm;
     scene.canvas.style.touchAction = farm ? "none" : "";
     scene.globe.maximumScreenSpaceError = farm ? GLOBE_SSE_FARM : GLOBE_SSE_DEFAULT;
+    // Default 1 = true scale. Cesium applies scene.verticalExaggeration to 3D Tiles content too (Model
+    // enableVerticalExaggeration defaults to true in @cesium/engine 26.5), so Google's tiles scale with the terrain.
     scene.verticalExaggeration = farm ? Math.max(0, exaggeration ?? 1) : 1;
     scene.verticalExaggerationRelativeHeight = farm ? (r.farmGround ?? 0) : 0;
     // Cheap realism: terrain shaded by the sun (vertex normals are requested in tiles.ts) plus ground atmosphere, sky
@@ -585,7 +609,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   useEffect(() => {
     const r = rt.current;
     if (!r || !surface) return;
-    r.outline.set(simBbox, TERRAIN_CLASS);
+    r.outline.set(simBbox, classificationFor(surface));
     if (r.orbit) r.orbit.dirty = true;
     r.viewer.scene.requestRender();
   }, [simBbox, surface]);
@@ -594,7 +618,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   useEffect(() => {
     const r = rt.current;
     if (!r || !surface) return;
-    r.fields.setFields(fields ?? [], TERRAIN_CLASS);
+    r.fields.setFields(fields ?? [], classificationFor(surface));
     r.viewer.scene.requestRender();
   }, [fields, surface]);
   useEffect(() => {

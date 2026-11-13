@@ -5,7 +5,7 @@ import type { Viewer } from "cesium";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GlobeDev } from "@/components/globe/Globe";
-import type { CropLook, Farm, FarmField, GlobeHandle, GlobeView, GroundOverlay, TileTier } from "@/components/globe/types";
+import type { CropLook, Farm, FarmField, FarmSurface, GlobeHandle, GlobeView, GroundOverlay, TileTier } from "@/components/globe/types";
 
 import { createDrape, type Drape, type DrapeMethod, type DrapeSource } from "./drape";
 import type { LoadedTier } from "./tiles";
@@ -77,6 +77,18 @@ const SIM_BBOX: [number, number, number, number] = (() => {
   return [FARMS[0].lon - dLon, FARMS[0].lat - dLat, FARMS[0].lon + dLon, FARMS[0].lat + dLat];
 })();
 
+/** Dev-only sample mask: three made-up 60 m squares near test location 1 (stand-ins for building footprints). */
+const SAMPLE_MASK: [number, number][][] = [
+  [0, 0],
+  [0.002, 0.001],
+  [-0.0025, -0.0012],
+].map(([dx, dy]) => {
+  const x = FARMS[0].lon + dx;
+  const y = FARMS[0].lat + dy;
+  const h = 0.0003; // ~30 m north-south half-size; east-west is ~22 m, fine for a test
+  return [[x - h, y - h], [x + h, y - h], [x + h, y + h], [x - h, y + h]];
+});
+
 function bboxAround(f: Farm): DrapeSource["bbox"] {
   const dLat = 0.006; // about 670 m north-south half-height
   const dLon = dLat / Math.cos((f.lat * Math.PI) / 180);
@@ -91,11 +103,13 @@ declare global {
 }
 
 export default function Spike() {
-  // ?tier=B|C forces a tier on this page without touching env files.
+  // ?tier=A|B|C forces a tier on this page without touching env files (A spends one Google session per farm view load).
   const [tierOrder] = useState<TileTier[] | undefined>(() => {
     const q = new URLSearchParams(window.location.search).get("tier")?.toUpperCase();
-    return q === "B" ? ["B", "C"] : q === "C" ? ["C"] : undefined;
+    return q === "A" ? ["A", "B", "C"] : q === "B" ? ["B", "C"] : q === "C" ? ["C"] : undefined;
   });
+  const [surface, setSurface] = useState<FarmSurface>("google");
+  const [maskOn, setMaskOn] = useState(true);
   const [tier, setTier] = useState<TileTier | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState<Live | null>(null);
@@ -218,6 +232,8 @@ export default function Spike() {
         overlays={overlays}
         simBbox={squareOn ? SIM_BBOX : undefined}
         exaggeration={exaggeration}
+        surface={surface}
+        overlayMask={maskOn ? SAMPLE_MASK : undefined}
       />
       {split && drapeOn && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80" style={{ left: `${divider * 100}%` }} />}
       <div className="absolute left-3 top-3 flex max-h-[calc(100%-1.5rem)] max-w-xs flex-col gap-2 overflow-y-auto rounded-md bg-surface/95 p-3 text-sm text-ink shadow">
@@ -271,7 +287,18 @@ export default function Spike() {
           <input type="range" min={1} max={5} step={0.5} value={exaggeration} onChange={(e) => setExaggeration(Number(e.target.value))} />
         </label>
         <label className={label}>
+          Surface
+          <select className="rounded border border-line bg-surface-2 px-1" value={surface} onChange={(e) => setSurface(e.target.value as FarmSurface)}>
+            <option value="google">google (tier A only)</option>
+            <option value="terrain">terrain</option>
+          </select>
+        </label>
+        <p data-testid="surface">Surface shown: {live?.tier.surface ?? "…"} (updates on the next control change)</p>
+        <label className={label}>
           <input type="checkbox" checked={overlayOn} onChange={(e) => setOverlayOn(e.target.checked)} /> Overlay blob
+        </label>
+        <label className={label}>
+          <input type="checkbox" checked={maskOn} onChange={(e) => setMaskOn(e.target.checked)} /> Mask 3 sample squares (overlayMask)
         </label>
         <label className={label}>
           <input type="checkbox" checked={overlayAnim} onChange={(e) => setOverlayAnim(e.target.checked)} /> Animate overlay (version bumps)

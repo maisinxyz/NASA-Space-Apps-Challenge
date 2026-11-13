@@ -32,13 +32,11 @@ describe("FarmCard", () => {
     expect(html).not.toContain("Approximate location");
   });
 
-  it("without a globe: no Open twin; the hero links to the simulation with the synthetic label", () => {
+  it("without a globe: no Open twin and no link to removed pages", () => {
     const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} />);
     expect(html).not.toContain("Open twin");
-    expect(html).toContain('href="/simulate"');
-    expect(html).toContain("Synthetic storm demo");
+    expect(html).not.toContain("/simulate");
     expect(html).not.toContain("data-dev-only");
-    expect(renderToStaticMarkup(<FarmCard farm={explore} onClose={noop} />)).not.toContain("/simulate");
   });
 });
 

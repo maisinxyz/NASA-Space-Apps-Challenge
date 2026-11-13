@@ -1,5 +1,7 @@
 // Farm twin layers on the Cesium scene: ground-clamped field polygons (illustrative crop looks, pickable)
 // and generic ground overlays (any climate scenario renders into a canvas; re-uploaded only when its version changes).
+// On Google's photoreal tiles everything classifies the tiles too (ClassificationType.BOTH): overlays are kept off
+// roofs by cutting the overlayMask (building footprints) out of each canvas. Tree canopies have no mask and still get painted.
 import "./base";
 import {
   ClassificationType,
@@ -162,33 +164,70 @@ czm_material czm_getMaterial(czm_materialInput materialInput) {
   return material;
 }`;
 
+/** Pure: [lon, lat] -> canvas pixel [x, y] for a north-up canvas of width x height covering bbox [w, s, e, n]. */
+export function lonLatToPx(bbox: readonly [number, number, number, number], width: number, height: number, lon: number, lat: number): [number, number] {
+  const [w, s, e, n] = bbox;
+  return [((lon - w) / (e - w)) * width, ((n - lat) / (n - s)) * height];
+}
+
+/** Rings of [lon, lat] where overlays must not draw (FarmTwinProps.overlayMask). */
+export type OverlayMask = readonly (readonly [number, number][])[];
+
+/** Punch the mask polygons out of a canvas that covers bbox (destination-out). Rings outside the bbox are clipped away by the canvas. */
+function punchMask(g: CanvasRenderingContext2D, bbox: readonly [number, number, number, number], mask: OverlayMask) {
+  const { width, height } = g.canvas;
+  g.save();
+  g.globalCompositeOperation = "destination-out";
+  g.fillStyle = "#000";
+  g.beginPath();
+  for (const ring of mask) {
+    if (ring.length < 3) continue;
+    ring.forEach(([lon, lat], i) => {
+      const [x, y] = lonLatToPx(bbox, width, height, lon, lat);
+      if (i) g.lineTo(x, y);
+      else g.moveTo(x, y);
+    });
+    g.closePath();
+  }
+  g.fill("nonzero");
+  g.restore();
+}
+
 type OverlaySlot = { material: Material; canvases: [HTMLCanvasElement, HTMLCanvasElement]; flip: number };
 
 export type OverlayLayer = {
-  /** Cheap when nothing changed (safe to call every frame). Returns true if anything needs a re-render. */
-  sync(overlays: readonly GroundOverlay[], classification: ClassificationType): boolean;
+  /**
+   * Cheap when nothing changed (safe to call every frame). Returns true if anything needs a re-render.
+   * `mask` polygons are cut out of every overlay; a new mask (by reference) re-uploads every overlay.
+   */
+  sync(overlays: readonly GroundOverlay[], classification: ClassificationType, mask?: OverlayMask): boolean;
 };
 
 export function createOverlayLayer(collection: PrimitiveCollection): OverlayLayer {
   let keys: OverlayKey[] = [];
   let cls: ClassificationType | undefined;
+  let lastMask: OverlayMask | undefined;
   const slots = new Map<string, OverlaySlot>();
 
   // Material only re-uploads a texture when the uniform is a different object, so copy into two canvases
   // and alternate (same trick as drape.ts).
-  const upload = (slot: OverlaySlot, src: HTMLCanvasElement) => {
+  const upload = (slot: OverlaySlot, src: HTMLCanvasElement, bbox: GroundOverlay["bbox"], mask: OverlayMask | undefined) => {
     slot.flip ^= 1;
     const dst = slot.canvases[slot.flip];
     if (dst.width !== src.width || dst.height !== src.height) Object.assign(dst, { width: src.width, height: src.height });
     const g = dst.getContext("2d")!;
     g.clearRect(0, 0, dst.width, dst.height);
     g.drawImage(src, 0, 0);
+    if (mask?.length) punchMask(g, bbox, mask);
     slot.material.uniforms.image = dst;
   };
 
   return {
-    sync(overlays, classification) {
+    sync(overlays, classification, maskIn) {
+      const mask = maskIn?.length ? maskIn : undefined; // an empty mask is a no-op (no re-uploads when [] is re-created)
       const plan = planOverlays(keys, overlays, classification !== cls);
+      const maskChanged = mask !== lastMask;
+      lastMask = mask;
       keys = overlays.map(({ id, version, bbox }) => ({ id, version, bbox }));
       cls = classification;
       if (plan.rebuild) {
@@ -221,8 +260,8 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
           slot.material.uniforms.opacity = opacity;
           changed = true;
         }
-        if (toUpload.has(o.id)) {
-          upload(slot, o.canvas);
+        if (maskChanged || toUpload.has(o.id)) {
+          upload(slot, o.canvas, o.bbox, mask);
           changed = true;
         }
       }

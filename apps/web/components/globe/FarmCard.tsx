@@ -1,23 +1,9 @@
 // Card for the selected farm. Facts come from lib/farms.ts; every one links back to its source.
-import Link from "next/link";
-
 import { TierTag } from "./FarmList";
 import type { Farm } from "./types";
 
 export const EXPLORE_NOTE = "Simulation not available for this farm yet";
 export const PRIMARY_BTN = "rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-accent-ink hover:opacity-90";
-
-/** Link to the hero farm's simulation. The simulation data is still synthetic, so the label is always visible (also in Presenter mode). */
-export function SimLink() {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-2">
-      <Link href="/simulate" className={PRIMARY_BTN}>
-        Open simulation
-      </Link>
-      <span className="rounded border border-ink-muted px-1.5 text-xs font-semibold text-ink">Synthetic storm demo</span>
-    </span>
-  );
-}
 
 /** `onOpen` is left out when there is no globe to fly in (small screens, globe failure). */
 export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm; onClose(): void; onOpen?: () => void; className?: string }) {
@@ -53,15 +39,13 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
         </a>
       </p>
       {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}</p>}
-      <div className="mt-3">
-        {onOpen ? (
+      {onOpen && (
+        <div className="mt-3">
           <button type="button" onClick={onOpen} className={PRIMARY_BTN}>
             Open twin
           </button>
-        ) : (
-          farm.tier === "twin" && <SimLink />
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
