@@ -2,13 +2,17 @@
 // Homepage body: the full-bleed Earth globe with farm pins, and everything around it (pitch, farm list,
 // farm card, farm-view bar, failure fallback). The globe itself is components/globe/Globe.tsx, loaded client-only.
 import { useReducedMotion } from "framer-motion";
+import { useShallow } from "zustand/react/shallow";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Component, type ReactNode, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+import { TwinPanel, twinFields } from "@/components/farm/TwinPanel";
 import { FARMS, farmById } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { useAppStore } from "@/lib/store";
+import { ROTATING_FIELDS } from "@/lib/twin/agassiz";
+import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
 import { EXPLORE_NOTE, FarmCard, SimLink } from "./FarmCard";
 import { FarmList } from "./FarmList";
@@ -68,6 +72,16 @@ export function GlobeHome() {
   const farm = farmById(farmId);
   const showGlobe = wide && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
+  // Farm twin (only "twin" farms with field data): fields + the season of the rotation chosen in Compare.
+  const fields = view === "farm" && farm?.tier === "twin" ? twinFields(farm.id) : undefined;
+  const inTwin = inFarm && !!fields;
+  const { twinFieldId, twinRotationId, twinYear, twinMonth, photoreal, exaggeration } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, photoreal: s.photoreal, exaggeration: s.exaggeration })),
+  );
+  const cropByField = useMemo(() => {
+    const r = rotationById(twinRotationId ?? "");
+    return fields && r ? cropsForSeason(fields, ROTATING_FIELDS, r, twinYear, twinMonth) : undefined;
+  }, [fields, twinRotationId, twinYear, twinMonth]);
 
   // Global Reset key: TourController resets the store (back to the globe, no farm); re-centre the camera too.
   useEffect(() => {
@@ -138,12 +152,20 @@ export function GlobeHome() {
             setLoad("ready");
           }}
           onError={() => setLoad("error")}
+          fields={fields}
+          selectedFieldId={twinFieldId}
+          onSelectField={(id) => useAppStore.setState({ twinFieldId: id })}
+          cropByField={cropByField}
+          photoreal={inTwin && photoreal}
+          exaggeration={inTwin ? exaggeration : 1}
         />
       </GlobeBoundary>
 
       {/* Overlays: the layer lets pointer events through to the globe; each panel takes them back. */}
       <div className="pointer-events-none absolute inset-0 p-4 *:pointer-events-auto">
-        {inFarm ? (
+        {inTwin ? (
+          <TwinPanel farm={farm} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
+        ) : inFarm ? (
           <div className="absolute top-4 left-4 flex max-w-[calc(100%-22rem)] flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface/90 p-3">
             <button type="button" className={btn} onClick={() => useAppStore.setState({ globeView: "globe" })}>
               ← Back to globe
@@ -161,7 +183,7 @@ export function GlobeHome() {
           </div>
         )}
 
-        {list("absolute top-4 right-4 max-h-[calc(100%-2rem)] w-72 overflow-y-auto")}
+        {!inTwin && list("absolute top-4 right-4 max-h-[calc(100%-2rem)] w-72 overflow-y-auto")}
 
         {cardOpen && <FarmCard farm={farm} onClose={() => select(null)} onOpen={() => useAppStore.setState({ globeView: "farm" })} className="absolute bottom-10 left-4 w-80 max-w-[calc(100%-22rem)]" />}
 

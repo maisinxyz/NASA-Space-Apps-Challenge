@@ -4,6 +4,9 @@ import { create } from "zustand";
 
 import type { GlobeView } from "@/components/globe/types";
 import type { TwinViewerProps, ViewerLayerName, ViewerQuality } from "@/components/viewer";
+import type { Weights } from "@/lib/twin/rotations";
+
+export type TwinMode = "explore" | "simulate" | "compare" | "evidence";
 
 export interface AppState {
   siteId: string | null;
@@ -30,6 +33,18 @@ export interface AppState {
   farmId: string | null;
   /** Homepage globe: whole Earth, or flown in to farmId. */
   globeView: GlobeView;
+  /** Farm twin (homepage farm view): active mode, selected field, rotation + season shown on the fields, layers. */
+  twinMode: TwinMode;
+  twinFieldId: string | null;
+  /** null = each field shows its illustrative current crop. */
+  twinRotationId: string | null;
+  /** Rotation year (0-based) and month (0 = Jan) shown on the fields. */
+  twinYear: number;
+  twinMonth: number;
+  priorities: Weights;
+  photoreal: boolean;
+  /** Terrain vertical exaggeration, 1–3. */
+  exaggeration: number;
 }
 
 export const initialState: AppState = {
@@ -50,6 +65,14 @@ export const initialState: AppState = {
   divider: 0.5,
   farmId: null,
   globeView: "globe",
+  twinMode: "explore",
+  twinFieldId: null,
+  twinRotationId: null,
+  twinYear: 0,
+  twinMonth: 6,
+  priorities: { water: 1, erosion: 1, soilCover: 1, income: 1 },
+  photoreal: false,
+  exaggeration: 1,
 };
 
 export const useAppStore = create<AppState & { reset(): void }>()((set) => ({
