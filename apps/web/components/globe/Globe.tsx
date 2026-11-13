@@ -67,6 +67,9 @@ const FARM_PITCH_RAD = CesiumMath.toRadians(45);
 const ORBIT_RAD_PER_PX = 0.005;
 const WHEEL_ZOOM_PER_DELTA = 0.0015;
 const FLY_SECONDS = 3;
+/** Fly-in safety nets: give up waiting for the terrain height after this, and force the landing this long after the flight should have ended. */
+const GROUND_TIMEOUT_S = 4;
+const LAND_GRACE_S = 2;
 const HOME = { lon: -100, lat: 25 };
 /** Auto-rotate speed, radians per second (one turn in about three minutes). */
 const AUTO_ROTATE_RAD_S = CesiumMath.toRadians(2);
@@ -102,6 +105,9 @@ type Runtime = {
   twinLayers: PrimitiveCollection;
   /** Non-null only in farm view after the fly-in; the camera then sits in the target's ENU frame. */
   orbit: OrbitState | null;
+  /** Pending farm landing: enters the orbit framing. Forced by the watchdog at `landBy` (performance.now ms). */
+  land: (() => void) | null;
+  landBy: number;
 };
 
 /** The area the farm-view camera is confined to: the simulation square, else a box inscribed in the farm radius. */
@@ -175,6 +181,7 @@ function startFlight(r: Runtime) {
 /** Camera back to the normal globe frame (the orbit uses a local ENU frame). */
 function leaveOrbit(r: Runtime) {
   r.orbit = null;
+  r.land = null;
   r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
 }
 
@@ -198,23 +205,34 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
   const box = boxOf(p, farm);
   const centre: LonLat = { lon: box.lon, lat: box.lat };
   const framing = clampOrbit({ heading: 0, pitch: -FARM_PITCH_RAD, range: 2 * Math.max(box.halfX, box.halfY) * FRAME_RANGE_PER_SIDE });
-  const go = (ground: number) => {
-    if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
-    r.farmGround = ground;
-    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, ground), 1), {
+  let ground = r.farmGround ?? 0;
+  // Landing = the orbit framing, exactly where a completed flight ends. It also runs when the flight is cancelled
+  // without being superseded, and from the per-frame watchdog if the flight never finishes, so "Open twin" always
+  // ends in the same framing as Reset view. The per-frame ground update then corrects `ground` if it was a guess.
+  const land = () => {
+    if (seq !== r.flightSeq || r.viewer.isDestroyed() || r.land !== land) return;
+    r.land = null;
+    done();
+    r.orbit = { target: centre, o: framing, ground, camGround: ground, dirty: true };
+  };
+  r.land = land;
+  r.landBy = performance.now() + (GROUND_TIMEOUT_S + FLY_SECONDS + LAND_GRACE_S) * 1000;
+  let started = false;
+  const go = (g: number) => {
+    if (started || seq !== r.flightSeq || r.viewer.isDestroyed()) return;
+    started = true;
+    ground = g;
+    r.farmGround = g;
+    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
       offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
       duration: p.reducedMotion ? 0 : FLY_SECONDS,
-      complete: () => {
-        if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
-        done();
-        // The orbit starts exactly where the flight ended: same target, heading, pitch and range.
-        r.orbit = { target: centre, o: framing, ground, camGround: ground, dirty: true };
-      },
-      cancel: done,
+      complete: land,
+      cancel: land, // a no-op when a newer flight superseded this one (seq changed)
     });
   };
-  // The target height comes from terrain so the flight does not end underground at high sites.
+  // The target height comes from terrain so the flight does not end underground at high sites; do not wait forever.
   (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
+  setTimeout(() => go(ground), GROUND_TIMEOUT_S * 1000);
 }
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
@@ -280,6 +298,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       outline: createSquareOutline(outlineCol),
       twinLayers,
       orbit: null,
+      land: null,
+      landBy: 0,
     };
     rt.current = r;
     prev.current = null;
@@ -417,11 +437,21 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     // Per-frame work. preUpdate fires every animation frame even in requestRenderMode; moving the camera
     // makes Cesium render, so an idle globe costs nothing.
     let last = performance.now();
+    let tilesWereLoaded = true;
     const offPreUpdate = scene.preUpdate.addEventListener(() => {
       const now = performance.now();
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       const p = live.current;
+
+      // requestRenderMode can stop rendering before the last globe tiles are drawn (seen after the farm fly-in: the
+      // camera had landed but the screen kept the coarse mid-flight tiles until something else asked for a frame).
+      // Keep rendering while tiles load, plus one frame after they finish.
+      const tilesLoaded = scene.globe.tilesLoaded;
+      if (!tilesLoaded || !tilesWereLoaded) scene.requestRender();
+      tilesWereLoaded = tilesLoaded;
+      // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
+      if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
       if (r.fields.flush()) scene.requestRender();
@@ -434,6 +464,10 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         if (entity.show !== visible) entity.show = visible;
       }
 
+      if (r.land && now > r.landBy) {
+        r.viewer.camera.cancelFlight();
+        r.land(); // cancelFlight normally lands already (cancel callback); this covers a flight that never started
+      }
       if (r.flying) return;
       if (p.view === "globe") {
         if (!r.interacted && !p.reducedMotion && p.selectedId == null) camera.rotate(Cartesian3.UNIT_Z, -AUTO_ROTATE_RAD_S * dt);

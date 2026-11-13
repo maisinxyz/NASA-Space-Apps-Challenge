@@ -66,3 +66,10 @@ Static scene, redrawn every frame: about 30 fps, identical with lighting/atmosph
 - Touch pinch/one-finger orbit is untested.
 - Middle-drag pan is the only pan control (hidden from users; PRODUCT may add a hint).
 - Field/overlay classification on OSM buildings stays unpainted (terrain only), as before.
+
+### C3b fix: "Open twin" sometimes did not show the farm framing
+- What happened: the camera did land in the orbit framing (checked: 1387 m, orbit on), but the screen still showed coarse terrain from mid-flight. In requestRenderMode Cesium stopped rendering before the last globe tiles were drawn (`globe.tilesLoaded` was true, 0 renders in 2 s, then one `requestRender()` showed the farm). "Reset view" only worked because it moved the camera again.
+- Fix (Globe.tsx preUpdate): keep requesting a frame while `globe.tilesLoaded` is false, plus one more frame after the tiles finish loading.
+- Also found: Cesium's CameraFlightPath sets `screenSpaceCameraController.enableInputs = true` after every flight, so after the fly-in Cesium's own controls were back on in farm view. preUpdate now turns them off again every frame in farm view.
+- Safety nets in flyToFarm: the wait for the terrain height times out after 4 s. The landing (orbit framing) also runs when the flight is cancelled without a newer flight, and a watchdog (fly time + 6 s) forces it if the flight never finishes. Reset view, list and pin all go through the same flyToFarm.
+- No pure test: the cause was Cesium render scheduling, not our maths. Screenshots: `.playwright-mcp/c3b-agassiz-run2.png` (bug: camera already landed, stale frame), `c3b-agassiz-run2-after.png` (after one render), `c3b-agassiz-open-fixed-b.png` (fixed path). With the fix, the first screenshot 10 s after Open twin still showed coarse tiles (still loading at the right position). They refined a few seconds later without any input.
