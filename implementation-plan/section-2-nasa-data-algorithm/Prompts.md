@@ -1,79 +1,94 @@
-# Section 2 Prompts: NASA data and algorithm
+# Section 2 Prompts: NASA data and algorithm (rewritten for PRD v0.2 and Databases.md)
 
-Run in order, one per Claude Code session. Prompt 01 (kickoff) must be done by both owners before anything else.
+Run in order, one per Claude Code session. Prompt S2-01 (kickoff) must be done by both owners before anything else. Data prompts are tagged **[S2-A]** (data) or **[S2-B]** (algorithm); prompts with no tag are shared.
+
+Per-dataset detail (why, how to get it, steps, needs, outputs, fallback) lives in `../Databases.md` under the ids **DB-1 to DB-13**. Each data prompt names the DB sections it implements. Do not re-derive that detail; read the named sections.
 
 ## Rules for every prompt (Claude reads these once)
 
-1. Read, in this order and nothing else unless the prompt lists it: `CLAUDE.md`, this folder's `PRD.md` section 0 and the sections the prompt names, the last 3 entries of `progress.md`.
-2. For root-PRD detail, do NOT open the whole file. Run `grep -n "### BE-06" prd.md`, then `sed -n '<start>,<end>p' prd.md` for that card only.
-3. Never invent dataset names, URLs, parameters or constants. Look them up on the web, cite the URL in a code comment, or mark `TODO(verify)`.
-4. Do only this prompt's task. Do not edit `packages/contracts/openapi.yaml`; if a change is needed, write a contract request in `progress.md` and stop for the integrator.
-5. Output shapes must pass `fixtures_lib.contract.validate_response`. Keep determinism and `OFFLINE=1` behavior.
-6. Finish with: `make test` (show results), list acceptance items that pass or fail, append an entry to `progress.md`, update `PRD.md` (change-log row) if a decision changed, then stop.
+1. Read, in this order and nothing else unless the prompt lists it: `CLAUDE.md`, this folder's `PRD.md` section 0 and the sections the prompt names, the `../Databases.md` sections the prompt names, the last 3 entries of `progress.md`.
+2. Never invent dataset names, URLs, parameters, variable names, fill values or constants. Look them up on the web, cite the URL in a code comment, or mark `TODO(verify)`. Record each verified fact in `data-sources.md` and update the matching `Databases.md` row.
+3. Do only this prompt's task. There is **no hand-written contract file** (PRD D-19): Pydantic models in `services/api/app/models/` are the contract and `/openapi.json` is generated. If a change affects Section 1, announce it to the integrator the same hour and regenerate fixtures.
+4. Keep determinism (same inputs give byte-identical outputs) and `OFFLINE=1` behavior (ingest modules refuse network calls and read `data/cache/` or `data/seed/` only).
+5. Engine purity: `engine/` and `markers/` take arrays and return arrays/models. No network, file I/O, clock or LLM there.
+6. Earthdata credentials live in `.env` only. Never commit `.env`, raw downloads (`data/cache/`) or imagery whose license forbids redistribution. Commit only derived, license-safe tables to `data/seed/<site>/`.
+7. Finish with: `make test` (show results), list acceptance items that pass or fail, append an entry to `progress.md`, update `PRD.md` and `../Databases.md` (change-log row) if a decision or fact changed, then stop.
 
 `progress.md` entry format (max 10 lines): `## S2-xx name | date | commit` then Built / Files / How to run / Gaps / Next prompt must know.
 
-Commit directly to `main` with the prompt ID in the message (e.g. `S2-03: …`); `git pull --rebase` before pushing. Swap points live in `services/api/app/services/*`.
+Commit directly to `main` with the prompt ID in the message (e.g. `S2-03: …`); `git pull --rebase` before pushing.
 
 ---
 
-## S2-01 Kickoff: flesh out this PRD and verify the data (both owners, interview style)
+## S2-01 Kickoff: verify the data, flesh out the PRD (both owners, interview style)
 
-**Goal:** a PRD the team believes in, with verified datasets. No pipeline code.
-**Read:** `PRD.md` fully; `../README.md`; `../section-1-web-experience-3d-ui/PRD.md` sections 0 and 7 only.
-**Task:** (a) Web-verify each candidate dataset in PRD section 4: exact name, variables, resolution, time coverage, access method, license, rate limits, a working sample request (record URL). Drop or flag any that are impractical. (b) Interview the owners one question at a time on PRD section 10 and on which of concepts 1-7 are P0. (c) Write `prior-art.md`: 5 to 8 existing tools or Space Apps entries (including ones for this challenge) and how our approach differs. (d) Rewrite `PRD.md`: owners, verified data table, chosen concepts with a one-paragraph method each, measurable acceptance, a 48-hour plan with hour marks per owner. Under 300 lines.
-**Done when:** every dataset row has a verified source or a drop reason; `prior-art.md` exists; open questions resolved or assigned. Append `progress.md`.
+**Goal:** every dataset verified against its provider, accounts working, farm chosen. No pipeline code.
+**Read:** `PRD.md` fully; `../Databases.md` fully; `../README.md`; `../section-1-web-experience-3d-ui/PRD.md` sections 0, 7 and 7.1 only.
+**Task:** (a) Open the **official 2026 challenge page** in a browser and copy its Resources list into `data-sources.md`; add anything that fits a role in `Databases.md` §1. (b) For each P0 row (DB-1 to DB-8), web-verify and record: exact product name and version, variables and units, resolution, time coverage, access method, **a working sample request URL**, license and attribution text, rate limits, and whether ~49°N is covered. (c) Decide **SMAP L4 vs L3** (DB-5) and record why. (d) Create Earthdata accounts, run one real download each, and write `.env.example` (variable names only). (e) Interview the owners one question at a time to pick the **exact Fraser Valley farm** (coordinates, fields) and the 3 curated rotations. (f) Write `prior-art.md` from PRD §13. (g) Update `Databases.md` §1 table statuses (`TODO(verify)` to verified) and the PRD §5 table.
+**Done when:** every P0 dataset row is verified with a sample request or has a drop reason and fallback; `data-sources.md`, `prior-art.md`, `.env.example` exist; farm and rotations chosen; open items 1 to 5, 11 and 13 in PRD §15 resolved or assigned. Append `progress.md`.
 
-## S2-02 NASA weather ingestion, storm ranking, return periods (BE-06)
+## S2-02 Models, fixtures and engine skeleton [S2-B]
 
-**Read:** root `prd.md` card BE-06; `services/api/app/services/weather.py`; contract schemas `Storm`, `TrendSeries` (grep in `openapi.yaml`).
-**Task:** Real client for the NASA weather source(s) chosen in S2-01 (verified parameters only), disk cache per location, offline fallback. Rolling 1-3 day totals, distinct storm selection (about 7 days apart), antecedent wetness, hyetograph (flag `synthetic: true` unless real sub-daily data is used), Theil-Sen trends with CI, and **extreme-value return periods** per storm. Return-period fields are a contract request: write it in `progress.md`, implement internally first.
-**Done when:** ranking test on a synthetic series with known events passes; cached offline response works; `/weather/storms` and `/weather/summary` validate.
+**Read:** PRD sections 6.1, 9.2, 9.3, 10 (invariants row), 14.
+**Task:** Pydantic v2 models for `FieldMarker`, `Evidence`, `SourceRef`, `Basis`, zone, rotation, compare result, **terrain package metadata**, and provenance (shapes in PRD §9.2 and `Databases.md` DB-1, DB-13). FastAPI app that serves fixtures generated from the models (one script writes example JSON for every endpoint, including the proposed `GET /sites/{id}/terrain`). `make fixtures`, `make types`-style script for Section 1 to regenerate TypeScript from `/openapi.json`. Engine skeleton (`engine/hazard.py`, `exposure.py`) with the **invariant tests** from PRD §10 on tiny synthetic arrays.
+**Done when:** `/openapi.json` generated; every fixture validates against its model; invariant tests pass on synthetic data; Section 1 notified of the model shapes.
 
-## S2-03 Terrain ingestion and analysis (BE-01, BE-04)
+## S2-03 Weather ingestion: POWER, IMERG, SMAP [S2-A]
 
-**Read:** root cards BE-01, BE-04; `fixtures_lib/terrain.py` (reuse helpers); contract `TerrainPackage`.
-**Task:** Elevation adapter (open DEM or NASA elevation per S2-01), resample to the standard grid; slope, aspect, D8 flow, flow accumulation, priority-flood depressions, **topographic wetness index**; layer PNGs with contract encodings; stats JSON. Flag `dsm_includes_vegetation` where relevant.
-**Done when:** tilted/bowl/ridge-valley synthetic tests pass; layers match contract encodings; curated site drainage follows visible valleys.
+**Read:** `../Databases.md` DB-3, DB-4, DB-5 and §3; PRD sections 6.2 and 8; `data-sources.md`.
+**Task:** Three cache-first ingest modules (`ingest/power.py`, `imerg.py`, `smap.py`) with `httpx` and `earthaccess` (or the access method verified in S2-01). Subset to the farm's cell, cache raw in `data/cache/`, log request URLs, retry with backoff, replace verified fill values with missing and report the missing share. `OFFLINE=1` refuses network and reads cache only. Return tidy daily tables (date, rain mm, wetness, tmin, tmax). Pre-download everything for the curated site now (decision D-03).
+**Done when:** POWER, IMERG and SMAP daily tables exist for the curated site; a test with the network blocked still loads from cache; missing-data report printed; sample requests recorded in `data-sources.md`.
 
-## S2-04 Cover and phenology from imagery and NASA vegetation index (BE-05)
+## S2-04 Fusion and hazard odds [S2-B, with S2-A data]
 
-**Read:** root card BE-05; S2-01 data table rows for vegetation.
-**Task:** Classical cover classification from the photo/texture (excess-green plus Otsu plus morphology; classes vegetation/bare/water/other; persistent-bare mask; confidence). If a NASA vegetation index time series was verified, derive an observed cover/phenology curve for the field and compare it to the crop-library curve. Document limits.
-**Done when:** percentages sum to 100; low-confidence flag works; no gross errors on curated spot-check.
+**Read:** PRD section 6.2; `../Databases.md` DB-3, DB-4, DB-5; S2-02 and S2-03 progress entries.
+**Task:** Per-season empirical quantile mapping POWER to IMERG (rain) and POWER to SMAP (wetness) over the overlap years, applied to all POWER years (`fusion/`). Site-percentile thresholds (heavy rain, wet ground, dry spell). `wet_hit(y,w)` and `dry_hit(y,w)` matrices, `J_wet[52]` and `J_dry[52]` (joint frequency counted directly, not multiplied), circular smoothing. Write `hazard.json` with thresholds, matrices and **before/after fit diagnostics**. If IMERG or SMAP is unavailable, run the labeled fallback (uncorrected POWER with a caveat in `hazard.json`).
+**Done when:** diagnostics show the 95th and 99th rain percentile closer to IMERG after mapping; raising `q_rain` never raises `J_wet` (test); deterministic output; fallback path tested.
 
-## S2-05 Crop library and rotation engine (BE-07)
+## S2-05 Terrain and zones [S2-A]
 
-**Read:** root card BE-07; `services/api/app/services/crops.py`, `fixtures/crops.json`.
-**Task:** Data-file crop library with `source` per value (approximate values marked `to_verify` until sourced); exactly three rotations (existing + two transparent-rule alternatives); validation rules; monthly cover calendar and bare days; implement real `/rotations/validate` including the returned custom rotation (contract decision #23).
-**Done when:** bare-days test matches hand-computed examples; family-repeat warning works; three rotations always returned.
+**Read:** PRD section 6.4; `../Databases.md` DB-1, DB-2; contract shape from S2-02.
+**Task:** Terrain adapter for LidarBC (curated site) and NASADEM (other sites and Lite mode): mosaic, clip with buffer, reproject, resample, priority-flood fill, slope, D8, flow accumulation, TWI. Terrain zones (0.5 to 2 ha) clipped to fields, merge slivers, terrain factor `T(z)`, pole-of-inaccessibility icon points, simplified outlines. Write the **terrain package for Section 1** (heightmap PNG16 row-major row 0 north, normals PNG, `terrain.json` with grid size, cell size m, CRS, elevation range, `source`, `resolution_m`, `dsm_includes_vegetation`) and `zones.geojson`. Implement `GET /sites/{id}/terrain` and `/zones`.
+**Done when:** synthetic tilted-plane, bowl and ridge-valley tests pass (highest `T(z)` in hollows); curated-site drainage follows visible ditches; package loads in Section 1's decoder; license of redistributed derived products confirmed.
 
-## S2-06 Core simulation engine (BE-08)
+## S2-06 Crop calendars from HLS and AAFC [S2-A]
 
-**Read:** root card BE-08; `fixtures_lib/mock_sim.py` and `ftw1.py` (output format only).
-**Task:** SCS-CN runoff with antecedent adjustment, D8 time-stepped routing with ponding, relative erosion index, FTW1 frames (about 60), risk PNG, metrics. Cache by input hash; grid-size fallback with a flag (contract request if no field exists). Implement all invariant tests from root BE-08.
-**Done when:** all invariant tests pass; three rotations differ visibly on at least two storms; output decodes with the real FTW1 reader.
+**Read:** PRD sections 6.3 and 6.5; `../Databases.md` DB-6, DB-7, DB-8.
+**Task:** Clip AAFC crop inventory to field patches (`fields.geojson`). Select sample fields per crop. Read HLS windows (cloud-optimized, no full-tile downloads), mask with the quality layer, compute NDVI, weekly median across years, linear gap-fill, **valid-observation count per week**. `Bare_crop[52]`, stage dates, textbook fallback labeled `assumed`. Transcribe FAO-56 Kc values with table references into `data/reference/fao56_kc.json` (**S2-B reviews every value**) and compute `Sens_crop[52]`. Write `calendars.json`.
+**Done when:** median green-up and harvest weeks fall inside the agronomic windows you cite; observation counts reported; every FAO-56 value has a `source`; no imagery committed.
 
-## S2-07 Our algorithm, part 1: terrain-coupled wetness, whole-record ensemble, resilience profile
+## S2-07 Exposure engine, bootstrap and sensitivity [S2-B]
 
-**Read:** PRD section 5 (concepts 1, 2, 5, 7) as refined in S2-01; S2-02, S2-03, S2-06 progress entries.
-**Task:** Implement the terrain-coupled wetness downscaling (coarse NASA wetness redistributed with TWI; document the equation and assumptions), run each rotation over the whole ranked storm set plus dry years, compute the Resilience Profile (mean, worst-case, return-period-weighted exposure), Monte Carlo uncertainty ranges, and a sensitivity table. Run heavy ensembles offline and cache in `data/seed`. Provide a short design note `algorithm.md` with equations and what is ours vs standard.
-**Done when:** deterministic seeds; ranges reproducible; sensitivity table generated; note matches code.
+**Read:** PRD sections 6.1, 6.6, 10; `hazard.json` and `calendars.json` schemas; S2-04 and S2-06 progress entries.
+**Task:** Rotation calendars from crop calendars (average over the rotation cycle). `WinterExposure` and `SummerExposure` per rotation and zone, keeping the 52-week products. Year bootstrap (B = 1000, seed from input hash) giving ranges and **rank stability**; one-at-a-time sensitivity over `q_rain`, `q_wet`, `n_dry`, `τ_bare`, smoothing width and terrain weights. Write `exposure.json`, `bootstrap.json`, `sensitivity.json` (summary statistics, not raw samples) and the sensitivity table in `algorithm.md`.
+**Done when:** all PRD §10 invariants pass on real tables; same seed gives identical bytes; the table says which assumption, if any, flips a ranking.
 
-## S2-08 Our algorithm, part 2: Field Shift counterfactual and contract request
+## S2-08 Field Shift scenarios and optimizer [S2-B]
 
-**Read:** PRD section 5 (concepts 3, 4); S2-07 progress entry.
-**Task:** Scenario engine: scale storm intensity and shift planting windows from observed trends (delta approach), re-score rotations, label as scenario. Write the contract request for `scenario`, resilience profile, return periods and zone actions (exact fields, defaults, fixtures to update) and hand it to the integrator; do not edit the contract yourself.
-**Done when:** scenario results are monotonic and sane in tests; the contract request is complete enough for the integrator to apply.
+**Read:** PRD sections 6.7, 6.8.
+**Task:** Per-year `wet_index` and `dry_index`, Theil-Sen trends with confidence intervals, importance-weighted analog-year scenarios (`baseline`, `wetter_winters`, `drier_summers`, `both`), "trend not significant" flag. Bounded optimizer over feasible farmer changes (shift harvest or planting by weeks, add winter cover crop, delay tillage, buffer strip) re-running the 52-week sums; keep Pareto improvements with rank stability of at least 80%. Write `scenarios.json` and `optimizer.json`.
+**Done when:** scenario exposures are monotonic and sane in tests; adding cover never raises winter exposure; best candidate per zone reproducible; no scenario text says "forecast".
 
-## S2-09 Zone actions, insights, evidence generator (BE-09)
+## S2-09 Markers and endpoints [S2-B]
 
-**Read:** root card BE-09; PRD section 5 (concept 6); S2-06/07 progress entries.
-**Task:** Rule-engine templates (no LLM) for terrain, cover, storm, rotation and data-quality insights with anchors, confidence and data references; zone actions ranked by relative risk reduction; tips library with `basis` and `verify_locally`; five-section evidence cards whose numbers come straight from metrics; cautious wording, support-not-replace text.
-**Done when:** every card number equals a metric; each insight has anchor, confidence and data ref; no absolute guarantees in tips.
+**Read:** PRD sections 7, 9.2, 9.3; `../Databases.md` DB-13; S2-07 and S2-08 progress entries.
+**Task:** Zone classification (`winter_wet`, `summer_dry`, `opportunity`, `protected`), merge neighbours, score, cap at 5, `active_weeks`, template text (headline up to 60 characters, one action, "why?" evidence with units, basis and `SourceRef`s, caveats such as "rate not bias-corrected" or "calendar assumed"). Endpoints: `GET /sites`, `/sites/{id}/markers`, `/compare`, `/rotations`, `GET /provenance`. Every `SourceRef.dataset` must exist in the provenance list.
+**Done when:** every marker number equals an `exposure.json` value; no absolute guarantees in text; at least one `opportunity` marker on the curated site; runtime calls under 1 s; the support-not-replace line is returned for the farm view.
 
-## S2-10 Validation, seed data, offline, smoke test (BE-11, BE-12, validation plan)
+## S2-10 Backtest and validation [S2-A data, S2-B scoring]
 
-**Read:** root cards BE-11, BE-12; PRD section 8.
-**Task:** Backtest against the independent observation chosen in S2-01 and report the skill metric honestly; `make seed` for the three curated sites (terrain, weather, storms, rotations, simulations, ensembles); verification script; `OFFLINE=1` enforcement (block external calls); end-to-end smoke script; the one-page "How we use NASA data" write-up (accurate to the code) for the Methods page and submission.
-**Done when:** with network off and `OFFLINE=1` every curated site completes the full journey; smoke script passes from a clean checkout; write-up reviewed by both owners and the integrator.
+**Read:** PRD sections 10 and 11; `../Databases.md` DB-6, DB-5, DB-10.
+**Task:** Verify the Nov 2021 atmospheric-river dates and an observation source. Build the observed flooded or saturated mask from HLS water index (where cloud allows) and SMAP change; add RADARSAT only if open access is confirmed (DB-10). Compare zones flagged `winter_wet` to the mask: hit rate and IoU **against an area-matched random baseline**, reported as is. Optional (P2, only if P0 is complete): ECOSTRESS sanity plot for the summer axis (DB-9); never feed it into scores.
+**Done when:** `backtest.json` and a short honest write-up (including cloud and resolution limits) exist and are shown on the Methods page data.
+
+## S2-11 Lite mode [S2-A data, S2-B scoring]
+
+**Read:** PRD section 6.9; `../Databases.md` DB-2, DB-3, DB-12.
+**Task:** `POST /lite/markers`: location + field polygons + crop per field. Live POWER (cached per location) and NASADEM terrain and zones, textbook calendar (`assumed`), percentile thresholds, no fusion or bootstrap, same marker shape with `mode = "lite"` and "Lite mode: fewer data sources" in every caveat list. Validate upload type, size and coordinates; strip image metadata; store uploads in `data/uploads/` (gitignored); the photo never feeds a number.
+**Done when:** any land location returns markers within the interactive budget; Lite never shows a rank-stability line; oversized or invalid uploads are rejected cleanly.
+
+## S2-12 Seed data, offline, provenance, smoke test, write-up [S2-A, with S2-B]
+
+**Read:** PRD sections 8 and 12; `../Databases.md` §3 and DB-13.
+**Task:** `make seed` builds `data/seed/<site>/` for site 1 (then sites 2 and 3 if time): terrain package, `zones.geojson`, `fields.geojson`, `hazard.json`, `calendars.json`, `exposure.json`, `bootstrap.json`, `scenarios.json`, `optimizer.json`, `provenance.json`. **Provenance test:** fails if any dataset used in a seed table is missing from `provenance.json` or lacks license and attribution. `OFFLINE=1` test with the network blocked. End-to-end smoke script. The one-page "How we use NASA data" write-up (accurate to the code) naming each NASA dataset and its single job, plus the not-used list from `Databases.md` §4.
+**Done when:** with network off and `OFFLINE=1` the curated site completes the full journey; smoke passes from a clean checkout; write-up reviewed by both owners and the integrator.

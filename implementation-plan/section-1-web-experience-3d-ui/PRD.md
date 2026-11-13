@@ -74,6 +74,28 @@ Recommended default: **web-native rendering with react-three-fiber/three.js** fo
 - Expected additions (not yet in contract): `scenario` on a simulation request (storm intensity scale, season shift), per-rotation resilience profile and uncertainty range, zone actions. Build the UI against mock versions behind a flag until Section 2 ships real data.
 - Binary formats: heightmap PNG16, normal PNG, FTW1 frames, risk PNG (255 = masked). See `packages/contracts/README.md`.
 
+### 7.1 Data Section 1 consumes (from `../Databases.md`)
+
+Section 1 never downloads or processes NASA data. It consumes outputs that Section 2 derives from the datasets in `../Databases.md`:
+
+| Section 2 output | Built from (Databases.md) | S1 owner | Used for |
+| --- | --- | --- | --- |
+| Terrain package: heightmap PNG16, normals, metadata (`GET /sites/{id}/terrain`, proposed) | DB-1 LidarBC (~1 m, curated Fraser Valley site) or DB-2 NASADEM (~30 m, everything else) | S1-A | 3D land. Must handle both resolutions and show "lower-resolution terrain" when `resolution_m` is coarse; must show `dsm_includes_vegetation` caveat when true |
+| Zone outlines + icon points + terrain factor (`zones.geojson`) | DB-1 or DB-2 terrain analysis | S1-A | Soft zone highlights and marker placement on the land |
+| Field markers with `active_weeks`, "why?" payload and `SourceRef` list | DB-3 to DB-8 via the algorithm | S1-A (placement), S1-B (tap card) | Markers, 12-month scrubber, "why?" source lines |
+| `provenance.json` via `GET /provenance` | DB-13, built from every dataset used | S1-B | Data and Methods page, data credits, "why?" source lines. **No hard-coded dataset names, licenses or URLs in the UI** |
+| `mode` (`full` / `lite`), terrain `source`, pre-built flag | DB-1 to DB-3 | S1-B | "Pre-built" badge, "Lite mode: fewer data sources" notice |
+| User photo, map pin, crop per field (`POST /lite/markers` input) | DB-12 | S1-B (flow), S1-A (photo as land texture) | Land Scan flow for non-curated sites |
+
+UI rules that come from the data:
+- **Every dataset the user can see is credited.** Source name, provider, license and basis chip come from `/provenance`, not from the frontend.
+- **Resolution is honest.** NASADEM terrain (30 m) must not look like 1 m LiDAR: the UI shows the source and resolution in the layer panel.
+- **No yield, no disaster counts.** Those datasets are deliberately not used (`../Databases.md` §4). The UI must not show yield or disaster numbers even in mock data.
+- **Photo is texture only.** Nothing derived from the photo appears as a number (no crop detection).
+- **Offline.** All of the above must load from the seed with `OFFLINE=1` and no network.
+
+Open for the integrator: this v0.1 PRD still describes the FTW1 storm-replay and A/B design, while Section 2 PRD v0.2 outputs markers, zones and a 12-month calendar (replay is "visual support, if Section 1 keeps it"). Resolve in S1-01; see open question 7.
+
 ## 8. Quality bar (acceptance)
 
 - [ ] Tilted-plane fixture renders with correct relative elevation; picking readouts correct.
@@ -92,9 +114,13 @@ Recommended default: **web-native rendering with react-three-fiber/three.js** fo
 4. Do we show a narrator or story character (Zumorroda-X style) or stay purely scientific?
 5. Demo video: 30 s video or 7-slide deck (confirm 2026 format on Nov 13).
 6. Target demo machine and resolution.
+7. Section 2 v0.2 produces markers, zones and a 12-month calendar; this PRD still centres on the FTW1 storm replay and A/B. Which is the hero (markers + scrubber, replay, or both)? Decide with the integrator in S1-01, then update sections 3, 4 and 6.
+8. Terrain package: agree grid size (max 512 x 512 proposed) and the `GET /sites/{id}/terrain` shape with S2-A.
+9. Marker icon set and zone highlight style (the backend only sends `kind`).
 
 ## 10. Change log
 
 | Date | Who | Change |
 | --- | --- | --- |
 | 2026-11-12 | Claude | v0.1 draft created |
+| 2026-11-13 | Claude + product owner | Added §7.1 "Data Section 1 consumes" from `../Databases.md` (terrain package, zones, markers, provenance, user inputs); UI rules from the data (credit every dataset, honest resolution, no yield or disaster numbers, photo is texture only); open questions 7 to 9 |

@@ -19,8 +19,8 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 ## S1-01 Kickoff: flesh out this PRD (both owners, interview style)
 
 **Goal:** turn PRD v0.1 into a PRD the team believes in. No code.
-**Read:** `PRD.md` fully; `../README.md`; `../section-2-nasa-data-algorithm/PRD.md` section 0 and 7 only.
-**Task:** Interview the owners one question at a time (use multiple-choice where possible) covering PRD section 9 open questions plus: visual mood, hero shot storyboard (second by second), page list, who owns what, and the Omniverse decision (present options A/B/C from section 5, verify claims on the web, recommend). Then rewrite `PRD.md`: fill owners, resolve questions or mark them owned with a date, add a screen-by-screen sketch list, add measurable acceptance criteria per deliverable, add a 48-hour plan with hour marks per owner. Keep it under 250 lines.
+**Read:** `PRD.md` fully (including §7.1); `../README.md`; `../Databases.md` §1 and §3 only; `../section-2-nasa-data-algorithm/PRD.md` sections 0, 7 and 9 only.
+**Task:** Interview the owners one question at a time (use multiple-choice where possible) covering PRD section 9 open questions (including 7 to 9: hero = markers, replay or both; terrain package shape; icon style) plus: visual mood, hero shot storyboard (second by second), page list, who owns what, and the Omniverse decision (present options A/B/C from section 5, verify claims on the web, recommend). Also confirm with S2-A the terrain package and `GET /sites/{id}/terrain` shape, and record how the UI shows terrain source and resolution (LidarBC vs NASADEM). Then rewrite `PRD.md`: fill owners, resolve questions or mark them owned with a date, add a screen-by-screen sketch list, add measurable acceptance criteria per deliverable, add a 48-hour plan with hour marks per owner. Keep it under 250 lines.
 **Done when:** PRD has no blank owners, every open question is resolved or assigned, and a change-log row exists. Append `progress.md`.
 
 ## S1-02 Design system and app shell (FE-00)
@@ -31,8 +31,8 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 
 ## S1-03 3D viewer core (FE-04, part 1)
 
-**Read:** `packages/contracts/README.md` (encodings); `apps/web/lib/decode/*`; root `prd.md` card FE-04 only.
-**Task:** Component `LandViewer` (react-three-fiber). Load terrain from `terr_mock_hills`; displace a mesh from the 16-bit heightmap in the vertex shader; lit normal map; imagery texture; orbit controls; reset view; scale bar and north indicator. Layer toggles (imagery, slope, drainage, low spots, cover) without reloading assets. Picking returns elevation, slope, cover. WebGL-off fallback: 2D canvas map with the same layers. Include a dev page `/dev/viewer` and tests using the tilted-plane fixture.
+**Read:** `packages/contracts/README.md` (encodings); `apps/web/lib/decode/*`; root `prd.md` card FE-04 only; `../Databases.md` DB-1, DB-2 and DB-12 (what the terrain and photo really are).
+**Task:** Component `LandViewer` (react-three-fiber). The terrain package comes from LiDAR (~1 m, curated site) or NASADEM (~30 m, other sites): the viewer must render both from the same package shape, show the terrain `source` and `resolution_m` in the layer panel, and show a caveat when `dsm_includes_vegetation` is true. The user's farm photo is a texture only; no number may be derived from it. Load terrain from `terr_mock_hills`; displace a mesh from the 16-bit heightmap in the vertex shader; lit normal map; imagery texture; orbit controls; reset view; scale bar and north indicator. Layer toggles (imagery, slope, drainage, low spots, cover) without reloading assets. Picking returns elevation, slope, cover. WebGL-off fallback: 2D canvas map with the same layers. Include a dev page `/dev/viewer` and tests using the tilted-plane fixture.
 **Done when:** tilted plane shows correct relative slope; picking values match fixtures; fallback works.
 
 ## S1-04 Water overlay, A/B split, difference
@@ -61,15 +61,15 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 
 ## S1-08 Landing and Land Scan flow (FE-01, FE-03, FE-02 light)
 
-**Read:** root `prd.md` cards FE-01, FE-03.
-**Task:** Landing hero that plays the hero moment (short loop); site gallery with Pre-built badges; Land Scan wizard (photos, map pin with MapLibre, progress via SSE fixture, terraform reveal into the viewer). Sample-farm shortcut. Clear message when a location is unsupported.
+**Read:** root `prd.md` cards FE-01, FE-03; `../Databases.md` DB-12 (user inputs).
+**Task:** Landing hero that plays the hero moment (short loop); site gallery with Pre-built badges; Land Scan wizard (photos, map pin with MapLibre, progress via SSE fixture, terraform reveal into the viewer). Sample-farm shortcut. Clear message when a location is unsupported. For a non-curated location the flow also collects field outlines and a **crop per field** (sent to the Lite-mode endpoint, labeled "assumed"), validates photo type and size on the client, and shows "Lite mode: fewer data sources" on the result.
 **Done when:** full journey works in mock mode from landing to simulator in under 90 s.
 
 ## S1-09 Insights, camera modes, Methods page (FE-07, FE-08)
 
-**Read:** root `prd.md` cards FE-07, FE-08.
-**Task:** Insight pins anchored to terrain with timed pop-ups tied to timeline events; farmer-tip cards with basis and "verify locally" tags; fly-through and ground-level camera with smooth transitions; Data & Methods page (datasets, licenses, measured/modeled/assumed table, limits).
-**Done when:** a timed insight fires at the right frame and place; Methods page lists every dataset with attribution.
+**Read:** root `prd.md` cards FE-07, FE-08; `../Databases.md` §1 table and DB-13 (provenance); PRD §7.1.
+**Task:** Insight pins anchored to terrain with timed pop-ups tied to timeline events; farmer-tip cards with basis and "verify locally" tags; fly-through and ground-level camera with smooth transitions; Data & Methods page rendered **from `GET /provenance`** (dataset, provider, license, attribution, accessed date, basis chip, what we use it for), plus a "not used and why" block (GRACE, yield, disaster data) copied from `Databases.md` §4. No dataset name, URL or license may be hard-coded in the UI. Add a "Lite mode: fewer data sources" notice and a terrain-resolution notice.
+**Done when:** a timed insight fires at the right frame and place; Methods page lists every dataset the API reports, with attribution, and a test fails if a hard-coded dataset name appears in `apps/web`.
 
 ## S1-10 Demo mode, QA, performance, backup video (FE-12, FE-13)
 

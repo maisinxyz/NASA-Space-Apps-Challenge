@@ -93,7 +93,9 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 
 ## 5. Data sources
 
-**Everything in this table is `TODO(verify)` until S2-01 confirms the product name, version, variables, resolution, coverage, access method, license, and a working sample request (recorded URL).** Values in brackets are what we believe and must check.
+> **Detailed plans live in [`../Databases.md`](../Databases.md)** (v0.1): per dataset, why we need it, how to get it, how to implement it, what it needs, outputs, fallback, and which team owns it. This table is the summary; if the two disagree, fix both and log it. Section 2 owns ingestion (S2-A) and use (S2-B); Section 1 only consumes derived outputs (terrain package, zones, markers, provenance).
+
+**Everything in this table is `TODO(verify)` until S2-01 confirms the product name, version, variables, resolution, coverage, access method, license, and a working sample request (recorded URL).** Values in brackets are what we believe and must check. Rows 1 to 4 and 11 have names and URLs from an unofficial catalog (see `Databases.md`); the official Resources list has not been read yet.
 
 | # | Dataset | Owner | Role in FieldTwin | Variables we need | Believed resolution / coverage | Access (verify) | Basis label |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -107,6 +109,11 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 | 8 | **FAO-56** crop coefficients | FAO (publication) | Summer stage weights (D-10) | Kc_ini, Kc_mid, Kc_end; stage lengths | Table values | FAO Irrigation and Drainage Paper 56 [cite exact table] | assumed (published) |
 | 9 | **RADARSAT Constellation Mission** (stretch, D-18) | Canadian Space Agency | Flood/saturation map for the Nov 2021 backtest | SAR backscatter | [verify] | [verify open access and license] | measured |
 | 10 | **Soil texture / hydrologic group** | [BC Soil Information Finder or SoilGrids: verify] | Optional modifier of the terrain factor | Texture class | [verify] | [verify] | measured / assumed |
+| 11 | **ECOSTRESS evapotranspiration** (P2, optional) | NASA | Independent check on the summer-dry axis; never feeds a score | Evapotranspiration (`ECO_L3T_JET` V003) | [~70 m, irregular ISS passes] | Earthdata login (LP DAAC) | measured |
+
+Decisions recorded from the data review (2026-11-13):
+- **SMAP product (open):** row 3 assumes L4 root-zone moisture, but the challenge catalog lists L3 enhanced `SPL3SMP_E` (surface moisture). Root zone is what matters for runoff and crop stress. Default L4; fall back to L3 with the caveat "surface moisture used as a proxy". Decide in S2-01.
+- **Not used:** NASA GRACE/GRACE-FO (monthly, hundreds of km, no farm-scale signal), crop-yield data (forbidden by D-04 and the non-goals), disaster-event catalogs (hazard odds come from our own fused record plus the Nov 2021 backtest). Reasons in `Databases.md` §4.
 
 Rules:
 - NASA data must do the core work (POWER, IMERG, SMAP, HLS, NASADEM). Non-NASA sources (6–10) are labeled and licensed in the UI's data credits.
@@ -312,12 +319,13 @@ Field names are a proposal. Once the models exist in code, **`/openapi.json` is 
 | Endpoint | Returns | Notes |
 | --- | --- | --- |
 | `GET /sites` | Curated sites with a "Pre-built" flag | |
+| `GET /sites/{id}/terrain` | **Terrain package** from LidarBC or NASADEM: 16-bit heightmap PNG, normal map, metadata (grid size, cell size m, CRS, elevation range, `source`, `resolution_m`, `dsm_includes_vegetation`) | **Proposal, new.** Feeds the 3D land (S1-A). Encoding follows the old decoder contract (row-major, row 0 = north); see `Databases.md` DB-1. Final grid size agreed with S1-A |
 | `GET /sites/{id}/zones` | Zone outlines + terrain factor | For layer views |
 | `GET /sites/{id}/rotations` | Curated rotations + their calendars (52 weeks) | |
 | `GET /sites/{id}/markers?rotation=&scenario=&week=&all=` | ≤ 5 `FieldMarker` (or all) | `week` filters to active markers for the scrubber |
 | `GET /sites/{id}/compare?rotations=a,b,c&scenario=` | Two axes per rotation + rank stability | UI shows it minimally (e.g. two small meters), not a chart |
 | `POST /lite/markers` | Same shape, `mode = "lite"` | Location + field polygons + crop per field |
-| `GET /provenance` | Every dataset with source, license, attribution | Data credits page |
+| `GET /provenance` | Every dataset with source, license, attribution, accessed date, basis | Data credits page. Built from `Databases.md` facts (DB-13); a test fails if a dataset used in any seed table is missing |
 
 ### 9.4 Interface rules
 
@@ -366,7 +374,7 @@ Each curated site shows a "Pre-built" badge in the UI.
 | Event, Sun AM | Lite mode (POWER live + NASADEM) | Sensitivity table, backtest score, `algorithm.md` |
 | Event, Sun PM | Sites 2–3 if time; provenance page data | "How we use NASA data" one-pager; freeze by Sun 21:00 |
 
-`Prompts.md` must be rewritten to follow this plan (its current prompts S2-02…S2-10 predate v0.2 and reference deleted files).
+`Prompts.md` was rewritten on 2026-11-13 to follow this plan and `../Databases.md` (prompts S2-01…S2-12). Each data task above maps to a `Databases.md` section (DB-1…DB-13).
 
 ---
 
@@ -412,8 +420,11 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | 6 | Choose `τ_bare`, default percentiles, and smoothing width from literature; record sources | S2-B |
 | 7 | Define the 3 curated Fraser Valley rotations with the owner (e.g. silage corn with/without winter cover; perennial grass) | S2-B + owner |
 | 8 | Update `../README.md` (contract rule → D-19) and Section 1 PRD (markers §9, icon requirement) | Integrator |
-| 9 | Rewrite `Prompts.md` for v0.2 | S2-B |
+| 9 | ~~Rewrite `Prompts.md` for v0.2~~ Done 2026-11-13 (see `Databases.md` for the data tasks) | S2-B |
 | 10 | Fill in owners (§2) | Team |
+| 11 | Decide SMAP L4 vs L3 (`Databases.md` DB-5) | S2-A + S2-B |
+| 12 | Agree terrain package shape and grid size with S1-A (new `GET /sites/{id}/terrain`) | S2-A + S1-A + Integrator |
+| 13 | Create Earthdata accounts for everyone and test one download each | Everyone |
 
 ---
 
@@ -423,3 +434,4 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | --- | --- | --- |
 | 2026-11-12 | Claude | v0.1 draft created |
 | 2026-11-12 | Claude + product owner | v0.2: design interview decisions D-01…D-22; Risk Window Calendar spec; data table; marker output; validation incl. Nov 2021 backtest; prior art; plan |
+| 2026-11-13 | Claude + product owner | v0.2.1: added `../Databases.md` as the detailed data plan; ECOSTRESS row (P2); SMAP L4 vs L3 open decision; GRACE, yield and disaster data recorded as not used; proposed `GET /sites/{id}/terrain`; `/provenance` tied to `Databases.md`; `Prompts.md` rewritten |

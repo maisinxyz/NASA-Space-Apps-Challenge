@@ -10,6 +10,8 @@ Project: FieldTwin (NASA Space Apps 2026, "Field Shift: Adapting Farms with NASA
 | `section-2-nasa-data-algorithm/` | 2 | NASA data use and our own algorithm: ingestion, simulation, scoring, suggestions |
 | (this folder) | 1 integrator | Moves between teams, owns the contract, keeps both sides compatible, runs the demo path |
 
+Shared by both teams: **[`Databases.md`](Databases.md)** lists every dataset (terrain, weather, soil moisture, land cover and crops, reference tables, validation), why we use it, how to get and process it, and which team owns it. It is the data source of truth; both PRDs and both `Prompts.md` files point to it. Update it (with a change-log row) whenever a dataset changes.
+
 Each team folder has:
 - `PRD.md`: what we are building and why. A **living document**. Draft v0.1 only; the team must flesh it out in the kickoff prompt (prompt 01) and keep it current.
 - `Prompts.md`: numbered prompts for Claude Code, run in order. Each prompt is short and self-contained.
@@ -35,7 +37,8 @@ Each team folder has:
 
 | Section 2 gives | Section 1 uses it for |
 | --- | --- |
-| TerrainPackage (heightmap, normals, texture, layers) | 3D terrain and layer toggles |
+| TerrainPackage (heightmap, normals, texture, layers) built from LidarBC or NASADEM (`Databases.md` DB-1, DB-2) | 3D terrain and layer toggles |
+| Provenance list (`GET /provenance`, `Databases.md` DB-13) | Data and Methods page, "why?" source lines |
 | Storm list, weather summary, return periods | Storm picker, Trends |
 | Simulation frames (FTW1), risk PNG, metrics per rotation | Water replay, HUD, difference overlay |
 | Evidence cards, insights with anchors, zone actions | Pop-ups, Rotation Lab |
