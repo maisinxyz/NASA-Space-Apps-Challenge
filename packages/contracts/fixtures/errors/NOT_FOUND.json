@@ -1,8 +1,0 @@
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "No item with this ID.",
-    "hint": "Check the link or go back to the site list.",
-    "retryable": false
-  }
-}

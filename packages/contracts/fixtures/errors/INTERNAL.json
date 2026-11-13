@@ -1,8 +1,0 @@
-{
-  "error": {
-    "code": "INTERNAL",
-    "message": "Something went wrong on our side.",
-    "hint": "Try again. If it keeps happening, tell the team.",
-    "retryable": true
-  }
-}

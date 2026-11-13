@@ -1,8 +1,0 @@
-{
-  "error": {
-    "code": "TERRAIN_COVERAGE_MISSING",
-    "message": "No open elevation data found for this location.",
-    "hint": "Try a site in southern BC or use a curated site.",
-    "retryable": false
-  }
-}

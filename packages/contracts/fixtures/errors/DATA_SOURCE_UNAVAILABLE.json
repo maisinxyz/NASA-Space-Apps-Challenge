@@ -1,8 +1,0 @@
-{
-  "error": {
-    "code": "DATA_SOURCE_UNAVAILABLE",
-    "message": "The elevation service is not responding.",
-    "hint": "Try again in a minute or use a curated site.",
-    "retryable": true
-  }
-}
