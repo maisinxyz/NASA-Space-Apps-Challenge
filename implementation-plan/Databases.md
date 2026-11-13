@@ -1,4 +1,4 @@
-# Databases: every dataset FieldTwin uses, what for, and who builds it (v0.1)
+# Databases: every dataset FieldTwin uses, what for, and who builds it (v0.2)
 
 > Living document. This is the single place that says **which data we use, why, how we get it, and which team owns it**. Both section PRDs and both `Prompts.md` files point here. Change a row only together with a change-log entry (bottom).
 >
@@ -8,7 +8,7 @@
 
 ## 1. Overview table: databases by scope of work
 
-**How to read this section.** Table 1 is the quick index. Tables 2a to 2f give the detail for each scope of work. Table 3 says who owns what. Section 2 below has the full plan per dataset (DB-1 to DB-13).
+**How to read this section.** Table 1 is the quick index. Tables 2a to 2f give the detail for each scope of work. Table 3 says who owns what. Section 2 below has the full plan per dataset (DB-1 to DB-14).
 
 - **Pri.:** P0 = must have, P1 = should have, P2 = stretch.
 - **Status:** `catalog` = name and URL come from the unofficial challenge catalog; `TODO(verify)` = not yet confirmed against the provider.
@@ -31,6 +31,7 @@
 | DB-11 | Soil texture / hydrologic group | Soil properties (optional) | TODO(verify) | No | P2 | TODO(verify) |
 | DB-12 | Photo, location, crop per field | User inputs | The user | n/a | P0 | n/a |
 | DB-13 | `provenance.json` | Data credits | Us | n/a | P0 | n/a |
+| DB-14 | Globe and basemap sources (Cesium ion World Terrain, Google Photorealistic 3D Tiles, Natural Earth II, OpenStreetMap field outlines) | Globe, intro and visuals | Cesium / Google / Natural Earth / OSM | No | P0 | in use on `fe/S1-cesium-globe`; terms TODO(verify) |
 
 ### Table 2. Detail by scope of work
 
@@ -76,6 +77,7 @@
 | --- | --- | --- |
 | DB-12 | Texture on the 3D land, farm centre, crop assignment for non-curated sites | Upload and map pin in the web app |
 | DB-13 | Every dataset with source, license, attribution | `GET /provenance`, built from this file |
+| DB-14 | The spinning Earth, fly-in imagery, photoreal 3D context, field outlines. **Visual only: never feeds a number** | Cesium tiers A/B/C in the web app (Section 1) |
 
 ### Table 3. Ownership: who touches which database
 
@@ -91,6 +93,7 @@ Roles: **builds** = downloads and processes it; **uses** = reads the derived tab
 | DB-9, DB-10, DB-11 | builds (stretch) | scores backtest (DB-10) | | |
 | DB-12 | validates and stores | uses crop per field | textures (photo) | collects (upload, pin, crop) |
 | DB-13 | builds `provenance.json` | | | shows (Methods page, "why?" lines) |
+| DB-14 | adds to provenance | | builds (globe, tiers) | shows credits |
 
 **Considered and not used** (see §4): NASA GRACE/GRACE-FO (too coarse), any crop-yield dataset (none in scope; PRD forbids yield figures), any disaster-event catalog (hazard odds come from our own record instead).
 
@@ -100,7 +103,7 @@ Roles: **builds** = downloads and processes it; **uses** = reads the derived tab
 | --- | --- | --- |
 | **S2-A Data** | DB-1 to DB-7, DB-9 to DB-13 | Download, cache, clean, derive the seed tables, write provenance |
 | **S2-B Algorithm** | DB-3 to DB-8 (as derived tables) | Fusion hazard odds, exposure engine, bootstrap, optimizer, markers |
-| **S1-A Rendering** | DB-1, DB-2, DB-12 (terrain package, zones, photo) | 3D terrain, zone highlights, marker placement in the scene |
+| **S1-A Rendering** | DB-1, DB-2, DB-12, DB-14 (terrain package, zones, photo, globe tiles) | 3D terrain, zone highlights, marker placement in the scene |
 | **S1-B Product UI** | DB-12, DB-13 (via the API) | Upload and location flow, "why?" source lines, Data and Methods page, badges |
 | Integrator | all | Accounts and secrets, license check, shape of S2 output for S1 |
 
@@ -175,6 +178,7 @@ Every section answers the same questions: **why we need it, what exactly we take
   5. If the latest months are missing (Final lag), leave them out; do not mix in the Late run for the quantile fit.
 - **Needs:** Earthdata account; about 8 GB of global daily files if downloaded naively, so subset. Pre-download before the event (decision D-03).
 - **Outputs:** corrected daily rain series and fit diagnostics inside `hazard.json`.
+- **Half-hourly shape for storm replay (D-35):** for each storm in the library from 2000 onward, also take IMERG **half-hourly** rain over the farm cell for the storm window. Use it as the storm's real hyetograph (`synthetic: false`). Older storms keep the assumed profile. `TODO(verify)` the half-hourly product short name, version and variable. Download only the storm windows, not the whole record.
 - **Fallback:** if coverage or access fails, use POWER rain uncorrected and add the caveat "rain not bias-corrected" to every marker's "why?".
 - **Basis label:** `measured`; corrected series: `derived`.
 - **Owners:** S2-A downloads; S2-B owns the fusion method.
@@ -284,6 +288,25 @@ Every section answers the same questions: **why we need it, what exactly we take
 
 ---
 
+#### DB-14 Globe and basemap sources (visual only, Section 1)
+
+- **Why:** the space-to-farm intro (Section 2 PRD D-25, D-26) and the photoreal context around the farm. These sources are **visual only**; no number in FieldTwin is computed from them.
+- **What is used:** these are Section 1's Cesium tiers on branch `fe/S1-cesium-globe`, per `docs/progress/s1-C1.md` there:
+
+  | Tier | Source | Needs |
+  | --- | --- | --- |
+  | A | Google Photorealistic 3D Tiles via Cesium ion | Network + ion token |
+  | B | Cesium World Terrain + ion imagery (fallback asset "Google Maps 2D Satellite") | Network + ion token |
+  | C | Natural Earth II bundled with Cesium | Nothing (keyless, offline) |
+  | Field outlines | OpenStreetMap, ODbL | — |
+
+  The OSM query is recorded in `docs/progress/s1-C3-product.md`.
+- **Needs:** `NEXT_PUBLIC_CESIUM_ION_TOKEN` in `apps/web/.env.local` (never committed). Tier C works with no token, so the demo must pass in tier C.
+- **Licensing (TODO(verify)):** Google 3D Tiles and Cesium ion terms (attribution, caching, recording a video of tiles for the backup), Natural Earth (public domain, verify), OSM (ODbL attribution "© OpenStreetMap contributors").
+- **Provenance:** S2-A adds each source to `provenance.json` with its license, so the Methods page (F34) lists it.
+- **Not NASA:** these don't count toward "NASA data does the core work". The Methods page says the globe imagery is for context only.
+- **Owners:** S1-A builds; S2-A records provenance.
+
 ## 3. Pipeline and storage
 
 ```
@@ -342,3 +365,4 @@ For each P0 row, record in `data-sources.md`: exact product name and version; va
 | Date | Who | Change |
 | --- | --- | --- |
 | 2026-11-13 | Claude + product owner | v0.1: created from the Section 2 PRD v0.2 data table and the unofficial challenge catalog; per-dataset plans; team split; GRACE, yield and disaster catalogs excluded |
+| 2026-11-13 | Claude + product owner | v0.2: DB-14 globe and basemap sources (Cesium tiers, Google 3D Tiles, Natural Earth II, OSM), visual only; IMERG half-hourly storm shape in DB-4 (D-35); tables updated |

@@ -1,18 +1,21 @@
-# Section 2 PRD: NASA data and the FieldTwin algorithm (v0.2)
+# Section 2 PRD: NASA data and the FieldTwin algorithm (v0.3)
 
-> Living document. v0.2 records the design agreed in the 2026-11-12 design interview ("grilling" session) with the product owner. Every decision below has an ID (`D-xx`) so prompts, code comments and commits can point to it. Change a decision only by editing its row and adding a change-log entry.
+> Living document. v0.2 recorded the 2026-11-12 design interview. v0.3 records the 2026-11-13 feature interview (decisions D-23…D-36, feature catalog §4.1). Every decision has an ID (`D-xx`) so prompts, code comments and commits can point to it. Change a decision only by editing its row and adding a change-log entry.
 
 ---
 
 ## 0. Context capsule (Claude: read this first; it replaces reading anything else)
 
-- **Product:** FieldTwin. A farm becomes a 3D landscape that the user walks around. A NASA-data engine finds *when* and *where* the farm is exposed to harm (wet winters on bare soil, dry spells on sensitive crops) and places a few minimalist, game-style markers on the land (Hay Day / Clash of Clans feel, SaaS look). Tapping a marker shows a one-line headline, one action, and "why?" with the numbers and NASA sources.
+- **Product:** FieldTwin. A farm becomes a 3D landscape that the user walks around. A NASA-data engine finds *when* and *where* the farm is exposed to harm (wet winters on bare soil, dry spells on sensitive crops) and places a few minimalist, realistic pins and muted zone highlights on the land (D-24). Tapping a pin shows a one-line headline, one action, and "why?" with the numbers and NASA sources. The experience opens on a spinning Earth and flies down to the farm (D-25). Features are listed in §4.1.
 - **Challenge:** "Field Shift: Adapting Farms with NASA Data", NASA Space Apps 2026. Statement (as quoted by other teams; re-check on the official page): *"Create a decision-support tool that uses NASA Earth observations along with local soil information, crop characteristics, and farmer priorities to help farmers explore rotation strategies that could strengthen soil health and adapt their farms to changing conditions."* Page: https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/
 - **Event:** Sat Nov 14 09:00 to Sun Nov 15 23:59, 2026. **Pre-building data before the event is allowed** (D-03).
 - **Section 2 scope:** backend only: data ingestion, the algorithm, and the outputs the UI consumes. Visual design is Section 1's job; this PRD only states what the backend must *give* the UI (§9).
-- **Repo state (2026-11-12):** the "revamped repo" commit removed the old code, `CLAUDE.md`, root `prd.md`, and `packages/contracts/`. The repo now contains only `implementation-plan/`. The old FastAPI skeleton and fixtures can still be read in git history (`git show e83a93c:<path>`), but nothing depends on them.
-- **Stack (proposed, unchanged):** Python 3.12+, FastAPI, Pydantic v2, NumPy, SciPy, rasterio, scikit-image, Shapely, httpx, pytest, `uv`.
-- **Interface rule (D-19):** there is **no hand-written contract file**. Pydantic response models in `services/api` are the source of truth; FastAPI publishes `/openapi.json`; Section 1 generates TypeScript types from it.
+- **Repo state (2026-11-13):**
+  - Section 1 restored the contract `packages/contracts/openapi.yaml` **v1.0.0**, its fixtures, and the FastAPI skeleton in `services/api`. Every route serves fixtures via `services/api/app/providers/fixtures.py`. There is no NASA ingestion yet, and `data/seed/` is empty.
+  - The web app on `main` has the r3f viewer, water replay, A/B, layers, storm picker, Rotation Lab, Methods page and tour.
+  - Branch `fe/S1-cesium-globe` (not merged) adds the Cesium globe, farm pins (`apps/web/lib/farms.ts`) and the Agassiz farm twin.
+- **Stack:** Python 3.11+, FastAPI, NumPy, SciPy, rasterio, scikit-image, Shapely, httpx, pytest, `uv` (as in `services/api/pyproject.toml`).
+- **Interface rule (D-19, revised by D-31):** `packages/contracts/openapi.yaml` stays the contract. New features go in as the additive **v1.1** described in [`../contract-request-v1.1.md`](../contract-request-v1.1.md). Real data replaces fixtures behind the existing swap points `services/api/app/services/*.py`, and responses must pass `fixtures_lib.contract.validate_response`.
 - **Honesty rules (always):** outputs are **relative comparisons and historical odds, never forecasts** (D-04). Every number carries units and a basis label: `measured | derived | modeled | assumed | relative`. Same inputs give same outputs. `OFFLINE=1` serves pre-built data only. Never invent dataset names, URLs, parameters, or constants; mark `TODO(verify)` and record the source URL.
 
 ---
@@ -62,10 +65,24 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 | D-16 | Suggestions | **Optimizer** over a bounded set of feasible farmer changes; results become 💡 markers | The concrete "what should I change" answer |
 | D-17 | Non-curated locations | **Lite mode**: live POWER + NASADEM, textbook calendar, no HLS/SMAP/bootstrap, clearly labeled | Shows global reach; full quality stays on pre-built sites |
 | D-18 | CSA data | **Stretch**: Canadian Space Agency radar (RADARSAT) for the backtest, after access/license check | Radar sees through winter cloud; CSA is a Space Apps partner |
-| D-19 | Interface | **No contract file.** Pydantic models are the contract, exported via FastAPI `/openapi.json` | Speed, while still catching mismatches at type-check |
-| D-20 | UI output form | **Field markers**, not dashboards (§9): 4 kinds, ≤ 5 per view, zone highlight + one icon, active weeks for a 12-month scrubber, numbers only after "why?" | Owner's Hay Day-style, minimalist SaaS direction |
+| D-19 | Interface | ~~No contract file~~ **Superseded by D-31** (keep `openapi.yaml`, extend to v1.1) | Section 1 had already built against v1.0.0 |
+| D-20 | UI output form | **Field pins** (§9): 4 kinds, ≤ 5 per view, muted zone highlight + one thin-line pin, active weeks for a 12-month scrubber, numbers only after "why?". Charts and tables allowed only in the side panel (D-28). ~~Hay Day style~~ replaced by D-24 | Minimalist, realistic direction |
 | D-21 | Backtest | **Nov 2021 atmospheric river** (Sumas Prairie flooding) | Local, well documented, strong demo and validity evidence |
 | D-22 | Curated sites | **1 Fraser Valley farm first** (best quality), then **2 contrasting climates** if time allows (e.g. US Midwest corn–soy; a dry Mediterranean or South Asian site) | Depth first, breadth if time |
+| D-23 | Time focus | **Historical first.** Every output is "what happened here, how often, when". Scenarios replay real years (D-13) | Validatable; matches D-04 |
+| D-24 | Aesthetic | **Minimalist, realistic, muted.** Not futuristic, cartoony, playful or colorful. Photoreal terrain, earth tones, one restrained risk accent, thin-line pins, low-opacity heat maps. Reference: dark space, thin white type, negative space, slow camera | Owner direction (2026-11-13) |
+| D-25 | Hero | **Space-to-farm intro:** Earth drifts into frame → cursor orbits like an astronaut → spinning Earth with farm pins (hover: country + farm) → click: fast fly-in to the farm → bold title (country, locality, farm name) top right, fades → free 3D exploration. Inside the farm: storm replay + living calendar | Memorable opening; on-theme for NASA |
+| D-26 | Intro build | Section 1's **real-time Cesium globe and fly-in** (tiers: Google photoreal → Cesium terrain → keyless offline) + **one recorded video** as demo backup. Title font: a freely licensed (OFL) bold, wide, all-caps display font, not the Marvel font | Already built on `fe/S1-cesium-globe`; offline-safe fallback |
+| D-27 | Modes | **Explore** (default, ≤ 5 pins), **Weather**, **Plan**, **Learn**. The 3D land is always on screen | Organizes 44 features |
+| D-28 | Analytics | Graphs and tables **only in a collapsible side panel**, linked to the 3D view (hover a week → land highlights; click a row → camera flies there) | Owner wants analytics; land stays primary |
+| D-29 | Mini-game | **F39 Season challenge** P1; F40 P2 | Teaches "timing beats luck"; reuses the bootstrap |
+| D-30 | Feature priorities | As in §4.1 (P0, P1, P2) | Owner sign-off 2026-11-13 |
+| D-31 | Contract | Keep `openapi.yaml` v1.0.0; additive **v1.1** per `../contract-request-v1.1.md` | Protects Section 1's working UI |
+| D-32 | Waypoints | Curated farm(s) = `tier: twin` (Pre-built); other research-farm pins = `tier: explore` (Lite mode, D-17) | Global reach, honest quality split |
+| D-33 | P0 farm | **AAFC Agassiz Research and Development Centre**, Agassiz, BC (49.2482, −121.7637; coordinates approximate, TODO(verify) with AAFC), ~1.4 km simulation square from `fe/S1-cesium-globe` | Public research farm in the Fraser Valley; resolves open item 1 |
+| D-34 | Storm library | Top **8** distinct storms by 1–3 day total (≥ 7 days apart, 1981 onward) + the **Nov 2021 atmospheric river**; each card shows rank and antecedent wetness | Real events; local story |
+| D-35 | Storm shape | Storms from 2000 onward use the **IMERG half-hourly** shape (`synthetic: false`); older storms keep the assumed profile. Product name TODO(verify) | "The actual storm" on the land |
+| D-36 | Backend order | §12: terrain → storms → hazards → calendars + rotations → recommendations + tables → scenarios → Lite + seed + offline. Each step leaves Agassiz working end to end | Real data replaces fixtures one step at a time |
 
 ---
 
@@ -83,8 +100,103 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 ### Non-goals (explicit)
 
 - No yield, profit, or absolute soil-loss figures. No forecasts of next season.
-- No LLM in the numeric path. Any text is template-generated from computed values.
-- No dashboard of charts. Charts may exist only behind "why?", if at all.
+- No LLM in the numeric path. (Non-goals continue below the feature catalog.)
+
+### 4.1 Feature catalog (signed off 2026-11-13, D-30)
+
+**How to read this table:**
+- **Mode:** Explore, Weather, Plan or Learn (D-27).
+- **UI form:** layer = muted heat map on the terrain; pin = thin-line marker; scrubber = 12-month or multi-year slider; panel = side drawer chart or table (D-28); split = A/B view; story = guided sequence.
+- **Step:** the backend build step in §12 (D-36); "FE" = frontend-only.
+- **Data:** DB-ids from `../Databases.md`.
+- **Endpoint:** names refer to contract v1.1 (`../contract-request-v1.1.md`). `layers/x` = `GET /terrain/{id}/layers/x.png`; `insights` = `GET /terrain/{id}/insights`.
+
+**A. Land insights (load automatically with the farm)**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F1 | Wetness map (TWI): where water collects | P0 | Explore | layer | DB-1/2 | 1 | `layers/wetness_index` |
+| F2 | Drainage paths along the real flow network | P0 | Explore | layer (subtle flow) | DB-1/2 | 1 | `layers/flow_accumulation` |
+| F3 | Ponding hollows that fill first | P0 | Explore | layer + pin | DB-1/2 | 1 | `layers/depressions`, `insights` |
+| F4 | Erosion-prone slopes (slope-length) | P1 | Explore | layer | DB-1/2 | 1 | `layers/slope` |
+| F5 | Seasonal soil moisture, SMAP redistributed by terrain (relative; SMAP is 9 km) | P1 | Explore | layer + scrubber | DB-5 + DB-1 | 5 | `layers/soil_moisture_relative` |
+| F6 | Bare-soil calendar per field, measured from HLS | P0 | Explore | scrubber; fields fade to soil when bare | DB-6 | 4 | `/rotations/presets` (cover calendar), `/sites/{id}/zones` |
+| F7 | Greenness history per field (NDVI, ~10 years) | P1 | Explore | multi-year scrubber | DB-6 | 4 | v1.2 request when built |
+| F8 | Crop map per field and year | P0 | Explore | layer + labels | DB-7 | 4 | `layers/cover_class`, `Zone.crop` |
+| F9 | Elevation readout and contours | P2 | Explore | hover + layer | DB-1/2 | 1 | terrain package |
+
+**B. Weather and climate**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F10 | Climate fingerprint: typical year from 45 years | P0 | Weather | panel chart | DB-3 | 3 | `/weather/summary` (`climatology`) |
+| F11 | Storm replay of real top storms on the land | P0 | Weather | hero 3D (exists) | DB-3/4 + terrain | 2 | `/weather/storms`, `/simulations` |
+| F12 | Hazard calendar: 52-week odds of heavy rain on wet ground and dry spells | P0 | Weather | panel ring → drives scrubber | DB-3/4/5 | 3 | `/sites/{id}/hazard-calendar` |
+| F13 | Local hazard catalog: kinds of events, how often, when; tap to replay the worst | P0 | Weather | cards | DB-3/4/5 | 3 | `/sites/{id}/hazards` |
+| F14 | Trend panel (wetter winters? drier summers?) with significance | P1 | Weather | panel chart | DB-3 | 3 | `/weather/summary` (`series`) |
+| F15 | Nov 2021 atmospheric-river story vs satellite-seen water | P1 | Weather | story | DB-3/4/6/10 | 2 + backtest | `/weather/storms` (`named_event`) |
+| F16 | Growing season: frost dates, frost-free days, GDD | P1 | Weather | stat tiles + calendar band | DB-3 | 3 | `/weather/summary` (`climatology.growing_season`) |
+| F17 | Water received per zone per year (rain + run-on): where to irrigate | P1 | Explore | layer | DB-3/4 + flow | 5 | `layers/water_received` |
+
+**C. Simulator and scenarios**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F18 | Rotation comparison on two axes (winter wet, summer dry) | P0 | Plan | panel + split | engine | 4 | `/sites/{id}/compare` |
+| F19 | Field Shift scenarios (real years reweighted by trend; not a forecast) | P0 | Plan / Weather | scenario switch | engine | 6 | `scenario` param |
+| F20 | What-if builder: shift harvest, add cover, delay tillage → live exposure | P1 | Plan | panel controls; zones re-shade | engine | 6 | v1.2 request when built |
+| F21 | Year replay: scrub a real year week by week | P1 | Weather | scrubber | DB-3/6 | 4 | v1.2 request when built |
+| F22 | A/B split under the same storm, with difference glow | P1 | Plan | split (exists) | engine + F11 | 2 | `/simulations/{id}/diff` |
+| F23 | Farmer-priority sliders change what's highlighted, not the numbers | P2 | Plan | panel | engine | 6 | client-side |
+
+**D. Recommendations ("good spot" highlights)**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F24 | Opportunity zones: the one change that helps most here | P0 | Explore | pin + highlight | optimizer | 5 | `insights` (`opportunity`) |
+| F25 | Planting suitability: water-tolerant vs drought-tolerant zones | P0 | Explore | layer + per-zone suggestion | terrain + hazard + DB-8 | 5 | `layers/planting_suitability`, `insights` |
+| F26 | Irrigation priority: zones that dry first | P1 | Explore | layer | DB-1/3/5 | 5 | `layers/irrigation_priority` |
+| F27 | Drainage / buffer-strip advisor along flow paths | P1 | Explore | pin + drawn strip | flow + engine | 5 | `insights` (`opportunity`) |
+| F28 | Cover-crop timing: latest protective seeding date | P1 | Plan | calendar band | DB-6 + hazard | 5 | `insights` (`opportunity`, `active_weeks`) |
+| F29 | Protected zones (positive feedback) | P0 | Explore | subtle pin | engine | 5 | `insights` (`protected`) |
+
+**E. Analytics (side panel only)**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F30 | Zone table: sortable; row click flies the camera | P0 | Plan | panel table | engine | 5 | `/sites/{id}/zones` |
+| F31 | Rotation scorecard with ranges and rank stability | P0 | Plan | panel | bootstrap | 5 | `/sites/{id}/compare` |
+| F32 | Confidence panel: which assumptions could flip a result | P1 | Plan | panel | sensitivity | 5 | v1.2 request when built |
+| F33 | Farm report export (PDF/CSV) | P2 | Plan | button | all | FE | client-side |
+| F34 | Data and Methods page incl. "not used and why" | P0 | Learn | page (exists) | DB-13 | 7 | `/terrain/{id}/provenance` |
+
+**F. Education**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F35 | Guided tour (≤ 90 s) | P0 | Learn | overlay (exists) | — | FE | — |
+| F36 | "Why?" on every number: computation + satellite | P0 | all | card | all | every step | evidence / `Source` on every response |
+| F37 | How NASA sees your farm: POWER cell, SMAP cell, IMERG grid, HLS pixels at true scale | P1 | Learn | layer | DB-3/4/5/6 | 7 | v1.2 request when built (cell footprints) |
+| F38 | Glossary on hover | P2 | all | tooltip | — | FE | — |
+
+**G. Mini-games (realistic, not cartoony)**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F39 | Season challenge: pick a rotation, replay a random real decade, score = soil protected vs baseline | P1 | Learn | panel + 3D replay | bootstrap | 6 | v1.2 request when built |
+| F40 | Where will water pool? Guess, then reveal | P2 | Learn | 3D tap + reveal | DB-1 | FE | `layers/wetness_index` |
+
+**H. Reach, and I. Stretch**
+
+| ID | Feature | Pri. | Mode | UI form | Data | Step | Endpoint |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| F41 | Lite mode for any globe pin or dropped pin | P0 | all | `tier: explore` | DB-2/3 | 7 | `POST /lite/...` (v1.2 request) |
+| F42 | Compare climates: this farm vs another site | P2 | Plan | split | all | 7 | existing site endpoints |
+| F43 | ECOSTRESS summer-stress check | P2 | Learn | panel | DB-9 | 7 | v1.2 request when built |
+| F44 | Nitrate-leaching risk | P2 | Explore | layer | engine | 7 | v1.2 request when built |
+
+### 4.2 Non-goals (continued) Any text is template-generated from computed values.
+- The land is always primary. Charts and tables live only in the side panel (D-28), never over the 3D view.
 - No full hydraulic model. The 3D water replay (if Section 1 keeps it) is visual support, not the ranking engine.
 - No computer vision on the farm photo for crop detection (out of scope for 48 h).
 - Drone/video capture appear only as Roadmap items.
@@ -252,7 +364,7 @@ dem ─► hydrology ─► zones.geojson ─────┘   bootstrap
                                            optimizer ─► data/seed/<site>/*.json
 ```
 
-- **Proposed module layout** (`services/api/app/`): `ingest/` (one module per source; httpx; cache-first), `fusion/`, `calendar/`, `terrain/`, `engine/` (hazard, exposure, bootstrap, scenarios, optimizer), `markers/`, `models/` (Pydantic, the contract per D-19), `routes/`.
+- **Proposed module layout** (`services/api/app/`): `ingest/` (one module per source; httpx; cache-first), `fusion/`, `calendar/`, `terrain/`, `engine/` (hazard, exposure, bootstrap, scenarios, optimizer), `markers/`. Routes stay in the existing `routers/`; services in the existing `services/*.py` call the new modules and return shapes that pass `fixtures_lib.contract.validate_response` (D-31).
 - **Engine purity:** `engine/` and `markers/` take arrays and return arrays/models. No network, no file I/O, no clock, no LLM. Unit tests run in milliseconds.
 - **Caching:** raw downloads in `data/cache/` (gitignored); derived, license-safe tables in `data/seed/<site_id>/` (committed): `hazard.json`, `calendars.json`, `zones.geojson`, `exposure.json`, `bootstrap.json`, `scenarios.json`, `optimizer.json`, `provenance.json`.
 - **OFFLINE=1:** ingest modules refuse network calls and read `data/seed/` only. A test enforces it (network blocked → curated site still returns markers).
@@ -262,76 +374,52 @@ dem ─► hydrology ─► zones.geojson ─────┘   bootstrap
 
 ## 9. What Section 2 gives Section 1
 
-### 9.1 UI direction the backend must support (owner's words, summarized)
+### 9.1 UI direction the backend must support (owner's words, summarized; D-24…D-28)
 
-- The user **moves around the 3D farm**. Based on the farm's land, crops, and what the algorithm finds, **minimalist game-style markers** appear: a hazard symbol over a patch of land, and/or the patch softly highlighted (Hay Day / Clash of Clans feel).
-- **Sleek, minimalist, SaaS aesthetic.** Not a dashboard of numbers and graphs.
-- **Icons must be minimalist and match the app's aesthetic.** This is a Section 1 design task; the backend only sends `kind`.
+- The experience opens in space: a spinning Earth with farm pins. Hovering a pin shows the country and farm; clicking it flies down to the farm, and a bold title (country, locality, farm name) fades in and out. The backend supplies the pin data through `Site` v1.1 (`country`, `locality`, `owner`, `location`, `tier`, `sim_bbox`).
+- The user **moves around the 3D farm**. Based on the land, the crops and the algorithm's findings, **minimalist, realistic pins** appear and zones are softly highlighted. The style is muted earth tones with one restrained risk accent: not cartoony, playful or colorful.
+- **Four modes** (D-27): Explore, Weather, Plan, Learn. Charts and tables appear only in the side panel (D-28), linked to the 3D view.
+- **Icons are a Section 1 design task.** The backend only sends `kind`.
 
-### 9.2 Field marker (Pydantic model sketch: the contract per D-19)
+### 9.2 What the backend returns (contract v1.1, D-31)
 
-```python
-class MarkerKind(str, Enum):
-    winter_wet = "winter_wet"      # ⚠️
-    summer_dry = "summer_dry"      # 🌵
-    opportunity = "opportunity"    # 💡
-    protected = "protected"        # ✅
+The exact schema changes are in [`../contract-request-v1.1.md`](../contract-request-v1.1.md). In summary:
 
-class Basis(str, Enum):
-    measured = "measured"; derived = "derived"; modeled = "modeled"
-    assumed = "assumed"; relative = "relative"
+- **Pins** reuse the existing `Insight` schema with new kinds `winter_wet`, `summer_dry`, `opportunity`, `protected`, plus optional `action`, `zone_ids`, `active_weeks`, `scenario`. Its `why_it_matters`, `data_refs`, `confidence` and the evidence bundle carry the "why?" layer: metric, value, units, basis, comparison, rank stability, sources, caveats.
+- **Zones** (`Zone`): outline, icon point (pole of inaccessibility), area, terrain factor, crop, winter and summer exposure (relative).
+- **Hazards:** `HazardCalendar` (`j_wet[52]`, `j_dry[52]`, thresholds, caveats) and `HazardCatalog` (event kinds, years with event out of years total, peak weeks, worst storm to replay).
+- **Rotation comparison** (`RotationComparison`): two axes per rotation with p10–p90 ranges and rank stability (null in Lite).
+- **Storms:** existing `Storm` plus `rank`, `rank_of`, `named_event`. `hyetograph.synthetic: false` applies when the IMERG half-hourly shape is used (D-35).
+- **Layers:** existing `LayerName` widened with `wetness_index`, `planting_suitability` (P0), and `soil_moisture_relative`, `irrigation_priority`, `water_received` (P1).
+- **Scenario:** optional `scenario` on `SimulationRequest`, `hazard-calendar` and `compare` (`baseline | wetter_winters | drier_summers | both`).
 
-class SourceRef(BaseModel):
-    dataset: str          # e.g. "NASA POWER"
-    detail: str           # e.g. "daily precipitation 1981–2025, bias-corrected to GPM IMERG"
-    url: str              # dataset landing page (verified)
+Marker generation (§7) maps onto `Insight`: headline → `title` (≤ 60 characters), action → `action`, severity → `severity`, icon point → `anchor` (with `at_time_min: null`).
 
-class Evidence(BaseModel):          # the "why?" layer, shown only after a tap
-    metric: str           # e.g. "winter_exposure"
-    value: float
-    units: str            # e.g. "relative index (field mean = 1)"
-    basis: Basis
-    comparison: str | None    # e.g. "−48% vs current practice"
-    rank_stability: str | None  # e.g. "lower than Rotation A in 91% of resampled histories"; None in Lite
-    sources: list[SourceRef]
-    caveats: list[str]    # e.g. ["Lite mode: fewer data sources", "calendar assumed for this crop"]
+### 9.3 Endpoints (existing v1.0.0 + v1.1 additions)
 
-class FieldMarker(BaseModel):
-    id: str
-    kind: MarkerKind
-    severity: int = Field(ge=1, le=5)
-    zone_ids: list[str]
-    icon_point: LonLat            # pole of inaccessibility
-    outline: GeoJSONPolygon       # for the soft highlight
-    active_weeks: list[int]       # 0–51, week 0 starts Jan 1; wraps
-    headline: str = Field(max_length=60)
-    action: str                   # one sentence
-    evidence: Evidence
-    rotation_id: str
-    scenario: Literal["baseline", "wetter_winters", "drier_summers", "both"]
-    mode: Literal["full", "lite"]
-```
-
-Field names are a proposal. Once the models exist in code, **`/openapi.json` is authoritative**, and Section 1 regenerates types from it.
-
-### 9.3 Endpoints (proposal)
-
-| Endpoint | Returns | Notes |
-| --- | --- | --- |
-| `GET /sites` | Curated sites with a "Pre-built" flag | |
-| `GET /sites/{id}/terrain` | **Terrain package** from LidarBC or NASADEM: 16-bit heightmap PNG, normal map, metadata (grid size, cell size m, CRS, elevation range, `source`, `resolution_m`, `dsm_includes_vegetation`) | **Proposal, new.** Feeds the 3D land (S1-A). Encoding follows the old decoder contract (row-major, row 0 = north); see `Databases.md` DB-1. Final grid size agreed with S1-A |
-| `GET /sites/{id}/zones` | Zone outlines + terrain factor | For layer views |
-| `GET /sites/{id}/rotations` | Curated rotations + their calendars (52 weeks) | |
-| `GET /sites/{id}/markers?rotation=&scenario=&week=&all=` | ≤ 5 `FieldMarker` (or all) | `week` filters to active markers for the scrubber |
-| `GET /sites/{id}/compare?rotations=a,b,c&scenario=` | Two axes per rotation + rank stability | UI shows it minimally (e.g. two small meters), not a chart |
-| `POST /lite/markers` | Same shape, `mode = "lite"` | Location + field polygons + crop per field |
-| `GET /provenance` | Every dataset with source, license, attribution, accessed date, basis | Data credits page. Built from `Databases.md` facts (DB-13); a test fails if a dataset used in any seed table is missing |
+| Endpoint | Status | Returns | Features |
+| --- | --- | --- | --- |
+| `GET /sites`, `GET /sites/{id}` | exists; v1.1 fields | Curated (`tier: twin`) and explore sites | Globe pins, title card |
+| `GET /terrain/{id}` + `heightmap.png`, `normal.png`, `texture.jpg` | exists | Terrain package from LidarBC or NASADEM | 3D land |
+| `GET /terrain/{id}/layers`, `/layers/{name}.png` | exists; v1.1 layer names | Layer PNGs and legends | F1–F5, F17, F25, F26 |
+| `GET /terrain/{id}/insights` | exists; v1.1 kinds | Pins (≤ 5 by default) | F3, F24, F25, F27–F29 |
+| `GET /terrain/{id}/provenance` | exists | Every dataset with source, license, attribution | F34, F36 |
+| `GET /weather/summary` | exists; v1.1 `climatology` | Climate fingerprint, trends, growing season | F10, F14, F16 |
+| `GET /weather/storms` | exists; v1.1 fields | Storm library (D-34) | F11, F13, F15 |
+| `POST /simulations`, frames, risk, evidence, diff | exists; v1.1 `scenario` | Storm replay per rotation | F11, F19, F22 |
+| `GET /rotations/presets`, `POST /rotations/validate` | exists | Rotations and cover calendars | F6, F18 |
+| `GET /sites/{id}/hazard-calendar` | **new** | `HazardCalendar` | F12 |
+| `GET /sites/{id}/hazards` | **new** | `HazardCatalog` | F13 |
+| `GET /sites/{id}/zones` | **new** | `ZoneCollection` | F1, F25, F26, F30 |
+| `GET /sites/{id}/compare` | **new** | `RotationComparison` | F18, F31 |
+| Lite mode, what-if builder, year replay, season challenge, NDVI history, cell footprints | later (v1.2) | — | F7, F20, F21, F37, F39, F41 |
 
 ### 9.4 Interface rules
 
-- Section 1 builds against fixtures generated **from the Pydantic models** (one script writes example JSON for every endpoint).
-- Any change to a model is announced in the team chat the same hour.
-- A type-check failure on the generated types is treated as a broken build.
+- The integrator applies contract changes (see `../README.md`). Section 2 never edits `openapi.yaml`; it writes a request like `../contract-request-v1.1.md`.
+- Every real response must pass `fixtures_lib.contract.validate_response`. Real data replaces fixtures behind `services/api/app/services/*.py`, one service at a time (D-36).
+- Fixtures for every new schema land with the contract change, so Section 1 can build before real data exists.
+- Section 1 must handle unknown enum values (new `Insight.kind`, `LayerName`) gracefully.
 
 ---
 
@@ -355,9 +443,10 @@ Honesty about the backtest: a fair test is one where our method beats a random s
 
 | Site | Status | Terrain | Crops | Notes |
 | --- | --- | --- | --- | --- |
-| Fraser Valley farm | **P0, build first** | LidarBC | AAFC crop map | Exact farm `TODO(owner)`: pick it, or choose fields from the AAFC map near Sumas Prairie / Abbotsford / Chilliwack. Backtest site |
-| Contrasting site 2 | P1 (time permitting) | NASADEM / local open LiDAR | Local crop map or user-assigned | e.g. US Midwest corn–soy |
-| Contrasting site 3 | P1 (time permitting) | NASADEM | User-assigned | e.g. dry Mediterranean or South Asian site |
+| **Agassiz Research and Development Centre** (AAFC), Agassiz, BC (D-33) | **P0, build first** (`tier: twin`) | LidarBC (coverage TODO(verify)), NASADEM fallback | AAFC crop map; Section 1's illustrative OSM field layout until real crops exist | Simulation square `[-121.77543, 49.24461, -121.75617, 49.25719]` (~1.4 km), from `fe/S1-cesium-globe` `lib/twin/agassiz.ts`. Coordinates approximate (geocoded). Nov 2021 backtest: Agassiz is ~30 km east of Sumas Prairie, so check whether the event's flooding reached this square; if not, run the backtest on a Sumas Prairie square with the same pipeline (TODO(verify)) |
+| Contrasting site 2 | P1 (time permitting) | NASADEM / local open LiDAR | Local crop map or user-assigned | Pick from the 7 research-farm pins on the globe |
+| Contrasting site 3 | P1 (time permitting) | NASADEM | User-assigned | As above |
+| 7 research-farm pins (IRRI Los Baños, ICRISAT Hyderabad, Rothamsted, …) | Lite mode (`tier: explore`, D-32) | NASADEM | User-assigned or textbook | Facts and sources in `apps/web/lib/farms.ts` on `fe/S1-cesium-globe`; they move into `GET /sites` in v1.1 |
 
 Each curated site shows a "Pre-built" badge in the UI.
 
@@ -365,16 +454,29 @@ Each curated site shows a "Pre-built" badge in the UI.
 
 ## 12. Plan (pre-event → event)
 
+**Build order (D-36).** Each step ends with Agassiz working end to end on real data so far, while every other route keeps serving fixtures.
+
+| Step | Delivers | Features unlocked | Prompt |
+| --- | --- | --- | --- |
+| 0 | Verify data, accounts, contract request sent | — | S2-01, S2-02 |
+| 1 | Real terrain (LidarBC/NASADEM) + layers | F1–F4, F9 | S2-03 |
+| 2 | Real storm library (POWER + IMERG), real storm replay | F11, F15, F22 | S2-04, S2-05 |
+| 3 | Fusion, hazard calendar, hazard catalog, climate fingerprint | F10, F12–F14, F16 | S2-06 |
+| 4 | HLS + AAFC calendars, rotation comparison | F6–F8, F18, F21 | S2-07, S2-08 |
+| 5 | Zones, optimizer pins, suitability layers, zone table, scorecard | F5, F17, F24–F32 | S2-09 |
+| 6 | Field Shift scenarios | F19, F20, F23, F39 | S2-10 |
+| 7 | Backtest, Lite mode, seed, offline, provenance, write-up | F34, F41, F42 | S2-11, S2-12 |
+
 | When | S2-A (Data) | S2-B (Algorithm) |
 | --- | --- | --- |
-| Pre-event, day −2 | S2-01: verify every dataset (§5), read the official Resources list, Earthdata accounts, pick the Fraser Valley farm | Pydantic models (§9.2) + fixture generator; engine skeleton with invariant tests on synthetic data |
-| Pre-event, day −1 | Ingest + cache POWER, IMERG, SMAP; HLS + AAFC calendars; LidarBC terrain + zones | Fusion, hazard odds, exposure engine, bootstrap on real cached data |
-| Event, Sat AM | Backtest data for Nov 2021 | Scenarios (analog years), optimizer, marker generator |
-| Event, Sat PM | `data/seed/` for site 1; OFFLINE test | Endpoints live on site 1; Section 1 swaps to live |
-| Event, Sun AM | Lite mode (POWER live + NASADEM) | Sensitivity table, backtest score, `algorithm.md` |
-| Event, Sun PM | Sites 2–3 if time; provenance page data | "How we use NASA data" one-pager; freeze by Sun 21:00 |
+| Pre-event, day −2 | Step 0; step 1 | Contract request; engine skeleton with invariant tests |
+| Pre-event, day −1 | Step 2 downloads (POWER, IMERG, SMAP); HLS + AAFC downloads | Steps 2–3 |
+| Event, Sat AM | Step 4 calendars | Step 4 compare; step 5 |
+| Event, Sat PM | `data/seed/agassiz/`; OFFLINE test | Step 5 done; Section 1 swaps Agassiz to live |
+| Event, Sun AM | Step 7: backtest data, Lite mode | Step 6; sensitivity table |
+| Event, Sun PM | Sites 2–3 if time; provenance | Write-up; freeze by Sun 21:00 |
 
-`Prompts.md` was rewritten on 2026-11-13 to follow this plan and `../Databases.md` (prompts S2-01…S2-12). Each data task above maps to a `Databases.md` section (DB-1…DB-13).
+`Prompts.md` follows this order (S2-01…S2-12). Each data task maps to a `../Databases.md` section (DB-1…DB-14).
 
 ---
 
@@ -403,7 +505,8 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | AAFC classes lack cover crops | `Bare_r` for cover-crop rotations is assumed | Label `assumed`; check whether any class or local study covers it |
 | IMERG latitude coverage near 49°N | Fusion fails | Verify early; else fuse rain to POWER only and say so |
 | Backtest shows low skill | Weaker validity story | Report honestly vs a random baseline; explain limits |
-| No shared contract (D-19) | Silent mismatch between sections | Generated types + fixtures from models; announce changes |
+| Contract v1.1 not applied in time (D-31) | Section 1 can't show new features | Send the request on day −2; fixtures land with the change; v1.0.0 routes keep working meanwhile |
+| Globe branch not merged / Google tiles need network and a key | Intro fails at the venue | Tier fallback to the keyless offline globe; recorded backup video (D-26) |
 | Time | Sites 2–3 missing | Depth first (D-22); Lite mode still shows global reach |
 
 ---
@@ -412,19 +515,21 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 
 | # | Item | Owner |
 | --- | --- | --- |
-| 1 | Pick the exact Fraser Valley farm (coordinates, field boundaries) | Product owner |
+| 1 | ~~Pick the exact Fraser Valley farm~~ Agassiz (D-33). Still to verify: farm centre and extent with AAFC; LidarBC coverage of the square | S2-A |
 | 2 | Read and record the official 2026 Resources list for the challenge | S2-A |
 | 3 | Verify every row in §5 (names, variables, coverage, access, license, sample request) | S2-A |
 | 4 | Confirm Nov 2021 event dates and an observation source for the backtest | S2-A |
 | 5 | Check CSA RADARSAT open access/license (D-18) | S2-A |
 | 6 | Choose `τ_bare`, default percentiles, and smoothing width from literature; record sources | S2-B |
 | 7 | Define the 3 curated Fraser Valley rotations with the owner (e.g. silage corn with/without winter cover; perennial grass) | S2-B + owner |
-| 8 | Update `../README.md` (contract rule → D-19) and Section 1 PRD (markers §9, icon requirement) | Integrator |
+| 8 | Apply `../contract-request-v1.1.md` to `openapi.yaml`, fixtures and types; announce | Integrator |
 | 9 | ~~Rewrite `Prompts.md` for v0.2~~ Done 2026-11-13 (see `Databases.md` for the data tasks) | S2-B |
 | 10 | Fill in owners (§2) | Team |
 | 11 | Decide SMAP L4 vs L3 (`Databases.md` DB-5) | S2-A + S2-B |
-| 12 | Agree terrain package shape and grid size with S1-A (new `GET /sites/{id}/terrain`) | S2-A + S1-A + Integrator |
+| 12 | ~~New `GET /sites/{id}/terrain`~~ Use the existing `GET /terrain/{id}` package (v1.0.0). Agree grid size for the 1.4 km square with S1-A, and how the terrain drapes on Cesium | S2-A + S1-A |
 | 13 | Create Earthdata accounts for everyone and test one download each | Everyone |
+| 14 | Verify the IMERG half-hourly product name and access (D-35) | S2-A |
+| 15 | Check that the Nov 2021 flooding reached the Agassiz square, or pick a Sumas Prairie backtest square | S2-A |
 
 ---
 
@@ -435,3 +540,4 @@ Established methods we use but do not claim: quantile-mapping bias correction, T
 | 2026-11-12 | Claude | v0.1 draft created |
 | 2026-11-12 | Claude + product owner | v0.2: design interview decisions D-01…D-22; Risk Window Calendar spec; data table; marker output; validation incl. Nov 2021 backtest; prior art; plan |
 | 2026-11-13 | Claude + product owner | v0.2.1: added `../Databases.md` as the detailed data plan; ECOSTRESS row (P2); SMAP L4 vs L3 open decision; GRACE, yield and disaster data recorded as not used; proposed `GET /sites/{id}/terrain`; `/provenance` tied to `Databases.md`; `Prompts.md` rewritten |
+| 2026-11-13 | Claude + product owner | v0.3: feature interview. Decisions D-23…D-36 (historical first, realistic aesthetic, space-to-farm hero on Cesium, four modes, side-panel analytics, mini-game, contract v1.1 replacing D-19, Agassiz as P0 farm, storm library and IMERG half-hourly shape, build order). Feature catalog §4.1 (F1–F44 with priority, mode, UI form, data, step, endpoint). §9 rewritten around contract v1.1 (`../contract-request-v1.1.md`). §11 Agassiz + Lite pins. §12 build order. Risks and open items updated |

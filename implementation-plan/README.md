@@ -12,6 +12,8 @@ Project: FieldTwin (NASA Space Apps 2026, "Field Shift: Adapting Farms with NASA
 
 Shared by both teams: **[`Databases.md`](Databases.md)** lists every dataset (terrain, weather, soil moisture, land cover and crops, reference tables, validation), why we use it, how to get and process it, and which team owns it. It is the data source of truth; both PRDs and both `Prompts.md` files point to it. Update it (with a change-log row) whenever a dataset changes.
 
+Pending contract change: **[`contract-request-v1.1.md`](contract-request-v1.1.md)** (additive `openapi.yaml` v1.1 for the 2026-11-13 features: site fields for the globe, storm rank, hazard calendar and catalog, zones, rotation comparison, new pin kinds and layers, scenarios). The integrator applies it.
+
 Each team folder has:
 - `PRD.md`: what we are building and why. A **living document**. Draft v0.1 only; the team must flesh it out in the kickoff prompt (prompt 01) and keep it current.
 - `Prompts.md`: numbered prompts for Claude Code, run in order. Each prompt is short and self-contained.

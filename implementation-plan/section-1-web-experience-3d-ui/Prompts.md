@@ -2,6 +2,11 @@
 
 Run in order, one per Claude Code session. Prompt 01 (kickoff) must be done by both owners before anything else.
 
+**Status (2026-11-13):**
+- The work in S1-02…S1-10 has largely been built on `main` as cards s1-A1…A10 (viewer) and s1-B1…B10 (UI); see `docs/progress/s1-*`. Re-run a prompt only for its gaps.
+- The globe and farm twin are being built as cards C1…C8 on branch `fe/S1-cesium-globe`; see `docs/progress/s1-cesium-board.md` there.
+- New prompts **S1-11…S1-14** implement the 2026-11-13 feature interview (PRD §3.1) and the Section 1 side of contract v1.1 (`../contract-request-v1.1.md`). They build on the Cesium branch. Merge it to `main` first, or coordinate with its lead.
+
 ## Rules for every prompt (Claude reads these once)
 
 1. Read, in this order and nothing else unless the prompt lists it: `CLAUDE.md`, this folder's `PRD.md` section 0 and the sections the prompt names, the last 3 entries of `progress.md`.
@@ -20,7 +25,7 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 
 **Goal:** turn PRD v0.1 into a PRD the team believes in. No code.
 **Read:** `PRD.md` fully (including §7.1); `../README.md`; `../Databases.md` §1 and §3 only; `../section-2-nasa-data-algorithm/PRD.md` sections 0, 7 and 9 only.
-**Task:** Interview the owners one question at a time (use multiple-choice where possible) covering PRD section 9 open questions (including 7 to 9: hero = markers, replay or both; terrain package shape; icon style) plus: visual mood, hero shot storyboard (second by second), page list, who owns what, and the Omniverse decision (present options A/B/C from section 5, verify claims on the web, recommend). Also confirm with S2-A the terrain package and `GET /sites/{id}/terrain` shape, and record how the UI shows terrain source and resolution (LidarBC vs NASADEM). Then rewrite `PRD.md`: fill owners, resolve questions or mark them owned with a date, add a screen-by-screen sketch list, add measurable acceptance criteria per deliverable, add a 48-hour plan with hour marks per owner. Keep it under 250 lines.
+**Task:** Interview the owners one question at a time (use multiple-choice where possible) covering PRD section 9 open questions (7 is resolved in §3.1; 8 to 11: terrain grid on Cesium, thin-line icon set, the owner's Helix Sensors link, unknown-enum handling) plus: visual mood, hero shot storyboard (second by second), page list, who owns what, and the Omniverse decision (present options A/B/C from section 5, verify claims on the web, recommend). Also confirm with S2-A the grid size of the existing `GET /terrain/{id}` package for the Agassiz square, and record how the UI shows terrain source and resolution (LidarBC vs NASADEM). Then rewrite `PRD.md`: fill owners, resolve questions or mark them owned with a date, add a screen-by-screen sketch list, add measurable acceptance criteria per deliverable, add a 48-hour plan with hour marks per owner. Keep it under 250 lines.
 **Done when:** PRD has no blank owners, every open question is resolved or assigned, and a change-log row exists. Append `progress.md`.
 
 ## S1-02 Design system and app shell (FE-00)
@@ -76,3 +81,94 @@ Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`);
 **Read:** root `prd.md` cards FE-12, FE-13, section 11 (demo plan, fallbacks).
 **Task:** Guided tour (`T`), presentation mode (hide dev badges, larger type, Reset key, network indicator); accessibility sweep; performance sweep at projector resolution; swap mock to live for the curated site if Section 2 is ready (coordinate with integrator); record backup video; checklist from root section 11.3.
 **Done when:** tour under 90 s on all curated sites, Reset exact, offline works, fps targets met, backup video saved.
+
+---
+
+## S1-11 Space-to-farm intro and title card (D-25, D-26)
+
+**Read:**
+- `PRD.md` §3.1
+- `docs/progress/s1-C1.md` and `s1-C2.md` (on `fe/S1-cesium-globe`)
+- `apps/web/components/globe/{Globe.tsx,types.ts,GlobeHome.tsx}`
+- `apps/web/components/viewer/cesium/{tiles.ts,clamp.ts}`
+
+**Task:**
+- **Intro sequence:** Earth drifts into frame against stars. Cursor movement gives astronaut-style orbit parallax with slow easing. Earth auto-spins until the first interaction.
+- **Pins:** hover shows "farm, country"; `twin` vs `explore` styling uses thin lines, no emoji.
+- **Fly-in:** click starts a fast, eased "meteor" fly-in to the farm. Use the tier A photoreal tiles where available and fall back through B to C. It must never stall on a missing tile tier.
+- **Title card:** on arrival, show a top-right title with country, locality and farm name in an OFL bold, wide, all-caps display font, then fade it out over about 3 s. Record the font license for the Methods page.
+- **Reduced motion:** replace the fly-in with a crossfade.
+- **Backup video:** record one video of the full intro to `docs/demo/` as the offline backup.
+
+**Done when:**
+- the intro runs from load to farm with no page errors in tiers A, B and C
+- the reduced-motion path works
+- the title shows the correct fields for Agassiz
+- the backup video is saved
+
+## S1-12 Four modes and the linked side panel (D-27, D-28)
+
+**Read:**
+- `PRD.md` §3.1
+- `docs/progress/s1-C3-product.md`
+- `apps/web/components/farm/{TwinPanel.tsx,ComparePanel.tsx}`
+- `apps/web/lib/store.ts`
+
+**Task:**
+- **Modes:** rename and regroup the twin modes to **Explore / Weather / Plan / Learn**:
+  - Simulate → Weather
+  - Compare + Evidence → Plan
+  - add Learn (tour entry, Methods link, placeholder for the Season challenge)
+- **Explore:** opens by default with at most 5 pins.
+- **Collapsible side panel:** hovering a week in any chart sets a store `highlightWeek` that the land reads. Clicking a table row flies the camera to the zone.
+- **Restyle:** apply the realistic, muted aesthetic (D-24): thin-line pins, low-opacity overlays, one risk accent.
+- **Keyboard:** keep tab semantics and arrow keys.
+
+**Done when:**
+- all four modes render with no console errors
+- `highlightWeek` and row-click camera fly work in mock mode
+- Reset clears the new store keys
+- tests updated
+
+## S1-13 Contract v1.1 on the UI: pins, zones, hazards, compare (F1, F12, F13, F18, F24, F25, F29–F31)
+
+**Read:**
+- `../contract-request-v1.1.md`
+- `PRD.md` §7.1
+- Section 2 PRD §4.1 and §9
+
+**Task (after the integrator applies v1.1 and regenerates types and fixtures):**
+- **Unknown enums:** render unknown `Insight.kind` and `LayerName` values as a neutral default. Ship this guard first, even before v1.1.
+- **Pins:** the four new `Insight` kinds as thin-line pins at `anchor`, with `active_weeks` driving visibility on the 12-month scrubber. The "why?" card shows units, basis, rank stability and sources.
+- **Zones:** muted highlight from `GET /sites/{id}/zones`, and the zone table (F30) in Plan.
+- **Weather mode:** the hazard calendar ring (F12) linked to the scrubber, and hazard catalog cards (F13) where a tap replays the `worst_storm_id`.
+- **Plan mode:** rotation comparison on two axes with ranges (F18, F31); remove the hand-assigned scores.
+- **Layers:** `wetness_index` and `planting_suitability` with legends.
+- **Globe:** read globe pins from `GET /sites` (`country`, `locality`, `location`, `tier`, `sim_bbox`) instead of `lib/farms.ts`.
+
+**Done when:**
+- every new fixture renders
+- every number shows units and a basis chip
+- scrubbing hides and shows pins by `active_weeks`
+- typecheck, lint and test pass
+
+## S1-14 Real Agassiz data swap (Cesium card C6)
+
+**Read:**
+- Section 2 `progress.md` (latest S2-03…S2-09 entries)
+- `PRD.md` §7.1
+
+**Task:** switch Agassiz from mock to live in the order Section 2 delivers it:
+1. terrain and layers (S2-03)
+2. real storms and replay (S2-05)
+3. hazards (S2-06)
+4. calendars and compare (S2-07, S2-08)
+5. pins and zones (S2-09)
+
+After each switch, check:
+- basis chips are present
+- the Pre-built badge shows
+- `OFFLINE=1` still works
+- no "mock" badge reaches the demo path
+
+**Done when:** the full journey (globe → fly-in → Explore → Weather replay → Plan compare) runs on real Agassiz data offline.
