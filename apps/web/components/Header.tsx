@@ -7,7 +7,7 @@ import { mockExtrasEnabled } from "@/components/viewer/meta";
 import { isMock, offline } from "@/lib/api/client";
 import { usePresenter } from "@/lib/store";
 
-import { startTour } from "./TourController";
+import { AboutPanel } from "./globe/AboutPanel";
 
 const NAV = [
   { href: "/explore", label: "Sites" },
@@ -41,9 +41,7 @@ export function Header() {
           {offline && <span className="rounded border border-ink-muted px-2 py-0.5 text-xs font-medium text-ink">Offline: pre-built data</span>}
           {isMock && <Badge variant="mock" />}
           {(isMock || mockExtrasEnabled) && <span className="presenter-only rounded border border-ink-muted px-1.5 text-xs text-ink-muted">mock data</span>}
-          <button type="button" onClick={startTour} className="rounded-md bg-accent px-3 py-1 font-medium text-accent-ink hover:opacity-90">
-            ▶ Guided demo
-          </button>
+          <AboutPanel />
           <button type="button" aria-pressed={presenter} onClick={() => usePresenter.setState({ presenter: !presenter })} className="rounded-md border border-line px-3 py-1 text-ink hover:bg-surface-2">
             Presenter mode{presenter ? ": on" : ""}
           </button>

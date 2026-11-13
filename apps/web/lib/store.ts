@@ -2,6 +2,7 @@
 // Update with useAppStore.setState({...}); reset() restores initialState (demo Reset key).
 import { create } from "zustand";
 
+import type { GlobeView } from "@/components/globe/types";
 import type { TwinViewerProps, ViewerLayerName, ViewerQuality } from "@/components/viewer";
 
 export interface AppState {
@@ -25,6 +26,10 @@ export interface AppState {
   simId: string | null;
   /** Split divider, 0..1 of the canvas width. */
   divider: number;
+  /** Homepage globe: the selected farm (lib/farms.ts id), or null. */
+  farmId: string | null;
+  /** Homepage globe: whole Earth, or flown in to farmId. */
+  globeView: GlobeView;
 }
 
 export const initialState: AppState = {
@@ -43,6 +48,8 @@ export const initialState: AppState = {
   showDiff: false,
   simId: null,
   divider: 0.5,
+  farmId: null,
+  globeView: "globe",
 };
 
 export const useAppStore = create<AppState & { reset(): void }>()((set) => ({

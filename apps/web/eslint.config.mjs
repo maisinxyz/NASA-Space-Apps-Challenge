@@ -20,6 +20,7 @@ const eslintConfig = [
       "next-env.d.ts",
       "lib/api/schema.d.ts",
       "public/mock/**",
+      "public/cesium/**",
     ],
   },
 ];

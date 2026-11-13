@@ -1,16 +1,16 @@
 "use client";
-// Guided demo runner (script in lib/tour.ts) and the global Reset key. Mounted once in the root layout.
+// The global Reset key, plus the guided demo runner (script in lib/tour.ts). Mounted once in the root layout.
+// The guided demo has no entry point any more (S1-C2 removed the header button and startTour): nothing sets
+// tourStep, so the runner below never shows. It stays mounted because it owns the Reset key.
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
-import { initialState, useAppStore } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 import { TOUR, tourDurationMs } from "@/lib/tour";
 
 const BACKUP_VIDEO_URL = process.env.NEXT_PUBLIC_BACKUP_VIDEO_URL;
 const dev = process.env.NODE_ENV !== "production";
-
-export const startTour = () => useAppStore.setState({ ...initialState, tourStep: 0 });
 
 export function BackupVideo() {
   return BACKUP_VIDEO_URL ? (

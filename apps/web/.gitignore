@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Cesium static runtime, copied by scripts/sync-cesium.mjs
+/public/cesium
