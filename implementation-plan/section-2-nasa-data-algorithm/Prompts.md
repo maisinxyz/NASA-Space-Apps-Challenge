@@ -11,9 +11,9 @@ Run in order, one per Claude Code session. Prompt 01 (kickoff) must be done by b
 5. Output shapes must pass `fixtures_lib.contract.validate_response`. Keep determinism and `OFFLINE=1` behavior.
 6. Finish with: `make test` (show results), list acceptance items that pass or fail, append an entry to `progress.md`, update `PRD.md` (change-log row) if a decision changed, then stop.
 
-`progress.md` entry format (max 10 lines): `## S2-xx name | date | branch` then Built / Files / How to run / Gaps / Next prompt must know.
+`progress.md` entry format (max 10 lines): `## S2-xx name | date | commit` then Built / Files / How to run / Gaps / Next prompt must know.
 
-Branch per prompt: `be/S2-xx-slug`. Swap points live in `services/api/app/services/*`.
+Commit directly to `main` with the prompt ID in the message (e.g. `S2-03: …`); `git pull --rebase` before pushing. Swap points live in `services/api/app/services/*`.
 
 ---
 

@@ -10,9 +10,9 @@ Run in order, one per Claude Code session. Prompt 01 (kickoff) must be done by b
 4. Build against mock fixtures (`NEXT_PUBLIC_API_MODE=mock`). Never hard-code data that the API provides.
 5. Finish with: run `pnpm lint && pnpm typecheck && pnpm test` (in `apps/web`), list which acceptance items pass, append an entry to `progress.md` (format below), update `PRD.md` if a decision changed (add a change-log row), then stop.
 
-`progress.md` entry format (max 10 lines): `## S1-xx name | date | branch` then Built / Files / How to run / Gaps / Next prompt must know.
+`progress.md` entry format (max 10 lines): `## S1-xx name | date | commit` then Built / Files / How to run / Gaps / Next prompt must know.
 
-Branch for each prompt: `fe/S1-xx-slug`.
+Commit directly to `main` with the prompt ID in the message (e.g. `S1-03: …`); `git pull --rebase` before pushing.
 
 ---
 

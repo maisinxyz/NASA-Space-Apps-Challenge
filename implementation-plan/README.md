@@ -22,7 +22,7 @@ Each team folder has:
 3. **Mock/live switch.** Section 1 builds against fixtures (`NEXT_PUBLIC_API_MODE=mock`). Section 2 ships real outputs in the same shapes. Swapping is one setting.
 4. **Honesty rules** from `../CLAUDE.md` apply to both sections (basis labels, "relative, not prediction", pre-built badge).
 5. **Token-saving habit:** start each Claude session with the prompt's "Read" list only. Do not ask Claude to read the whole repo or the whole root PRD.
-6. Branches: `fe/S1-xx-slug` (Section 1), `be/S2-xx-slug` (Section 2), merge to `main` often, keep `main` runnable.
+6. Git: commit directly to `main` (no feature branches, no PRs). `git pull --rebase` before you start and before you push. Put the prompt ID in the commit message (e.g. `S1-03: …`). Small commits; keep `main` runnable.
 
 ## Integrator checklist (per day)
 

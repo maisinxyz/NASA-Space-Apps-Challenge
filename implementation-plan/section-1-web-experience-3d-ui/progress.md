@@ -5,7 +5,7 @@ Each finished prompt adds one entry, max 10 lines, newest at the bottom. The nex
 Format:
 
 ```
-## S1-xx name | date | branch
+## S1-xx name | date | commit
 Built:
 Files:
 How to run:
