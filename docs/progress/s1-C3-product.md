@@ -38,3 +38,13 @@ Not touched: `Globe.tsx`, `components/viewer/**`, `components/globe/types.ts`, `
 - `fields` is the module constant `AGASSIZ_FIELDS`, so the reference is stable. `cropByField` is `useMemo`'d, and it is `undefined` while no rotation is shown, so fall back to `field.crop`.
 - `photoreal` and `exaggeration` are sent only in twin view; otherwise the values are `false` and `1`.
 - Selection: `onSelectField(id|null)` writes `twinFieldId`, and the panel list writes the same key.
+
+## C3b: fewer fields + simulation square (not committed)
+- **Fields:** the twin now shows 3 adjacent OSM fields (real rings unchanged): f4 Centre field (35.5 ha, silage corn, rotating, phase 0), f2 North paddock (8.2 ha, alfalfa, rotating, phase 2) and f3 Berry block (3.9 ha, berries, perennial). f4 is the large rotating field, f2 touches it on the north at a different rotation stage, and f3 sits in a bay of f4. So one square shows neighbours at different stages. f1, f5-f8 are dropped. `ROTATING_FIELDS` is now `{ f2: 2, f4: 0 }`.
+- **Square:** `AGASSIZ_SIM_BBOX = [-121.77543, 49.24461, -121.75617, 49.25719]` in `lib/twin/agassiz.ts`. It is 1.4 km by 1.4 km in metres (the lon span is divided by cos 49.25 deg). `GlobeHome` passes it as `simBbox` in twin view only. `SIM_AREA_LABEL` is "Simulation area (~1.4 km square)".
+- **Explore panel:** the photoreal toggle is gone. It shows the square label and "The thin outline on the map marks where simulation layers apply; they only cover this area." The exaggeration slider stays. Nothing says the outside is muted.
+- **Removed:** the `photoreal` store key, its reset test entry and the GlobeHome prop. There was no tier "A" copy in my files.
+- **Tests:** `twin.test.ts` now expects 2-3 fields and checks that every ring point is inside the square and that the width/height ratio is within 3% of 1 (1.0-1.5 km). `cropByField` for Compare is unchanged, so "Show on fields" drives f2/f4 (f3 keeps berries).
+- **Board:** added backlog card C3c "field drill-down" to `s1-cesium-board.md`.
+- **Results:** typecheck errors are only in RENDER files (`viewer/cesium/Spike.tsx`, `tiles.ts`, `tiles.test.ts`: tier "A" and `photoreal`, still being removed). None in my files. Lint passes. Tests 126/127; the one failure is the known `client.test.ts` CRLF issue.
+- **Not checked:** browser view of the 3-field twin (the Playwright check was not done).

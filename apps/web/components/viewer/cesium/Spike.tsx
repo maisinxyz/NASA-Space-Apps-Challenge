@@ -70,6 +70,13 @@ function testFrames(cx: number, cy: number, strength: number): Uint8Array[] {
   });
 }
 
+/** Dev-only sample simulation square (about 1 km) around test location 1. */
+const SIM_BBOX: [number, number, number, number] = (() => {
+  const dLat = 0.0045;
+  const dLon = dLat / Math.cos((FARMS[0].lat * Math.PI) / 180);
+  return [FARMS[0].lon - dLon, FARMS[0].lat - dLat, FARMS[0].lon + dLon, FARMS[0].lat + dLat];
+})();
+
 function bboxAround(f: Farm): DrapeSource["bbox"] {
   const dLat = 0.006; // about 670 m north-south half-height
   const dLon = dLat / Math.cos((f.lat * Math.PI) / 180);
@@ -84,10 +91,10 @@ declare global {
 }
 
 export default function Spike() {
-  // ?tier=A|B|C forces a tier on this page without touching env files.
+  // ?tier=B|C forces a tier on this page without touching env files.
   const [tierOrder] = useState<TileTier[] | undefined>(() => {
     const q = new URLSearchParams(window.location.search).get("tier")?.toUpperCase();
-    return q === "A" ? ["A", "B", "C"] : q === "B" ? ["B", "C"] : q === "C" ? ["C"] : undefined;
+    return q === "B" ? ["B", "C"] : q === "C" ? ["C"] : undefined;
   });
   const [tier, setTier] = useState<TileTier | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +112,7 @@ export default function Spike() {
   const [fieldsOn, setFieldsOn] = useState(true);
   const [swap, setSwap] = useState(false);
   const [fieldId, setFieldId] = useState<string | null>(null);
-  const [photoreal, setPhotoreal] = useState(false);
+  const [squareOn, setSquareOn] = useState(true);
   const [exaggeration, setExaggeration] = useState(1);
   const [overlayOn, setOverlayOn] = useState(false);
   const [overlayAnim, setOverlayAnim] = useState(false);
@@ -144,7 +151,7 @@ export default function Spike() {
   useEffect(() => {
     if (!live || !drapeOn || !farm) return;
     const source = (frames: Uint8Array[]): DrapeSource => ({ frames, width: W, height: H, maxDepthMm: 100, bbox: bboxAround(farm) });
-    const make = (i: number, side: "both" | "left" | "right") => createDrape(live.viewer, source(patterns[i]), { method, side, tileset: live.tier.tileset });
+    const make = (i: number, side: "both" | "left" | "right") => createDrape(live.viewer, source(patterns[i]), { method, side });
     drapes.current = split ? [make(0, "left"), make(1, "right")] : [make(0, "both")];
     return () => {
       drapes.current.forEach((d) => d.destroy());
@@ -209,7 +216,7 @@ export default function Spike() {
         selectedFieldId={fieldId}
         onSelectField={setFieldId}
         overlays={overlays}
-        photoreal={photoreal}
+        simBbox={squareOn ? SIM_BBOX : undefined}
         exaggeration={exaggeration}
       />
       {split && drapeOn && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80" style={{ left: `${divider * 100}%` }} />}
@@ -257,7 +264,7 @@ export default function Spike() {
         </label>
         <p data-testid="field">Selected field: {fieldId ?? "none"}</p>
         <label className={label}>
-          <input type="checkbox" checked={photoreal} onChange={(e) => setPhotoreal(e.target.checked)} /> Photoreal (Google tiles, spends quota)
+          <input type="checkbox" checked={squareOn} onChange={(e) => setSquareOn(e.target.checked)} /> Simulation square (simBbox)
         </label>
         <label className={label}>
           Exaggeration {exaggeration.toFixed(1)}x

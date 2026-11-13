@@ -8,6 +8,7 @@ Branch: `fe/S1-cesium-globe`. Plan: globe -> pins -> real farm -> digital twin (
 | C1 | Cesium spike: globe, tiles tiers, clamp, drape, split | agent-render | Review | `package.json`, `scripts/sync-cesium.mjs`, `.gitignore`, `components/viewer/cesium/**`, `components/globe/Globe.tsx`, `app/dev/cesium/**` | typecheck, lint, tests pass; go/no-go note written |
 | C2 | Farm list, cards, About, header, homepage shell | agent-shell | Review | `lib/farms.ts`, `components/globe/{FarmCard,FarmList,AboutPanel,GlobeHome}.tsx`, `app/page.tsx`, `components/Header.tsx`, tour entry points | typecheck, lint, tests pass; every farm has a source URL |
 | C3 | Farm twin core + four-mode UI | unassigned | Backlog | after C1 gate | |
+| C3c | Field drill-down: clicking a field flies the camera down to it in the same viewer and opens a field-detail panel (crop, bare months, runoff share later). No separate window or scene: water crosses field edges, so the simulation must stay whole-square. | unassigned | Backlog | after C3b | |
 | C4 | Water, A/B, diff on Cesium | unassigned | Backlog | after C1 gate | |
 | C5 | Realism pack | unassigned | Backlog | | |
 | C6 | Real-data swap for Agassiz | blocked on Section 2 data | Blocked | | owner of DEM + storm not named |

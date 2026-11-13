@@ -1,50 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { clampCamera, easeToward, horizontalDistanceM, MAX_HEIGHT_ABOVE_GROUND_M, MIN_HEIGHT_ABOVE_GROUND_M } from "./clamp";
+import { boxOfBbox, boxOfRadius, clampOrbit, clampTarget, fromOffsetM, localMorningUtcMs, MAX_PITCH_RAD, MAX_RANGE_M, MIN_PITCH_RAD, MIN_RANGE_M, offsetM } from "./clamp";
 
-const farm = { lon: -121.76, lat: 49.24, radiusM: 1000 };
+const bbox: [number, number, number, number] = [-121.765, 49.238, -121.755, 49.246];
 
-describe("clampCamera", () => {
-  it("leaves a camera inside the area untouched", () => {
-    const pos = { lon: -121.757, lat: 49.242, height: 600 };
-    expect(clampCamera(pos, farm, 100)).toEqual(pos);
+describe("box + offsets", () => {
+  it("round-trips lon/lat through metres", () => {
+    const c = { lon: -121.76, lat: 49.24 };
+    const back = fromOffsetM(c, offsetM({ lon: -121.75, lat: 49.25 }, c));
+    expect(back.lon).toBeCloseTo(-121.75, 9);
+    expect(back.lat).toBeCloseTo(49.25, 9);
   });
-
-  it("pulls a camera outside the radius back onto the circle on the same bearing", () => {
-    const pos = { lon: -121.70, lat: 49.27, height: 500 };
-    const before = horizontalDistanceM(pos, farm);
-    expect(before).toBeGreaterThan(farm.radiusM);
-    const out = clampCamera(pos, farm);
-    expect(horizontalDistanceM(out, farm)).toBeCloseTo(farm.radiusM, 3);
-    const bearing = (p: { lon: number; lat: number }) => Math.atan2(p.lat - farm.lat, p.lon - farm.lon);
-    expect(bearing(out)).toBeCloseTo(bearing(pos), 9);
-    expect(out.height).toBe(500);
+  it("builds a centred box from a bbox", () => {
+    const b = boxOfBbox(bbox);
+    expect(b.lon).toBeCloseTo(-121.76, 9);
+    expect(b.halfY).toBeCloseTo(0.004 * (Math.PI / 180) * 6378137, 3);
+    expect(b.halfX).toBeGreaterThan(300);
   });
-
-  it("limits height relative to the ground under the camera", () => {
-    expect(clampCamera({ ...farm, height: 105 }, farm, 100).height).toBe(100 + MIN_HEIGHT_ABOVE_GROUND_M);
-    expect(clampCamera({ ...farm, height: -50 }, farm, 0).height).toBe(MIN_HEIGHT_ABOVE_GROUND_M);
-    expect(clampCamera({ ...farm, height: 9000 }, farm, 100).height).toBe(100 + MAX_HEIGHT_ABOVE_GROUND_M);
+  it("antimeridian offsets stay small", () => {
+    expect(Math.abs(offsetM({ lon: -179.999, lat: 0 }, { lon: 179.999, lat: 0 }).x)).toBeLessThan(300);
   });
-
-  it("handles the antimeridian", () => {
-    const area = { lon: 179.999, lat: 0, radiusM: 500 };
-    const out = clampCamera({ lon: -179.99, lat: 0, height: 100 }, area);
-    expect(horizontalDistanceM(out, area)).toBeCloseTo(500, 3);
+  it("radius fallback is inscribed in the circle", () => {
+    const b = boxOfRadius({ lon: 0, lat: 0 }, 1000);
+    expect(Math.hypot(b.halfX, b.halfY)).toBeCloseTo(1000, 6);
   });
 });
 
-describe("easeToward", () => {
-  const a = { lon: 0, lat: 0, height: 0 };
-  const b = { lon: 1, lat: 2, height: 100 };
-  it("does not move at dt 0 and converges for large dt", () => {
-    expect(easeToward(a, b, 0)).toEqual(a);
-    const far = easeToward(a, b, 10);
-    expect(far.height).toBeCloseTo(100, 6);
-    expect(far.lat).toBeCloseTo(2, 6);
+describe("clampTarget (hard stop)", () => {
+  const box = { halfX: 300, halfY: 200 };
+  it("leaves inside points alone and clips outside ones", () => {
+    expect(clampTarget({ x: 10, y: -20 }, box)).toEqual({ x: 10, y: -20 });
+    expect(clampTarget({ x: 999, y: -999 }, box)).toEqual({ x: 300, y: -200 });
   });
-  it("moves part of the way in one frame (eases, no hard stop)", () => {
-    const h = easeToward(a, b, 1 / 60).height;
-    expect(h).toBeGreaterThan(0);
-    expect(h).toBeLessThan(50);
+});
+
+describe("clampOrbit", () => {
+  it("limits range, pitch and wraps heading", () => {
+    expect(clampOrbit({ heading: 0, pitch: -0.5, range: 10 }).range).toBe(MIN_RANGE_M);
+    expect(clampOrbit({ heading: 0, pitch: -0.5, range: 1e6 }).range).toBe(MAX_RANGE_M);
+    expect(clampOrbit({ heading: 0, pitch: 0, range: 500 }).pitch).toBe(MAX_PITCH_RAD);
+    expect(clampOrbit({ heading: 0, pitch: -3, range: 500 }).pitch).toBe(MIN_PITCH_RAD);
+    expect(clampOrbit({ heading: -Math.PI / 2, pitch: -0.5, range: 500 }).heading).toBeCloseTo(1.5 * Math.PI, 9);
+  });
+  it("leaves a valid orbit untouched", () => {
+    const o = { heading: 1, pitch: -0.7, range: 800 };
+    expect(clampOrbit(o)).toEqual(o);
+  });
+  it("tilts down to keep the camera above the ground floor", () => {
+    const o = clampOrbit({ heading: 0, pitch: MAX_PITCH_RAD, range: 200 }, 100);
+    expect(200 * Math.sin(-o.pitch)).toBeGreaterThanOrEqual(100 - 1e-9);
+  });
+});
+
+describe("localMorningUtcMs", () => {
+  it("is 10:00 local solar time, deterministic", () => {
+    expect(new Date(localMorningUtcMs(0)).toISOString()).toBe("2026-06-21T10:00:00.000Z");
+    expect(new Date(localMorningUtcMs(-120)).toISOString()).toBe("2026-06-21T18:00:00.000Z");
+    expect(localMorningUtcMs(15)).toBe(localMorningUtcMs(15));
   });
 });

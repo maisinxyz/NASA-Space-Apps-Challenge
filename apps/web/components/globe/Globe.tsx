@@ -1,5 +1,5 @@
 "use client";
-// The Cesium Earth globe: stars, farm pins, fly-in to a farm, camera confined to the farm in farm view.
+// The Cesium Earth globe: stars, farm pins, fly-in to a farm, turntable orbit around the simulation square in farm view.
 // Client-only (load with next/dynamic { ssr: false }). Contract: ./types.ts.
 import "@/components/viewer/cesium/base";
 import "cesium/Build/Cesium/Widgets/widgets.css";
@@ -7,6 +7,7 @@ import {
   BoundingSphere,
   Cartesian2,
   Cartesian3,
+  Cartographic,
   ClassificationType,
   Color,
   ConstantProperty,
@@ -15,19 +16,42 @@ import {
   type Entity,
   HeadingPitchRange,
   HeightReference,
+  JulianDate,
   LabelStyle,
   Math as CesiumMath,
+  Matrix4,
   PrimitiveCollection,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
+  Transforms,
   VerticalOrigin,
   type Viewer,
 } from "cesium";
 import { forwardRef, type ForwardRefExoticComponent, type RefAttributes, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import { clampCamera, easeToward, horizontalDistanceM } from "@/components/viewer/cesium/clamp";
+import {
+  type Box,
+  boxOfBbox,
+  boxOfRadius,
+  clampOrbit,
+  clampTarget,
+  fromOffsetM,
+  localMorningUtcMs,
+  type LonLat,
+  MIN_HEIGHT_ABOVE_GROUND_M,
+  offsetM,
+  type Orbit,
+} from "@/components/viewer/cesium/clamp";
 import { createViewer, type LoadedTier, loadTier, pickSurface, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
-import { createFieldLayer, createOverlayLayer, type FieldLayer, fieldIdFromPick, type OverlayLayer } from "@/components/viewer/cesium/twin";
+import {
+  createFieldLayer,
+  createOverlayLayer,
+  createSquareOutline,
+  type FieldLayer,
+  fieldIdFromPick,
+  type OverlayLayer,
+  type SquareOutline,
+} from "@/components/viewer/cesium/twin";
 
 import type { Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
 
@@ -36,9 +60,12 @@ import type { Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
 const GLOBE_HEIGHT_M = 2.0e7;
 /** Continental-scale view used when a pin is selected in globe view, metres. */
 const CONTINENT_HEIGHT_M = 7.0e6;
-/** Farm overview: camera distance from the farm centre (about 1.5 km across at Cesium's default 60 degree fov). */
-const FARM_RANGE_M = 1500;
+/** Orbit framing after the fly-in: range = this many times the square's longer side (then clamped to 150 m - 2.5 km). */
+const FRAME_RANGE_PER_SIDE = 1.4;
 const FARM_PITCH_RAD = CesiumMath.toRadians(45);
+/** Drag sensitivity, radians per pixel; wheel zoom is exponential in deltaY. */
+const ORBIT_RAD_PER_PX = 0.005;
+const WHEEL_ZOOM_PER_DELTA = 0.0015;
 const FLY_SECONDS = 3;
 const HOME = { lon: -100, lat: 25 };
 /** Auto-rotate speed, radians per second (one turn in about three minutes). */
@@ -48,12 +75,17 @@ const MAX_ZOOM_OUT_M = 4.0e7;
 /** Globe tile detail: Cesium's default 2 px; finer in farm view for a sharper ground (costs some fps). */
 const GLOBE_SSE_DEFAULT = 2;
 const GLOBE_SSE_FARM = 1.5;
+/** Fields, overlays and the square outline classify terrain only, so OSM buildings stay unpainted. */
+const TERRAIN_CLASS = ClassificationType.TERRAIN;
 
 /** Dev-only extras used by /dev/cesium. Not part of the shared contract; the exported `Globe` type hides them. */
 export type GlobeDevProps = {
   tierOrder?: TileTier[];
   onViewer?(v: { viewer: Viewer; tier: LoadedTier } | null): void;
 };
+
+/** Turntable orbit around the simulation square. target = the point at the screen centre (stays inside the square). */
+type OrbitState = { target: LonLat; o: Orbit; ground: number; camGround: number; dirty: boolean };
 
 type Runtime = {
   viewer: Viewer;
@@ -66,27 +98,23 @@ type Runtime = {
   farmGround: number | undefined;
   fields: FieldLayer;
   overlays: OverlayLayer;
+  outline: SquareOutline;
   twinLayers: PrimitiveCollection;
-  warnedPhotoreal: boolean;
+  /** Non-null only in farm view after the fly-in; the camera then sits in the target's ENU frame. */
+  orbit: OrbitState | null;
 };
 
-/** Twin layers classify terrain only (not OSM buildings); on Google's tiles they must classify the tiles too. */
-const classificationFor = (s: Surface | null) => (s === "google" ? ClassificationType.BOTH : ClassificationType.TERRAIN);
+/** The area the farm-view camera is confined to: the simulation square, else a box inscribed in the farm radius. */
+const boxOf = (p: GlobeProps, farm: Farm): Box => (p.simBbox ? boxOfBbox(p.simBbox) : boxOfRadius(farm, farm.radiusM));
 
-/** Show the surface the current props ask for (tiles.ts pickSurface), falling back if a source fails to load. */
-function syncSurface(r: Runtime, props: () => GlobeProps, onShown: (s: Surface) => void) {
+/** Show the surface the tier asks for (tiles.ts pickSurface), falling back to the base globe if a source fails to load. */
+function syncSurface(r: Runtime, onShown: (s: Surface) => void) {
   const t = r.tier;
   if (!t) return;
-  const p = props();
-  const want = pickSurface({ tier: t.tier, view: p.view, photoreal: !!p.photoreal, failed: t.failed });
-  if (p.view === "farm" && p.photoreal && want !== "google" && !r.warnedPhotoreal) {
-    r.warnedPhotoreal = true;
-    console.warn("[globe] photoreal requested but Google Photorealistic 3D Tiles are unavailable; showing terrain");
-  }
-  void t.setSurface(want).then((ok) => {
+  void t.setSurface(pickSurface({ tier: t.tier, failed: t.failed })).then((ok) => {
     if (r.viewer.isDestroyed()) return;
     if (ok) onShown(t.surface);
-    else syncSurface(r, props, onShown); // `failed` grew; pick again ("base" always succeeds)
+    else syncSurface(r, onShown); // `failed` grew; pick again ("base" always succeeds)
   });
 }
 
@@ -144,25 +172,53 @@ function startFlight(r: Runtime) {
   return { seq, done };
 }
 
-function flyToFarm(r: Runtime, farm: Farm, reducedMotion: boolean) {
+/** Camera back to the normal globe frame (the orbit uses a local ENU frame). */
+function leaveOrbit(r: Runtime) {
+  r.orbit = null;
+  r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
+}
+
+/** Apply the orbit state: hard clamps (target inside the square, range, pitch, 20 m floor), then lookAtTransform at the target. */
+function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
+  const s = r.orbit;
+  if (!s) return;
+  const box = boxOf(p, farm);
+  s.target = fromOffsetM(box, clampTarget(offsetM(s.target, box), box));
+  // The camera must stay MIN_HEIGHT_ABOVE_GROUND_M over the ground under it (last frame's value): tilt downward if needed.
+  s.o = clampOrbit(s.o, s.camGround + MIN_HEIGHT_ABOVE_GROUND_M - s.ground);
+  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(s.target.lon, s.target.lat, s.ground));
+  r.viewer.camera.lookAtTransform(frame, new HeadingPitchRange(s.o.heading, s.o.pitch, s.o.range));
+  s.dirty = false;
+  r.viewer.scene.requestRender();
+}
+
+function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
+  leaveOrbit(r);
   const { seq, done } = startFlight(r);
+  const box = boxOf(p, farm);
+  const centre: LonLat = { lon: box.lon, lat: box.lat };
+  const framing = clampOrbit({ heading: 0, pitch: -FARM_PITCH_RAD, range: 2 * Math.max(box.halfX, box.halfY) * FRAME_RANGE_PER_SIDE });
   const go = (ground: number) => {
     if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
     r.farmGround = ground;
-    // Keep the overview inside the clamp: the camera's horizontal offset must not exceed radiusM.
-    const range = Math.min(FARM_RANGE_M, (0.9 * farm.radiusM) / Math.cos(FARM_PITCH_RAD));
-    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(farm.lon, farm.lat, ground), 1), {
-      offset: new HeadingPitchRange(0, -FARM_PITCH_RAD, range),
-      duration: reducedMotion ? 0 : FLY_SECONDS,
-      complete: done,
+    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, ground), 1), {
+      offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
+      duration: p.reducedMotion ? 0 : FLY_SECONDS,
+      complete: () => {
+        if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
+        done();
+        // The orbit starts exactly where the flight ended: same target, heading, pitch and range.
+        r.orbit = { target: centre, o: framing, ground, camGround: ground, dirty: true };
+      },
       cancel: done,
     });
   };
   // The target height comes from terrain so the flight does not end underground at high sites.
-  (r.tier ? r.tier.sampleGround(farm.lon, farm.lat) : Promise.resolve(0)).then(go, () => go(0));
+  (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
 }
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
+  leaveOrbit(r);
   const { done } = startFlight(r);
   const here = r.viewer.camera.positionCartographic;
   const lon = at?.lon ?? CesiumMath.toDegrees(here.longitude);
@@ -187,7 +243,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const r = rt.current;
     if (!r) return;
     const farm = selectedFarm();
-    if (live.current.view === "farm" && farm) flyToFarm(r, farm, live.current.reducedMotion);
+    if (live.current.view === "farm" && farm) flyToFarm(r, live.current, farm);
     else flyToGlobe(r, farm, GLOBE_HEIGHT_M, live.current.reducedMotion);
   };
   const resetRef = useRef(resetView);
@@ -205,10 +261,11 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       live.current.onError(toError(e)); // WebGL unavailable
       return;
     }
-    // Twin layers: fields under overlays (draw order = add order); shown in farm view only.
+    // Twin layers: fields under overlays under the outline (draw order = add order); shown in farm view only.
     const twinLayers = viewer.scene.primitives.add(new PrimitiveCollection({ show: false })) as PrimitiveCollection;
     const fieldsCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const overlaysCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
+    const outlineCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const r: Runtime = {
       viewer,
       tier: null,
@@ -220,14 +277,16 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       farmGround: undefined,
       fields: createFieldLayer(fieldsCol),
       overlays: createOverlayLayer(overlaysCol),
+      outline: createSquareOutline(outlineCol),
       twinLayers,
-      warnedPhotoreal: false,
+      orbit: null,
     };
     rt.current = r;
     prev.current = null;
     const { scene } = viewer;
     const { camera, canvas } = scene;
     scene.screenSpaceCameraController.maximumZoomDistance = MAX_ZOOM_OUT_M;
+    viewer.clock.shouldAnimate = false; // the sun time is fixed (set per farm in the view effect), never animating
     camera.setView({ destination: Cartesian3.fromDegrees(HOME.lon, HOME.lat, GLOBE_HEIGHT_M) });
 
     let cancelled = false;
@@ -238,7 +297,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         live.current.onReady({ tier: tier.tier });
         live.current.onViewer?.({ viewer, tier });
         setSurface(tier.surface);
-        syncSurface(r, () => live.current, setSurface);
+        syncSurface(r, setSurface);
         if (live.current.view === "farm") resetRef.current(); // redo the fly-in now that ground heights are known
       },
       (e) => {
@@ -275,7 +334,12 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       else if (pin && pin !== p.selectedId) p.onSelect(pin);
       else p.onSelectField?.(fieldIdFromPick(picked));
     }, ScreenSpaceEventType.LEFT_CLICK);
+    let lastHoverPick = 0;
     handler.setInputAction((e: { endPosition: Cartesian2 }) => {
+      // scene.pick reads the GPU back: not while dragging the camera, and at most ~12 times a second.
+      const t = performance.now();
+      if (r.orbit && (t - lastHoverPick < 80 || pointers.size > 0)) return;
+      lastHoverPick = t;
       const picked: unknown = scene.pick(e.endPosition);
       const id = pinOf(picked);
       canvas.style.cursor = id || (inFarm() && live.current.onSelectField && fieldIdFromPick(picked)) ? "pointer" : "";
@@ -283,6 +347,72 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       r.hoverId = id;
       stylePins(r, live.current.selectedId);
     }, ScreenSpaceEventType.MOUSE_MOVE);
+
+    // Farm-view input: our own turntable controls (Cesium's controller is off in farm view). Hard limits, no easing.
+    // Left drag = orbit (heading) + tilt, right drag / ctrl+left drag = tilt, middle / shift+left drag = pan the
+    // target (hard-stopped at the square), wheel / pinch = zoom. Every change goes through clampOrbit / clampTarget.
+    const pointers = new Map<number, { x: number; y: number }>();
+    let pinch = 0;
+    const farmNow = () => live.current.farms.find((f) => f.id === live.current.selectedId);
+    const onDown = (e: PointerEvent) => {
+      if (!r.orbit || r.flying) return;
+      canvas.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinch = Math.hypot(a.x - b.x, a.y - b.y);
+      }
+    };
+    const onMove = (e: PointerEvent) => {
+      const st = r.orbit;
+      const was = pointers.get(e.pointerId);
+      const farm = farmNow();
+      if (!st || !was || !farm || r.flying) return;
+      const dx = e.clientX - was.x;
+      const dy = e.clientY - was.y;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinch > 0 && d > 0) st.o = { ...st.o, range: st.o.range * (pinch / d) };
+        pinch = d;
+      } else if (e.buttons & 4 || (e.buttons & 1 && e.shiftKey)) {
+        // Pan: the ground follows the cursor. In (east, north): forward = (sin h, cos h), right = (cos h, -sin h).
+        const k = st.o.range * 0.0015;
+        const h = st.o.heading;
+        const c = offsetM(st.target, boxOf(live.current, farm));
+        st.target = fromOffsetM(boxOf(live.current, farm), {
+          x: c.x - Math.cos(h) * dx * k + Math.sin(h) * dy * k,
+          y: c.y + Math.sin(h) * dx * k + Math.cos(h) * dy * k,
+        });
+      } else if (e.buttons & 2 || (e.buttons & 1 && e.ctrlKey)) {
+        st.o = { ...st.o, pitch: st.o.pitch - dy * ORBIT_RAD_PER_PX };
+      } else if (e.buttons & 1) {
+        st.o = { ...st.o, heading: st.o.heading - dx * ORBIT_RAD_PER_PX, pitch: st.o.pitch - dy * ORBIT_RAD_PER_PX };
+      } else return;
+      applyOrbit(r, live.current, farm);
+    };
+    const onUp = (e: PointerEvent) => {
+      pointers.delete(e.pointerId);
+      pinch = 0;
+    };
+    const onWheel = (e: WheelEvent) => {
+      const st = r.orbit;
+      const farm = farmNow();
+      if (!st || !farm || r.flying) return;
+      e.preventDefault();
+      st.o = { ...st.o, range: st.o.range * Math.exp(e.deltaY * WHEEL_ZOOM_PER_DELTA) };
+      applyOrbit(r, live.current, farm);
+    };
+    const noMenu = (e: Event) => {
+      if (live.current.view === "farm") e.preventDefault();
+    };
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("pointercancel", onUp);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("contextmenu", noMenu);
 
     // Per-frame work. preUpdate fires every animation frame even in requestRenderMode; moving the camera
     // makes Cesium render, so an idle globe costs nothing.
@@ -295,7 +425,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
       if (r.fields.flush()) scene.requestRender();
-      if (r.tier && r.overlays.sync(p.overlays ?? [], classificationFor(r.tier.surface))) scene.requestRender();
+      if (r.tier && r.overlays.sync(p.overlays ?? [], TERRAIN_CLASS)) scene.requestRender();
 
       // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth.
       const occluder = new EllipsoidalOccluder(Ellipsoid.WGS84, camera.positionWC);
@@ -310,14 +440,22 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         return;
       }
       const farm = p.farms.find((f) => f.id === p.selectedId);
-      if (!farm) return;
-      // Farm view: ease the camera back inside the farm's radius and height band (clamp.ts).
-      const c = camera.positionCartographic;
-      const pos = { lon: CesiumMath.toDegrees(c.longitude), lat: CesiumMath.toDegrees(c.latitude), height: c.height };
-      const target = clampCamera(pos, farm, r.tier?.groundAt(c) ?? r.farmGround ?? 0);
-      if (horizontalDistanceM(pos, target) < 0.01 && Math.abs(pos.height - target.height) < 0.01) return;
-      const next = p.reducedMotion ? target : easeToward(pos, target, dt);
-      Cartesian3.fromDegrees(next.lon, next.lat, next.height, Ellipsoid.WGS84, camera.position);
+      const st = r.orbit;
+      if (!farm || !st || !r.tier) return;
+      // Ground under the target and under the camera (for the 20 m floor); re-apply the orbit when they change
+      // (terrain tiles streaming in) or when the square changed.
+      const ground = r.tier.groundAt(Cartographic.fromDegrees(st.target.lon, st.target.lat));
+      if (ground != null && Math.abs(ground - st.ground) > 0.25) {
+        st.ground = ground;
+        r.farmGround = ground;
+        st.dirty = true;
+      }
+      const camGround = r.tier.groundAt(camera.positionCartographic);
+      if (camGround != null && Math.abs(camGround - st.camGround) > 0.25) {
+        st.camGround = camGround;
+        st.dirty = true;
+      }
+      if (st.dirty) applyOrbit(r, p, farm);
     });
 
     return () => {
@@ -326,6 +464,12 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       offPreUpdate();
       offRenderError();
       handler.destroy();
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onUp);
+      canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("contextmenu", noMenu);
       for (const ev of inputs) canvas.removeEventListener(ev, stopAuto);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       rt.current = null;
@@ -370,31 +514,53 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     stylePins(r, selectedId);
   }, [farms, selectedId]);
 
-  // Surface (terrain vs Google photoreal) follows view + photoreal; the first sync runs when the tier loads.
-  const { fields, cropByField, selectedFieldId, photoreal, exaggeration } = props;
+  // The surface (terrain vs base globe) is fixed by the tier; re-sync on view changes in case a source failed meanwhile.
+  const { fields, cropByField, selectedFieldId, simBbox, exaggeration } = props;
   useEffect(() => {
     const r = rt.current;
-    if (r) syncSurface(r, () => live.current, setSurface);
-  }, [view, photoreal]);
+    if (r) syncSurface(r, setSurface);
+  }, [view]);
 
-  // Farm view only: twin layers, finer globe tiles, vertical exaggeration (pivoting at the farm's ground height).
+  // Farm view only: twin layers, finer globe tiles, vertical exaggeration (pivoting at the farm's ground height),
+  // sun lighting at a fixed mid-morning local time, our own camera controls instead of Cesium's.
+  const farmLon = farms.find((f) => f.id === selectedId)?.lon;
   useEffect(() => {
     const r = rt.current;
     if (!r) return;
     const farm = view === "farm";
     const { scene } = r.viewer;
     r.twinLayers.show = farm;
+    scene.screenSpaceCameraController.enableInputs = !farm;
+    // Cesium's terrain collision push-out would fight the orbit; applyOrbit keeps the 20 m floor itself.
+    scene.screenSpaceCameraController.enableCollisionDetection = !farm;
+    scene.canvas.style.touchAction = farm ? "none" : "";
     scene.globe.maximumScreenSpaceError = farm ? GLOBE_SSE_FARM : GLOBE_SSE_DEFAULT;
     scene.verticalExaggeration = farm ? Math.max(0, exaggeration ?? 1) : 1;
     scene.verticalExaggerationRelativeHeight = farm ? (r.farmGround ?? 0) : 0;
+    // Cheap realism: terrain shaded by the sun (vertex normals are requested in tiles.ts) plus ground atmosphere, sky
+    // atmosphere and fog. Off in globe view, where it would just show the night side.
+    scene.globe.enableLighting = farm;
+    if (farm && farmLon != null) r.viewer.clock.currentTime = JulianDate.fromDate(new Date(localMorningUtcMs(farmLon)));
+    scene.globe.showGroundAtmosphere = true;
+    scene.fog.enabled = true;
+    if (scene.skyAtmosphere) scene.skyAtmosphere.show = true;
     scene.requestRender();
-  }, [view, exaggeration]);
+  }, [view, exaggeration, farmLon]);
 
-  // Fields: rebuild when the list or the surface (classification target) changes; recolour otherwise.
+  // The simulation square's thin outline (the layer group is shown in farm view only); re-frame the clamp if it moved.
   useEffect(() => {
     const r = rt.current;
     if (!r || !surface) return;
-    r.fields.setFields(fields ?? [], classificationFor(surface));
+    r.outline.set(simBbox, TERRAIN_CLASS);
+    if (r.orbit) r.orbit.dirty = true;
+    r.viewer.scene.requestRender();
+  }, [simBbox, surface]);
+
+  // Fields: rebuild when the list or the surface changes; recolour otherwise.
+  useEffect(() => {
+    const r = rt.current;
+    if (!r || !surface) return;
+    r.fields.setFields(fields ?? [], TERRAIN_CLASS);
     r.viewer.scene.requestRender();
   }, [fields, surface]);
   useEffect(() => {
@@ -409,7 +575,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     prev.current = { view, selectedId };
     const farm = live.current.farms.find((f) => f.id === selectedId);
     const reduced = live.current.reducedMotion;
-    if (view === "farm" && farm) flyToFarm(r, farm, reduced);
+    if (view === "farm" && farm) flyToFarm(r, live.current, farm);
     else if (view === "globe" && was?.view === "farm") flyToGlobe(r, farm, GLOBE_HEIGHT_M, reduced);
     else if (view === "globe" && farm && was?.selectedId !== selectedId) flyToGlobe(r, farm, CONTINENT_HEIGHT_M, reduced);
   }, [view, selectedId]);

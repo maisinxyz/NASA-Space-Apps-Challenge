@@ -11,7 +11,7 @@ import { TwinPanel, twinFields } from "@/components/farm/TwinPanel";
 import { FARMS, farmById } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { useAppStore } from "@/lib/store";
-import { ROTATING_FIELDS } from "@/lib/twin/agassiz";
+import { AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "@/lib/twin/agassiz";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
 import { EXPLORE_NOTE, FarmCard, SimLink } from "./FarmCard";
@@ -75,8 +75,8 @@ export function GlobeHome() {
   // Farm twin (only "twin" farms with field data): fields + the season of the rotation chosen in Compare.
   const fields = view === "farm" && farm?.tier === "twin" ? twinFields(farm.id) : undefined;
   const inTwin = inFarm && !!fields;
-  const { twinFieldId, twinRotationId, twinYear, twinMonth, photoreal, exaggeration } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, photoreal: s.photoreal, exaggeration: s.exaggeration })),
+  const { twinFieldId, twinRotationId, twinYear, twinMonth, exaggeration } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration })),
   );
   const cropByField = useMemo(() => {
     const r = rotationById(twinRotationId ?? "");
@@ -156,7 +156,7 @@ export function GlobeHome() {
           selectedFieldId={twinFieldId}
           onSelectField={(id) => useAppStore.setState({ twinFieldId: id })}
           cropByField={cropByField}
-          photoreal={inTwin && photoreal}
+          simBbox={inTwin ? AGASSIZ_SIM_BBOX : undefined}
           exaggeration={inTwin ? exaggeration : 1}
         />
       </GlobeBoundary>

@@ -1,10 +1,9 @@
-// Viewer construction and the three imagery/tiles tiers (A Google photoreal via ion, B ion terrain + imagery, C keyless).
+// Viewer construction and the two imagery/tiles tiers (B ion terrain + imagery + OSM Buildings, C keyless).
 import "./base";
 import {
   buildModuleUrl,
-  Cartographic,
   type Cesium3DTileset,
-  createGooglePhotorealistic3DTileset,
+  Cartographic,
   createOsmBuildingsAsync,
   createWorldImageryAsync,
   createWorldTerrainAsync,
@@ -17,29 +16,28 @@ import {
   TileMapServiceImageryProvider,
   Viewer,
 } from "cesium";
-import type { GlobeView, TileTier } from "@/components/globe/types";
+import type { TileTier } from "@/components/globe/types";
 
-const TIERS: readonly TileTier[] = ["A", "B", "C"];
+const TIERS: readonly TileTier[] = ["B", "C"];
 /** ion asset "Google Maps 2D Satellite", id as listed for the team's ion account (see tier B below). */
 const ION_GOOGLE_2D_SATELLITE = 3830182;
 
 /**
  * Tiers to try, in order (pure). No token -> only C (no ion calls at all). Otherwise start at the override
- * if valid, else A in production and B in development (the ion free plan meters Google tile sessions,
- * so dev does not spend them by default), and fall back downward.
+ * if valid (B or C), else B, and fall back downward.
  */
-export function selectTierOrder(input: { token?: string | null; override?: string | null; production: boolean }): TileTier[] {
+export function selectTierOrder(input: { token?: string | null; override?: string | null }): TileTier[] {
   if (!input.token?.trim()) return ["C"];
   const o = input.override?.trim().toUpperCase();
-  const start = TIERS.find((t) => t === o) ?? (input.production ? "A" : "B");
+  const start = TIERS.find((t) => t === o) ?? "B";
   return TIERS.slice(TIERS.indexOf(start));
 }
 
 const ionToken = () => process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN?.trim() ?? "";
 
-/** Tier order from the build-time env: NEXT_PUBLIC_CESIUM_ION_TOKEN, NEXT_PUBLIC_TILE_TIER=A|B|C, NODE_ENV. */
+/** Tier order from the build-time env: NEXT_PUBLIC_CESIUM_ION_TOKEN, NEXT_PUBLIC_TILE_TIER=B|C. */
 export function tierOrderFromEnv(): TileTier[] {
-  return selectTierOrder({ token: ionToken(), override: process.env.NEXT_PUBLIC_TILE_TIER, production: process.env.NODE_ENV === "production" });
+  return selectTierOrder({ token: ionToken(), override: process.env.NEXT_PUBLIC_TILE_TIER });
 }
 
 /** A Cesium Viewer with every default widget off. The credit container is left in place (required attribution). */
@@ -71,28 +69,16 @@ export function createViewer(container: HTMLElement): Viewer {
   return viewer;
 }
 
-/**
- * What draws the ground: "google" = Google Photorealistic 3D Tiles (globe surface hidden), "terrain" = ion
- * World Terrain + world imagery (+ OSM Buildings), "base" = keyless Natural Earth globe (tier C).
- */
-export type Surface = "google" | "terrain" | "base";
+/** What draws the ground: "terrain" = ion World Terrain + world imagery (+ OSM Buildings), "base" = keyless Natural Earth globe (tier C). */
+export type Surface = "terrain" | "base";
 
-/**
- * Pure: which surface to show. Globe view keeps the loaded tier's look (A google, B terrain). Farm view shows
- * google only when photoreal is asked for, terrain otherwise. A surface that failed to load falls back to the
- * other ion surface, then to base. Tier C never touches ion.
- */
-export function pickSurface(i: { tier: TileTier; view: GlobeView; photoreal: boolean; failed: ReadonlySet<Surface> }): Surface {
-  if (i.tier === "C") return "base";
-  const want: Surface = i.view === "globe" ? (i.tier === "A" ? "google" : "terrain") : i.photoreal ? "google" : "terrain";
-  const other: Surface = want === "google" ? "terrain" : "google";
-  return !i.failed.has(want) ? want : !i.failed.has(other) ? other : "base";
+/** Pure: which surface to show. Tier C never touches ion; a terrain source that failed to load falls back to base. */
+export function pickSurface(i: { tier: TileTier; failed: ReadonlySet<Surface> }): Surface {
+  return i.tier === "C" || i.failed.has("terrain") ? "base" : "terrain";
 }
 
 export type LoadedTier = {
   tier: TileTier;
-  /** The Google Photorealistic 3D tileset once it has been loaded (tier A at start, else lazily on photoreal). */
-  readonly tileset?: Cesium3DTileset;
   /** Surface currently shown. */
   readonly surface: Surface;
   /** Surfaces whose sources failed to load (never retried: each source is requested at most once per viewer). */
@@ -124,7 +110,8 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
   // Every ion source is requested at most once per viewer (memoised promises, failures included): quota.
   let ionUsable = false;
   let terrainP: Promise<TerrainProvider> | undefined;
-  const worldTerrain = () => (terrainP ??= createWorldTerrainAsync());
+  // requestVertexNormals: needed for sun shading of the terrain (globe.enableLighting).
+  const worldTerrain = () => (terrainP ??= createWorldTerrainAsync({ requestVertexNormals: true }));
   const sampleGround = async (lon: number, lat: number) => {
     if (!ionUsable) return 0;
     try {
@@ -136,39 +123,14 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
   };
 
   let surface: Surface = "base";
-  let tileset: Cesium3DTileset | undefined;
   let osm: Cesium3DTileset | undefined;
-  let googleShowing = false; // true once the tileset's first view has loaded: only then hide the globe
   const failed = new Set<Surface>();
 
   const show = (s: Surface) => {
     surface = s;
-    if (tileset) tileset.show = s === "google";
     if (osm) osm.show = s === "terrain";
-    // Google's tiles replace the globe surface (keeping both gives z-fighting). The globe stays visible until
-    // the tileset's first view has loaded, so the Earth is never blank.
-    scene.globe.show = !(s === "google" && googleShowing);
     scene.requestRender();
   };
-
-  let googleP: Promise<unknown> | undefined;
-  const loadGoogle = () =>
-    (googleP ??= (async () => {
-      // Cesium resolves the Google Photorealistic 3D Tiles ion asset itself (no asset id in our code).
-      // onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google geocoder;
-      // this app has no geocoder at all. TODO(verify): confirm that "no geocoder" satisfies the ion/Google terms.
-      // enableCollision: needed for tileset.getHeight() (camera clamp) and for clamping pins to the tiles.
-      // maximumScreenSpaceError 8 (Cesium default 16) streams finer tiles, so the farm view is sharper.
-      const ts = await createGooglePhotorealistic3DTileset({ onlyUsingWithGoogleGeocoder: true }, { enableCollision: true, maximumScreenSpaceError: 8 });
-      alive();
-      ts.show = false;
-      scene.primitives.add(ts);
-      ts.initialTilesLoaded.addEventListener(() => {
-        googleShowing = true;
-        if (!viewer.isDestroyed()) show(surface);
-      });
-      tileset = ts;
-    })());
 
   let terrainBundleP: Promise<unknown> | undefined;
   const loadTerrain = () =>
@@ -197,13 +159,12 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
         .catch((e) => console.warn("[globe] OSM Buildings unavailable", e instanceof Error ? e.message : e));
     })());
 
-  // Last request wins when calls overlap (e.g. photoreal toggled twice while a load is in flight).
+  // Last request wins when calls overlap.
   let wanted: Surface = "base";
   const setSurface = async (s: Surface): Promise<boolean> => {
     wanted = s;
     try {
-      if (s === "google") await loadGoogle();
-      else if (s === "terrain") await loadTerrain();
+      if (s === "terrain") await loadTerrain();
     } catch (e) {
       if (viewer.isDestroyed()) return false;
       failed.add(s);
@@ -216,39 +177,30 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
 
   const loaded = (tier: TileTier): LoadedTier => ({
     tier,
-    get tileset() {
-      return tileset;
-    },
     get surface() {
       return surface;
     },
     failed,
     setSurface,
-    groundAt: (c) => (surface === "google" && tileset ? tileset.getHeight(c, scene) : scene.globe.getHeight(c)),
+    groundAt: (c) => scene.globe.getHeight(c),
     sampleGround,
   });
 
   let lastError: unknown;
   for (const tier of order) {
     try {
-      if (tier === "A") {
-        await loadGoogle();
-        ionUsable = true;
-        void worldTerrain().catch(() => undefined); // fly-in heights; also reused if terrain is shown later
-        show("google");
-      } else if (tier === "B") {
+      if (tier === "B") {
         await loadTerrain();
         ionUsable = true;
         show("terrain");
       } else {
-        failed.add("google").add("terrain"); // tier C: never call ion
+        failed.add("terrain"); // tier C: never call ion
         show("base");
       }
       return loaded(tier);
     } catch (e) {
       alive();
       lastError = e;
-      if (tier === "A") failed.add("google");
       if (tier === "B") failed.add("terrain");
       console.warn(`[globe] tile tier ${tier} failed, falling back`, e instanceof Error ? e.message : e);
     }

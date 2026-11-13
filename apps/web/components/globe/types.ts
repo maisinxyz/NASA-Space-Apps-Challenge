@@ -24,8 +24,8 @@ export type Farm = {
 
 export type GlobeView = "globe" | "farm";
 
-/** Which imagery/tiles tier actually loaded: A Google photoreal via ion, B ion World Terrain + Bing Aerial (+ OSM Buildings), C keyless imagery. */
-export type TileTier = "A" | "B" | "C";
+/** Which imagery/tiles tier actually loaded: B ion World Terrain + Bing Aerial (+ OSM Buildings), C keyless imagery. (Google tier A removed by product decision.) */
+export type TileTier = "B" | "C";
 
 /** Ground cover drawn on a field in the twin. Illustrative look only, not a measured crop map. */
 export type CropLook = "grass" | "corn" | "cereal" | "legume" | "cover" | "berry" | "bare";
@@ -64,10 +64,11 @@ export type FarmTwinProps = {
   /** Drapes, bottom first. Empty/undefined = none. */
   overlays?: GroundOverlay[];
   /**
-   * false (default) = farm view on terrain + aerial imagery (+ OSM buildings): sharp, unmetered, overlays sit
-   * on the ground only. true = Google Photorealistic 3D Tiles (real trees/buildings; spends ion quota).
+   * The simulation square, [west, south, east, north] degrees: the twin's model area. Inside it the farm is
+   * shown in full detail (terrain, aerial imagery, fields, overlays); outside it the land is muted context.
+   * The farm-view camera orbits its centre and the screen centre cannot leave it. Undefined = whole farm radius.
    */
-  photoreal?: boolean;
+  simBbox?: [number, number, number, number];
   /** Terrain vertical exaggeration in farm view, 1 = true scale. */
   exaggeration?: number;
 };

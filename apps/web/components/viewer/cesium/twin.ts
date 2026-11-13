@@ -230,3 +230,33 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
     },
   };
 }
+
+// ---- Simulation square outline -----------------------------------------------------------------------------
+
+const SQUARE_OUTLINE = "#f4ecd2";
+const SQUARE_OUTLINE_ALPHA = 0.8;
+
+export type SquareOutline = {
+  /** Thin ground-clamped outline of the simulation square [west, south, east, north]; undefined removes it. */
+  set(bbox: readonly [number, number, number, number] | undefined, classification: ClassificationType): void;
+};
+
+export function createSquareOutline(collection: PrimitiveCollection): SquareOutline {
+  return {
+    set(bbox, classification) {
+      collection.removeAll();
+      if (!bbox) return;
+      const [w, s, e, n] = bbox;
+      collection.add(
+        new GroundPolylinePrimitive({
+          geometryInstances: new GeometryInstance({
+            geometry: new GroundPolylineGeometry({ positions: Cartesian3.fromDegreesArray([w, s, e, s, e, n, w, n, w, s]), width: 1.5 }),
+            attributes: { color: ColorGeometryInstanceAttribute.fromColor(Color.fromCssColorString(SQUARE_OUTLINE).withAlpha(SQUARE_OUTLINE_ALPHA)) },
+          }),
+          appearance: new PolylineColorAppearance(),
+          classificationType: classification,
+        }),
+      );
+    },
+  };
+}

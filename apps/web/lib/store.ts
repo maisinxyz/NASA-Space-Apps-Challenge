@@ -42,7 +42,6 @@ export interface AppState {
   twinYear: number;
   twinMonth: number;
   priorities: Weights;
-  photoreal: boolean;
   /** Terrain vertical exaggeration, 1–3. */
   exaggeration: number;
 }
@@ -71,7 +70,6 @@ export const initialState: AppState = {
   twinYear: 0,
   twinMonth: 6,
   priorities: { water: 1, erosion: 1, soilCover: 1, income: 1 },
-  photoreal: false,
   exaggeration: 1,
 };
 

@@ -3,7 +3,6 @@
 // scene's split divider (scene.splitPosition, 0..1) so two drapes can be compared under one camera.
 import "./base";
 import {
-  type Cesium3DTileset,
   ClassificationType,
   EllipsoidSurfaceAppearance,
   GeometryInstance,
@@ -30,7 +29,7 @@ export type DrapeSource = {
 
 /**
  * "classification": GroundPrimitive + canvas-backed material, ClassificationType.BOTH (terrain and 3D tiles).
- * "imagery": SingleTileImageryProvider layer on the globe, or on tileset.imageryLayers when a tileset is given.
+ * "imagery": SingleTileImageryProvider layer on the globe.
  */
 export type DrapeMethod = "classification" | "imagery";
 export type DrapeSide = "both" | "left" | "right";
@@ -83,7 +82,7 @@ czm_material czm_getMaterial(czm_materialInput materialInput) {
   return material;
 }`;
 
-export function createDrape(viewer: Viewer, source: DrapeSource, opts: { method: DrapeMethod; side?: DrapeSide; tileset?: Cesium3DTileset }): Drape {
+export function createDrape(viewer: Viewer, source: DrapeSource, opts: { method: DrapeMethod; side?: DrapeSide }): Drape {
   const { scene } = viewer;
   const { width, height, frames } = source;
   const side = opts.side ?? "both";
@@ -130,7 +129,7 @@ export function createDrape(viewer: Viewer, source: DrapeSource, opts: { method:
   // Imagery: a single-tile provider cannot change its image, so every frame is a new layer.
   // ponytail: the previous layer is dropped after a fixed delay (its replacement needs a moment to decode);
   // layers pile up while scrubbing fast. Fine for the spike; swap for a custom ImageryProvider if this method is chosen.
-  const layers = opts.tileset ? opts.tileset.imageryLayers : viewer.imageryLayers;
+  const layers = viewer.imageryLayers;
   const canvas = newCanvas();
   const live = new Set<ImageryLayer>();
   const drop = (layer: ImageryLayer) => {

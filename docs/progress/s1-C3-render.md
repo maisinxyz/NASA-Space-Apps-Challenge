@@ -44,3 +44,25 @@ Branch `fe/S1-cesium-globe`. Owner: agent-render. Nothing committed. Contract `c
 - Overlays: draw into your canvas and bump `version`. A new array is not required (sync runs every frame), but it is fine.
 - `photoreal` toggles cost one Google session the first time per page load. Later toggles are free.
 - In farm view, empty-ground clicks no longer exit to the globe. "Back to globe" is the way out.
+
+## C3b (render): no Google tiles, simBbox, turntable camera, cheap realism
+Not committed. Files: `components/globe/Globe.tsx`, `components/viewer/cesium/{tiles,clamp,twin,drape,Spike}.ts(x)` + tests (`tiles.test.ts`, `clamp.test.ts`).
+
+- **Google Photorealistic 3D Tiles removed.** `TileTier` = "B" | "C". `Surface` = "terrain" | "base". `pickSurface({tier, failed})`. Default order B then C (no token -> C); `NEXT_PUBLIC_TILE_TIER` may force B or C. No Google tileset, no photoreal switching, no geocoder TODO, `drape.ts` lost its `tileset` option. (The Google 2D satellite ion asset stays only as the fallback when Bing is missing; `TODO(verify)` terms remain.) Fields, overlays and the outline always classify TERRAIN.
+- **`simBbox`.** Farm view shows the square as a thin ground-clamped outline (`createSquareOutline` in twin.ts, light colour, alpha 0.8). No muting of the outside (dropped by decision). Undefined simBbox: the camera uses a box inscribed in the farm radius, no outline.
+- **Turntable camera (hard limits, no easing).** After the fly-in, `lookAtTransform` in the ENU frame of the target (`applyOrbit`). Own pointer handlers (Cesium's controller is `enableInputs=false` and `enableCollisionDetection=false` in farm view; the collision push-out fought the orbit): left drag = heading + tilt, right drag / ctrl+left drag = tilt, middle / shift+left drag = pan, wheel / pinch = zoom. Clamps (`clamp.ts`): range 150 m - 2.5 km, pitch -89 .. -15 deg, target inside simBbox (hard stop), camera >= 20 m above the ground under it (pitches down when needed). `easeToward` and `clampCamera` removed. Reset view and the fly-in end in the same framing (pitch -45, range = 1.4 x the square's side, clamped). Back to globe: `lookAtTransform(IDENTITY)`, inputs and collision back on, lighting off.
+- **Cheap realism (farm view only).** `globe.enableLighting` at a fixed time, 10:00 local solar time on 21 June 2026 (`localMorningUtcMs`, clock not animating); World Terrain now requests vertex normals so the shading shows; sky atmosphere, ground atmosphere and fog on.
+- **Hover pick** is skipped while dragging and limited to ~12/s in farm view.
+
+### Checked (Playwright, /dev/cesium?tier=B, sample simBbox ~1 km)
+Orbit by drag, tilt clamps at -15.0 deg, zoom clamps 150 m and 2500 m, pan of 5000 px stays inside the bbox (hard stop), lighting visible on hills, outline visible, Reset works, Globe view releases the transform. Screenshots: `.playwright-mcp/c3b-farm-framing.png`, `c3b-orbit-low-pitch.png`.
+Checks of field picking, cropByField and exaggeration were not repeated after the rewrite (code paths unchanged). The homepage Agassiz twin was not checked (depends on PRODUCT).
+
+### Perf (Intel Arc 140T laptop browser, canvas 1554x1143 at dpr 1.5, shared machine)
+Static scene, redrawn every frame: about 30 fps, identical with lighting/atmosphere/fog on or off (no measurable cost of the realism). Camera moving every frame (synthetic input): 12-15 fps, also with lighting off, twin layers off, resolution 1.0, OSM SSE 64. CPU render time was ~6 ms, so the limit looks GPU/compositor bound in this Playwright browser; the earlier C3 note measured 44 fps (smaller canvas). The >= 30 fps target while moving is NOT shown here; measure in a normal browser window.
+
+### Gaps
+- Moving-camera fps above; no real-mouse test (events were dispatched synthetically).
+- Touch pinch/one-finger orbit is untested.
+- Middle-drag pan is the only pan control (hidden from users; PRODUCT may add a hint).
+- Field/overlay classification on OSM buildings stays unpainted (terrain only), as before.

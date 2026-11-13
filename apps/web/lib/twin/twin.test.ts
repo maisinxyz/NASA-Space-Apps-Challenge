@@ -1,21 +1,37 @@
 import { describe, expect, it } from "vitest";
 
-import { AGASSIZ_FIELDS, ROTATING_FIELDS } from "./agassiz";
+import { AGASSIZ_FIELDS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "./agassiz";
 import { bareMonths, cropsForSeason, PRIORITIES, rankRotations, ROTATIONS } from "./rotations";
 import { SCENARIOS } from "./scenario";
 
 const even = { water: 1, erosion: 1, soilCover: 1, income: 1 };
 
 describe("agassiz twin data", () => {
-  it("has 6–10 valid fields", () => {
-    expect(AGASSIZ_FIELDS.length).toBeGreaterThanOrEqual(6);
-    expect(AGASSIZ_FIELDS.length).toBeLessThanOrEqual(10);
+  it("has 2–3 valid fields", () => {
+    expect(AGASSIZ_FIELDS.length).toBeGreaterThanOrEqual(2);
+    expect(AGASSIZ_FIELDS.length).toBeLessThanOrEqual(3);
     expect(new Set(AGASSIZ_FIELDS.map((f) => f.id)).size).toBe(AGASSIZ_FIELDS.length);
     for (const f of AGASSIZ_FIELDS) {
       expect(f.ring.length).toBeGreaterThanOrEqual(3);
       expect(f.areaHa).toBeGreaterThan(0);
     }
     for (const id of Object.keys(ROTATING_FIELDS)) expect(AGASSIZ_FIELDS.some((f) => f.id === id)).toBe(true);
+  });
+
+  it("keeps every field fully inside a roughly square simulation area", () => {
+    const [w, so, e, n] = AGASSIZ_SIM_BBOX;
+    for (const f of AGASSIZ_FIELDS) for (const [lon, lat] of f.ring) {
+      expect(lon).toBeGreaterThan(w);
+      expect(lon).toBeLessThan(e);
+      expect(lat).toBeGreaterThan(so);
+      expect(lat).toBeLessThan(n);
+    }
+    const heightM = (n - so) * 111320;
+    const widthM = (e - w) * 111320 * Math.cos((((n + so) / 2) * Math.PI) / 180);
+    expect(widthM / heightM).toBeGreaterThan(0.97);
+    expect(widthM / heightM).toBeLessThan(1.03);
+    expect(heightM).toBeGreaterThan(1000);
+    expect(heightM).toBeLessThan(1500);
   });
 
   it("has exactly three rotations, one existing, each complete", () => {

@@ -1,61 +1,78 @@
-// Pure camera-confinement maths for farm view (unit-tested, no Cesium import).
-// Cesium's ScreenSpaceCameraController min/max zoom only limits mouse/touch zoom and has no
-// horizontal bound, so the Globe applies this every frame instead.
+// Pure camera maths for the farm-view turntable orbit (unit-tested, no Cesium import).
+// The Globe keeps an orbit state {target offset, heading, pitch, range} around the simulation square and applies
+// these hard clamps (no easing) before every frame.
 
 /** Lowest the camera may sit above the ground under it, metres. Product choice ("roughly 20 m"). */
 export const MIN_HEIGHT_ABOVE_GROUND_M = 20;
-/** Highest the camera may sit above the ground under it, metres. Product choice ("3000 m"). */
-export const MAX_HEIGHT_ABOVE_GROUND_M = 3000;
-/** Easing rate of the pull-back, 1/s. ~95 % of the correction is applied after 3/EASE_RATE seconds. */
-export const CLAMP_EASE_RATE = 6;
+/** Orbit distance from the target (the point at the screen centre), metres. Product choice. */
+export const MIN_RANGE_M = 150;
+export const MAX_RANGE_M = 2500;
+/** Pitch limits, radians (negative = looking down). Highest pitch -15 deg: the horizon is never in view. */
+export const MAX_PITCH_RAD = (-15 * Math.PI) / 180;
+export const MIN_PITCH_RAD = (-89 * Math.PI) / 180;
 
 // WGS84 semi-major axis, metres (same value as Cesium's Ellipsoid.WGS84.maximumRadius).
-// ponytail: flat-earth (equirectangular) distances around the farm centre; error is far below a metre
-// at farm radii of a few km. Switch to geodesics only if radiusM ever reaches tens of km or near a pole.
+// ponytail: flat-earth (equirectangular) offsets around the centre; error is far below a metre at a few km.
+// Switch to geodesics only if the square ever reaches tens of km or sits near a pole.
 const EARTH_RADIUS_M = 6378137;
 const RAD = Math.PI / 180;
 
-/** Camera position: degrees and metres above the ellipsoid. */
-export type CameraPos = { lon: number; lat: number; height: number };
-export type ClampArea = { lon: number; lat: number; radiusM: number };
+export type LonLat = { lon: number; lat: number };
+/** East/north offset from a centre, metres. */
+export type Offset = { x: number; y: number };
+export type Orbit = { heading: number; pitch: number; range: number };
+/** Axis-aligned box around a centre: half extents in metres. */
+export type Box = LonLat & { halfX: number; halfY: number };
 
-/** Horizontal distance from the area centre, metres. */
-export function horizontalDistanceM(pos: { lon: number; lat: number }, centre: { lon: number; lat: number }): number {
-  const [x, y] = offsetM(pos, centre);
-  return Math.hypot(x, y);
-}
-
-function offsetM(pos: { lon: number; lat: number }, centre: { lon: number; lat: number }): [number, number] {
+/** East/north offset of `pos` from `centre`, metres. */
+export function offsetM(pos: LonLat, centre: LonLat): Offset {
   let dLon = pos.lon - centre.lon;
   if (dLon > 180) dLon -= 360;
   if (dLon < -180) dLon += 360;
-  return [dLon * RAD * EARTH_RADIUS_M * Math.cos(centre.lat * RAD), (pos.lat - centre.lat) * RAD * EARTH_RADIUS_M];
+  return { x: dLon * RAD * EARTH_RADIUS_M * Math.cos(centre.lat * RAD), y: (pos.lat - centre.lat) * RAD * EARTH_RADIUS_M };
+}
+
+/** Inverse of offsetM. */
+export function fromOffsetM(centre: LonLat, o: Offset): LonLat {
+  return { lon: centre.lon + o.x / (RAD * EARTH_RADIUS_M * Math.cos(centre.lat * RAD)), lat: centre.lat + o.y / (RAD * EARTH_RADIUS_M) };
+}
+
+/** The simulation square [west, south, east, north] as a centred box. */
+export function boxOfBbox(b: readonly [number, number, number, number]): Box {
+  const c = { lon: (b[0] + b[2]) / 2, lat: (b[1] + b[3]) / 2 };
+  const { x, y } = offsetM({ lon: b[2], lat: b[3] }, c);
+  return { ...c, halfX: Math.abs(x), halfY: Math.abs(y) };
+}
+
+/** Fallback when there is no simulation square: a box inscribed in the farm radius circle. */
+export function boxOfRadius(c: LonLat, radiusM: number): Box {
+  const h = radiusM / Math.SQRT2;
+  return { ...c, halfX: h, halfY: h };
+}
+
+/** Hard stop: the target offset cannot leave the box. */
+export function clampTarget(o: Offset, box: Pick<Box, "halfX" | "halfY">): Offset {
+  return { x: Math.min(box.halfX, Math.max(-box.halfX, o.x)), y: Math.min(box.halfY, Math.max(-box.halfY, o.y)) };
 }
 
 /**
- * Nearest allowed camera position: within `radiusM` of the centre horizontally (same bearing), and between
- * MIN and MAX height above `groundHeightM` (ellipsoid height of the ground under the camera).
- * Returns the input values unchanged when already inside.
+ * Hard-clamp the orbit: range 150 m - 2.5 km, pitch -89 deg .. -15 deg, heading wrapped to [0, 2pi).
+ * `needAboveTargetM` = how far above the target the camera must be to keep 20 m over the ground (0 = ignore):
+ * raises the pitch (looks more downward) when the range is long enough, never beyond the limits.
  */
-export function clampCamera(pos: CameraPos, area: ClampArea, groundHeightM = 0): CameraPos {
-  const [x, y] = offsetM(pos, area);
-  const d = Math.hypot(x, y);
-  const k = d > area.radiusM && d > 0 ? area.radiusM / d : 1;
-  const height = Math.min(groundHeightM + MAX_HEIGHT_ABOVE_GROUND_M, Math.max(groundHeightM + MIN_HEIGHT_ABOVE_GROUND_M, pos.height));
-  if (k === 1) return { lon: pos.lon, lat: pos.lat, height };
-  return {
-    lon: area.lon + (x * k) / (RAD * EARTH_RADIUS_M * Math.cos(area.lat * RAD)),
-    lat: area.lat + (y * k) / (RAD * EARTH_RADIUS_M),
-    height,
-  };
+export function clampOrbit(o: Orbit, needAboveTargetM = 0): Orbit {
+  const range = Math.min(MAX_RANGE_M, Math.max(MIN_RANGE_M, o.range));
+  let pitch = Math.min(MAX_PITCH_RAD, o.pitch);
+  if (needAboveTargetM > 0) pitch = Math.min(pitch, -Math.asin(Math.min(1, needAboveTargetM / range)));
+  pitch = Math.max(MIN_PITCH_RAD, pitch);
+  const heading = ((o.heading % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  return { heading, pitch, range };
 }
 
-/** One eased step from `pos` toward `target` after `dtS` seconds (exponential, frame-rate independent). */
-export function easeToward(pos: CameraPos, target: CameraPos, dtS: number, rate = CLAMP_EASE_RATE): CameraPos {
-  const t = 1 - Math.exp(-rate * Math.max(0, dtS));
-  return {
-    lon: pos.lon + (target.lon - pos.lon) * t,
-    lat: pos.lat + (target.lat - pos.lat) * t,
-    height: pos.height + (target.height - pos.height) * t,
-  };
+/**
+ * Fixed sun time for the lit farm view: 10:00 local mean solar time on 21 June 2026, as UTC milliseconds.
+ * Constant date so the same inputs always give the same shading (determinism).
+ */
+export function localMorningUtcMs(lonDeg: number): number {
+  return Date.UTC(2026, 5, 21, 10, 0, 0) - (lonDeg / 15) * 3600000;
 }

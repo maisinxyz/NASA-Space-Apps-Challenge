@@ -8,7 +8,7 @@ import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
 import { BasisChip } from "@/components/ui/BasisChip";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { type TwinMode, useAppStore } from "@/lib/store";
-import { AGASSIZ_FIELDS, FIELDS_ATTRIBUTION, FIELDS_NOTES } from "@/lib/twin/agassiz";
+import { AGASSIZ_FIELDS, FIELDS_ATTRIBUTION, FIELDS_NOTES, SIM_AREA_LABEL } from "@/lib/twin/agassiz";
 import { ROTATIONS } from "@/lib/twin/rotations";
 import { SCENARIOS } from "@/lib/twin/scenario";
 
@@ -101,7 +101,6 @@ export function TwinPanel({ farm, onBack, onReset }: { farm: Farm; onBack(): voi
 }
 
 function Explore() {
-  const photoreal = useAppStore((s) => s.photoreal);
   const exaggeration = useAppStore((s) => s.exaggeration);
   const fieldId = useAppStore((s) => s.twinFieldId);
   const crops = useAppStore((s) => s.twinRotationId);
@@ -113,13 +112,10 @@ function Explore() {
         <h2 id="layers-h" className="text-sm font-semibold">
           Layers
         </h2>
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" checked={photoreal} onChange={(e) => useAppStore.setState({ photoreal: e.target.checked })} className="mt-1 accent-accent" />
-          <span>
-            Photorealistic 3D
-            <span className="block text-xs text-ink-muted">Uses Google 3D tiles (real trees and buildings).</span>
-          </span>
-        </label>
+        <p className="text-sm">
+          <span className="font-semibold">{SIM_AREA_LABEL}</span>
+          <span className="block text-xs text-ink-muted">The thin outline on the map marks where simulation layers apply; they only cover this area.</span>
+        </p>
         <label className="grid grid-cols-[auto_1fr_2.5rem] items-center gap-2 text-sm">
           Vertical exaggeration
           <input type="range" min={1} max={3} step={0.5} value={exaggeration} onChange={(e) => useAppStore.setState({ exaggeration: Number(e.target.value) })} className="accent-accent" />
