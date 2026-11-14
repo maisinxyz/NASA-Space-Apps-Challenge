@@ -40,8 +40,8 @@ describe("rotation data", () => {
   it("has a regional set for New York dairy and Maryland grain", () => {
     expect(Object.keys(ROTATION_SETS).sort()).toEqual(["md-grain", "ny-dairy"]);
   });
-  it("defines the 12 climate scenarios (copy and inputs only; results need backend data)", () => {
-    expect(SCENARIOS).toHaveLength(12);
+  it("defines the 10 climate scenarios (copy and inputs only; results need backend data)", () => {
+    expect(SCENARIOS).toHaveLength(10);
   });
 });
 

@@ -31,14 +31,12 @@ const KINDS: Record<ScenarioId, GroundLayerKind[]> = {
   "veg-stress": ["vegetation"],
   "multi-year": ["cropCover", "organicMatter"],
   trends: ["nasaImagery"],
-  "climate-shift": ["wetness", "dryness"],
-  compound: ["dryness", "water", "runoff"],
 };
 
 describe("ground evaluators", () => {
   it.each(SCENARIO_DEFS.flatMap((d) => [CORNELL, BELTSVILLE].flatMap((f) => [0, 0.5, 1].map((p) => [d.id, f, p] as const))))("%s on %s at %s: kinds and ranges", (id, farm, p) => {
     const ls = GROUND[id](run(id, p, {}, farm));
-    if (id !== "climate-shift") expect(ls.map((l) => l.kind)).toEqual(KINDS[id]);
+    expect(ls.map((l) => l.kind)).toEqual(KINDS[id]);
     const ids = fieldIds(farm);
     for (const l of ls) {
       expect(l.id).toBeTruthy();

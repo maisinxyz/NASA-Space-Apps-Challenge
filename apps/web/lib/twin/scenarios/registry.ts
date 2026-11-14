@@ -19,8 +19,8 @@ const TMIN_DATA = "Minimum temperature (NASA POWER)";
 const TMAX_DATA = "Maximum temperature (NASA POWER)";
 const CROP_DATA = "Crop calendar for the chosen rotation (typical planting and harvest months)";
 
-export const FAMILY_LABEL = { "rain-water": "Rain & water", "dry-hot": "Dry & hot", cold: "Cold", "seasons-years": "Seasons & years", "what-if": "What-if" } as const;
-export const FAMILY_ORDER = ["rain-water", "dry-hot", "cold", "seasons-years", "what-if"] as const;
+export const FAMILY_LABEL = { "rain-water": "Rain & water", "dry-hot": "Dry & hot", cold: "Cold", "seasons-years": "Seasons & years" } as const;
+export const FAMILY_ORDER = ["rain-water", "dry-hot", "cold", "seasons-years"] as const;
 
 export const SCENARIO_DEFS: ScenarioDef[] = [
   {
@@ -249,55 +249,6 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
     ],
     effectCaption: GROUND_ONLY,
     rotationDependent: false,
-  },
-  {
-    id: "climate-shift",
-    family: "what-if",
-    label: "Climate shift",
-    summary: "Replay a storm in a wetter, hotter world and compare.",
-    plainMeaning: "Takes a storm like one that has happened and asks: what if rain came harder, dry spells ran longer and it were warmer?",
-    timeKind: "event-hours",
-    outputKind: "frames",
-    durationLabel: "Up to 72 hours, hourly",
-    secondsAtOneX: 40,
-    inputs: [
-      { id: "rain_change_pct", label: "Rain intensity change", unit: "%", min: -30, max: 50, step: 5, default: 20, hint: "Harder rain above zero, lighter below." },
-      { id: "dry_spell_change_pct", label: "Dry spell length change", unit: "%", min: -30, max: 50, step: 5, default: 20, hint: "Longer dry spells above zero." },
-      { id: "temp_shift_c", label: "Temperature shift", unit: "°C", min: -2, max: 6, step: 0.5, default: 2, hint: "How much warmer (or cooler) every day is." },
-    ],
-    dataNeeds: [RAIN_DATA, TMAX_DATA, TMIN_DATA, ELEV_DATA, "Climate-change adjustment factors (TODO(verify): which source and scenario)"],
-    basis: "relative",
-    legend: [
-      { color: "#4aa3df", label: "Same as the storm" },
-      { color: "#ef8a3c", label: "Changed climate" },
-      { color: "#b3262d", label: "Largest change" },
-    ],
-    effectCaption: `${SKY} ${WAIT}`,
-    rotationDependent: true,
-  },
-  {
-    id: "compound",
-    family: "what-if",
-    label: "Dry spell, then storm",
-    summary: "A dry, hot stretch followed by a heavy storm on hard ground.",
-    plainMeaning: "Shows how a storm that follows a dry spell can behave differently, because dry hard soil lets water run off.",
-    timeKind: "event-hours",
-    outputKind: "frames",
-    durationLabel: "A dry phase, then a storm",
-    secondsAtOneX: 50,
-    inputs: [
-      { id: "phase1_days", label: "Dry phase length", unit: "days", min: 3, max: 30, step: 1, default: 14, hint: "Days of dry, hot weather before the storm." },
-      { id: "storm_peak_mm_h", label: "Storm peak rain rate", unit: "mm/h", min: 10, max: 100, step: 5, default: 50, hint: "How hard it rains at the heaviest hour." },
-    ],
-    dataNeeds: [RAIN_DATA, TMAX_DATA, SOIL_DATA, ELEV_DATA],
-    basis: "relative",
-    legend: [
-      { color: "#c9b27a", label: "Dry ground" },
-      { color: "#4aa3df", label: "Rain and runoff" },
-      { color: "#1f4e8c", label: "Water gathering" },
-    ],
-    effectCaption: `${SKY} ${WAIT}`,
-    rotationDependent: true,
   },
 ];
 

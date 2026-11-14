@@ -7,7 +7,7 @@
 import type { AtmosphereState, GroundLayerSpec } from "@/components/globe/types";
 import type { BasisOrRelative } from "@/lib/api/types";
 
-export type ScenarioFamily = "rain-water" | "dry-hot" | "cold" | "seasons-years" | "what-if";
+export type ScenarioFamily = "rain-water" | "dry-hot" | "cold" | "seasons-years";
 
 export type ScenarioId =
   | "storm"
@@ -19,9 +19,7 @@ export type ScenarioId =
   | "bare-soil"
   | "veg-stress"
   | "multi-year"
-  | "trends"
-  | "climate-shift"
-  | "compound";
+  | "trends";
 
 /** What the scenario shows: animated frames, a static zone layer, a series/strip, or a multi-year timeline. */
 export type OutputKind = "frames" | "zones" | "series" | "timeline";

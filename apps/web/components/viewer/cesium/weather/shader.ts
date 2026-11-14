@@ -22,7 +22,6 @@ in vec2 v_textureCoordinates;
 
 uniform mat4 u_eyeToLocal;
 uniform float u_time;
-uniform vec2 u_gate;     // x: -1 left of split only, 1 right only, 0 whole screen; y: split 0..1
 uniform vec4 u_cloud;    // cover, darkness, drift east m, drift north m
 uniform vec4 u_rain;     // density, speed, drizzle, slant (rad)
 uniform vec4 u_air;      // fog, haze, shimmer, frost sparkle
@@ -94,14 +93,6 @@ float rainLayer(vec2 uv, float scale, float speed, float len, float density, flo
 
 void main(void) {
   vec2 uv0 = v_textureCoordinates;
-  if (u_gate.x != 0.0) {
-    float x = gl_FragCoord.x / czm_viewport.z;
-    if ((u_gate.x < 0.0 && x >= u_gate.y) || (u_gate.x > 0.0 && x < u_gate.y)) {
-      out_FragColor = texture(colorTexture, uv0);
-      return;
-    }
-  }
-
   float rawDepth = texture(depthTexture, uv0).r;
   bool sky = czm_readDepth(depthTexture, uv0) >= 1.0;
   vec4 posEC = czm_windowToEyeCoordinates(gl_FragCoord.xy, rawDepth);

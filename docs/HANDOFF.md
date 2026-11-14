@@ -35,7 +35,7 @@ Without a token the app falls back to a plain offline map with no terrain and no
 
 ## Scenario system (the current work)
 
-Twelve scenarios, defined in `apps/web/lib/twin/scenarios/registry.ts`: storm, wet-spell, flood-zones, drought, heat-wave, frost, bare-soil, veg-stress, multi-year, trends, climate-shift, compound. Each has plain-language copy, inputs, data needs, basis and a legend. The shared contract is `apps/web/components/globe/types.ts` (AtmosphereState, GroundLayerSpec, DetailLevel, FarmTwinProps weather, groundLayers, detail) and `apps/web/lib/twin/scenario.ts`.
+Ten scenarios, defined in `apps/web/lib/twin/scenarios/registry.ts`: storm, wet-spell, flood-zones, drought, heat-wave, frost, bare-soil, veg-stress, multi-year, trends. Each has plain-language copy, inputs, data needs, basis and a legend. The shared contract is `apps/web/components/globe/types.ts` (AtmosphereState, GroundLayerSpec, DetailLevel, FarmTwinProps weather, groundLayers, detail) and `apps/web/lib/twin/scenario.ts`.
 
 Two owners split the visuals:
 
@@ -54,7 +54,7 @@ MSAA is off (it was the largest cost), FXAA stays. While the camera moves, tile 
 - **Tests:** 305 of 318 pass. 12 failures are `lib/twin/scenarios/registry.test.ts` ("composeFrame(...) is a clear sky with no ground layers until the owners fill it in"). The owners have since filled the evaluators, so the assertion is stale. Rewrite it to check the evaluators' output. The 13th failure is the old `lib/api/client.test.ts` SSE fixture: `packages/contracts/fixtures/scans/sse_success.txt` has CRLF line endings on Windows. Fix with a `.gitattributes` rule forcing LF on fixtures.
 - **Viewer crash on cleanup (S2-G finding):** `GlobeHome.tsx` moves `.cesium-widget-credits` into another parent. `CesiumWidget.destroy` then removes it from its original parent and throws `NotFoundError` at `Globe.tsx`, masking the real error. Fix: pass `creditContainer` at construction or restore the node before destroy, and keep the original error.
 - **Visual approval still pending:** NASA imagery draping over Google tiles was not confirmed visible. Field-edge alignment, roads, frost crust, cracks and low-spot water need a full-square visual check. The NASA credit collides with the bottom dock.
-- **A/B weather:** no contract field exists for the right-side atmosphere. S2-W requests an optional `compareWeather?: AtmosphereState | null` on GlobeProps so Compare can drive the climate-shift split.
+- **A/B weather:** no contract field exists for the right-side atmosphere. `compareWeather` is dropped: the climate-shift scenario it was meant for was removed.
 - **Sky:** reduced motion is only unit-tested. Low tier clouds look grainy at slab edges. The sun is stylised, not an ephemeris.
 - **Data caveats:** coordinates approximate, crops and rotation scores are team assumptions that need a NY and a MD adviser, some season months and climate sentences are `TODO(verify)`, Oakville's source page returned 403. Overpass (OpenStreetMap) was unreachable for several days, so building footprints for roof masking (`overlayMask`) are empty and trees can still be painted by overlays.
 - **Not done from the challenge brief:** Learn page and glossary, expanded rotation criteria (organic matter, nitrogen, pest break, forage, market), priority profiles, crop-role chips, "My farm" constraints panel, "ask your adviser" markers, conditions charts and stress strip, NASA layers drawer with time slider, vulnerability layers, what-if input preview chart, backend data contract document. Mount the trends chart panel.
@@ -81,7 +81,7 @@ The backend owner delivers terrain, storm, water frames, risk and diff layers, r
 
 1. Fix the stale registry test and the CRLF fixture rule so the suite is green.
 2. Fix the credits-container crash on viewer cleanup.
-3. Visual acceptance of S2-G on Google and Terrain surfaces, then wire `compareWeather`.
+3. Visual acceptance of S2-G on Google and Terrain surfaces.
 4. Build the brief-coverage items: Learn page, expanded rotation criteria, "My farm" panel, adviser markers, NASA layers drawer, conditions view.
 5. Write the backend data-contract document and agree shapes with the backend owner.
 6. Measure fps on the demo laptop and set Detail defaults.

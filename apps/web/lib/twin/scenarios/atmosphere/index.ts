@@ -7,9 +7,9 @@
 //  - Only rainRateMmH is data-driven; everything else is mood. The UI captions it "Illustrative weather effect".
 //  - Test on /dev/scenarios (turn on "Fixture run source"); the real twin never calls these until the backend exists.
 import type { AtmosphereEvaluator, ScenarioId } from "../../scenario";
-import { calm, climateShift, compound, drought, frost, heatWave, storm, wetSpell } from "./evaluators";
+import { calm, drought, frost, heatWave, storm, wetSpell } from "./evaluators";
 
-export { compoundHandoff, stormCurve, type AtmosphereWithBaseline } from "./evaluators";
+export { stormCurve } from "./evaluators";
 
 export const ATMOSPHERE: Record<ScenarioId, AtmosphereEvaluator> = {
   storm,
@@ -22,6 +22,4 @@ export const ATMOSPHERE: Record<ScenarioId, AtmosphereEvaluator> = {
   "veg-stress": calm,
   "multi-year": calm,
   trends: calm,
-  "climate-shift": climateShift,
-  compound,
 };

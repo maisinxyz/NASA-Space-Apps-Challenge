@@ -22,6 +22,10 @@ describe("share link", () => {
     expect(back).toEqual({ ...full(), camera: { lon: -76.254112, lat: 42.440912, height: 812.3, heading: 12.35, pitch: -35.68 } });
   });
 
+  it("ignores a removed scenario id", () => {
+    expect(decodeShare("#farm=cornell-ruminant&m=simulate&sc=compound")).not.toHaveProperty("scenario");
+  });
+
   it("omits field and camera when not set", () => {
     const h = encodeShare({ ...full(), field: null, camera: null });
     expect(h).not.toMatch(/[&#]f=|cam=/);

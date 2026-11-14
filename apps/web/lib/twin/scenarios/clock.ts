@@ -39,10 +39,6 @@ export function clockSpec(def: ScenarioDef, inputs: Record<string, number>): Clo
       return { unit: "Year", steps: inputs.years };
     case "trends":
       return { unit: "Year", steps: 30, firstYear: inputs.start_year };
-    case "climate-shift":
-      return { unit: "Hour", steps: 48 };
-    case "compound":
-      return { unit: "Day", steps: inputs.phase1_days + 3 };
     default:
       return { unit: "Hour", steps: 0 };
   }

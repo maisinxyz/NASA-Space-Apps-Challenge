@@ -5,9 +5,6 @@ import { type AtmosphereState, CLEAR_SKY } from "@/components/globe/types";
 
 import type { AtmosphereEvaluator, ScenarioRun } from "../../scenario";
 
-/** A state plus an optional "today" baseline (climate shift only); the engine may draw the baseline left of the A/B split. */
-export type AtmosphereWithBaseline = AtmosphereState & { baseline?: AtmosphereState };
-
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const smooth = (e0: number, e1: number, x: number) => {
@@ -122,73 +119,6 @@ export const frost: AtmosphereEvaluator = (run) => {
     tint: [0.72, 0.84, 1, lerp(0.15, 0.45, Math.max(night, freezing * 0.8))],
     timeOfDayHours: hour,
   });
-};
-
-/** Climate shift, one side: a 48 h storm (an assumed 30 mm/h peak, scaled by the rain change) in a warmer, drier world. */
-const SHIFT_BASE_PEAK_MM_H = 30; // assumed reference storm for the what-if; the real reference storm comes from the backend
-function shiftedSky(p: number, rainPct: number, dryPct: number, tempC: number): AtmosphereState {
-  const base = stormSky(stormCurve(p), SHIFT_BASE_PEAK_MM_H * (1 + rainPct / 100), p);
-  const warm = clamp01(tempC / 6);
-  const dry = clamp01(dryPct / 50);
-  const wetter = clamp01(rainPct / 50);
-  const tintW = Math.max(0, warm) * 0.35;
-  return {
-    ...base,
-    cloudCover: clamp01(base.cloudCover * (1 + 0.25 * wetter - 0.2 * dry)),
-    cloudDarkness: clamp01(base.cloudDarkness + 0.1 * wetter),
-    haze: clamp01(0.08 + 0.35 * dry + 0.2 * warm) * (1 - stormCurve(p)),
-    heatShimmer: 0.45 * warm * (1 - smooth(0.05, 0.3, stormCurve(p))),
-    sunIntensity: Math.min(1.5, base.sunIntensity + 0.15 * warm),
-    tint: tintW > base.tint[3] ? [1, 0.78, 0.55, tintW] : base.tint,
-  };
-}
-
-/** Climate shift: the state responds live to the sliders; `baseline` is the same storm with every slider at 0 ("today"). */
-export const climateShift: AtmosphereEvaluator = (run): AtmosphereWithBaseline => {
-  const p = clamp01(run.progress);
-  return {
-    ...shiftedSky(p, input(run, "rain_change_pct", 20), input(run, "dry_spell_change_pct", 20), input(run, "temp_shift_c", 2)),
-    baseline: shiftedSky(p, 0, 0, 0),
-  };
-};
-
-/** Where the compound run hands off from the dry phase to the storm (progress 0..1). Shared with the ground layers. */
-export const compoundHandoff = (phase1Days: number) => phase1Days / (phase1Days + 3);
-
-/** Dry spell, then storm: sun and haze, then clouds roll in over ~a third of a day, then a hard storm on the last 3 days. */
-export const compound: AtmosphereEvaluator = (run) => {
-  const p = clamp01(run.progress);
-  const h = compoundHandoff(input(run, "phase1_days", 14));
-  const dryK = smooth(0, h, p);
-  const dry = sky({
-    cloudCover: 0.05,
-    haze: lerp(0.1, 0.5, dryK),
-    heatShimmer: lerp(0.05, 0.55, dryK),
-    sunIntensity: lerp(1.25, 1.45, dryK),
-    tint: [1, 0.84, 0.62, lerp(0.15, 0.4, dryK)],
-    timeOfDayHours: 14,
-  });
-  const q = clamp01((p - h) / (1 - h)); // storm phase progress
-  const wet = stormSky(stormCurve(0.05 + 0.9 * q), input(run, "storm_peak_mm_h", 50), 0.25 + 0.75 * q);
-  const mix = smooth(h - 0.02, h + 0.02, p); // visible hand-off
-  if (mix <= 0) return dry;
-  if (mix >= 1) return wet;
-  const m = (k: keyof AtmosphereState) => lerp(dry[k] as number, wet[k] as number, mix);
-  return {
-    cloudCover: Math.max(m("cloudCover"), mix), // clouds lead the hand-off
-    cloudDarkness: m("cloudDarkness"),
-    rainRateMmH: wet.rainRateMmH * mix,
-    drizzle: 0,
-    lightning: 0,
-    fog: m("fog"),
-    haze: m("haze"),
-    heatShimmer: m("heatShimmer"),
-    frostSparkle: 0,
-    sunIntensity: m("sunIntensity"),
-    tint: [lerp(dry.tint[0], wet.tint[0], mix), lerp(dry.tint[1], wet.tint[1], mix), lerp(dry.tint[2], wet.tint[2], mix), lerp(dry.tint[3], wet.tint[3], mix)],
-    timeOfDayHours: lerp(dry.timeOfDayHours, wet.timeOfDayHours, mix),
-    windSlantDeg: m("windSlantDeg"),
-  };
 };
 
 /** Calm neutral sky for the ground-only scenarios. */

@@ -5,7 +5,7 @@ import { CLEAR_SKY, type AtmosphereState } from "@/components/globe/types";
 import type { ScenarioId, ScenarioRun } from "../../scenario";
 import { scenarioById, SCENARIO_DEFS } from "../registry";
 import { resolveInputs } from "../clock";
-import { ATMOSPHERE, type AtmosphereWithBaseline } from ".";
+import { ATMOSPHERE } from ".";
 import { stormCurve } from "./evaluators";
 
 const runOf = (id: ScenarioId, progress: number, inputs: Record<string, number> = {}): ScenarioRun => {
@@ -118,38 +118,5 @@ describe("frost", () => {
     expect(preDawn.tint[2]).toBeGreaterThan(preDawn.tint[0]); // cold blue
     expect(at("frost", 14 / 48).frostSparkle).toBe(0); // 08:00, thawed
     expect(at("frost", 11.5 / 48, { min_temp_c: -10 }).frostSparkle).toBeGreaterThan(at("frost", 11.5 / 48, { min_temp_c: -1 }).frostSparkle);
-  });
-});
-
-describe("climate shift", () => {
-  it("responds live to the sliders and carries a today baseline", () => {
-    const s = at("climate-shift", 0.45) as AtmosphereWithBaseline;
-    expect(s.baseline).toBeDefined();
-    const harder = at("climate-shift", 0.45, { rain_change_pct: 50 });
-    const lighter = at("climate-shift", 0.45, { rain_change_pct: -30 });
-    expect(harder.rainRateMmH).toBeGreaterThan(s.baseline!.rainRateMmH);
-    expect(lighter.rainRateMmH).toBeLessThan(s.baseline!.rainRateMmH);
-    const warm = at("climate-shift", 0.05, { temp_shift_c: 6 });
-    const today = at("climate-shift", 0.05, { temp_shift_c: 0, dry_spell_change_pct: 0, rain_change_pct: 0 });
-    expect(warm.heatShimmer).toBeGreaterThan(today.heatShimmer);
-    expect(at("climate-shift", 0.05, { dry_spell_change_pct: 50 }).haze).toBeGreaterThan(today.haze);
-    const { baseline, ...rest } = today as AtmosphereWithBaseline;
-    expect(rest).toEqual(baseline); // all sliders at 0 = today
-  });
-});
-
-describe("compound", () => {
-  it("dry first, a visible hand-off, then a hard storm", () => {
-    const h = 14 / 17;
-    const dry = at("compound", h * 0.8);
-    expect(dry.rainRateMmH).toBe(0);
-    expect(dry.haze).toBeGreaterThan(0.3);
-    const mid = at("compound", h);
-    expect(mid.cloudCover).toBeGreaterThan(0.4);
-    expect(mid.cloudCover).toBeLessThan(1);
-    let max = 0;
-    for (let p = h; p <= 1; p += 0.002) max = Math.max(max, at("compound", p).rainRateMmH);
-    expect(max).toBeGreaterThan(45);
-    expect(at("compound", h + (1 - h) * 0.4).cloudDarkness).toBeGreaterThan(0.8);
   });
 });

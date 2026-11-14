@@ -11,12 +11,10 @@
 // How it draws: ONE depth-aware post-process pass (shader.ts) does clouds, cloud shadows, fog, haze, shimmer, frost
 // sparkle, rain, grade and the lightning pulse. Cesium 1.147 does have CloudCollection/CumulusCloud, but a cloud
 // slab marched in the same pass gives shadows that match the puffs exactly, honours scene.splitPosition per pixel
-// and adds no scene objects or draw calls. A second, gated copy of the pass draws the "today" baseline left of the
-// split (climate shift, dev toggle ?sky=split; ?sky=today shows the baseline everywhere).
+// and adds no scene objects or draw calls.
 import { Cartesian2, Cartesian3, Cartesian4, DirectionalLight, Matrix4, PostProcessStage, Transforms, type Light, type Viewer } from "cesium";
 
 import type { AtmosphereState, DetailLevel, FarmSurface } from "@/components/globe/types";
-import type { AtmosphereWithBaseline } from "@/lib/twin/scenarios/atmosphere";
 
 import { cloudSlab, createAutoTier, createLightning, rainDensity, rainFall, rainSpeed, sunFor, tierSettings, windDir } from "./logic";
 import { weatherShader } from "./shader";
@@ -46,9 +44,8 @@ type Params = {
   sun: Cartesian4;
   sunColor: Cartesian3;
   fall: Cartesian3;
-  gate: Cartesian2;
 };
-const newParams = (): Params => ({ cloud: new Cartesian4(), rain: new Cartesian4(), air: new Cartesian4(), tint: new Cartesian4(), sun: new Cartesian4(), sunColor: new Cartesian3(1, 1, 1), fall: new Cartesian3(0, 0, -1), gate: new Cartesian2() });
+const newParams = (): Params => ({ cloud: new Cartesian4(), rain: new Cartesian4(), air: new Cartesian4(), tint: new Cartesian4(), sun: new Cartesian4(), sunColor: new Cartesian3(1, 1, 1), fall: new Cartesian3(0, 0, -1) });
 
 const DEG = Math.PI / 180;
 const WIND_M_S = 5; // cloud drift speed (mood)
@@ -141,9 +138,7 @@ function perfLine(viewer: Viewer) {
 
 export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   const { scene } = viewer;
-  const skyMode = new URLSearchParams(window.location.search).get("sky"); // dev toggle: "today" | "split" | null
   const main = newParams();
-  const base = newParams();
   const eyeToLocal = new Matrix4();
   const worldToLocal = new Matrix4();
   const localToWorld = new Matrix4();
@@ -153,7 +148,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   let anchor: Cartesian3 | null = null;
   let anchorCheckS = 0;
   let anchorGuess = true;
-  let stages: { left: PostProcessStage; right: PostProcessStage } | null = null;
+  let stage: PostProcessStage | null = null;
   let builtTier: DetailLevel | null = null;
   let last: AtmosphereState | null = null;
   let active = false;
@@ -177,7 +172,6 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   const uniformsFor = (p: Params) => ({
     u_eyeToLocal: () => eyeToLocal,
     u_time: () => time.t,
-    u_gate: () => p.gate,
     u_cloud: () => p.cloud,
     u_rain: () => p.rain,
     u_air: () => p.air,
@@ -190,20 +184,16 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   });
 
   const removeStages = () => {
-    if (!stages) return;
-    scene.postProcessStages.remove(stages.left); // remove() also destroys
-    scene.postProcessStages.remove(stages.right);
-    stages = null;
+    if (!stage) return;
+    scene.postProcessStages.remove(stage); // remove() also destroys
+    stage = null;
     builtTier = null;
   };
 
   const build = (tier: DetailLevel) => {
     removeStages();
     const fragmentShader = weatherShader(tierSettings(tier));
-    stages = {
-      left: scene.postProcessStages.add(new PostProcessStage({ name: "ft-weather-today", fragmentShader, uniforms: uniformsFor(base) })) as PostProcessStage,
-      right: scene.postProcessStages.add(new PostProcessStage({ name: "ft-weather", fragmentShader, uniforms: uniformsFor(main) })) as PostProcessStage,
-    };
+    stage = scene.postProcessStages.add(new PostProcessStage({ name: "ft-weather", fragmentShader, uniforms: uniformsFor(main) })) as PostProcessStage;
     builtTier = tier;
   };
 
@@ -259,7 +249,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
     },
     update(state, ctx) {
       if (!state) {
-        if (last || stages) clear();
+        if (last || stage) clear();
         return;
       }
       updateAnchor(ctx.nowS);
@@ -269,7 +259,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       const moving = !reduced && animates(state);
       const tier = moving && !perf.measuring() ? auto.update(ctx.detail, ctx.dtS) : ctx.detail;
       if (builtTier !== tier) build(tier);
-      if (!stages) return;
+      if (!stage) return;
 
       if (!reduced) {
         time.t = ctx.nowS % 3600; // keep float precision in the shader
@@ -294,19 +284,8 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       Matrix4.multiply(worldToLocal, scene.camera.inverseViewMatrix, eyeToLocal);
       Object.assign(slab, cloudSlab(eyeToLocal[14]));
       const sun = fillParams(main, state, drift, reduced);
-      const withBase = state as AtmosphereWithBaseline;
-      const baseline = withBase.baseline;
-      const split = !!baseline && skyMode === "split";
-      if (baseline && skyMode === "today") fillParams(main, baseline, drift, reduced);
-      if (split) fillParams(base, baseline, drift, reduced);
-      const at = scene.splitPosition > 0 && scene.splitPosition < 1 ? scene.splitPosition : 0.5;
-      main.gate.x = split ? 1 : 0;
-      main.gate.y = at;
-      base.gate.x = -1;
-      base.gate.y = at;
       const bypass = perf.bypass();
-      stages.left.enabled = split && !bypass;
-      stages.right.enabled = !bypass;
+      stage.enabled = !bypass;
 
       // Sun direction for lit surfaces (terrain, models); Google photogrammetry is unlit, so the grade carries the look.
       const sunWorld = Matrix4.multiplyByPointAsVector(localToWorld, new Cartesian3(...sun.dir), new Cartesian3());
@@ -321,7 +300,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       if (ctx.nowS - perfAt > 0.5) {
         perfAt = ctx.nowS;
         const stepped = tier !== ctx.detail ? ` (auto-stepped from ${ctx.detail})` : "";
-        perf.set(`sky tier ${tier}${stepped}${moving ? `  fx fps ${auto.fps.toFixed(0)}` : "  static"}${split ? "  split" : ""}  cam ${eyeToLocal[14].toFixed(0)} m above anchor`);
+        perf.set(`sky tier ${tier}${stepped}${moving ? `  fx fps ${auto.fps.toFixed(0)}` : "  static"}  cam ${eyeToLocal[14].toFixed(0)} m above anchor`);
       }
     },
     destroy() {

@@ -17,8 +17,6 @@ import { bareSoil } from "./bareSoil";
 import { vegStress } from "./vegStress";
 import { multiYear } from "./multiYear";
 import { trends } from "./trends";
-import { climateShift } from "./climateShift";
-import { compound } from "./compound";
 
 export { tooWetDays } from "./wetSpell";
 
@@ -33,6 +31,4 @@ export const GROUND: Record<ScenarioId, GroundEvaluator> = {
   "veg-stress": vegStress,
   "multi-year": multiYear,
   trends: trends,
-  "climate-shift": climateShift,
-  compound: compound,
 };

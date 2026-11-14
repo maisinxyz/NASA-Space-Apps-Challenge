@@ -8,9 +8,9 @@ import { clampInput, clockLabel, clockSpec, currentStep, resolveInputs, stepProg
 import { composeFrame, FAMILY_ORDER, SCENARIO_DEFS } from "./registry";
 
 describe("scenario registry", () => {
-  it("has exactly 12 unique scenarios covering the 5 families", () => {
-    expect(SCENARIO_DEFS).toHaveLength(12);
-    expect(new Set(SCENARIO_DEFS.map((d) => d.id)).size).toBe(12);
+  it("has exactly 10 unique scenarios covering the 4 families", () => {
+    expect(SCENARIO_DEFS).toHaveLength(10);
+    expect(new Set(SCENARIO_DEFS.map((d) => d.id)).size).toBe(10);
     expect(new Set(SCENARIO_DEFS.map((d) => d.family))).toEqual(new Set(FAMILY_ORDER));
   });
 

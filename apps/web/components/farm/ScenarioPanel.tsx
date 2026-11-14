@@ -140,7 +140,7 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
         </label>
       )}
 
-      {def.family !== "seasons-years" && def.family !== "what-if" && def.timeKind !== "static" && (
+      {def.family !== "seasons-years" && def.timeKind !== "static" && (
         <label className="grid gap-1 text-xs">
           Real event
           <select disabled className={hudSelect}>
