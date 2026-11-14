@@ -1,20 +1,19 @@
-// Per-farm pin artwork, one design per farm (Farm.pin). Flat or lightly shaded, muted, all on the same 28 x 26 box and
-// visual weight, with the ground point at the bottom centre. Colour comes from --col (set by tier, brightened on
-// hover by the class on the svg) so the tier still reads: twin = terracotta, explore = slate blue.
+// Per-farm pin artwork, one design per farm (Farm.pin). Flat or lightly shaded, all on the same 36 x 34 box and visual
+// weight, with the ground point at the bottom centre. One colour for every farm (tier is shown in the popup and list, not
+// on the pin): warm amber with a thin dark outline. Contrast, measured as WCAG ratios against sample backdrops: amber
+// #ffc857 is 7.4 on deep ocean, 3.7 mid ocean, 3.3 green land, 13 on the night side; the #0b0d12 outline is 5.6 on light
+// ocean, 4.4 on brown land, 7.2 on desert and 17 on cloud. Every backdrop gets at least 3:1 from one of the two.
 // Samples and rationale: hive/pin-samples "By farm". Unknown ids are not here, so the caller falls back to the satin pin.
 import { useId } from "react";
 
-import type { FarmTier } from "@/components/globe/types";
-
 /** Box for every farm pin, px. Shared so the set has one visual weight. */
-export const FARM_PIN_BOX = { w: 28, h: 26 } as const;
+export const FARM_PIN_BOX = { w: 36, h: 34 } as const;
 
-const TONE: Record<FarmTier, string> = {
-  twin: "[--col:#c4685a] group-hover:[--col:#e0988b] group-focus-visible:[--col:#e0988b]",
-  explore: "[--col:#7690b3] group-hover:[--col:#a3bfe9] group-focus-visible:[--col:#a3bfe9]",
-};
+/** Brightens a touch on hover and focus; the same for every farm. */
+const TONE = "[--col:#ffc857] group-hover:[--col:#ffd98a] group-focus-visible:[--col:#ffd98a]";
 
-const FILL = { fill: "var(--col)" } as const;
+/** Fill plus a thin dark outline drawn outside the shape (paint-order stroke), so the pin reads on light and dark ground. */
+const FILL = { fill: "var(--col)", stroke: "#0b0d12", strokeWidth: 1.5, strokeLinejoin: "round", paintOrder: "stroke" } as const;
 
 type Art = (p: { id: string }) => React.ReactElement;
 
@@ -23,7 +22,7 @@ const Shadow = ({ x = 20, y = 30.5, rx, ry = 1.9 }: { x?: number; y?: number; rx
 /** Oakville: Napa Valley vineyard. A flat grape bunch. */
 const GrapeCluster: Art = () => (
   <g transform="translate(0 2.2)">
-    <path d="M20 9.5V13" stroke="var(--col)" strokeWidth={1.1} strokeLinecap="round" fill="none" />
+    <path d="M20 9.5V13" stroke="#0b0d12" strokeWidth={2.6} strokeLinecap="round" fill="none" /><path d="M20 9.5V13" stroke="var(--col)" strokeWidth={1.1} strokeLinecap="round" fill="none" />
     <path style={FILL} d="M20 11C22 8.8 25 8.6 26.5 9.4C25.6 11.6 22.8 12.4 20 11Z" />
     {[[15.5, 16], [20, 16], [24.5, 16], [17.7, 20.6], [22.3, 20.6], [20, 25.2]].map(([x, y]) => <circle key={`${x}-${y}`} style={FILL} cx={x} cy={y} r={2.6} />)}
   </g>
@@ -70,11 +69,11 @@ const DESIGNS: Record<string, Art> = { "grape-cluster": GrapeCluster, barn: Barn
 
 export const hasFarmPin = (design: string | undefined): design is string => !!design && design in DESIGNS;
 
-export function FarmPin({ design, tone, className = "", style }: { design: string; tone: FarmTier; className?: string; style?: React.CSSProperties }) {
+export function FarmPin({ design, className = "", style }: { design: string; className?: string; style?: React.CSSProperties }) {
   const id = `fp${useId().replace(/:/g, "")}`;
   const Art = DESIGNS[design];
   return (
-    <svg viewBox="6 6 28 26" width={FARM_PIN_BOX.w} height={FARM_PIN_BOX.h} className={`${TONE[tone]} transition-opacity group-active:opacity-80 ${className}`} style={{ overflow: "visible", ...style }} aria-hidden>
+    <svg viewBox="6 6 28 26" width={FARM_PIN_BOX.w} height={FARM_PIN_BOX.h} className={`${TONE} transition-opacity group-active:opacity-80 ${className}`} style={{ overflow: "visible", ...style }} aria-hidden>
       <defs>
         <linearGradient id={id} x1="0" x2="1">
           <stop offset="0" stopColor="#fff" stopOpacity={0.3} />

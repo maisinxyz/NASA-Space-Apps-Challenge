@@ -10,12 +10,15 @@ describe("per-farm pins", () => {
   it("every farm names a known design", () => {
     for (const f of FARMS) expect(hasFarmPin(f.pin), f.id).toBe(true);
   });
-  it("draws the farm design at the shared box, tier colour kept", () => {
+  it("draws every farm design at the shared box in one colour, whatever the tier", () => {
     const twin = renderToStaticMarkup(<Pin3D width={22} height={33} tone="twin" design="silo-pair" />);
     const explore = renderToStaticMarkup(<Pin3D width={22} height={33} tone="explore" design="barn" />);
-    expect(twin).toContain(`width="${FARM_PIN_BOX.w}"`);
-    expect(twin).toContain("#c4685a");
-    expect(explore).toContain("#7690b3");
+    for (const html of [twin, explore]) {
+      expect(html).toContain(`width="${FARM_PIN_BOX.w}"`);
+      expect(html).toContain("[--col:#ffc857]");
+      expect(html).not.toContain("#c4685a");
+      expect(html).not.toContain("#7690b3");
+    }
   });
   it("falls back to the satin pin for unknown or missing ids", () => {
     for (const d of [undefined, "nope"]) {
