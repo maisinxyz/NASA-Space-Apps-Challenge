@@ -216,20 +216,21 @@ export function mockZones(siteId: string): ZoneCollection {
   };
 }
 
-/** PRD §11 starter entries (plain language, "reviewed before demo"). */
+/** PRD §11 starter entries (plain language, "reviewed before demo"). TODO(verify): every `source` below. */
 export const MOCK_GLOSSARY: GlossaryEntry[] = [
-  { id: "et", term: "Evapotranspiration (ET)", short: "Water leaving the ground through soil evaporation and plant transpiration; the \"thirst\" of the field.", long: "Water leaving the ground through soil evaporation and plant transpiration.", how_we_use_it: "We estimate a reference value from temperature, so it is modeled, not measured.", source: "TODO(verify)" },
-  { id: "water_balance", term: "Water balance", short: "Rain minus evapotranspiration.", long: "Positive weeks add moisture; negative weeks dry the soil.", how_we_use_it: "Shown per week in the feature charts.", source: "TODO(verify)" },
-  { id: "soil_moisture_anomaly", term: "Soil-moisture anomaly", short: "How much wetter or drier the soil is than normal for that week.", long: "Measured in standard deviations. Zero is normal.", how_we_use_it: "Shown per week in the feature charts.", source: "TODO(verify)" },
-  { id: "ndvi", term: "NDVI", short: "A satellite \"greenness\" score.", long: "Low values in the growing season can signal stress or bare soil.", how_we_use_it: "Used as a cross-check where available.", source: "TODO(verify)" },
-  { id: "frost_risk", term: "Frost risk", short: "The share of past years with freezing temperatures in that week.", long: "It is history, not a forecast.", how_we_use_it: "Shown per week in the feature charts.", source: "TODO(verify)" },
-  { id: "satellite_vs_ground", term: "Satellite vs ground-based measurements", short: "Satellites cover every field but see coarse pixels and only the surface; ground sensors measure one point accurately and deeper, but miss the rest.", long: "Combining them lets satellite data show patterns and ground data check them.", how_we_use_it: "Our baseline weather values are regional satellite-model estimates, not field sensors.", source: "TODO(verify)" },
-  { id: "relative_score", term: "Relative score", short: "A comparison between these three rotations only.", long: "Not a prediction of yield or soil loss.", how_we_use_it: "Every rotation score is relative.", source: "TODO(verify)" },
+  { id: "et", term: "Evapotranspiration (ET)", short: "Water leaving the ground through soil evaporation and plant transpiration; the \"thirst\" of the field.", long: "Water leaving the ground through soil evaporation and plant transpiration.", how_we_use_it: "We estimate a reference value from temperature, so it is modeled, not measured.", source: "not yet verified" },
+  { id: "water_balance", term: "Water balance", short: "Rain minus evapotranspiration.", long: "Positive weeks add moisture; negative weeks dry the soil.", how_we_use_it: "Shown per week in the feature charts.", source: "not yet verified" },
+  { id: "soil_moisture_anomaly", term: "Soil-moisture anomaly", short: "How much wetter or drier the soil is than normal for that week.", long: "Measured in standard deviations. Zero is normal.", how_we_use_it: "Shown per week in the feature charts.", source: "not yet verified" },
+  { id: "ndvi", term: "NDVI", short: "A satellite \"greenness\" score.", long: "Low values in the growing season can signal stress or bare soil.", how_we_use_it: "Used as a cross-check where available.", source: "not yet verified" },
+  { id: "frost_risk", term: "Frost risk", short: "The share of past years with freezing temperatures in that week.", long: "It is history, not a forecast.", how_we_use_it: "Shown per week in the feature charts.", source: "not yet verified" },
+  { id: "satellite_vs_ground", term: "Satellite vs ground-based measurements", short: "Satellites cover every field but see coarse pixels and only the surface; ground sensors measure one point accurately and deeper, but miss the rest.", long: "Combining them lets satellite data show patterns and ground data check them.", how_we_use_it: "Our baseline weather values are regional satellite-model estimates, not field sensors.", source: "not yet verified" },
+  { id: "relative_score", term: "Relative score", short: "A comparison between these three rotations only.", long: "Not a prediction of yield or soil loss.", how_we_use_it: "Every rotation score is relative.", source: "not yet verified" },
 ];
 
+// TODO(verify): every `source` below.
 export const MOCK_CROP_EXPLAINERS: CropExplainer[] = [
-  { id: "nitrogen_fixing", short: "Nitrogen-fixing crops (for example beans, peas, clover)", why_it_helps: "Bacteria on roots turn air nitrogen into plant food, which can reduce fertilizer need.", limits: "Benefit depends on inoculation and what follows in the rotation.", source: "TODO(verify)" },
-  { id: "cover_crops", short: "Cover crops", why_it_helps: "Keep soil covered between cash crops, which reduces erosion, adds organic matter and holds moisture.", limits: "Can use water that the next crop needs.", source: "TODO(verify)" },
-  { id: "deep_rooting", short: "Deep-rooting crops", why_it_helps: "Open channels in compacted soil, draw water and nutrients from deeper layers, and improve structure over time.", limits: "Effect builds slowly.", source: "TODO(verify)" },
-  { id: "drought_tolerant", short: "Drought-tolerant crops", why_it_helps: "Need less water and hold up better in dry spells.", limits: "May offer lower returns or fewer markets (local review).", source: "TODO(verify)" },
+  { id: "nitrogen_fixing", short: "Nitrogen-fixing crops (for example beans, peas, clover)", why_it_helps: "Bacteria on roots turn air nitrogen into plant food, which can reduce fertilizer need.", limits: "Benefit depends on inoculation and what follows in the rotation.", source: "not yet verified" },
+  { id: "cover_crops", short: "Cover crops", why_it_helps: "Keep soil covered between cash crops, which reduces erosion, adds organic matter and holds moisture.", limits: "Can use water that the next crop needs.", source: "not yet verified" },
+  { id: "deep_rooting", short: "Deep-rooting crops", why_it_helps: "Open channels in compacted soil, draw water and nutrients from deeper layers, and improve structure over time.", limits: "Effect builds slowly.", source: "not yet verified" },
+  { id: "drought_tolerant", short: "Drought-tolerant crops", why_it_helps: "Need less water and hold up better in dry spells.", limits: "May offer lower returns or fewer markets (local review).", source: "not yet verified" },
 ];

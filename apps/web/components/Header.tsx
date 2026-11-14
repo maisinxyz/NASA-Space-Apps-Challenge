@@ -54,6 +54,9 @@ export function Header() {
             <Link href="/methods" className="text-ink-muted hover:text-ink">
               Methods &amp; data
             </Link>
+            <Link href="/learn" className="ml-4 text-ink-muted hover:text-ink">
+              Learn
+            </Link>
           </nav>
           <AboutPanel />
           {presenterBtn("rounded-md border border-white/15 px-2 py-0.5 text-xs hover:bg-white/10")}
@@ -71,6 +74,9 @@ export function Header() {
         <nav aria-label="Main" className="flex flex-1 flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link href="/methods" aria-current={onMethods ? "page" : undefined} className={`border-b-2 py-0.5 ${onMethods ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
             Methods &amp; data
+          </Link>
+          <Link href="/learn" className="border-b-2 border-transparent py-0.5 text-ink-muted hover:text-ink">
+            Learn
           </Link>
         </nav>
         <div className="flex flex-wrap items-center gap-2 text-sm">

@@ -29,6 +29,7 @@ import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts"
 import { PinLabel } from "@/components/hero/PinLabel";
 import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
+import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
@@ -382,6 +383,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const twin = view === "farm" && !diving ? twinConfig(farm?.id ?? null) : undefined;
   const fields = twin?.fields;
   const inTwin = inFarm && !!twin;
+  const zoneOverlays = useZoneOverlays(inTwin ? (farm?.id ?? null) : null);
   const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail } = useAppStore(
     useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail })),
   );
@@ -607,6 +609,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               exaggeration={inTwin ? exaggeration : 1}
               surface={twinSurface}
               overlayMask={inTwin ? twin.overlayMask : undefined}
+              overlays={zoneOverlays}
               showCropFills={comparing && showCropFills}
               weather={frame?.atmosphere}
               groundLayers={frame?.ground}
@@ -679,6 +682,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
         <p className="absolute z-10 -translate-x-1/2 translate-y-1/2 text-[11px] whitespace-nowrap" style={{ color: color.accent, left: `calc(50% + ${HERO_UNIT} * 48)`, bottom: `calc(${HERO_UNIT} * 28)` }}>
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
+      )}
+      {inTwin && (
+        <div className="absolute right-3 bottom-10 z-10">
+          <ZoneToggle />
+        </div>
       )}
       <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.25rem", display: onGlobe ? "none" : undefined }} />
 
