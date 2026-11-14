@@ -5,6 +5,7 @@ import {
   buildModuleUrl,
   type Cesium3DTileset,
   Cartographic,
+  Color,
   createGooglePhotorealistic3DTileset,
   createOsmBuildingsAsync,
   createWorldImageryAsync,
@@ -109,16 +110,29 @@ export function applyQuality(viewer: Viewer, tileset: Cesium3DTileset | undefine
 export const FARM_FAR_M = 3000;
 export const FARM_NEAR_M = 1;
 const FARM_FOG_DENSITY = 6.0e-4;
+/** Local solar hour of the fixed farm sun (clamp.ts localMorningUtcMs). */
+const FARM_HOURS = 10;
 const GLOBE_FOG_DENSITY = 2.0e-4; // Cesium default
 const GLOBE_NEAR_M = 0.1; // Cesium default
 const GLOBE_FAR_M = 500000000; // Cesium default
 
-/** Tighter frustum and fog in farm view (call once landed); `false` restores the globe-view defaults. */
-export function setFarmCameraLimits(viewer: Viewer, farm: boolean) {
+/**
+ * Pale sky-haze background for farm view (the horizon above the 3 km far plane would otherwise be pitch black):
+ * night blue-black -> day blue-grey by the stylised solar hour (same elevation curve as weather sunFor). Pure; mood only.
+ */
+export function farmHaze(hours: number): Color {
+  const e = Math.sin(Math.PI * (((((hours % 24) + 24) % 24) - 6) / 12)); // sun elevation proxy, negative at night
+  const t = Math.min(1, Math.max(0, (e + 0.1) / 0.35));
+  return Color.lerp(Color.fromCssColorString("#0c1320"), Color.fromCssColorString("#aebdca"), t, new Color());
+}
+
+/** Tighter frustum, fog and sky-haze background in farm view (call once landed); `false` restores the globe-view defaults (black space). */
+export function setFarmCameraLimits(viewer: Viewer, farm: boolean, hours = FARM_HOURS) {
   const f = viewer.camera.frustum as { near: number; far: number };
   f.near = farm ? FARM_NEAR_M : GLOBE_NEAR_M;
   f.far = farm ? FARM_FAR_M : GLOBE_FAR_M;
   viewer.scene.fog.density = farm ? FARM_FOG_DENSITY : GLOBE_FOG_DENSITY;
+  viewer.scene.backgroundColor = farm ? farmHaze(hours) : Color.BLACK;
   viewer.scene.requestRender();
 }
 

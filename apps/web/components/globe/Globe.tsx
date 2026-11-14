@@ -61,15 +61,12 @@ import {
   createFieldCanvas,
   createFieldLayer,
   createOverlayLayer,
-  createSquareOutline,
   type FieldLayer,
   fieldHoverText,
   fieldIdFromPick,
   type OverlayLayer,
   ringCentroid,
   splitSides,
-  SQUARE_RAISE_M,
-  type SquareOutline,
 } from "@/components/viewer/cesium/twin";
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
@@ -150,7 +147,6 @@ type Runtime = {
   /** Field fills as canvases for the A/B split (one per side). */
   fieldCanvasA: ReturnType<typeof createFieldCanvas>;
   fieldCanvasB: ReturnType<typeof createFieldCanvas>;
-  outline: SquareOutline;
   look: LookLayer;
   /** Effect engines (weather, ground layers): created on entering farm view, destroyed on leaving. */
   weather: WeatherEngine | null;
@@ -171,15 +167,6 @@ type Runtime = {
   land: (() => void) | null;
   landBy: number;
 };
-
-/**
- * Sim-square outline: ground-clamped on terrain; on Google tiles a raised polyline at the terrain height (the
- * classified ground polyline breaks up on the tiles).
- */
-function syncOutline(r: Runtime, p: GlobeProps, surface: Surface) {
-  r.outline.set(p.simBbox, classificationFor(surface), surface === "google" ? (r.terrainGround ?? r.farmGround ?? 0) + SQUARE_RAISE_M : undefined);
-  r.viewer.scene.requestRender();
-}
 
 /** Field look: invisible unless showCropFills (and not comparing: the split draws fills on canvases), faint edge on hover/selection. */
 function repaintFields(r: Runtime, p: GlobeProps) {
@@ -427,7 +414,6 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
     ground = g;
     r.farmGround = g;
     r.terrainGround = g;
-    if (r.tier) syncOutline(r, p, r.tier.surface);
     if (!meteor)
       return r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
         offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
@@ -615,12 +601,11 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       live.current.onError(toError(e)); // WebGL unavailable
       return;
     }
-    // Twin layers: fields under overlays under the outline (draw order = add order); shown in farm view only.
+    // Twin layers: fields under overlays (draw order = add order); shown in farm view only.
     const twinLayers = viewer.scene.primitives.add(new PrimitiveCollection({ show: false })) as PrimitiveCollection;
     const fieldsCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const overlaysCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const overlaysBCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
-    const outlineCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const fieldLabel = twinLayers.add(new LabelCollection()) as LabelCollection;
     const r: Runtime = {
       viewer,
@@ -639,7 +624,6 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       overlaysB: createOverlayLayer(overlaysBCol),
       fieldCanvasA: createFieldCanvas("ft-fields-a"),
       fieldCanvasB: createFieldCanvas("ft-fields-b"),
-      outline: createSquareOutline(outlineCol),
       look: createLookLayer(viewer.scene),
       weather: null,
       ground: null,
@@ -1052,11 +1036,10 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     scene.requestRender();
   }, [view, exaggeration, farmLon]);
 
-  // The simulation square's thin outline (the layer group is shown in farm view only); re-frame the clamp if it moved.
+  // Re-frame the clamp if the simulation square moved.
   useEffect(() => {
     const r = rt.current;
     if (!r || !surface) return;
-    syncOutline(r, live.current, surface);
     if (r.orbit) r.orbit.dirty = true;
   }, [simBbox, surface]);
 

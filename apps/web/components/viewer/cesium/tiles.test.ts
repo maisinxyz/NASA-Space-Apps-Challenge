@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { googleTilesRoute, pickSurface, PROGRESS_INTERVAL_MS, progressToReport, selectTierOrder, type Surface } from "./tiles";
+import { farmHaze, googleTilesRoute, pickSurface, PROGRESS_INTERVAL_MS, progressToReport, selectTierOrder, type Surface } from "./tiles";
 
 describe("progressToReport", () => {
   it("reports the first value, then changes at most every interval", () => {
@@ -56,5 +56,12 @@ describe("pickSurface", () => {
     expect(pickSurface({ ...farm, tier: "A", failed: new Set<Surface>(["google"]) })).toBe("terrain");
     expect(pickSurface({ ...farm, tier: "A", failed: new Set<Surface>(["google", "terrain"]) })).toBe("base");
     expect(pickSurface({ ...farm, tier: "B", want: "terrain", failed: new Set<Surface>(["terrain"]) })).toBe("base");
+  });
+});
+
+describe("farmHaze", () => {
+  it("is pale by day, near-black at night", () => {
+    expect(farmHaze(10).red).toBeGreaterThan(0.6);
+    expect(farmHaze(0).red).toBeLessThan(0.1);
   });
 });

@@ -17,9 +17,6 @@ import {
   PolygonGeometry,
   PolygonHierarchy,
   PolylineColorAppearance,
-  PolylineGeometry,
-  PolylineMaterialAppearance,
-  Primitive,
   PrimitiveCollection,
   Rectangle,
   RectangleGeometry,
@@ -28,23 +25,14 @@ import {
 
 import type { CropLook, FarmField, GroundOverlay } from "@/components/globe/types";
 
+import { CROP_COLORS, CROP_WORDS } from "@/lib/twin/cropColors";
+
 import { offsetM } from "./clamp";
 
 // ---- Fields ----------------------------------------------------------------------------------------------
 
-/**
- * Illustrative ground-cover colours (not a measured crop map). Natural hues, distinct from each other and
- * readable over aerial imagery. Product choice, tune freely.
- */
-export const CROP_COLORS: Record<CropLook, string> = {
-  grass: "#7cb85a", // pasture / hay
-  corn: "#2f7a32", // tall dark green
-  cereal: "#d9b44a", // ripening grain
-  legume: "#a8d46a", // light green (beans, peas)
-  cover: "#3f9a86", // teal-green cover crop
-  berry: "#7a4a86", // berry rows, purple-ish
-  bare: "#8a6446", // bare soil
-};
+// Colour table lives in lib/twin/cropColors.ts (no cesium) so scenario legends use the same hexes as the map.
+export { CROP_COLORS };
 const FILL_ALPHA = 0.42;
 const FILL_ALPHA_SELECTED = 0.68;
 const OUTLINE = "#f4ecd2";
@@ -73,16 +61,7 @@ export function fieldStyle(look: CropLook, st: FieldState): { fill: string; fill
   };
 }
 
-/** Plain words for the crop looks (hover label). Illustrative, not a crop map. */
-export const CROP_WORDS: Record<CropLook, string> = {
-  grass: "Grass / hay",
-  corn: "Corn",
-  cereal: "Small grain",
-  legume: "Legume (beans, peas)",
-  cover: "Cover crop",
-  berry: "Berries",
-  bare: "Bare soil",
-};
+export { CROP_WORDS };
 
 /** Pure: hover label text, e.g. "Centre field · Corn (illustrative)". */
 export function fieldHoverText(f: Pick<FarmField, "id" | "name" | "crop">, cropByField?: Record<string, CropLook>): string {
@@ -386,69 +365,6 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
         }
       }
       return changed;
-    },
-  };
-}
-
-// ---- Simulation square outline -----------------------------------------------------------------------------
-
-const SQUARE_OUTLINE = "#f4ecd2";
-const SQUARE_OUTLINE_ALPHA = 0.8;
-/** Where the outline is hidden behind trees/roofs on Google tiles it still draws, dimmer. */
-const SQUARE_OUTLINE_HIDDEN_ALPHA = 0.45;
-const SQUARE_WIDTH_PX = 1.5;
-/** Raised outline on Google tiles: this far above the farm's ground height, metres. */
-export const SQUARE_RAISE_M = 1;
-
-export type SquareOutline = {
-  /**
-   * Outline of the simulation square [west, south, east, north]; undefined removes it. Without `heightM` it is
-   * a ground-clamped polyline (classifies `classification`): right on terrain, but it breaks up on Google's tiles
-   * (classification volumes miss the mesh in places). With `heightM` (Google surface) it is a plain polyline at that
-   * ellipsoid height, drawn through anything in front of it (depth-fail appearance), so it stays continuous.
-   */
-  set(bbox: readonly [number, number, number, number] | undefined, classification: ClassificationType, heightM?: number): void;
-};
-
-export function createSquareOutline(collection: PrimitiveCollection): SquareOutline {
-  return {
-    set(bbox, classification, heightM) {
-      collection.removeAll();
-      if (!bbox) return;
-      const [w, s, e, n] = bbox;
-      const ring = [w, s, e, s, e, n, w, n, w, s];
-      const color = Color.fromCssColorString(SQUARE_OUTLINE);
-      if (heightM == null) {
-        collection.add(
-          new GroundPolylinePrimitive({
-            geometryInstances: new GeometryInstance({
-              geometry: new GroundPolylineGeometry({ positions: Cartesian3.fromDegreesArray(ring), width: SQUARE_WIDTH_PX }),
-              attributes: { color: ColorGeometryInstanceAttribute.fromColor(color.withAlpha(SQUARE_OUTLINE_ALPHA)) },
-            }),
-            appearance: new PolylineColorAppearance(),
-            classificationType: classification,
-          }),
-        );
-        return;
-      }
-      // ponytail: one height for the whole square (the farm's ground at the orbit target). Fine on flat farms;
-      // on a slope the line floats or sinks (still visible via depth-fail). Sample heights per vertex if a farm needs it.
-      const appearance = (alpha: number) =>
-        new PolylineMaterialAppearance({ material: Material.fromType("Color", { color: color.withAlpha(alpha) }), translucent: true });
-      collection.add(
-        new Primitive({
-          geometryInstances: new GeometryInstance({
-            geometry: new PolylineGeometry({
-              positions: Cartesian3.fromDegreesArrayHeights(ring.flatMap((v, i) => (i % 2 ? [v, heightM] : [v]))),
-              width: SQUARE_WIDTH_PX,
-              vertexFormat: PolylineMaterialAppearance.VERTEX_FORMAT,
-            }),
-          }),
-          appearance: appearance(SQUARE_OUTLINE_ALPHA),
-          depthFailAppearance: appearance(SQUARE_OUTLINE_HIDDEN_ALPHA),
-          asynchronous: false,
-        }),
-      );
     },
   };
 }
