@@ -13,6 +13,7 @@ export const LANCASTER: FarmInfo = {
   locality: "Intercourse, Pennsylvania", // from the source cited above
   lon: -76.1075,
   lat: 40.0383,
+  image: { src: "/farms/lancaster-intercourse.jpg", alt: "White farm buildings beyond a ploughed field near Intercourse, Lancaster County, Pennsylvania", credit: "Photo: Carol M. Highsmith, Library of Congress (public domain)" },
   tier: "explore",
   sourceUrl: "https://en.wikipedia.org/wiki/Intercourse,_Pennsylvania",
   coordsVerified: false,

@@ -30,6 +30,8 @@ export type Farm = {
    * simulation-square centre (or the farm point) at the renderer's standard range/pitch when omitted.
    */
   framing?: { lon: number; lat: number; rangeM: number; pitchDeg: number; headingDeg?: number };
+  /** Real photo of the farm (or a faithful photo of this type of farm and place), for the popup card. Source and licence: public/farms/CREDITS.md. */
+  image?: { src: string; alt: string; /** Short attribution line to show with the photo, e.g. "Photo: Treephoto, CC BY 4.0". */ credit: string };
   /** Closest allowed camera distance in farm view, metres (privacy for private farmland). Renderer default otherwise. */
   minRangeM?: number;
 };
