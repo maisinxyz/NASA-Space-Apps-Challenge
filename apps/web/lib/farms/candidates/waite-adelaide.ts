@@ -1,4 +1,4 @@
-// Waite Campus, University of Adelaide (Australia). Scouting candidate, NOT VALIDATED: needs the 3D check in /dev/farms-check and a visual check by a person.
+// Waite Campus, University of Adelaide (Australia). Scouting candidate, 3D check PASS (2026-11-14, docs/farm-scouting/FARMS.md).
 // Why: 184 ha research campus with vineyards in Adelaide's suburbs; Mediterranean climate.
 // TODO(verify): location -34.97, 138.63 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://waite.adelaide.edu.au (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates from memory.
@@ -22,5 +22,5 @@ export const WAITE_ADELAIDE: Candidate = {
   expected3d: "high",
   elevation: "elvis",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "pass",
 };

@@ -6,7 +6,7 @@
 // against the local mesh ground and Cesium World Terrain, plus the smallest tile geometric error seen near the centre.
 // Google Map Tiles policy: tiles are only streamed into this viewer; nothing is cached, stored or exported except the
 // summary numbers you copy by hand. Open-ground points (>= 40 m from any OSM building) are the flat control.
-import { type BoundingSphere, Cartesian3, Cartographic, type Cesium3DTile, type Viewer } from "cesium";
+import { type BoundingSphere, Cartesian3, Cartographic, type Cesium3DTile, HeadingPitchRange, type Viewer } from "cesium";
 import { useEffect, useRef, useState } from "react";
 
 import { GlobeDev } from "@/components/globe/Globe";
@@ -33,7 +33,7 @@ type Row = Stage1 & {
 declare global {
   interface Window {
     /** Dev only: results of the farm check, for a browser script. */
-    __ftFarmsCheck?: { rows: Row[]; running: boolean; sample?: (pts: [number, number][]) => Promise<(number | undefined)[]>; run?: (ids: string[], fast?: boolean) => void };
+    __ftFarmsCheck?: { rows: Row[]; running: boolean; sample?: (pts: [number, number][]) => Promise<(number | undefined)[]>; run?: (ids: string[], fast?: boolean) => void; view?: (id: string, rangeM: number, pitchDeg: number) => Promise<boolean>; cam?: () => unknown };
   }
 }
 
@@ -107,6 +107,25 @@ export default function FarmsCheck() {
       running,
       sample: live ? (pts) => heights(live.viewer, pts) : undefined,
       run: (ids, fast = true) => void runAll(farms.filter((f) => ids.includes(f.id)), fast),
+      cam: () => {
+        const c = live?.viewer.camera;
+        return { orbit: globe.current?.getCamera() ?? null, real: c ? { h: c.positionCartographic.height, pitch: (c.pitch * 180) / Math.PI, pending: live.tier.pending() } : null };
+      },
+      // Frame one site for a screenshot: fly in, then orbit camera at range/pitch; resolves once tiles have settled.
+      view: async (id, rangeM, pitchDeg) => {
+        const f = farms.find((x) => x.id === id);
+        if (!f || !live) return false;
+        setSelectedId(id);
+        await sleep(6000);
+        await settle(live);
+        // Ground = Google mesh height at the centre; the camera is set directly (the farm-view orbit clamps and its
+        // own ground estimate put a -89° camera underground), until the next user input.
+        const [mesh] = await heights(live.viewer, [[f.lon, f.lat]]);
+        const ground = mesh ?? (await live.tier.sampleGround(f.lon, f.lat));
+        live.viewer.camera.lookAt(Cartesian3.fromDegrees(f.lon, f.lat, ground), new HeadingPitchRange(0, (pitchDeg * Math.PI) / 180, rangeM));
+        await sleep(500);
+        return settle(live);
+      },
     };
   });
 

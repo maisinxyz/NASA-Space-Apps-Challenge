@@ -22,5 +22,5 @@ export const CIMMYT_EL_BATAN: Candidate = {
   expected3d: "high",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

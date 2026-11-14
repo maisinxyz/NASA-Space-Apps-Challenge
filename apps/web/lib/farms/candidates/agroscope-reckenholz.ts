@@ -1,4 +1,4 @@
-// Agroscope Reckenholz research station (Switzerland). Scouting candidate, NOT VALIDATED: needs the 3D check in /dev/farms-check and a visual check by a person.
+// Agroscope Reckenholz research station (Switzerland). Scouting candidate, 3D check PASS (2026-11-14, docs/farm-scouting/FARMS.md).
 // Why: Federal arable research station inside the city of Zurich.
 // TODO(verify): location 47.43, 8.52 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.agroscope.admin.ch/agroscope/en/home/about-us/locations-contacts/reckenholz.html (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Fenced protected trial site is part of the station: frame away from it.
@@ -22,5 +22,5 @@ export const AGROSCOPE_RECKENHOLZ: Candidate = {
   expected3d: "high",
   elevation: "swissalti3d",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "pass",
 };

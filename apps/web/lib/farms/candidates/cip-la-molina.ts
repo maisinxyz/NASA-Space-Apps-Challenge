@@ -22,5 +22,5 @@ export const CIP_LA_MOLINA: Candidate = {
   expected3d: "high",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

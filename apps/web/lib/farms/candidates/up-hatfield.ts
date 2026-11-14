@@ -22,5 +22,5 @@ export const UP_HATFIELD: Candidate = {
   expected3d: "high",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "weak",
 };
