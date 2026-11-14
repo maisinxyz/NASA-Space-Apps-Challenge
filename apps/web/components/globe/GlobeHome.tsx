@@ -474,7 +474,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     if (push?.diveTo && !reducedMotion && earthCentre) {
       selectFarm(id);
       clearTimeout(veilTimer.current);
-      veilTimer.current = setTimeout(() => setVeilEarly(true), PUSH_IN_MS - HANDOFF_IN_MS);
+      // The Earth texture goes soft over the last ~20% of the push-in (Kevin), so the veil is fully up by then.
+      veilTimer.current = setTimeout(() => setVeilEarly(true), PUSH_IN_MS * 0.8 - HANDOFF_IN_MS);
       push.diveTo(id, PUSH_IN_MS, () => dive(id));
       return;
     }
