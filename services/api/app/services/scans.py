@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
+from pathlib import Path
+
+from app.imagery.uploads import validate_and_store
 
 from app.core.errors import ApiError, not_found
 from app.providers.fixtures import MOCK_FAIL_SCAN_ID, MOCK_SCAN_ID, store
@@ -27,13 +30,41 @@ def parse_bbox(bbox: str | None) -> list[float] | None:
     return vals
 
 
-def create_scan(lat: float, lon: float, bbox: str | None, image_types: list[str | None]) -> dict:
-    if len(image_types) > MAX_IMAGES:
-        raise ApiError("INVALID_INPUT", f"At most {MAX_IMAGES} images.", "Remove some photos.")
-    for ct in image_types:
-        if ct not in ALLOWED_TYPES:
-            raise ApiError("UNSUPPORTED_FILE", "Only JPG, PNG and WEBP images are supported.", "Upload a photo in one of those formats.")
+def create_scan(
+    lat: float,
+    lon: float,
+    bbox: str | None,
+    images: list[tuple[bytes, str | None]],
+    storage_dir: Path,
+) -> dict:
+    if len(images) > MAX_IMAGES:
+        raise ApiError(
+            "INVALID_INPUT",
+            f"At most {MAX_IMAGES} images.",
+            "Remove some photos.",
+        )
+
     parse_bbox(bbox)
+
+    mime_to_format = {
+        "image/jpeg": "JPEG",
+        "image/png": "PNG",
+        "image/webp": "WEBP",
+    }
+
+    for content, content_type in images:
+        if content_type not in mime_to_format:
+            raise ApiError(
+                "UNSUPPORTED_FILE",
+                "Only JPG, PNG and WEBP images are supported.",
+            )
+
+        validate_and_store(
+            content,
+            storage_dir,
+            expected_format=mime_to_format[content_type],
+        )
+
     # Mock: every scan becomes the successful fixture scan.
     return store().json("scans/scan_created.json")
 
