@@ -82,6 +82,8 @@ export function FarmPin({ design, className = "", style }: { design: string; cla
         </linearGradient>
       </defs>
       <Art id={id} />
+      {/* The exact spot: a small dot at the bottom centre of the box, where the farm is. */}
+      <circle style={FILL} cx={20} cy={31} r={1.7} />
     </svg>
   );
 }
