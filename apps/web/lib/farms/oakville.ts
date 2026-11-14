@@ -15,6 +15,7 @@ export const OAKVILLE: FarmInfo = {
   lon: -122.4121,
   lat: 38.4201,
   image: { src: "/farms/ucdavis-oakville.jpg", alt: "Autumn grapevines in a vineyard at Oakville, Napa Valley, California", credit: "Photo: Treephoto, CC BY 4.0" },
+  pin: "grape-cluster",
   tier: "explore",
   sourceUrl: "https://wine.ucdavis.edu/node/571",
   coordsVerified: false,

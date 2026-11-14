@@ -19,6 +19,7 @@ export const CORNELL: FarmInfo = {
   lon: -76.2541,
   lat: 42.4409,
   image: { src: "/farms/cornell-ruminant.jpg", alt: "Dairy farm barn and silos in Tompkins County, New York, similar to the Cornell Ruminant Center", credit: "Photo: Dougtone, CC BY-SA 2.0" },
+  pin: "silo-pair",
   tier: "twin",
   sourceUrl: "https://cals.cornell.edu/about/our-locations",
   coordsVerified: false,

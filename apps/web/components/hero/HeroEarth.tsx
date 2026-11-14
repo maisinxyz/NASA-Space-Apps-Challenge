@@ -18,7 +18,7 @@ import * as THREE from "three";
 
 import type { Farm, PinHover } from "@/components/globe/types";
 
-import { Pin3D } from "./Pin3D";
+import { Pin3D, pinBox } from "./Pin3D";
 import { easeInFlashOut, flyTo, hero, zoom as ZOOM } from "./tokens";
 
 const DAY = "/hero/earth/earth-day-3840.jpg";
@@ -608,7 +608,7 @@ export function HeroEarth(props: Props) {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {props.farms.map((f) => {
           const on = f.id === props.selectedId;
-          const size = f.tier === "twin" ? { w: 22, h: 33 } : { w: 18, h: 27 };
+          const size = pinBox(f.pin, f.tier === "twin" ? { w: 22, h: 33 } : { w: 18, h: 27 });
           return (
             <button
               key={f.id}
@@ -638,6 +638,7 @@ export function HeroEarth(props: Props) {
                 width={size.w}
                 height={size.h}
                 tone={f.tier}
+                design={f.pin}
                 className="block origin-bottom transition-transform duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:-translate-y-[2px] group-hover:scale-[1.08] group-focus-visible:-translate-y-[2px] group-focus-visible:scale-[1.08] group-active:translate-y-px group-active:scale-[0.9] group-active:duration-[60ms] group-active:ease-out motion-reduce:transition-none"
                 style={{ transform: on ? "scale(1.18)" : undefined }}
               />

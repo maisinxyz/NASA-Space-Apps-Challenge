@@ -19,6 +19,7 @@ export const BELTSVILLE: FarmInfo = {
   lon: -76.8844,
   lat: 39.0319,
   image: { src: "/farms/usda-barc.jpg", alt: "Aerial view of crop fields, barns and research buildings at the Beltsville Agricultural Research Center, Maryland", credit: "Photo: Ken Hammond, USDA ARS (public domain)" },
+  pin: "plot-grid",
   tier: "twin",
   sourceUrl: "https://www.ars.usda.gov/northeast-area/beltsville-md-barc/beltsville-agricultural-research-center/",
   coordsVerified: false,
