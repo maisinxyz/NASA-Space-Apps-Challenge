@@ -9,7 +9,7 @@ import { resolveInputs } from "../clock";
 import { SCENARIO_DEFS } from "../registry";
 import { GROUND, tooWetDays } from "./index";
 import { CROP_INDEX, clamp01, cropAt, fieldIds, input, smoothstep } from "./shared";
-import { TRENDS_FIXTURE_LAYER } from "./trends";
+import { GIBS_CREDIT, TRENDS_FIXTURE_LAYER, trendsYear } from "./trends";
 
 const CORNELL = "cornell-ruminant";
 const BELTSVILLE = "usda-barc";
@@ -30,7 +30,7 @@ const KINDS: Record<ScenarioId, GroundLayerKind[]> = {
   "bare-soil": ["cropCover"],
   "veg-stress": ["vegetation"],
   "multi-year": ["cropCover", "organicMatter"],
-  trends: [],
+  trends: ["nasaImagery"],
   "climate-shift": ["wetness", "dryness"],
   compound: ["dryness", "water", "runoff"],
 };
@@ -112,9 +112,18 @@ describe("ground evaluators", () => {
     }
   });
 
-  it("trends returns [] while the fixture layer is null", () => {
-    expect(TRENDS_FIXTURE_LAYER).toBeNull();
-    expect(GROUND.trends(run("trends", 0.5))).toEqual([]);
+  it("trends uses advertised January imagery and clamps out-of-range years", () => {
+    expect(TRENDS_FIXTURE_LAYER).toBe("MERRA2_2m_Air_Temperature_Assimilated_Monthly");
+    expect(trendsYear(1981, 0)).toBe(1981);
+    expect(trendsYear(1981, 1)).toBe(2026);
+    expect(trendsYear(1900, 0)).toBe(1980);
+    expect(trendsYear(2100, 1)).toBe(2026);
+    expect(trendsYear(1991, -1)).toBe(1991);
+    expect(trendsYear(1991, 2)).toBe(2026);
+    for (const p of [0, 0.5, 1]) {
+      const imagery = GROUND.trends(run("trends", p, { start_year: 1981 }))[0].imagery;
+      expect(imagery).toEqual({ layerId: TRENDS_FIXTURE_LAYER, date: `${trendsYear(1981, p)}-01-01`, credit: GIBS_CREDIT });
+    }
   });
 });
 
