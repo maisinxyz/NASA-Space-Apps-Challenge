@@ -2,7 +2,7 @@
 // Why: Experimental farm with vineyards next to campus in a town; Mediterranean climate.
 // TODO(verify): location -33.942, 18.867 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.sun.ac.za/english/faculty/agri/Pages/Experimental-Farms.aspx (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Small plots; coordinates from memory.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const SU_WELGEVALLEN: Candidate = {
   farm: {

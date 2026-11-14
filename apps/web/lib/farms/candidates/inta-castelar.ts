@@ -2,7 +2,7 @@
 // Why: Pampas research station inside the Buenos Aires metro.
 // TODO(verify): location -34.607, -58.668 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.argentina.gob.ar/node/138206 (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Press reports (2025-26) of land sales and transfers at the site.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const INTA_CASTELAR: Candidate = {
   farm: {

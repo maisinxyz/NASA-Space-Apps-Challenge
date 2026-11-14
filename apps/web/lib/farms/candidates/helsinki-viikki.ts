@@ -2,7 +2,7 @@
 // Why: 155 ha of fields inside a capital city; boreal climate.
 // TODO(verify): location 60.23, 25.02 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.helsinki.fi/en/research-stations/science-trails/viikki-research-farm-science-trail/welcome-viikki-research-farm (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates from memory.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const HELSINKI_VIIKKI: Candidate = {
   farm: {

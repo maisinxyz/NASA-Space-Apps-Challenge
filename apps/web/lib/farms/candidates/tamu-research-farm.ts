@@ -2,7 +2,7 @@
 // Why: Large irrigated research farm SW of College Station; hot humid climate.
 // TODO(verify): location 30.545, -96.43 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://soilcrop.tamu.edu/research/farm-services/ (found by web search 2026-11-14; not opened, sandbox network policy). Risk: HQ point uncertain; farm is outside the city.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const TAMU_RESEARCH_FARM: Candidate = {
   farm: {

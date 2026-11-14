@@ -12,7 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import { GlobeDev } from "@/components/globe/Globe";
 import type { Farm, GlobeHandle, TileTier } from "@/components/globe/types";
 import type { LoadedTier } from "@/components/viewer/cesium/tiles";
-import { CANDIDATES, FARMS } from "@/lib/farms";
+import { FARMS } from "@/lib/farms";
+import { CANDIDATES } from "@/lib/farms/candidates"; // dev only: the unvalidated list is never imported by the app registry
 import { type BuildingPoint, type BuildingSample, buildingsFromOsmApi, buildingsFromOverpass, distanceKm, fmtM, fmtShare, groundRing, offsetM, orbitCamera, osmApiBbox, overpassQuery, reliefGrid, reliefStats, stage1, type Stage1 } from "@/lib/scouting/check";
 
 type Live = { viewer: Viewer; tier: LoadedTier };

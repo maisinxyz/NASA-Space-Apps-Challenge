@@ -2,7 +2,7 @@
 // Why: About 1,000 ha research farm at a major city edge; humid tropics.
 // TODO(verify): location 7.4962, 3.9076 is from https://www.cgiar.org/locations/nigeria-iita-ibadan-campus (an institute or campus point, not a surveyed farm centre); confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.iita.org/about-iita/research-hubs-and-stations/headquarters/ (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Google 3D in Nigeria uncertain.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const IITA_IBADAN: Candidate = {
   farm: {

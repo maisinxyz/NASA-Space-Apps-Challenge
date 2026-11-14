@@ -2,7 +2,7 @@
 // Why: 184 ha research campus with vineyards in Adelaide's suburbs; Mediterranean climate.
 // TODO(verify): location -34.97, 138.63 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://waite.adelaide.edu.au (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates from memory.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const WAITE_ADELAIDE: Candidate = {
   farm: {

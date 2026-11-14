@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CANDIDATE_DATASETS, CANDIDATES, FARMS } from "../index";
+import { FARMS } from "../index";
+import { PINNED } from "../pinned";
+import { CANDIDATE_DATASETS, CANDIDATES } from "./index";
 import { buildingsFromOverpass, distanceKm, groundRing, median, orbitCamera, overpassQuery, stage1 } from "@/lib/scouting/check";
 
 const ids = CANDIDATES.map((c) => c.farm.id);
@@ -12,10 +14,10 @@ describe("candidate farms", () => {
     expect(ids).not.toContain("lancaster-intercourse");
   });
 
-  it("puts only candidates that passed the 3D check on the globe", () => {
-    const pinned = CANDIDATES.filter((c) => c.validation === "pass").map((c) => c.farm.id);
-    expect(FARMS.map((f) => f.id).slice(3)).toEqual(pinned);
-    for (const c of CANDIDATES.filter((x) => x.validation !== "pass")) expect(FARMS.map((f) => f.id)).not.toContain(c.farm.id);
+  it("pins only farms that passed the 3D check, and every passed farm", () => {
+    expect(FARMS.map((f) => f.id).slice(3)).toEqual(PINNED.map((c) => c.farm.id));
+    for (const c of PINNED) expect(c.validation).toBe("pass");
+    expect(CANDIDATES.filter((c) => c.validation === "pass").map((c) => c.farm.id).sort()).toEqual(PINNED.map((c) => c.farm.id).sort());
   });
 
   it.each(CANDIDATES)("$farm.id is explore-only, approximate, sourced and uses known datasets", (c) => {

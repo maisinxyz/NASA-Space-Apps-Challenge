@@ -2,7 +2,7 @@
 // Why: 58 ha city-campus farm dating from 1876; cold humid climate.
 // TODO(verify): location 43.075, 141.335 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.fsc.hokudai.ac.jp/farm/en/?p=128 (found by web search 2026-11-14; not opened, sandbox network policy). Risk: GSI 5 m DEM terms not yet verified, so global DEM listed.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const HOKUDAI_FARM: Candidate = {
   farm: {

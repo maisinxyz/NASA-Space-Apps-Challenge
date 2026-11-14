@@ -2,7 +2,7 @@
 // Why: 252 ha of rice paddies with a research campus; humid tropics.
 // TODO(verify): location 14.17, 121.25 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://news.irri.org/search/label/Zeigler%20Experiment%20Station (found by web search 2026-11-14; not opened, sandbox network policy). Risk: No official landing page found; source is the IRRI news blog.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const IRRI_LOS_BANOS: Candidate = {
   farm: {

@@ -2,7 +2,7 @@
 // Why: Federal arable research station inside the city of Zurich.
 // TODO(verify): location 47.43, 8.52 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.agroscope.admin.ch/agroscope/en/home/about-us/locations-contacts/reckenholz.html (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Fenced protected trial site is part of the station: frame away from it.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const AGROSCOPE_RECKENHOLZ: Candidate = {
   farm: {

@@ -2,7 +2,7 @@
 // Why: 1,390 ha semi-arid research farm on the Hyderabad edge.
 // TODO(verify): location 17.51, 78.27 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.cgiar.org/locations/india-icrisat-hyderabad-campus (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates from memory.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const ICRISAT_PATANCHERU: Candidate = {
   farm: {
