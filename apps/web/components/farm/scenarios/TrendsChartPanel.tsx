@@ -1,22 +1,35 @@
 "use client";
-// Floating trends panel pinned above the ground anchor (the renderer publishes the anchor). No series = no numbers.
+// Trends chart. `inline` = a block inside the Simulate panel; otherwise a floating panel pinned above the ground anchor
+// (the renderer publishes the anchor). No series = no numbers. One clock step = one year (lib/twin/scenarios/clock.ts).
 import { useSyncExternalStore } from "react";
 
 import { BasisChip } from "@/components/ui/BasisChip";
 import { getAnchor, subscribeAnchor } from "@/components/viewer/cesium/ground/anchor";
+import { LAST_IMAGERY_YEAR, trendsFirstYear, trendsSteps } from "@/lib/twin/scenarios/clock";
 
 const FIRST = 1981;
-const LAST = 2026; // same fixed "now" year as the trends evaluator
+const LAST = LAST_IMAGERY_YEAR; // same fixed "now" year as the trends evaluator
 const W = 220;
 const H = 70;
 
-export type TrendsChartPanelProps = { progress: number; startYear: number; series?: { year: number; value: number }[] | null; label?: string; unit?: string };
+export type TrendsChartPanelProps = {
+  progress: number;
+  startYear: number;
+  series?: { year: number; value: number }[] | null;
+  label?: string;
+  unit?: string;
+  /** Render in normal flow (Simulate panel) instead of floating over the map. */
+  inline?: boolean;
+  /** Shown under the chart instead of the default "arrives from the backend" line (e.g. offline). */
+  note?: string;
+};
 
-export function TrendsChartPanel({ progress, startYear, series, label = "Trend", unit }: TrendsChartPanelProps) {
+export function TrendsChartPanel({ progress, startYear, series, label = "Trend", unit, inline = false, note }: TrendsChartPanelProps) {
   const anchor = useSyncExternalStore(subscribeAnchor, getAnchor, () => null);
-  if (!anchor || !anchor.visible) return null;
-  const steps = LAST - startYear + 1;
-  const cursorYear = startYear + Math.min(steps - 1, Math.floor(Math.min(1, Math.max(0, progress)) * steps));
+  if (!inline && (!anchor || !anchor.visible)) return null;
+  const first = trendsFirstYear(startYear);
+  const steps = trendsSteps(startYear);
+  const cursorYear = first + Math.min(steps - 1, Math.floor(Math.min(1, Math.max(0, progress)) * steps));
   const x = (y: number) => ((y - FIRST) / (LAST - FIRST)) * W;
   const has = !!series && series.length > 1;
   let path = "";
@@ -26,8 +39,9 @@ export function TrendsChartPanel({ progress, startYear, series, label = "Trend",
     const span = Math.max(...vs) - lo || 1;
     path = series.map((s, i) => `${i ? "L" : "M"}${x(s.year).toFixed(1)},${(H - 4 - ((s.value - lo) / span) * (H - 8)).toFixed(1)}`).join("");
   }
+  const cls = inline ? "rounded-md border border-white/10 p-2 text-xs" : "glass pointer-events-none absolute z-10 w-60 -translate-x-1/2 -translate-y-full p-2 text-xs";
   return (
-    <section aria-label={`${label} chart`} className="glass pointer-events-none absolute z-10 w-60 -translate-x-1/2 -translate-y-full p-2 text-xs" style={{ left: anchor.x, top: anchor.y - 8 }}>
+    <section aria-label={`${label} chart`} className={cls} style={inline || !anchor ? undefined : { left: anchor.x, top: anchor.y - 8 }}>
       <div className="mb-1 flex items-center justify-between gap-2">
         <b>
           {label}
@@ -45,7 +59,7 @@ export function TrendsChartPanel({ progress, startYear, series, label = "Trend",
         <span>{cursorYear}</span>
         <span>{LAST}</span>
       </div>
-      {!has && <p className="mt-1 text-ink-muted">Trend data arrives from the backend</p>}
+      {!has && <p className="mt-1 text-ink-muted">{note ?? "Trend data arrives from the backend"}</p>}
     </section>
   );
 }

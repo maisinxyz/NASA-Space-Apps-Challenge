@@ -9,6 +9,8 @@ import { resolveInputs } from "../clock";
 import { SCENARIO_DEFS } from "../registry";
 import { GROUND, tooWetDays } from "./index";
 import { CROP_INDEX, clamp01, cropAt, fieldIds, input, smoothstep } from "./shared";
+import { frostLevel } from "./frost";
+import { wetSpellRainy } from "../atmosphere/evaluators";
 import { GIBS_CREDIT, TRENDS_FIXTURE_LAYER, trendsYear } from "./trends";
 
 const CORNELL = "cornell-ruminant";
@@ -28,7 +30,7 @@ const KINDS: Record<ScenarioId, GroundLayerKind[]> = {
   "heat-wave": ["heatGlow"],
   frost: ["frost"],
   "bare-soil": ["cropCover"],
-  "veg-stress": ["vegetation"],
+  "veg-stress": ["cropCover", "vegetation"],
   "multi-year": ["cropCover", "organicMatter"],
   trends: ["nasaImagery"],
 };
@@ -83,11 +85,40 @@ describe("ground evaluators", () => {
     expect(n(1)).toBeLessThanOrEqual(28);
   });
 
-  it("heat wave glows only on corn or cereal fields", () => {
+  it("heat wave glows on every growing field, strongest on corn or cereal", () => {
     const l = GROUND["heat-wave"](run("heat-wave", 1))[0];
     for (const id of fieldIds(CORNELL)) {
       const c = cropAt(CORNELL, "rot_existing", id, 0, 6);
-      expect(l.byField![id] > 0).toBe(c === "corn" || c === "cereal");
+      expect(l.byField![id] > 0).toBe(c !== "bare");
+      if (c === "corn" || c === "cereal") expect(l.byField![id]).toBeCloseTo(l.intensity);
+      else if (c !== "bare") expect(l.byField![id]).toBeLessThan(l.intensity);
+    }
+  });
+
+  it("frost level follows the WRCC thresholds and the slider reaches all three", () => {
+    expect(frostLevel(0)).toBe("light");
+    expect(frostLevel(-2.2)).toBe("moderate");
+    expect(frostLevel(-4.3)).toBe("moderate");
+    expect(frostLevel(-4.4)).toBe("hard");
+    const lv = (t: number) => find(GROUND.frost(run("frost", 0.2, { min_temp_c: t })), "frost")!.params!.level;
+    expect([lv(-1), lv(-3), lv(-5)]).toEqual([0, 0.5, 1]);
+    const def = SCENARIO_DEFS.find((d) => d.id === "frost")!.inputs.find((i) => i.id === "min_temp_c")!;
+    expect(def.min).toBeLessThan(-4.4);
+  });
+
+  it("ground frost is timed with the sky: frozen before the 06:00 dawns, thawed by 09:00", () => {
+    const f = (h: number) => find(GROUND.frost(run("frost", h / 48)), "frost")!.intensity;
+    expect(f(11.5)).toBeGreaterThan(0.3); // 05:30 day 2
+    expect(f(15)).toBe(0); // 09:00 day 2
+    expect(f(35.5)).toBeGreaterThan(0.3); // 05:30 day 3
+    expect(f(39)).toBe(0);
+  });
+
+  it("wet spell wetness rises on rainy days and drains on dry days (sky pattern)", () => {
+    const w = (d: number) => find(GROUND["wet-spell"](run("wet-spell", d / 28)), "wetness")!.intensity;
+    for (let d = 0; d < 27; d++) {
+      if (wetSpellRainy(d, 4)) expect(w(d + 1)).toBeGreaterThan(w(d));
+      else expect(w(d + 1)).toBeLessThanOrEqual(w(d));
     }
   });
 
@@ -108,6 +139,52 @@ describe("ground evaluators", () => {
       const c = l(p);
       expect(c.params![`crop_${id}`]).toBe(CROP_INDEX.indexOf(cropAt(CORNELL, "rot_cover", id, yi, c.params!.month)));
     }
+  });
+
+  it("cropCover shows every field every month: byField 1 for bare too, highlight only when asked", () => {
+    for (const rot of ["rot_existing", "rot_cover"]) {
+      for (let m = 0; m < 12; m++) {
+        const l = find(GROUND["multi-year"](run("multi-year", (m + 0.5) / 48, { years: 4 }, CORNELL, rot)), "cropCover")!;
+        for (const id of fieldIds(CORNELL)) expect(l.byField![id]).toBe(1);
+        expect(l.params!.bareHighlight).toBe(0);
+        const b = find(GROUND["bare-soil"](run("bare-soil", (m + 0.5) / 12, {}, CORNELL, rot)), "cropCover")!;
+        const anyBare = fieldIds(CORNELL).some((id) => cropAt(CORNELL, rot, id, 0, m) === "bare");
+        expect(b.params!.bareHighlight).toBe(anyBare ? 1 : 0);
+      }
+    }
+  });
+
+  it("veg-stress: bare fields are out of the ramp (veg 0, plain cropCover), growing fields are rated", () => {
+    for (let m = 0; m < 12; m++) {
+      const ls = GROUND["veg-stress"](run("veg-stress", (m + 0.5) / 12));
+      const cc = find(ls, "cropCover")!;
+      const veg = find(ls, "vegetation")!;
+      expect(cc.params!.bareHighlight).toBe(0);
+      for (const id of fieldIds(CORNELL)) {
+        const bare = cropAt(CORNELL, "rot_existing", id, 0, m) === "bare";
+        expect(cc.byField![id]).toBe(bare ? 1 : 0);
+        if (bare) expect(veg.byField![id]).toBe(0);
+        else expect(veg.byField![id]).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("veg-stress start month shifts the stress", () => {
+    const g = (start: number) => find(GROUND["veg-stress"](run("veg-stress", 0.55, { stress_start_month: start, stress_severity: 100 }, CORNELL, "rot_cover")), "vegetation")!.intensity;
+    expect(g(11)).toBeGreaterThan(g(5)); // stress has not started yet at ~July when it begins in November
+  });
+
+  it("bare-soil rain intensity scales the exposure highlight (relative)", () => {
+    const rainy = [...Array(24).keys()].map((k) => (k + 0.5) / 24).find((p) => find(GROUND["bare-soil"](run("bare-soil", p)), "water"));
+    if (rainy === undefined) return; // no rainy bare month for this farm/rotation
+    const w = (x: number) => find(GROUND["bare-soil"](run("bare-soil", rainy, { rain_intensity: x })), "water")!.intensity;
+    expect(w(2)).toBeGreaterThanOrEqual(w(0.5));
+  });
+
+  it("multi-year cover-crop share raises organic matter and defaults to unchanged", () => {
+    const om = (s: number) => find(GROUND["multi-year"](run("multi-year", 0.99, { years: 4, cover_crop_share: s }, CORNELL, "rot_existing")), "organicMatter")!.intensity;
+    expect(om(100)).toBeGreaterThan(om(0));
+    expect(om(0)).toBe(find(GROUND["multi-year"](run("multi-year", 0.99, { years: 4 }, CORNELL, "rot_existing")), "organicMatter")!.intensity);
   });
 
   it("trends uses advertised January imagery and clamps out-of-range years", () => {

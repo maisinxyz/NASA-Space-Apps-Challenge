@@ -128,8 +128,10 @@ export function sunFor(hours: number, sunIntensity: number): Sun {
   const flat = Math.sqrt(1 - up * up);
   const dir: [number, number, number] = [Math.sin(az) * flat, Math.cos(az) * flat, up];
   const e = Math.sin(elev);
-  const daylight = Math.min(1, Math.max(0, (e + 0.1) / 0.35)); // 0 at night .. 1 once the sun is ~15 deg up
-  const golden = Math.max(0, 1 - Math.abs(e - 0.08) / 0.25) * (e > -0.1 ? 1 : 0); // warm light near the horizon
+  // 0 at night .. 1 once the sun is ~30 deg up, smoothstep over ~3 h so sunrise has no visible jump.
+  const dl = Math.min(1, Math.max(0, (e + 0.12) / 0.62));
+  const daylight = dl * dl * (3 - 2 * dl);
+  const golden = Math.max(0, 1 - Math.abs(e - 0.08) / 0.25); // warm light near the horizon (continuous, 0 below e -0.17)
   const i = Math.min(1.5, Math.max(0, sunIntensity));
   const dayLevel = i > 1 ? 1 + (i - 1) * 0.4 : i; // above 1, brighten gently: photogrammetry roofs clip fast
   const exposure = 0.35 + (dayLevel - 0.35) * daylight;

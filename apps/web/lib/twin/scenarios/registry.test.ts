@@ -67,7 +67,11 @@ describe("scenario clock helpers", () => {
     const flood = SCENARIO_DEFS.find((d) => d.id === "flood-zones")!;
     expect(clockLabel(clockSpec(flood, resolveInputs(flood, undefined)), 0.3)).toBe("Static map");
     const trends = SCENARIO_DEFS.find((d) => d.id === "trends")!;
-    expect(clockLabel(clockSpec(trends, resolveInputs(trends, undefined)), 0)).toBe("Year 1991 (1 of 30)");
+    expect(clockLabel(clockSpec(trends, resolveInputs(trends, undefined)), 0)).toBe("Year 1991 (1 of 36)");
+    // one clock step = one year: the last step is the fixed "now" year and matches the evaluator
+    const tc = clockSpec(trends, resolveInputs(trends, { start_year: 1981 }));
+    expect(tc.steps).toBe(46);
+    expect(clockLabel(tc, 1)).toBe("Year 2026 (46 of 46)");
   });
 });
 

@@ -4,6 +4,7 @@
 // No dataset ids or URLs here: data needs are named plainly; anything unconfirmed is marked TODO(verify).
 // secondsAtOneX = wall-clock seconds for the WHOLE scenario (progress 0 to 1) at 1x speed; 0 = no clock (static).
 import type { ScenarioDef, ScenarioFrame, ScenarioId, ScenarioRun } from "../scenario";
+import { CROP_COLORS } from "../cropColors";
 import { ATMOSPHERE } from "./atmosphere";
 import { GROUND } from "./ground";
 
@@ -156,11 +157,13 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
       { id: "hours_below_0", label: "Hours below freezing", unit: "h", min: 1, max: 24, step: 1, default: 6, hint: "How long it stays below 0 °C." },
     ],
     dataNeeds: [TMIN_DATA, ELEV_DATA],
-    basis: "assumed",
+    basis: "derived",
+    // Frost bands (temperature only, duration not modeled): WRCC / Koss et al. 1988, NOAA,
+    // https://wrcc-archive.dri.edu/Climate/Education/freeze_frost.php. Hex values match the ground shader.
     legend: [
-      { color: "#e8f3fb", label: "Light frost" },
-      { color: "#8fc4e8", label: "Frost" },
-      { color: "#2b6fb3", label: "Hard frost" },
+      { color: "#a9d3f0", label: "Light frost (−2.2 to 0 °C)" },
+      { color: "#d2e9f8", label: "Moderate (−4.4 to −2.2 °C)" },
+      { color: "#f3f9ff", label: "Hard (≤ −4.4 °C)" },
     ],
     effectCaption: `${SKY} ${WAIT}`,
     rotationDependent: false,
@@ -175,13 +178,26 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
     outputKind: "timeline",
     durationLabel: "12 months",
     secondsAtOneX: 36,
-    inputs: [],
+    inputs: [
+      {
+        id: "rain_intensity",
+        label: "Rain intensity",
+        unit: "x",
+        min: 0.5,
+        max: 2,
+        step: 0.1,
+        default: 1,
+        hint: "Relative: scales how strongly bare months are highlighted as exposed to rain. Not a soil-loss figure.",
+        basis: "relative",
+      },
+    ],
     dataNeeds: [CROP_DATA, VEG_DATA],
     basis: "relative",
+    // Fallback only: the panel builds the live key per month from the map's colour table (./legend.ts).
     legend: [
-      { color: "#3b2616", label: "Bare soil" },
-      { color: "#7fae4a", label: "Cover crop" },
-      { color: "#4f9a3c", label: "Crop growing" },
+      { color: CROP_COLORS.bare, label: "Bare soil" },
+      { color: CROP_COLORS.cover, label: "Cover crop" },
+      { color: CROP_COLORS.corn, label: "Crop growing" },
     ],
     effectCaption: GROUND_ONLY,
     rotationDependent: true,
@@ -196,13 +212,16 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
     outputKind: "series",
     durationLabel: "1 growing season, monthly",
     secondsAtOneX: 36,
-    inputs: [{ id: "stress_severity", label: "Stress severity", unit: "%", min: 0, max: 100, step: 10, default: 50, hint: "How far greenness falls below a normal year." }],
+    inputs: [
+      { id: "stress_severity", label: "Stress severity", unit: "%", min: 0, max: 100, step: 10, default: 50, hint: "How far greenness falls below a normal year." },
+      { id: "stress_start_month", label: "Stress start month", unit: "month (1 = Jan)", min: 1, max: 12, step: 1, default: 5, hint: "The month the stress begins; it builds for about five months." },
+    ],
     dataNeeds: [VEG_DATA, RAIN_DATA, TMAX_DATA],
     basis: "relative",
+    // Fallback only: the panel builds the live key (stress ramp + bare soil if present) in ./legend.ts.
     legend: [
-      { color: "#2f7d32", label: "Greener than usual" },
-      { color: "#a9c46c", label: "Normal" },
-      { color: "#c7a24a", label: "Below normal" },
+      { color: "#2e8f33", label: "Greener (normal or above)" },
+      { color: "#9e8033", label: "Below normal" },
     ],
     effectCaption: GROUND_ONLY,
     rotationDependent: true,
@@ -217,13 +236,27 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
     outputKind: "timeline",
     durationLabel: "3 to 5 years, by season",
     secondsAtOneX: 50,
-    inputs: [{ id: "years", label: "Years shown", unit: "years", min: 3, max: 5, step: 1, default: 4, hint: "How many years of the rotation to replay." }],
+    inputs: [
+      { id: "years", label: "Years shown", unit: "years", min: 3, max: 5, step: 1, default: 4, hint: "How many years of the rotation to replay." },
+      {
+        id: "cover_crop_share",
+        label: "Cover-crop share",
+        unit: "%",
+        min: 0,
+        max: 100,
+        step: 10,
+        default: 0,
+        hint: "Relative: the share of otherwise bare months that gets a cover crop. Changes the organic-matter build-up only.",
+        basis: "relative",
+      },
+    ],
     dataNeeds: [CROP_DATA, VEG_DATA, RAIN_DATA],
     basis: "relative",
+    // Fallback only: the panel builds the live key per month from the map's colour table (./legend.ts).
     legend: [
-      { color: "#c9b23a", label: "Row crop" },
-      { color: "#3f7f5e", label: "Hay or legume" },
-      { color: "#7fae4a", label: "Cover crop" },
+      { color: CROP_COLORS.corn, label: "Row crop" },
+      { color: CROP_COLORS.legume, label: "Hay or legume" },
+      { color: CROP_COLORS.cover, label: "Cover crop" },
     ],
     effectCaption: GROUND_ONLY,
     rotationDependent: true,
@@ -236,7 +269,7 @@ export const SCENARIO_DEFS: ScenarioDef[] = [
     plainMeaning: "Shows how the weather record for this area has changed over the years, so you can see slow shifts, not just single seasons.",
     timeKind: "decades",
     outputKind: "series",
-    durationLabel: "30 years, yearly",
+    durationLabel: "Start year to 2026, yearly",
     secondsAtOneX: 60,
     // TODO(verify): earliest year of the daily record (NASA POWER daily starts around 1981); confirm before shipping.
     inputs: [{ id: "start_year", label: "Start year", unit: "year", min: 1981, max: 2000, step: 1, default: 1991, hint: "First year of the record you want to look at." }],
@@ -262,6 +295,6 @@ export function composeFrame(run: ScenarioRun): ScenarioFrame {
   return {
     atmosphere: ATMOSPHERE[id](run),
     ground: GROUND[id](run),
-    readouts: def.inputs.map((i) => ({ label: i.label, value: String(run.inputs[i.id] ?? i.default), unit: i.unit, basis: "assumed" as const })),
+    readouts: def.inputs.map((i) => ({ label: i.label, value: String(run.inputs[i.id] ?? i.default), unit: i.unit, basis: i.basis ?? ("assumed" as const) })),
   };
 }

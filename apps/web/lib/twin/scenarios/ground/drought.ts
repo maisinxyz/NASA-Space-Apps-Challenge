@@ -12,7 +12,7 @@ export const drought: GroundEvaluator = (run) => {
   const green = perField(run, (id) => (isGrowing(cropAt(run.farmId, run.rotationId, id, 0, MID_SEASON_MONTH)) ? 1 - 0.6 * d : 0.3));
   const delta = Object.fromEntries(fieldIds(run.farmId).map((id) => [`delta_${id}`, isGrowing(cropAt(run.farmId, run.rotationId, id, 0, MID_SEASON_MONTH)) ? green[id] - 1 : 0]));
   return [
-    layer(run, "drought-dryness", "dryness", d, { params: { cracks } }),
-    layer(run, "drought-vegetation", "vegetation", 1 - 0.6 * d, { byField: green, params: delta }),
+    layer(run, "drought-dryness", "dryness", d, { opacity: 1, params: { cracks } }), // bold key: full opacity
+    layer(run, "drought-vegetation", "vegetation", 1 - 0.6 * d, { opacity: 1, byField: green, params: delta }),
   ];
 };

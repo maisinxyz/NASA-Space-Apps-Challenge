@@ -77,12 +77,21 @@ describe("storm", () => {
 });
 
 describe("wet spell", () => {
-  it("is grey with drizzle, fog and a low sun; more rainy days = more drizzle overall", () => {
+  it("day 1 builds from few clouds; rainy days rain under a full deck; dry days do not", () => {
+    expect(at("wet-spell", 0).cloudCover).toBeLessThan(0.3);
+    expect(at("wet-spell", 0).rainRateMmH).toBe(0);
     const s = at("wet-spell", 0.5);
-    expect(s.cloudCover).toBeGreaterThanOrEqual(0.7);
     expect(s.fog).toBeGreaterThan(0.3);
     expect(s.timeOfDayHours).toBeLessThan(10);
-    expect(s.rainRateMmH).toBe(0); // drizzle is mood; no rain rate is implied
+    for (let d = 1; d < 28; d++) {
+      const x = at("wet-spell", (d + 0.3) / 28);
+      if (x.rainRateMmH > 0) expect(x.cloudCover).toBeGreaterThan(0.9);
+      else expect(x.cloudCover).toBeGreaterThanOrEqual(0.5);
+    }
+    const rainyDays = (n: number) => Array.from({ length: 28 }, (_, d) => at("wet-spell", (d + 0.3) / 28, { rain_days_per_week: n }).rainRateMmH > 0).filter(Boolean).length;
+    expect(rainyDays(7)).toBe(27); // day 1 is still building its cloud deck at 0.3
+    expect(rainyDays(4)).toBe(16);
+    expect(rainyDays(1)).toBe(4);
     const total = (n: number) => Array.from({ length: 28 }, (_, d) => at("wet-spell", (d + 0.5) / 28, { rain_days_per_week: n }).drizzle).reduce((x, y) => x + y);
     expect(total(7)).toBeGreaterThan(total(4));
     expect(total(4)).toBeGreaterThan(total(1));
@@ -90,12 +99,14 @@ describe("wet spell", () => {
 });
 
 describe("dry and hot", () => {
-  it("drought: haze and shimmer rise monotonically, sun hard, sky clear", () => {
+  it("drought: dusty haze rises, low sun, little shimmer, light grade, sky clear", () => {
     const xs = [0, 0.5, 1].map((p) => at("drought", p));
     expect(xs[1].haze).toBeGreaterThan(xs[0].haze);
     expect(xs[2].haze).toBeGreaterThan(xs[1].haze);
-    expect(xs[2].heatShimmer).toBeGreaterThan(xs[1].heatShimmer);
-    expect(xs[2].sunIntensity).toBeGreaterThan(1.3);
+    expect(xs[2].heatShimmer).toBeLessThanOrEqual(0.15);
+    expect(xs[2].tint[3]).toBeLessThanOrEqual(0.25);
+    expect(xs[2].timeOfDayHours).toBeGreaterThanOrEqual(15);
+    expect(xs[2].heatShimmer).toBeLessThan(at("heat-wave", 0.65).heatShimmer);
     expect(xs[2].cloudCover).toBe(0);
     expect(xs[2].rainRateMmH).toBe(0);
   });
@@ -104,6 +115,8 @@ describe("dry and hot", () => {
     expect(b.heatShimmer).toBeGreaterThan(a.heatShimmer);
     expect(c.heatShimmer).toBeGreaterThan(b.heatShimmer);
     expect(c.tint[3]).toBeGreaterThan(a.tint[3]);
+    expect(c.tint[3]).toBeLessThanOrEqual(0.3); // field key stays bold
+    expect(at("heat-wave", 0.65, { temp_anomaly_c: 12 }).heatShimmer).toBeGreaterThan(0.9);
     expect(at("heat-wave", 0.65, { temp_anomaly_c: 12 }).haze).toBeGreaterThan(at("heat-wave", 0.65, { temp_anomaly_c: 2 }).haze);
   });
 });
@@ -116,7 +129,13 @@ describe("frost", () => {
     const preDawn = at("frost", 11.5 / 48); // 05:30
     expect(preDawn.frostSparkle).toBeGreaterThan(0.5);
     expect(preDawn.tint[2]).toBeGreaterThan(preDawn.tint[0]); // cold blue
-    expect(at("frost", 14 / 48).frostSparkle).toBe(0); // 08:00, thawed
+    expect(at("frost", 15 / 48).frostSparkle).toBe(0); // 09:00, thawed
+    // No jumps: sparkle and tint change by < 0.1 per 0.1 h step across both dawns.
+    for (let h = 0; h < 48; h += 0.1) {
+      const [x, y] = [at("frost", h / 48), at("frost", (h + 0.1) / 48)];
+      expect(Math.abs(y.frostSparkle - x.frostSparkle)).toBeLessThan(0.1);
+      expect(Math.abs(y.tint[3] - x.tint[3])).toBeLessThan(0.05);
+    }
     expect(at("frost", 11.5 / 48, { min_temp_c: -10 }).frostSparkle).toBeGreaterThan(at("frost", 11.5 / 48, { min_temp_c: -1 }).frostSparkle);
   });
 });

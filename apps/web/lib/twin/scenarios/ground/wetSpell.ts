@@ -1,16 +1,25 @@
 import type { GroundEvaluator, ScenarioRun } from "../../scenario";
+import { WET_SPELL_DAYS as DAYS, wetSpellRainy } from "../atmosphere/evaluators";
 import { clamp01, input, layer, smoothstep } from "./shared";
 
-const DAYS = 28; // matches clock.ts (wet-spell = 28 daily steps)
 /** ASSUMED threshold (basis "assumed"): modeled wetness above this counts as too wet to work the field. Not a measurement. */
 export const TOO_WET = 0.7;
+const DRY = 0.15;
 
-/** Modeled wetness 0..1 at progress p: rises toward a saturation target over weeks. Assumed shape, not data. */
+/**
+ * Modeled wetness 0..1 at progress p, day by day on the sky's rain pattern (wetSpellRainy): rainy days soak toward a
+ * saturation target, dry days drain slowly back. Assumed shape, not data.
+ */
 export function wetAt(run: ScenarioRun, p: number): number {
-  const rd = clamp01(input(run, "rain_days_per_week") / 7);
-  const target = clamp01(0.1 + 0.6 * clamp01(input(run, "wetness") / 100) + 0.5 * rd);
-  const rate = 0.05 + 0.1 * rd;
-  return 0.15 + (target - 0.15) * (1 - Math.exp(-rate * clamp01(p) * DAYS));
+  const perWeek = input(run, "rain_days_per_week");
+  const target = clamp01(0.2 + 0.55 * clamp01(input(run, "wetness") / 100) + 0.3 * clamp01(perWeek / 7));
+  const t = clamp01(p) * DAYS;
+  let w = DRY;
+  for (let d = 0; d < t; d++) {
+    const dt = Math.min(1, t - d);
+    w = wetSpellRainy(d, perWeek) ? w + (target - w) * (1 - Math.exp(-0.6 * dt)) : w - (w - DRY) * (1 - Math.exp(-0.15 * dt));
+  }
+  return w;
 }
 
 /** Days so far (of 28) where modeled wetness exceeds the assumed TOO_WET threshold. */

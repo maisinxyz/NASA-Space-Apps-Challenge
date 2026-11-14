@@ -61,6 +61,8 @@ czm_material czm_getMaterial(czm_materialInput materialInput){
   // The primitive is padded 1% beyond the sim square so mask holes never touch its edge: cut the pad off.
   if (uv.x < 0.00980392 || uv.x > 0.99019608 || uv.y < 0.00980392 || uv.y > 0.99019608){ m.alpha = 0.0; return m; }
   uv = (uv - 0.00980392) / 0.98039216;
+  // Soft outer edge: every kind fades out over the last 5 % of the sim box, so no hard rectangle can ever show.
+  float feather = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
 
   vec2 pm = uv * uSize.xy;                   // metres from the south-west corner
   vec2 pmF = pm;                             // fwidth source for aliasing fades
@@ -76,7 +78,7 @@ czm_material czm_getMaterial(czm_materialInput materialInput){
   float inField = 0.0; float dcov = 0.0; int ds = 0;
   for (int i=0;i<8;i++){ inField += cov[i]; if (cov[i] > dcov){ dcov = cov[i]; ds = i; } }
   inField = clamp(inField, 0.0, 1.0);
-  float soilW = mix(1.0, mix(0.35, 1.0, inField), uSize.z);   // soil kinds: weaker outside the fields
+  float soilW = mix(1.0, inField, uSize.z);   // soil kinds + frost: inside the fields only (whole box if no fields)
 
   vec3 rgb = vec3(0.0); float a = 0.0;
 
@@ -98,8 +100,10 @@ czm_material czm_getMaterial(czm_materialInput materialInput){
   // 2 vegetation: greenness per field, 1 green -> 0 yellow/brown
   if (uK1.y > 0.0 && dcov > 0.0){
     float v = slotOf(uFv0, uFv1, ds);
-    vec3 col = mix(vec3(0.62,0.50,0.20), vec3(0.18,0.56,0.20), v);
-    over(rgb, a, col, 0.5 * uK1.y * dcov * (0.75 + 0.25*fbm(pm/6.0)));
+    if (v > 0.001){   // v == 0 means "not rated" (bare field): let the brown cropCover show through
+      vec3 col = mix(vec3(0.62,0.50,0.20), vec3(0.18,0.56,0.20), v);
+      over(rgb, a, col, 0.5 * uK1.y * dcov * (0.75 + 0.25*fbm(pm/6.0)));
+    }
   }
   // 3 organicMatter: gentle darkening; markers (dots) on legume/cover fields
   if (uK2.y > 0.0 && dcov > 0.0){
@@ -114,10 +118,10 @@ czm_material czm_getMaterial(czm_materialInput materialInput){
       over(rgb, a, vec3(0.80,0.95,0.55), 0.85 * dot_ * uK2.y * dcov * o);
     }
   }
-  // 4 dryness: tan soil, voronoi cracks fade in with params.cracks
+  // 4 dryness: drying tan (#c9b27a) -> very dry ochre (#a8793f), bold so haze/tint cannot wash it out; cracks fade in
   if (uK3.y > 0.0){
     float s = uK3.x;
-    over(rgb, a, vec3(0.76,0.64,0.42), 0.5 * s * uK3.y * soilW);
+    over(rgb, a, mix(vec3(0.788,0.698,0.478), vec3(0.659,0.475,0.247), smoothstep(0.35, 1.0, s)), 0.78 * sqrt(s) * uK3.y * soilW);
     if (uDetail > 0.5 && uK3.z > 0.0){
       float cr = 1.0 - smoothstep(0.0, 0.12, cracks(pm/2.5));
       cr *= 1.0 - smoothstep(0.5, 1.2, aa);
@@ -182,23 +186,26 @@ czm_material czm_getMaterial(czm_materialInput materialInput){
     float sh = vnoise(pm*0.8 + vec2(t*0.6, -t*0.4));
     over(rgb, a, vec3(0.16,0.40,0.64) + 0.12*sh, 0.52 * mask * uK7.y * (0.85 + 0.15*sh));
   }
-  // 9 frost: white creeping over low spots (params.lowSpotBias)
-  if (uK8.y > 0.0){
-    // Coverage raises the frost line, while lowSpotBias keeps higher terrain exposed.
-    float frostHeight = mix(0.35, h, uK8.z) + 0.10*(fbm(pm/3.0) - 0.5);
-    float frostLine = mix(0.05, 0.70, uK8.x);
-    float fr = (1.0 - smoothstep(frostLine - 0.12, frostLine + 0.12, frostHeight))
-      * step(0.001, uK8.x) * step(0.5, hg.a);
-    over(rgb, a, vec3(0.97,0.97,0.94), 0.78 * fr * uK8.y);
+  // 9 frost: x = coverage (timing x extent), z = lowSpotBias, w = level (0 light, 0.5 moderate, 1 hard).
+  // Covers every field (patchy at low coverage); valid relief adds extra frost in low spots only.
+  if (uK8.y > 0.0 && uK8.x > 0.0){
+    float n = fbm(pm/3.0);
+    float fr = smoothstep(n - 0.15, n + 0.15, uK8.x * 1.15);
+    if (hg.a >= 0.5 && uK8.z > 0.0) fr = max(fr, (1.0 - smoothstep(0.15, 0.55, h)) * uK8.z * smoothstep(0.0, 0.25, uK8.x));
+    // light #a9d3f0, moderate #d2e9f8, hard #f3f9ff (legend must match)
+    vec3 fc = uK8.w < 0.25 ? vec3(0.663,0.827,0.941) : (uK8.w < 0.75 ? vec3(0.824,0.914,0.973) : vec3(0.953,0.976,1.0));
+    float fa = uK8.w < 0.25 ? 0.38 : (uK8.w < 0.75 ? 0.5 : 0.6);
+    over(rgb, a, fc, fa * fr * soilW * uK8.y);
   }
-  // 10 heatGlow: warm stress glow on fields (static, no pulse)
+  // 10 heatGlow: legend ramp warm #f6e7b4 -> hot #ef8a3c -> very hot #b3262d, bold (static, no pulse)
   if (uK9.y > 0.0 && dcov > 0.0){
     float s = slotOf(uFh0, uFh1, ds);
-    over(rgb, a, mix(vec3(1.0,0.5,0.1), vec3(0.85,0.1,0.08), s), 0.42 * s * uK9.y * dcov);
+    vec3 hc = s < 0.5 ? mix(vec3(0.965,0.906,0.706), vec3(0.937,0.541,0.235), s*2.0) : mix(vec3(0.937,0.541,0.235), vec3(0.702,0.149,0.176), s*2.0 - 1.0);
+    over(rgb, a, hc, 0.75 * sqrt(s) * uK9.y * dcov);
   }
 
   m.diffuse = rgb;
-  m.alpha = a;
+  m.alpha = a * feather;
   return m;
 }
 `;

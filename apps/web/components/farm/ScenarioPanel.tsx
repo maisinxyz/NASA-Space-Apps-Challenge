@@ -10,8 +10,10 @@ import { useAppStore } from "@/lib/store";
 import { clampInput, clockLabel, clockSpec, currentStep, resolveInputs, SPEEDS, stepProgress } from "@/lib/twin/scenarios/clock";
 import { FAMILY_LABEL, FAMILY_ORDER, SCENARIO_DEFS, scenarioById } from "@/lib/twin/scenarios/registry";
 import { EMPTY_RUN_MESSAGE, type RunSource } from "@/lib/twin/scenarios/runSource";
-import type { OutputKind, ScenarioDef, ScenarioFamily, ScenarioFrame, ScenarioInput, TimeKind } from "@/lib/twin/scenario";
+import { scenarioLegend } from "@/lib/twin/scenarios/legend";
+import type { OutputKind, ScenarioDef, ScenarioFamily, ScenarioFrame, ScenarioInput, ScenarioRun, TimeKind } from "@/lib/twin/scenario";
 
+import { ScenarioExtras } from "./scenarios/ScenarioExtras";
 import { hudBtn, hudBtnOn, hudSelect, Kbd, useTwin } from "./shared";
 
 const TIME_CHIP: Record<TimeKind, string> = { "event-hours": "Event, hours", "season-months": "Season", "multi-year": "Years", decades: "Decades", static: "Static" };
@@ -105,6 +107,11 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
   const setInput = (i: ScenarioInput, v: number) => useAppStore.setState((s) => ({ scenarioInputs: { ...s.scenarioInputs, [def.id]: { ...s.scenarioInputs[def.id], [i.id]: clampInput(i, v) } } }));
   const resetInputs = () => useAppStore.setState((s) => ({ scenarioInputs: { ...s.scenarioInputs, [def.id]: {} } }));
   const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
+  const farmId = useAppStore((s) => s.farmId) ?? "";
+  const progress = useAppStore((s) => s.scenarioProgress);
+  const run: ScenarioRun = { scenarioId: def.id, farmId, progress, inputs, rotationId: rotation, timeS: 0 };
+  // Cover scenarios: key built from the map's colour table for this month; others keep the registry legend.
+  const legend = scenarioLegend(def, run) ?? def.legend;
 
   return (
     <div className="grid gap-3 text-sm">
@@ -170,7 +177,7 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
           Colour key <BasisChip basis={def.basis} />
         </h3>
         <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-          {def.legend.map((l) => (
+          {legend.map((l) => (
             <li key={l.label} className="flex items-center gap-1.5">
               <span aria-hidden className="size-3 rounded-sm ring-1 ring-white/20" style={{ background: l.color }} />
               {l.label}
@@ -197,6 +204,9 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
           </dl>
         </section>
       )}
+
+      {/* Wet-spell readout is computed, so it waits for a run (frame); the trends chart has no numbers without a series. */}
+      <ScenarioExtras run={def.id === "trends" || frame ? run : null} />
 
       <p className="rounded-md border border-white/10 p-2 text-xs text-ink-muted">{def.effectCaption}</p>
 
@@ -254,6 +264,7 @@ function InputRow({ input: i, value, onChange }: { input: ScenarioInput; value: 
           +
         </button>
         <span className="text-xs text-ink-muted">{i.unit}</span>
+        <BasisChip basis={i.basis ?? "assumed"} />
         <button type="button" className={`${hudBtn} ml-auto !min-h-6 text-xs`} aria-label={`Reset ${i.label}`} disabled={value === i.default} onClick={() => onChange(i.default)}>
           Reset
         </button>

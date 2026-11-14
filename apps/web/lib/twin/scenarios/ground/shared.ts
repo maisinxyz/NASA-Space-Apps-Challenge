@@ -76,12 +76,17 @@ export function layer(
 /** Per-field map from a function. */
 export const perField = (run: ScenarioRun, f: (id: string) => number): Record<string, number> => Object.fromEntries(fieldIds(run.farmId).map((id) => [id, f(id)]));
 
-/** cropCover params for one month: month, crop_<id> indexes, bareHighlight. Returns the spec. */
-export function cropCoverLayer(run: ScenarioRun, yearIndexOf: number, month: number): GroundLayerSpec {
+/**
+ * cropCover for one month: every field shows what is on it (crop colour when growing, bare brown when bare), all
+ * months. The shader scales alpha by byField, so byField is 1 for EVERY field (0 would hide bare fields). The bare
+ * look is the shader's brown unless `highlightBare` (bare-soil scenario) turns on its amber exposure highlight.
+ * `only` limits drawing to fields where it returns true (others get byField 0, still given their crop index).
+ */
+export function cropCoverLayer(run: ScenarioRun, yearIndexOf: number, month: number, o: { highlightBare?: boolean; only?: (crop: CropLook) => boolean } = {}): GroundLayerSpec {
   const ids = fieldIds(run.farmId);
   const crops = ids.map((id) => cropAt(run.farmId, run.rotationId, id, yearIndexOf, month));
-  const params: Record<string, number> = { month, bareHighlight: crops.some((c) => c === "bare") ? 1 : 0 };
+  const params: Record<string, number> = { month, bareHighlight: o.highlightBare && crops.some((c) => c === "bare") ? 1 : 0 };
   ids.forEach((id, i) => (params[`crop_${id}`] = CROP_INDEX.indexOf(crops[i])));
-  const byField = Object.fromEntries(ids.map((id, i) => [id, isGrowing(crops[i]) ? 1 : 0]));
+  const byField = Object.fromEntries(ids.map((id, i) => [id, !o.only || o.only(crops[i]) ? 1 : 0]));
   return layer(run, "crop-cover", "cropCover", 1, { opacity: 0.9, byField, params });
 }

@@ -16,6 +16,14 @@ export function resolveInputs(def: ScenarioDef, stored: Record<string, number> |
   return Object.fromEntries(def.inputs.map((i) => [i.id, stored && i.id in stored ? clampInput(i, stored[i.id]) : i.default]));
 }
 
+// Trends: one clock step = one year, from the (clamped) start year to the fixed "now" year, inclusive.
+// Fixed "now" so the sweep is deterministic. Imagery years: see ground/trends.ts. Lives here to avoid an import cycle.
+export const NOW_YEAR = 2026;
+export const FIRST_IMAGERY_YEAR = 1980;
+export const LAST_IMAGERY_YEAR = 2026;
+export const trendsFirstYear = (start: number): number => Math.max(FIRST_IMAGERY_YEAR, Math.min(LAST_IMAGERY_YEAR, Math.floor(Number.isFinite(start) ? start : FIRST_IMAGERY_YEAR)));
+export const trendsSteps = (start: number): number => Math.max(1, Math.min(NOW_YEAR, LAST_IMAGERY_YEAR) - trendsFirstYear(start) + 1);
+
 /** What the clock counts. `steps` = number of ticks (hours, days, months or years); 0 = no clock (static scenario). */
 export type ClockSpec = { unit: "Hour" | "Day" | "Month" | "Year"; steps: number; firstYear?: number };
 
@@ -38,7 +46,7 @@ export function clockSpec(def: ScenarioDef, inputs: Record<string, number>): Clo
     case "multi-year":
       return { unit: "Year", steps: inputs.years };
     case "trends":
-      return { unit: "Year", steps: 30, firstYear: inputs.start_year };
+      return { unit: "Year", steps: trendsSteps(inputs.start_year), firstYear: trendsFirstYear(inputs.start_year) };
     default:
       return { unit: "Hour", steps: 0 };
   }

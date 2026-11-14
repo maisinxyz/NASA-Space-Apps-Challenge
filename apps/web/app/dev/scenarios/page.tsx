@@ -14,11 +14,11 @@ const FARM = "cornell-ruminant";
 
 export default function DevScenarios() {
   const [ready, setReady] = useState(false);
-  const [source, setSource] = useState<RunSource>("none");
+  const [source, setSource] = useState<RunSource>("fixture") // dev page only: start with synthetic data so effects are visible at once;
 
   useEffect(() => {
     if (!twinConfig(FARM)) return;
-    useAppStore.setState({ farmId: FARM, globeView: "farm", twinMode: "simulate", leftOpen: true, rightOpen: true });
+    useAppStore.setState({ farmId: FARM, globeView: "farm", twinMode: "simulate", leftOpen: true, rightOpen: true, scenarioId: "storm", scenarioProgress: 0, scenarioPlaying: true });
     setReady(true);
   }, []);
 

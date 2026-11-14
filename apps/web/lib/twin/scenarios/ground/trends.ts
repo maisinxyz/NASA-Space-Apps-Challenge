@@ -1,4 +1,5 @@
 import type { GroundEvaluator } from "../../scenario";
+import { NOW_YEAR, trendsFirstYear, trendsSteps } from "../clock";
 import { clamp01, input, layer } from "./shared";
 
 /**
@@ -11,17 +12,14 @@ import { clamp01, input, layer } from "./shared";
  * Source: https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml
  */
 export const TRENDS_FIXTURE_LAYER = "MERRA2_2m_Air_Temperature_Assimilated_Monthly";
-const FIRST_IMAGERY_YEAR = 1980;
-const LAST_IMAGERY_YEAR = 2026;
-/** Fixed "now" year so the sweep is deterministic (no Date.now in a pure evaluator). */
-export const NOW_YEAR = 2026;
+/** Fixed "now" year so the sweep is deterministic (no Date.now in a pure evaluator). Shared with the clock. */
+export { NOW_YEAR };
 export const GIBS_CREDIT = "NASA Global Imagery Browse Services for EOSDIS";
 
+/** Year shown at progress p: one clock step = one year, same step count as the clock (trendsSteps). */
 export const trendsYear = (start: number, p: number): number => {
-  const first = Math.max(FIRST_IMAGERY_YEAR, Math.min(LAST_IMAGERY_YEAR, Math.floor(Number.isFinite(start) ? start : FIRST_IMAGERY_YEAR)));
-  const last = Math.min(NOW_YEAR, LAST_IMAGERY_YEAR);
-  const steps = Math.max(1, last - first + 1);
-  return first + Math.min(steps - 1, Math.floor(clamp01(p) * steps));
+  const steps = trendsSteps(start);
+  return trendsFirstYear(start) + Math.min(steps - 1, Math.floor(clamp01(p) * steps));
 };
 
 export const trends: GroundEvaluator = (run) => {

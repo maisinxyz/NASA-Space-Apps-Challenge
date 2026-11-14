@@ -38,6 +38,8 @@ export interface ScenarioInput {
   default: number;
   /** Plain-language one-liner shown under the slider. */
   hint?: string;
+  /** Basis label of this input's readout; default "assumed" (a user choice, not data). */
+  basis?: BasisOrRelative | "assumed" | "synthetic";
 }
 
 /** The state both visual owners evaluate. Pure and deterministic: same run state -> same output. */

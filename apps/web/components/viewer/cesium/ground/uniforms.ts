@@ -56,7 +56,7 @@ function paramsOf(kind: ProceduralKind, p: Record<string, number> = {}): [number
     case "runoff": return [clamp01(p.flow, 0.5), 0];
     case "floodZones": return [Math.min(2, Math.max(0, p.levelM ?? 0)), 0]; // intensity = levelM/2 fallback applied by the caller
     case "dryness": return [clamp01(p.cracks), 0];
-    case "frost": return [clamp01(p.lowSpotBias), 0];
+    case "frost": return [clamp01(p.lowSpotBias), clamp01(p.level)]; // level: 0 light, 0.5 moderate, 1 hard
     case "organicMatter": return [clamp01(p.markers), 0];
     default: return [0, 0];
   }
