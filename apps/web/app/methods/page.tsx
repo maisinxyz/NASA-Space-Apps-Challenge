@@ -10,6 +10,8 @@ import { MetricValue } from "@/components/ui/MetricValue";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { getProvenance, getSites, isMock } from "@/lib/api/client";
+import { FARMS } from "@/lib/farms";
+import { TIER_LABEL } from "@/components/globe/FarmList";
 import type { BasisOrRelative, Provenance } from "@/lib/api/types";
 
 // Regex, not the literal marker, so this file itself never trips scripts/check-build.mjs.
@@ -88,12 +90,20 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "OpenStreetMap",
-    role: "field outlines",
+    role: "field outlines (Beltsville), approximate Cornell pin",
     basis: "measured",
     licence: "Open Database License (ODbL) 1.0",
     attribution: "© OpenStreetMap contributors",
     url: "https://www.openstreetmap.org/copyright",
-    note: "Volunteer-mapped landuse outlines, downloaded 2026-11-13; may not match the farm's managed fields. Field names and crops are made up by us.",
+    note: "Volunteer-mapped. Beltsville field outlines: landuse ways 224922167, 224819517 and 224922168, downloaded 2026-11-13; community data, not USDA plot boundaries. Cornell pin: relation 6483196, not a farm boundary.",
+  },
+  {
+    name: "FieldTwin traced field outlines",
+    role: "field outlines (Cornell)",
+    basis: "assumed",
+    licence: "Made by the FieldTwin team",
+    attribution: "FieldTwin",
+    note: "Traced by eye on Google Photorealistic 3D imagery, 2026-11-13 (OpenStreetMap has no farmland outlines there). Approximate: they may not match the farm's managed fields. Field names and crops on both twins are made up by us, not farm records.",
   },
   {
     name: "NASA POWER",
@@ -103,7 +113,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
     licence: "NASA open data (citation wording not yet verified)",
     attribution: "NASA Langley Research Center POWER Project",
     url: "https://power.larc.nasa.gov/docs/services/api/",
-    note: "Checked to return data for the Agassiz location. Reanalysis grid of about 0.5° (roughly 55 km): one value covers the whole farm and much more.",
+    note: "Reanalysis grid of about 0.5° (roughly 55 km): one value covers the whole farm and much more.",
   },
 ];
 
@@ -291,6 +301,39 @@ export default function MethodsPage() {
         <p className="mt-4 text-sm text-ink-muted">Look filters (thermal, vegetation, night) are illustrative styling of the imagery, not sensor data.</p>
       </Section>
 
+      <Section id="farms" title="Farms on the globe">
+        <p className="text-ink-muted">Where each pin comes from. Private farmland is described by area only: no owners or addresses.</p>
+        <div className="mt-4 grid gap-4">
+          {FARMS.map((f) => (
+            <Card key={f.id}>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-ink">{f.name}</h3>
+                <span className="text-xs tracking-wide text-ink-muted uppercase">{TIER_LABEL[f.tier]}</span>
+              </div>
+              <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
+                <dt className="text-ink-muted">Operated by</dt>
+                <dd>{f.owner}</dd>
+                <dt className="text-ink-muted">Location</dt>
+                <dd className="flex flex-wrap items-baseline gap-2">
+                  {f.coordsVerified ? "Coordinates published by the source" : "Approximate: the source publishes no coordinates for this pin"}
+                  <BasisChip basis={f.coordsVerified ? "measured" : "assumed"} />
+                </dd>
+                <dt className="text-ink-muted">Source</dt>
+                <dd>
+                  <SourceLink url={f.sourceUrl} />
+                </dd>
+                {f.tier === "twin" && (
+                  <>
+                    <dt className="text-ink-muted">Twin</dt>
+                    <dd>Approximate field outlines; illustrative crops and rotations (not farm records).</dd>
+                  </>
+                )}
+              </dl>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
       <Section id="assumptions" title="Assumptions">
         {state.kind === "ok" ? (
           state.prov.assumptions.length ? (
@@ -325,7 +368,8 @@ export default function MethodsPage() {
           <li>Outputs compare rotations under the same storm. They are relative comparisons, not predictions of what will happen.</li>
           <li>FieldTwin gives no yield, profit or absolute soil-loss figures. The erosion index only ranks options against each other.</li>
           <li>Weather records are much coarser than a single field. A real storm can be stronger or weaker on your land than shown.</li>
-          <li>Field outlines and crops on curated sites are illustrative, not surveyed boundaries.</li>
+          <li>Field outlines on the farm twins are approximate, and their crops and rotations are illustrative, not surveyed boundaries or farm records.</li>
+          <li>Most farm pins are approximate locations; only the Mead pin uses published coordinates (an AmeriFlux tower).</li>
           <li>Coarse data stays labelled coarse. Stretching it over a detailed 3D surface does not add detail.</li>
           <li>Photos you upload only change how the land looks. Elevation always comes from open data.</li>
           <li>Drone and video capture are on the roadmap only. They do not work in this version.</li>

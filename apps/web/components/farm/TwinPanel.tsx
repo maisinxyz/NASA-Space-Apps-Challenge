@@ -9,12 +9,11 @@ import { BasisChip } from "@/components/ui/Provenance";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { TWIN_MODES, type TwinMode, useAppStore } from "@/lib/store";
 import { encodeShare, LOOKS } from "@/lib/share";
-import { FIELDS_ATTRIBUTION, FIELDS_NOTES } from "@/lib/twin/agassiz";
 
 import { ComparePanel } from "./ComparePanel";
 import { CompareTray, DividerHandle } from "./CompareTray";
 import { EvidenceBody, ExploreBody, FieldCard, SimulateBody } from "./Inspector";
-import { CropSwatch, hudBtn, hudBtnOn, hudSelect, Kbd, Panel } from "./shared";
+import { CropSwatch, hudBtn, hudBtnOn, hudSelect, Kbd, Panel, useTwin } from "./shared";
 
 const MODE_LABEL: Record<TwinMode, string> = { explore: "Explore", simulate: "Simulate", compare: "Compare", evidence: "Evidence" };
 const SURFACES: { id: FarmSurface; label: string }[] = [
@@ -41,6 +40,7 @@ type Props = {
 export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset, getCamera }: Props) {
   const { twinMode: mode, twinFieldId, panelsHidden, leftOpen, rightOpen } = useAppStore();
   const [msg, setMsg] = useState("");
+  const twin = useTwin();
   const field = fields.find((f) => f.id === twinFieldId);
   const compare = mode === "compare";
 
@@ -81,14 +81,18 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
     <>
       {compare && <DividerHandle />}
 
-      {/* Always visible, even with panels hidden: what the fields are, and the OSM credit. */}
+      {/* Always visible, even with panels hidden: what the fields are, and the outline credit. */}
       <div className="!pointer-events-none absolute top-3 left-1/2 flex max-w-[calc(100%-44rem)] -translate-x-1/2 flex-wrap justify-center gap-1.5 text-[0.7rem]">
-        {FIELDS_NOTES.map((n) => (
+        {twin.labels.map((n) => (
           <span key={n} className="glass !rounded-md border-dashed px-2 py-0.5">
             {n}
           </span>
         ))}
-        <span className="glass !rounded-md px-2 py-0.5 text-ink-muted">{FIELDS_ATTRIBUTION}</span>
+        {twin.attribution.map((a) => (
+          <span key={a} className="glass !rounded-md px-2 py-0.5 text-ink-muted">
+            {a}
+          </span>
+        ))}
         {pending > 0 && (
           <span role="status" className="glass basis-full !rounded-full px-3 py-0.5 text-center text-xs sm:basis-auto">
             Loading 3D detail…
@@ -197,7 +201,7 @@ function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string
           ))}
         </ul>
         <p className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-ink-muted">
-          Area <BasisChip basis="derived" /> from the mapped outline; crops <BasisChip basis="assumed" /> illustrative.
+          Area <BasisChip basis="derived" /> from the approximate outline; crops <BasisChip basis="assumed" /> illustrative. On the map, hover a field to see its name and crop.
         </p>
       </section>
 

@@ -56,17 +56,43 @@ export function clampTarget(o: Offset, box: Pick<Box, "halfX" | "halfY">): Offse
 }
 
 /**
- * Hard-clamp the orbit: range 150 m - 1.5 km, pitch -89 deg .. -25 deg, heading wrapped to [0, 2pi).
+ * Hard-clamp the orbit: range minRangeM (default 150 m) - 1.5 km, pitch -89 deg .. -25 deg, heading wrapped to [0, 2pi).
  * `needAboveTargetM` = how far above the target the camera must be to keep 20 m over the ground (0 = ignore):
  * raises the pitch (looks more downward) when the range is long enough, never beyond the limits.
+ * `minRangeM` = the farm's closest allowed distance (Farm.minRangeM, e.g. 250 m for private farmland).
  */
-export function clampOrbit(o: Orbit, needAboveTargetM = 0): Orbit {
-  const range = Math.min(MAX_RANGE_M, Math.max(MIN_RANGE_M, o.range));
+export function clampOrbit(o: Orbit, needAboveTargetM = 0, minRangeM = MIN_RANGE_M): Orbit {
+  const range = Math.min(MAX_RANGE_M, Math.max(Math.min(MAX_RANGE_M, minRangeM), o.range));
   let pitch = Math.min(MAX_PITCH_RAD, o.pitch);
   if (needAboveTargetM > 0) pitch = Math.min(pitch, -Math.asin(Math.min(1, needAboveTargetM / range)));
   pitch = Math.max(MIN_PITCH_RAD, pitch);
   const heading = ((o.heading % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
   return { heading, pitch, range };
+}
+
+/**
+ * Default farm-view framing (no Farm.framing): low and oblique so barns, trees and relief read as 3D. Range =
+ * 0.45 x the square's longer side, kept in 400-600 m; pitch -30 deg; heading north. Product choices.
+ */
+export const FRAME_RANGE_PER_SIDE = 0.45;
+export const FRAME_RANGE_MIN_M = 400;
+export const FRAME_RANGE_MAX_M = 600;
+export const FRAME_PITCH_RAD = (-30 * Math.PI) / 180;
+
+/** Farm.framing in components/globe/types.ts (degrees, metres). */
+export type Framing = { lon: number; lat: number; rangeM: number; pitchDeg: number; headingDeg?: number };
+
+/**
+ * The farm-view start view (fly-in end and Reset view): `framing` when given, else the box centre at the default
+ * range/pitch. The target is kept inside the box and the orbit is clamped (incl. minRangeM), so the flight ends
+ * exactly where the clamped orbit starts.
+ */
+export function startFraming(box: Box, framing?: Framing, minRangeM?: number): { target: LonLat; o: Orbit } {
+  const o: Orbit = framing
+    ? { heading: (framing.headingDeg ?? 0) * RAD, pitch: framing.pitchDeg * RAD, range: framing.rangeM }
+    : { heading: 0, pitch: FRAME_PITCH_RAD, range: Math.min(FRAME_RANGE_MAX_M, Math.max(FRAME_RANGE_MIN_M, 2 * Math.max(box.halfX, box.halfY) * FRAME_RANGE_PER_SIDE)) };
+  const target = framing ? fromOffsetM(box, clampTarget(offsetM(framing, box), box)) : { lon: box.lon, lat: box.lat };
+  return { target, o: clampOrbit(o, 0, minRangeM) };
 }
 
 /** Camera pose for share links: degrees and metres (same shape as CameraState in components/globe/types.ts). */

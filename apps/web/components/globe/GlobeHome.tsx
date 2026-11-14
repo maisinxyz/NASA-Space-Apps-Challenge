@@ -7,16 +7,15 @@ import dynamic from "next/dynamic";
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { TwinPanel } from "@/components/farm/TwinPanel";
-import { FARMS, farmById } from "@/lib/farms";
+import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
-import { useAppStore, useChrome } from "@/lib/store";
-import { AGASSIZ_BUILDINGS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS, twinFields } from "@/lib/twin/agassiz";
+import { selectFarm as select, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
 import { EXPLORE_NOTE, FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
-import type { CameraState, FarmField, GlobeHandle, TileTier } from "./types";
+import type { CameraState, GlobeHandle, TileTier } from "./types";
 
 const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Globe), {
   ssr: false,
@@ -61,13 +60,11 @@ class GlobeBoundary extends Component<{ onError(e: Error): void; children: React
   }
 }
 
-/** Crop per field for a rotation at (year, month); undefined without fields or a known rotation. */
-function season(fields: FarmField[] | undefined, id: string, year: number, month: number) {
-  const r = rotationById(id);
-  return fields && r ? cropsForSeason(fields, ROTATING_FIELDS, r, year, month) : undefined;
+/** Crop per field for a rotation at (year, month); undefined without a twin or a known rotation. */
+function season(twin: TwinConfig | undefined, id: string, year: number, month: number) {
+  const r = twin && rotationById(twin.rotations, id);
+  return twin && r ? cropsForSeason(twin.fields, twin.phases, r, year, month) : undefined;
 }
-
-const select = (id: string | null) => useAppStore.setState(id ? { farmId: id } : { farmId: null, globeView: "globe" });
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
 export function GlobeHome() {
@@ -84,16 +81,17 @@ export function GlobeHome() {
   const farm = farmById(farmId);
   const showGlobe = wide && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
-  // Farm twin (only "twin" farms with field data): fields + the season of the rotation chosen in Compare.
-  const fields = view === "farm" && farm?.tier === "twin" ? twinFields(farm.id) : undefined;
-  const inTwin = inFarm && !!fields;
-  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look })),
+  // Farm twin (only "twin" farms with a twin config): fields + the season of the rotation chosen in Compare.
+  const twin = view === "farm" ? twinConfig(farm?.id ?? null) : undefined;
+  const fields = twin?.fields;
+  const inTwin = inFarm && !!twin;
+  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills })),
   );
   // Compare paints rotation A (left of the split) and B (right) for the chosen season; other modes show current crops.
   const comparing = inTwin && twinMode === "compare";
-  const cropA = useMemo(() => (comparing ? season(fields, compareA, twinYear, twinMonth) : undefined), [comparing, fields, compareA, twinYear, twinMonth]);
-  const cropB = useMemo(() => (comparing ? season(fields, compareB, twinYear, twinMonth) : undefined), [comparing, fields, compareB, twinYear, twinMonth]);
+  const cropA = useMemo(() => (comparing ? season(twin, compareA, twinYear, twinMonth) : undefined), [comparing, twin, compareA, twinYear, twinMonth]);
+  const cropB = useMemo(() => (comparing ? season(twin, compareB, twinYear, twinMonth) : undefined), [comparing, twin, compareB, twinYear, twinMonth]);
   const compare = useMemo(() => (comparing ? { right: { cropByField: cropB }, divider } : null), [comparing, cropB, divider]);
 
   // Slim header while the twin workspace is on screen.
@@ -205,10 +203,11 @@ export function GlobeHome() {
           compare={compare}
           look={inFarm ? look : "none"}
           onLoadProgress={(p) => setPending(p.pending)}
-          simBbox={inTwin ? AGASSIZ_SIM_BBOX : undefined}
+          simBbox={inTwin ? twin.simBbox : undefined}
           exaggeration={inTwin ? exaggeration : 1}
           surface={twinSurface}
-          overlayMask={inTwin ? AGASSIZ_BUILDINGS : undefined}
+          overlayMask={inTwin ? twin.overlayMask : undefined}
+          showCropFills={comparing && showCropFills}
         />
       </GlobeBoundary>
 
@@ -217,7 +216,7 @@ export function GlobeHome() {
         {inTwin ? (
           <TwinPanel
             farm={farm}
-            fields={fields}
+            fields={twin.fields}
             cropA={cropA}
             cropB={cropB}
             pending={pending}
@@ -234,7 +233,8 @@ export function GlobeHome() {
               Reset view
             </button>
             <h1 className="font-display text-lg">{farm.name}</h1>
-            {farm.tier !== "twin" && <p className="basis-full text-sm text-ink-muted">Explore only: {EXPLORE_NOTE.toLowerCase()}</p>}
+            <p className="basis-full text-sm text-ink-muted">Explore only: {EXPLORE_NOTE.toLowerCase()}.</p>
+            {farm.note && <p className="basis-full text-xs text-ink-muted">{farm.note.text}</p>}
           </div>
         ) : (
           <div className="!pointer-events-none absolute top-4 left-4 max-w-md">

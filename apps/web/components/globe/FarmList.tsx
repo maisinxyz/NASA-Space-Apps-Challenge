@@ -13,7 +13,7 @@ export function FarmList({ farms, selectedId, onSelect, className = "" }: { farm
   return (
     <section aria-labelledby="farm-list-title" className={`rounded-lg border border-line bg-surface/90 p-3 text-ink ${className}`}>
       <h2 id="farm-list-title" className="text-sm font-semibold">
-        Public research farms
+        Research farms and farmland
       </h2>
       <ul className="mt-2 grid gap-1">
         {farms.map((f) => (

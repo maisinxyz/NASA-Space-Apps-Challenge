@@ -1,12 +1,13 @@
-// Card for the selected farm. Facts come from lib/farms.ts; every one links back to its source.
+// Card for the selected farm. Facts come from lib/farms (one file per farm); every one links back to its source.
+import type { FarmInfo } from "@/lib/farms";
+
 import { TierTag } from "./FarmList";
-import type { Farm } from "./types";
 
 export const EXPLORE_NOTE = "Simulation not available for this farm yet";
 export const PRIMARY_BTN = "rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-accent-ink hover:opacity-90";
 
 /** `onOpen` is left out when there is no globe to fly in (small screens, globe failure). */
-export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm; onClose(): void; onOpen?: () => void; className?: string }) {
+export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: FarmInfo; onClose(): void; onOpen?: () => void; className?: string }) {
   return (
     <section aria-labelledby="farm-card-title" className={`rounded-lg border border-line bg-surface/95 p-4 text-ink shadow-lg ${className}`}>
       <div className="flex items-start justify-between gap-3">
@@ -32,17 +33,30 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
           </>
         )}
       </dl>
+      {farm.note && (
+        <p className="mt-2 text-sm">
+          {farm.note.text}
+          {farm.note.url && (
+            <>
+              {" "}
+              <a href={farm.note.url} target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
+                {farm.note.linkText ?? "More"} (opens in a new tab)
+              </a>
+            </>
+          )}
+        </p>
+      )}
       {!farm.coordsVerified && <p className="mt-2 text-xs text-ink-muted">Approximate location: the pin is not from coordinates published by the operator.</p>}
       <p className="mt-2 text-sm">
         <a href={farm.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
           Source (opens in a new tab)
         </a>
       </p>
-      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}</p>}
+      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}. You can still fly in and look around.</p>}
       {onOpen && (
         <div className="mt-3">
           <button type="button" onClick={onOpen} className={PRIMARY_BTN}>
-            Open twin
+            {farm.tier === "twin" ? "Open twin" : "Fly in"}
           </button>
         </div>
       )}

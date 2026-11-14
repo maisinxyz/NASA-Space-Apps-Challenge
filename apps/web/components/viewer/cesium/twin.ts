@@ -50,16 +50,50 @@ const FILL_ALPHA_SELECTED = 0.68;
 const OUTLINE = "#f4ecd2";
 const OUTLINE_ALPHA = 0.7;
 const OUTLINE_SELECTED = "#ffd54a";
-const OUTLINE_WIDTH_PX = 2;
+/** Fills off (default, user choice: keep the real imagery visible): faint edges only on the selected / hovered field. */
+const OUTLINE_ALPHA_SELECTED_FAINT = 0.75;
+const OUTLINE_ALPHA_HOVER_FAINT = 0.3;
+const OUTLINE_WIDTH_PX = 1.5;
 
-/** Pure: fill and outline CSS colour + alpha for a field. */
-export function fieldStyle(look: CropLook, selected: boolean): { fill: string; fillAlpha: number; outline: string; outlineAlpha: number } {
+export type FieldState = { selected?: boolean; hovered?: boolean; /** FarmTwinProps.showCropFills */ fills?: boolean };
+
+/**
+ * Pure: fill and outline CSS colour + alpha for a field. Without fills (default) the field is invisible (alpha 0,
+ * still pickable) apart from a faint edge while selected or hovered; with fills, the illustrative crop colours.
+ */
+export function fieldStyle(look: CropLook, st: FieldState): { fill: string; fillAlpha: number; outline: string; outlineAlpha: number } {
+  const fill = CROP_COLORS[look] ?? CROP_COLORS.bare;
+  if (!st.fills)
+    return { fill, fillAlpha: 0, outline: st.selected ? OUTLINE_SELECTED : OUTLINE, outlineAlpha: st.selected ? OUTLINE_ALPHA_SELECTED_FAINT : st.hovered ? OUTLINE_ALPHA_HOVER_FAINT : 0 };
   return {
-    fill: CROP_COLORS[look] ?? CROP_COLORS.bare,
-    fillAlpha: selected ? FILL_ALPHA_SELECTED : FILL_ALPHA,
-    outline: selected ? OUTLINE_SELECTED : OUTLINE,
-    outlineAlpha: selected ? 1 : OUTLINE_ALPHA,
+    fill,
+    fillAlpha: st.selected ? FILL_ALPHA_SELECTED : FILL_ALPHA,
+    outline: st.selected ? OUTLINE_SELECTED : OUTLINE,
+    outlineAlpha: st.selected ? 1 : OUTLINE_ALPHA,
   };
+}
+
+/** Plain words for the crop looks (hover label). Illustrative, not a crop map. */
+export const CROP_WORDS: Record<CropLook, string> = {
+  grass: "Grass / hay",
+  corn: "Corn",
+  cereal: "Small grain",
+  legume: "Legume (beans, peas)",
+  cover: "Cover crop",
+  berry: "Berries",
+  bare: "Bare soil",
+};
+
+/** Pure: hover label text, e.g. "Centre field · Corn (illustrative)". */
+export function fieldHoverText(f: Pick<FarmField, "id" | "name" | "crop">, cropByField?: Record<string, CropLook>): string {
+  const look = cropByField?.[f.id] ?? f.crop;
+  return `${f.name} · ${CROP_WORDS[look] ?? look} (illustrative)`;
+}
+
+/** Pure: mean of the ring's vertices (label anchor; inside for the convex-ish fields we draw). */
+export function ringCentroid(ring: readonly [number, number][]): [number, number] {
+  const n = ring.length || 1;
+  return [ring.reduce((a, p) => a + p[0], 0) / n, ring.reduce((a, p) => a + p[1], 0) / n];
 }
 
 const FIELD_PREFIX = "field:";
@@ -75,10 +109,11 @@ export type FieldLayer = {
   /** Rebuild the primitives (fields or classification changed). Async in Cesium: colours apply once ready. */
   setFields(fields: readonly FarmField[], classification: ClassificationType): void;
   /**
-   * Recolour without rebuilding (crop override or selection changed). `fillsOnCanvas`: fills drawn elsewhere
-   * (A/B split, see createFieldCanvas): the fill primitive goes fully transparent but stays pickable.
+   * Recolour without rebuilding (crop override, selection, hover or fills changed). `fills` false (default, or
+   * while the A/B split draws fills on canvases, see createFieldCanvas): the fill primitive is fully transparent
+   * but stays pickable.
    */
-  paint(cropByField: Record<string, CropLook> | undefined, selectedId: string | null | undefined, fillsOnCanvas?: boolean): void;
+  paint(cropByField: Record<string, CropLook> | undefined, selectedId: string | null | undefined, fills?: boolean, hoveredId?: string | null): void;
   /** Call every frame: applies a pending paint once the primitives are ready. Returns true if it painted. */
   flush(): boolean;
 };
@@ -87,13 +122,10 @@ export function createFieldLayer(collection: PrimitiveCollection): FieldLayer {
   let fields: readonly FarmField[] = [];
   let fill: GroundPrimitive | undefined;
   let outline: GroundPolylinePrimitive | undefined;
-  let look: { crop?: Record<string, CropLook>; selected?: string | null; hidden?: boolean } = {};
+  let look: { crop?: Record<string, CropLook>; selected?: string | null; fills?: boolean; hovered?: string | null } = {};
   let dirty = false;
 
-  const styleOf = (f: FarmField) => {
-    const s = fieldStyle(look.crop?.[f.id] ?? f.crop, f.id === look.selected);
-    return look.hidden ? { ...s, fillAlpha: 0 } : s;
-  };
+  const styleOf = (f: FarmField) => fieldStyle(look.crop?.[f.id] ?? f.crop, { selected: f.id === look.selected, hovered: f.id === look.hovered, fills: look.fills });
 
   return {
     setFields(next, classification) {
@@ -132,8 +164,8 @@ export function createFieldLayer(collection: PrimitiveCollection): FieldLayer {
       ) as GroundPolylinePrimitive;
       dirty = false; // built with the current look
     },
-    paint(crop, selected, hidden) {
-      look = { crop, selected, hidden };
+    paint(crop, selected, fills, hovered) {
+      look = { crop, selected, fills, hovered };
       dirty = true;
     },
     flush() {
@@ -193,7 +225,7 @@ export function createFieldCanvas(id: string) {
     const g = canvas.getContext("2d")!;
     g.clearRect(0, 0, width, height);
     for (const f of list) {
-      const st = fieldStyle(crop?.[f.id] ?? f.crop, f.id === selected);
+      const st = fieldStyle(crop?.[f.id] ?? f.crop, { selected: f.id === selected, fills: true });
       g.globalAlpha = st.fillAlpha;
       g.fillStyle = st.fill;
       g.beginPath();

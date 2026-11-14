@@ -2,7 +2,20 @@
 import { type ReactNode, useId } from "react";
 
 import type { CropLook } from "@/components/globe/types";
+import { type TwinConfig, twinConfig } from "@/lib/farms";
+import { useAppStore } from "@/lib/store";
 import { CROP_LABELS, MONTHS } from "@/lib/twin/rotations";
+
+/** The current farm's twin. Only call inside the twin workspace (GlobeHome renders it only for twin farms). */
+export function useTwin(): TwinConfig {
+  const farmId = useAppStore((s) => s.farmId);
+  const twin = twinConfig(farmId);
+  if (!twin) throw new Error(`No twin config for farm "${farmId}"`);
+  return twin;
+}
+
+/** Regional crop names of the current farm, or the generic ones outside a twin. */
+export const useCropLabels = () => twinConfig(useAppStore((s) => s.farmId))?.cropLabels ?? CROP_LABELS;
 
 /** UI swatch colours for the crop legend and cover calendars (the 3D look is drawn by Globe.tsx). */
 export const CROP_COLOR: Record<CropLook, string> = {
@@ -16,10 +29,11 @@ export const CROP_COLOR: Record<CropLook, string> = {
 };
 
 export function CropSwatch({ crop }: { crop: CropLook }) {
+  const labels = useCropLabels();
   return (
     <span className="inline-flex items-center gap-1.5">
       <span aria-hidden className="size-3 rounded-sm ring-1 ring-white/20" style={{ background: CROP_COLOR[crop] }} />
-      {CROP_LABELS[crop]}
+      {labels[crop]}
     </span>
   );
 }
@@ -64,6 +78,7 @@ export function Panel({ title, open, onToggle, className = "", children, footer 
  * on top; with `onPickMonth` they are buttons that pick the month shown on the fields.
  */
 export function CoverCalendar({ rows, month, onPickMonth, activeRow }: { rows: { label: string; months: CropLook[] }[]; month?: number; onPickMonth?(m: number): void; activeRow?: number }) {
+  const labels = useCropLabels();
   const grid = "grid grid-cols-[4.5rem_repeat(12,minmax(0,1fr))] items-center gap-px";
   return (
     <div className="grid gap-0.5 text-[0.65rem]">
@@ -87,7 +102,7 @@ export function CoverCalendar({ rows, month, onPickMonth, activeRow }: { rows: {
           {r.months.map((c, m) => (
             <span
               key={m}
-              title={`${r.label}, ${MONTHS[m]}: ${CROP_LABELS[c]}`}
+              title={`${r.label}, ${MONTHS[m]}: ${labels[c]}`}
               className={`h-3 rounded-[2px] ${c === "bare" ? "outline outline-1 -outline-offset-1 outline-amber-300" : ""} ${m === month && ri === activeRow ? "ring-2 ring-white" : ""}`}
               style={{ background: CROP_COLOR[c] }}
             />

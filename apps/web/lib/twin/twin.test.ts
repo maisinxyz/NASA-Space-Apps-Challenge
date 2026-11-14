@@ -1,51 +1,45 @@
 import { describe, expect, it } from "vitest";
 
-import { AGASSIZ_FIELDS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "./agassiz";
-import { bareMonths, cropsForSeason, DEFAULT_WEIGHTS, explainRanking, PRIORITIES, PRIORITY_LABELS, rankRotations, ROTATIONS, vsBaseline } from "./rotations";
+import { bareMonths, cropsForSeason, DEFAULT_WEIGHTS, explainRanking, PRIORITIES, PRIORITY_LABELS, rankRotations, ROTATION_SETS, rotationById, type TwinRotation, vsBaseline } from "./rotations";
 import { SCENARIOS } from "./scenario";
 
 const even = { water: 1, erosion: 1, soilCover: 1, income: 1 };
+const SETS = Object.entries(ROTATION_SETS);
 
-describe("agassiz twin data", () => {
-  it("has 2–3 valid fields", () => {
-    expect(AGASSIZ_FIELDS.length).toBeGreaterThanOrEqual(2);
-    expect(AGASSIZ_FIELDS.length).toBeLessThanOrEqual(3);
-    expect(new Set(AGASSIZ_FIELDS.map((f) => f.id)).size).toBe(AGASSIZ_FIELDS.length);
-    for (const f of AGASSIZ_FIELDS) {
-      expect(f.ring.length).toBeGreaterThanOrEqual(3);
-      expect(f.areaHa).toBeGreaterThan(0);
-    }
-    for (const id of Object.keys(ROTATING_FIELDS)) expect(AGASSIZ_FIELDS.some((f) => f.id === id)).toBe(true);
-  });
-
-  it("keeps every field fully inside a roughly square simulation area", () => {
-    const [w, so, e, n] = AGASSIZ_SIM_BBOX;
-    for (const f of AGASSIZ_FIELDS) for (const [lon, lat] of f.ring) {
-      expect(lon).toBeGreaterThan(w);
-      expect(lon).toBeLessThan(e);
-      expect(lat).toBeGreaterThan(so);
-      expect(lat).toBeLessThan(n);
-    }
-    const heightM = (n - so) * 111320;
-    const widthM = (e - w) * 111320 * Math.cos((((n + so) / 2) * Math.PI) / 180);
-    expect(widthM / heightM).toBeGreaterThan(0.97);
-    expect(widthM / heightM).toBeLessThan(1.03);
-    expect(heightM).toBeGreaterThan(1000);
-    expect(heightM).toBeLessThan(1500);
-  });
-
-  it("has exactly three rotations, one existing, each complete", () => {
-    expect(ROTATIONS).toHaveLength(3);
-    expect(ROTATIONS.filter((r) => r.isExisting)).toHaveLength(1);
-    for (const r of ROTATIONS) {
+describe.each(SETS)("rotation set %s", (_, rotations) => {
+  it("has exactly three rotations: existing baseline, cover, and one more, each complete", () => {
+    expect(rotations).toHaveLength(3);
+    expect(rotations.map((r) => r.id).slice(0, 2)).toEqual(["rot_existing", "rot_cover"]);
+    expect(rotations.filter((r) => r.isExisting).map((r) => r.id)).toEqual(["rot_existing"]);
+    expect(new Set(rotations.map((r) => r.id)).size).toBe(3);
+    for (const r of rotations) {
       expect(r.id).toMatch(/^rot_[A-Za-z0-9_-]+$/);
       expect(r.card.rotation_id).toBe(r.id);
       for (const y of r.years) expect(y).toHaveLength(12);
       for (const p of PRIORITIES) expect(r.scores[p]).toBeGreaterThanOrEqual(1);
+      for (const p of PRIORITIES) expect(r.scores[p]).toBeLessThanOrEqual(5);
       for (const k of ["evidence", "benefits", "information_gaps", "risks_for_local_review"] as const) expect(r.card[k].length).toBeGreaterThan(0);
     }
   });
 
+  it("rates the cover-crop rotation as less bare than the existing one", () => {
+    const share = (id: string) => bareMonths(rotationById(rotations, id)!).share;
+    expect(share("rot_cover")).toBeLessThan(share("rot_existing"));
+  });
+
+  it("with the default equal weights, does not put the baseline first and explains in one sentence", () => {
+    const ranked = rankRotations(rotations, DEFAULT_WEIGHTS);
+    expect(ranked[0].rotation.isExisting).toBe(false);
+    const s = explainRanking(ranked, DEFAULT_WEIGHTS);
+    expect(s.split(". ")).toHaveLength(1);
+    expect(s.startsWith(ranked[0].rotation.name)).toBe(true);
+  });
+});
+
+describe("rotation data", () => {
+  it("has a regional set for New York dairy and Maryland grain", () => {
+    expect(Object.keys(ROTATION_SETS).sort()).toEqual(["md-grain", "ny-dairy"]);
+  });
   it("has no climate scenario until real data exists", () => {
     expect(SCENARIOS).toHaveLength(0);
   });
@@ -57,10 +51,6 @@ describe("bareMonths", () => {
     expect(b.perYear).toEqual([2, 12]);
     expect(b.total).toBe(14);
     expect(b.share).toBeCloseTo(14 / 24);
-  });
-  it("rates the cover-crop rotation as the least bare", () => {
-    const [existing, cover] = ROTATIONS.map((r) => bareMonths(r).share);
-    expect(cover).toBeLessThan(existing);
   });
 });
 
@@ -82,7 +72,8 @@ describe("rankRotations", () => {
 
 describe("cropsForSeason", () => {
   it("rotates only rotating fields, offset by phase", () => {
-    const fields = AGASSIZ_FIELDS.slice(0, 2).map((f, i) => ({ ...f, id: `x${i}`, crop: "berry" as const }));
+    const ring: [number, number][] = [[0, 0], [1, 0], [1, 1]];
+    const fields = [0, 1].map((i) => ({ id: `x${i}`, name: `X${i}`, ring, areaHa: 1, crop: "berry" as const }));
     const r = { years: [Array(12).fill("corn"), Array(12).fill("cereal")] };
     expect(cropsForSeason(fields, { x0: 1 }, r, 0, 6)).toEqual({ x0: "cereal", x1: "berry" });
     expect(cropsForSeason(fields, { x0: 1 }, r, 1, 6)).toEqual({ x0: "corn", x1: "berry" });
@@ -98,7 +89,7 @@ describe("vsBaseline", () => {
 });
 
 describe("explainRanking", () => {
-  const rot = (name: string, scores: Record<string, number>, isExisting = false) => ({ name, isExisting, scores: scores as (typeof ROTATIONS)[number]["scores"] });
+  const rot = (name: string, scores: Record<string, number>, isExisting = false) => ({ name, isExisting, scores: scores as TwinRotation["scores"] });
   const A = rot("Alpha", { water: 1, erosion: 1, soilCover: 1, income: 5 }, true);
   const B = rot("Beta", { water: 5, erosion: 4, soilCover: 2, income: 1 });
 
@@ -117,12 +108,6 @@ describe("explainRanking", () => {
     expect(explainRanking(rankRotations([A, B], tie), tie)).toBe("Alpha and Beta tie on your priorities; Alpha is listed first only because it is the existing rotation.");
     const zero = { water: 0, erosion: 0, soilCover: 0, income: 0 };
     expect(explainRanking(rankRotations([A, B], zero), zero)).toMatch(/^All priorities are set to 0/);
-  });
-
-  it("with the default equal weights, gives one sentence for the real rotations", () => {
-    const s = explainRanking(rankRotations(ROTATIONS, DEFAULT_WEIGHTS), DEFAULT_WEIGHTS);
-    expect(s.split(". ")).toHaveLength(1);
-    expect(s.startsWith(ROTATIONS[1].name)).toBe(true);
   });
 
   it("uses the renamed economic label", () => {

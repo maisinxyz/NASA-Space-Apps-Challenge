@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CropLook } from "@/components/globe/types";
 
-import { CROP_COLORS, fieldIdFromPick, fieldsBbox, fieldStyle, lonLatToPx, planOverlays, sideValue, splitSides } from "./twin";
+import { CROP_COLORS, CROP_WORDS, fieldHoverText, fieldIdFromPick, fieldsBbox, fieldStyle, lonLatToPx, planOverlays, ringCentroid, sideValue, splitSides } from "./twin";
 
 describe("splitSides", () => {
   it("draws A everywhere and B nowhere without a comparison", () => {
@@ -30,15 +30,37 @@ describe("fieldsBbox", () => {
 describe("fieldStyle", () => {
   it("gives every crop look its own colour", () => {
     const looks = Object.keys(CROP_COLORS) as CropLook[];
-    expect(new Set(looks.map((l) => fieldStyle(l, false).fill)).size).toBe(looks.length);
+    expect(new Set(looks.map((l) => fieldStyle(l, { fills: true }).fill)).size).toBe(looks.length);
   });
-  it("highlights the selected field", () => {
-    const a = fieldStyle("corn", false);
-    const b = fieldStyle("corn", true);
+  it("is invisible by default: no fill, faint edge only when selected or hovered", () => {
+    const plain = fieldStyle("corn", {});
+    const hover = fieldStyle("corn", { hovered: true });
+    const sel = fieldStyle("corn", { selected: true, hovered: true });
+    expect([plain.fillAlpha, hover.fillAlpha, sel.fillAlpha]).toEqual([0, 0, 0]);
+    expect(plain.outlineAlpha).toBe(0);
+    expect(hover.outlineAlpha).toBeGreaterThan(0);
+    expect(sel.outlineAlpha).toBeGreaterThan(hover.outlineAlpha);
+    expect(sel.outlineAlpha).toBeLessThan(1); // faint
+  });
+  it("highlights the selected field when fills are on", () => {
+    const a = fieldStyle("corn", { fills: true });
+    const b = fieldStyle("corn", { selected: true, fills: true });
     expect(b.fill).toBe(a.fill);
     expect(b.fillAlpha).toBeGreaterThan(a.fillAlpha);
     expect(b.outline).not.toBe(a.outline);
     expect(a.fillAlpha).toBeLessThan(1); // semi-transparent: the imagery shows through
+  });
+});
+
+describe("hover label", () => {
+  const f = { id: "f1", name: "Centre field", crop: "corn" as const };
+  it("names the field and its illustrative crop, honouring cropByField", () => {
+    expect(fieldHoverText(f)).toBe("Centre field · Corn (illustrative)");
+    expect(fieldHoverText(f, { f1: "cover" })).toBe(`Centre field · ${CROP_WORDS.cover} (illustrative)`);
+    expect(Object.keys(CROP_WORDS).sort()).toEqual(Object.keys(CROP_COLORS).sort());
+  });
+  it("anchors at the ring centroid", () => {
+    expect(ringCentroid([[0, 0], [2, 0], [2, 2], [0, 2]])).toEqual([1, 1]);
   });
 });
 

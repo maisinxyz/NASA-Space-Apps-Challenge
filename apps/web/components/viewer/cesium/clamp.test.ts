@@ -13,6 +13,7 @@ import {
   MIN_RANGE_M,
   offsetM,
   orbitFromCamera,
+  startFraming,
 } from "./clamp";
 
 const bbox: [number, number, number, number] = [-121.765, 49.238, -121.755, 49.246];
@@ -86,6 +87,29 @@ describe("clampOrbit", () => {
   it("tilts down to keep the camera above the ground floor", () => {
     const o = clampOrbit({ heading: 0, pitch: MAX_PITCH_RAD, range: 200 }, 100);
     expect(200 * Math.sin(-o.pitch)).toBeGreaterThanOrEqual(100 - 1e-9);
+  });
+});
+
+describe("startFraming", () => {
+  const box = boxOfBbox(bbox); // ~730 x 890 m
+  it("defaults to the box centre, -30 deg, 0.45 x side within 400-600 m", () => {
+    const f = startFraming(box);
+    expect(f.target).toEqual({ lon: box.lon, lat: box.lat });
+    expect(f.o.pitch).toBeCloseTo(-Math.PI / 6, 9);
+    expect(f.o.range).toBeCloseTo(Math.max(400, Math.min(600, 0.9 * Math.max(box.halfX, box.halfY))), 6);
+  });
+  it("honours Farm.framing (degrees -> radians) and keeps the target inside the box", () => {
+    const f = startFraming(box, { lon: -121.761, lat: 49.241, rangeM: 400, pitchDeg: -30, headingDeg: 90 });
+    expect(f.target).toEqual({ lon: expect.closeTo(-121.761, 9), lat: expect.closeTo(49.241, 9) });
+    expect(f.o).toEqual({ heading: expect.closeTo(Math.PI / 2, 9), pitch: expect.closeTo(-Math.PI / 6, 9), range: 400 });
+    const out = startFraming(box, { lon: -120, lat: 49.241, rangeM: 400, pitchDeg: -30 });
+    expect(offsetM(out.target, box).x).toBeCloseTo(box.halfX, 6);
+  });
+  it("applies minRangeM to the framing and to clampOrbit", () => {
+    expect(startFraming(box, { lon: box.lon, lat: box.lat, rangeM: 200, pitchDeg: -30 }, 250).o.range).toBe(250);
+    expect(clampOrbit({ heading: 0, pitch: -0.5, range: 180 }, 0, 250).range).toBe(250);
+    expect(clampOrbit({ heading: 0, pitch: -0.5, range: 180 }).range).toBe(180);
+    expect(clampOrbit({ heading: 0, pitch: -0.5, range: 100 }, 0, 1e5).range).toBe(MAX_RANGE_M);
   });
 });
 

@@ -17,6 +17,7 @@ import {
   HeadingPitchRange,
   HeightReference,
   JulianDate,
+  LabelCollection,
   LabelStyle,
   Math as CesiumMath,
   Matrix4,
@@ -43,6 +44,7 @@ import {
   offsetM,
   type Orbit,
   orbitFromCamera,
+  startFraming,
 } from "@/components/viewer/cesium/clamp";
 import { activeLook, createLookLayer, type LookLayer } from "@/components/viewer/cesium/look";
 import { createViewer, type LoadedTier, loadTier, pickSurface, progressToReport, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
@@ -52,8 +54,10 @@ import {
   createOverlayLayer,
   createSquareOutline,
   type FieldLayer,
+  fieldHoverText,
   fieldIdFromPick,
   type OverlayLayer,
+  ringCentroid,
   splitSides,
   SQUARE_RAISE_M,
   type SquareOutline,
@@ -66,14 +70,7 @@ import type { CameraState, Farm, GlobeHandle, GlobeProps, TileTier } from "./typ
 const GLOBE_HEIGHT_M = 2.0e7;
 /** Continental-scale view used when a pin is selected in globe view, metres. */
 const CONTINENT_HEIGHT_M = 7.0e6;
-/**
- * Orbit framing after the fly-in: low and oblique so barns, trees and relief read as 3D (Google's rural mesh is
- * coarse; from far above at -45 deg it looks like a photo). Range = 0.45 x the square's longer side, kept in 400-600 m.
- */
-const FRAME_RANGE_PER_SIDE = 0.45;
-const FRAME_RANGE_MIN_M = 400;
-const FRAME_RANGE_MAX_M = 600;
-const FARM_PITCH_RAD = CesiumMath.toRadians(30);
+// Orbit framing after the fly-in: Farm.framing, else clamp.ts startFraming's default (-30 deg, 400-600 m).
 /** Drag sensitivity, radians per pixel; wheel zoom is exponential in deltaY. */
 const ORBIT_RAD_PER_PX = 0.005;
 const WHEEL_ZOOM_PER_DELTA = 0.0015;
@@ -116,6 +113,9 @@ type Runtime = {
   /** Terrain height at the farm centre from the fly-in's terrain sample (not roofs/trees), metres. */
   terrainGround: number | undefined;
   fields: FieldLayer;
+  /** Field under the cursor (farm view) and its floating name/crop label. */
+  hoverField: string | null;
+  fieldLabel: LabelCollection;
   /** Overlays of A (whole screen, or left of the divider when comparing) and of B (right of the divider only). */
   overlays: OverlayLayer;
   overlaysB: OverlayLayer;
@@ -142,6 +142,51 @@ type Runtime = {
  */
 function syncOutline(r: Runtime, p: GlobeProps, surface: Surface) {
   r.outline.set(p.simBbox, classificationFor(surface), surface === "google" ? (r.terrainGround ?? r.farmGround ?? 0) + SQUARE_RAISE_M : undefined);
+  r.viewer.scene.requestRender();
+}
+
+/** Field look: invisible unless showCropFills (and not comparing: the split draws fills on canvases), faint edge on hover/selection. */
+function repaintFields(r: Runtime, p: GlobeProps) {
+  r.fields.paint(p.cropByField, p.selectedFieldId, !!p.showCropFills && !p.compare, r.hoverField);
+}
+
+/**
+ * Hover label at the field's centroid (just above the ground, never hidden by tiles): "<name> · <crop> (illustrative)".
+ * In the A/B split the crop is the one of the side under the cursor (`xFrac` = cursor x / canvas width).
+ */
+function setFieldHover(r: Runtime, p: GlobeProps, id: string | null, xFrac: number) {
+  const f = id ? p.fields?.find((x) => x.id === id) : undefined;
+  const crop = p.compare && xFrac > p.compare.divider ? p.compare.right.cropByField : p.cropByField;
+  const text = f ? fieldHoverText(f, crop) : "";
+  const changed = id !== r.hoverField;
+  r.hoverField = f ? id : null;
+  if (changed) repaintFields(r, p);
+  const label = r.fieldLabel.length ? r.fieldLabel.get(0) : null;
+  if (!f) {
+    if (label?.show) {
+      label.show = false;
+      r.viewer.scene.requestRender();
+    }
+    return;
+  }
+  const [lon, lat] = ringCentroid(f.ring);
+  const ground = r.tier?.groundAt(Cartographic.fromDegrees(lon, lat)) ?? r.terrainGround ?? 0;
+  const position = Cartesian3.fromDegrees(lon, lat, ground + 3);
+  if (label) Object.assign(label, { show: true, text, position });
+  else
+    r.fieldLabel.add({
+      position,
+      text,
+      font: "600 13px system-ui, sans-serif",
+      style: LabelStyle.FILL,
+      fillColor: Color.WHITE,
+      showBackground: true,
+      backgroundColor: Color.fromCssColorString("#10201e").withAlpha(0.82), // dark glass, same as pin labels
+      backgroundPadding: new Cartesian2(9, 6),
+      verticalOrigin: VerticalOrigin.BOTTOM,
+      pixelOffset: new Cartesian2(0, -8),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    });
   r.viewer.scene.requestRender();
 }
 
@@ -242,7 +287,7 @@ function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
   const box = boxOf(p, farm);
   s.target = fromOffsetM(box, clampTarget(offsetM(s.target, box), box));
   // The camera must stay MIN_HEIGHT_ABOVE_GROUND_M over the ground under it (last frame's value): tilt downward if needed.
-  s.o = clampOrbit(s.o, s.camGround + MIN_HEIGHT_ABOVE_GROUND_M - s.ground);
+  s.o = clampOrbit(s.o, s.camGround + MIN_HEIGHT_ABOVE_GROUND_M - s.ground, farm.minRangeM);
   const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(s.target.lon, s.target.lat, s.ground));
   r.viewer.camera.lookAtTransform(frame, new HeadingPitchRange(s.o.heading, s.o.pitch, s.o.range));
   s.dirty = false;
@@ -252,11 +297,7 @@ function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
 function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
   leaveOrbit(r);
   const { seq, done } = startFlight(r);
-  const box = boxOf(p, farm);
-  const centre: LonLat = { lon: box.lon, lat: box.lat };
-  const side = 2 * Math.max(box.halfX, box.halfY);
-  const range = Math.min(FRAME_RANGE_MAX_M, Math.max(FRAME_RANGE_MIN_M, side * FRAME_RANGE_PER_SIDE));
-  const framing = clampOrbit({ heading: 0, pitch: -FARM_PITCH_RAD, range });
+  const { target: centre, o: framing } = startFraming(boxOf(p, farm), farm.framing, farm.minRangeM);
   let ground = r.farmGround ?? 0;
   // Landing = the orbit framing, exactly where a completed flight ends. It also runs when the flight is cancelled
   // without being superseded, and from the per-frame watchdog if the flight never finishes, so "Open twin" always
@@ -374,6 +415,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const overlaysCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const overlaysBCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const outlineCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
+    const fieldLabel = twinLayers.add(new LabelCollection()) as LabelCollection;
     const r: Runtime = {
       viewer,
       tier: null,
@@ -385,6 +427,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       farmGround: undefined,
       terrainGround: undefined,
       fields: createFieldLayer(fieldsCol),
+      hoverField: null,
+      fieldLabel,
       overlays: createOverlayLayer(overlaysCol),
       overlaysB: createOverlayLayer(overlaysBCol),
       fieldCanvasA: createFieldCanvas("ft-fields-a"),
@@ -459,7 +503,9 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       lastHoverPick = t;
       const picked: unknown = scene.pick(e.endPosition);
       const id = pinOf(picked);
-      canvas.style.cursor = id || (inFarm() && live.current.onSelectField && fieldIdFromPick(picked)) ? "pointer" : "";
+      const fieldId = inFarm() ? fieldIdFromPick(picked) : null;
+      if (fieldId !== r.hoverField || fieldId) setFieldHover(r, live.current, fieldId, e.endPosition.x / Math.max(1, canvas.clientWidth));
+      canvas.style.cursor = id || (live.current.onSelectField && fieldId) ? "pointer" : "";
       if (id === r.hoverId) return;
       r.hoverId = id;
       stylePins(r, live.current.selectedId);
@@ -521,6 +567,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       st.o = { ...st.o, range: st.o.range * Math.exp(e.deltaY * WHEEL_ZOOM_PER_DELTA) };
       applyOrbit(r, live.current, farm);
     };
+    const onLeave = () => setFieldHover(r, live.current, null, 0);
     const noMenu = (e: Event) => {
       if (live.current.view === "farm") e.preventDefault();
     };
@@ -530,6 +577,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     canvas.addEventListener("pointercancel", onUp);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("contextmenu", noMenu);
+    canvas.addEventListener("pointerleave", onLeave);
 
     // Per-frame work. preUpdate fires every animation frame even in requestRenderMode; moving the camera
     // makes Cesium render, so an idle globe costs nothing.
@@ -564,8 +612,9 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         const cls = classificationFor(r.tier.surface);
         const sides = splitSides(p.compare);
         const right = p.compare?.right;
-        const fieldsA = right ? r.fieldCanvasA(p.fields ?? [], p.cropByField, p.selectedFieldId) : null;
-        const fieldsB = right ? r.fieldCanvasB(p.fields ?? [], right.cropByField, p.selectedFieldId) : null;
+        const fills = right && p.showCropFills; // split fills only on request (user choice: imagery stays visible)
+        const fieldsA = fills ? r.fieldCanvasA(p.fields ?? [], p.cropByField, p.selectedFieldId) : null;
+        const fieldsB = fills ? r.fieldCanvasB(p.fields ?? [], right.cropByField, p.selectedFieldId) : null;
         const ovA = fieldsA ? [fieldsA, ...(p.overlays ?? [])] : (p.overlays ?? []);
         const ovB = right ? (fieldsB ? [fieldsB, ...(right.overlays ?? [])] : (right.overlays ?? [])) : [];
         if (r.overlays.sync(ovA, cls, p.overlayMask, sides.a)) scene.requestRender();
@@ -631,6 +680,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("contextmenu", noMenu);
+      canvas.removeEventListener("pointerleave", onLeave);
       for (const ev of inputs) canvas.removeEventListener(ev, stopAuto);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       rt.current = null;
@@ -728,13 +778,16 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const r = rt.current;
     if (!r || !surface) return;
     r.fields.setFields(fields ?? [], classificationFor(surface));
+    setFieldHover(r, live.current, null, 0);
     r.viewer.scene.requestRender();
   }, [fields, surface]);
-  // While comparing, the fills come from the per-side canvases (preUpdate); the fill primitive stays for picking.
+  // Fills only with showCropFills; while comparing they come from the per-side canvases (preUpdate). The fill primitive stays for picking.
   const comparing = !!props.compare;
+  const { showCropFills } = props;
   useEffect(() => {
-    rt.current?.fields.paint(cropByField, selectedFieldId, comparing);
-  }, [fields, surface, cropByField, selectedFieldId, comparing]);
+    const r = rt.current;
+    if (r) repaintFields(r, live.current);
+  }, [fields, surface, cropByField, selectedFieldId, comparing, showCropFills]);
 
   // Camera: fly in / out / to the selected pin's region.
   useEffect(() => {

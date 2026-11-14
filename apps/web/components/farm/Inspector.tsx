@@ -6,21 +6,18 @@ import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
 import { BasisChip, SourceFooter, Value } from "@/components/ui/Provenance";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { useAppStore } from "@/lib/store";
-import { ROTATING_FIELDS, SIM_AREA_LABEL } from "@/lib/twin/agassiz";
-import { bareMonths, rotationById, ROTATIONS } from "@/lib/twin/rotations";
+import { bareMonths, rotationById } from "@/lib/twin/rotations";
 import { SCENARIOS } from "@/lib/twin/scenario";
 
-import { CoverCalendar, CropSwatch } from "./shared";
-
-/** OSM base timestamp of the field-outline download (lib/twin/agassiz.ts). */
-const OSM_DATE = "2026-11-13";
+import { CoverCalendar, CropSwatch, useTwin } from "./shared";
 
 export const EVIDENCE_NOTE = "Decision support, not agronomic advice: talk to a local agronomist or adviser before changing a rotation.";
 
 export function FieldCard({ field, cropA, cropB }: { field: FarmField; cropA: CropLook; cropB?: CropLook }) {
   const compareA = useAppStore((s) => s.compareA);
-  const rotation = rotationById(compareA)!;
-  const phase = ROTATING_FIELDS[field.id];
+  const twin = useTwin();
+  const rotation = rotationById(twin.rotations, compareA)!;
+  const phase = twin.phases[field.id];
   // Rows start at this field's own stage: fields in rotation are staggered by `phase` years.
   const rows =
     phase === undefined
@@ -33,7 +30,7 @@ export function FieldCard({ field, cropA, cropB }: { field: FarmField; cropA: Cr
       <dl className="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1.5">
         <dt className="text-ink-muted">Area</dt>
         <dd>
-          <Value value={field.areaHa} meta={{ basis: "derived", unit: "ha", sourceId: "osm", observedAt: OSM_DATE, spatialResolution: "volunteer-mapped outline", qualityNote: "Flat-map estimate of the mapped outline; the managed field may differ." }} />
+          <Value value={field.areaHa} meta={{ basis: "derived", unit: "ha", sourceId: twin.outlineSource, observedAt: twin.outlineDate, spatialResolution: "approximate outline", qualityNote: "Flat-map estimate of the outline; the managed field may differ." }} />
         </dd>
         <dt className="text-ink-muted">{cropB ? "Crop shown, A" : "Crop shown"}</dt>
         <dd className="flex flex-wrap items-center gap-1.5">
@@ -66,15 +63,16 @@ export function FieldCard({ field, cropA, cropB }: { field: FarmField; cropA: Cr
       ) : (
         <p className="text-xs text-ink-muted">Perennial: this field keeps the same cover every year and does not follow the rotation.</p>
       )}
-      <SourceFooter ids={["osm", "illustrativeCrops", ...(rows.length ? (["rotationCalendar"] as const) : [])]} />
+      <SourceFooter ids={[twin.outlineSource, "illustrativeCrops", ...(rows.length ? (["rotationCalendar"] as const) : [])]} />
     </div>
   );
 }
 
 export function ExploreBody({ farm, fieldCount }: { farm: Farm; fieldCount: number }) {
+  const { simAreaLabel } = useTwin();
   return (
     <div className="grid gap-2 text-sm">
-      <p>Click a field on the map, or pick one under Fields &amp; layers, to inspect it.</p>
+      <p>Hover a field to see its name and crop. Click it, or pick one under Fields &amp; layers, to inspect it.</p>
       <dl className="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1 text-xs">
         <dt className="text-ink-muted">Farm</dt>
         <dd>
@@ -83,7 +81,7 @@ export function ExploreBody({ farm, fieldCount }: { farm: Farm; fieldCount: numb
         <dt className="text-ink-muted">Fields</dt>
         <dd>{fieldCount} shown</dd>
         <dt className="text-ink-muted">Model area</dt>
-        <dd>{SIM_AREA_LABEL}; the thin outline on the map marks where simulation layers apply.</dd>
+        <dd>{simAreaLabel}; the thin outline on the map marks where simulation layers apply.</dd>
       </dl>
       <p className="text-xs text-ink-muted">Keys: 1–4 modes · H hide panels · R reset · Esc close.</p>
     </div>
@@ -103,12 +101,13 @@ export function SimulateBody() {
 }
 
 export function EvidenceBody() {
+  const { rotations } = useTwin();
   return (
     <div className="grid gap-3">
       <p role="note" className="sticky top-0 z-10 rounded-md border border-amber-300/50 bg-[#2a2210] px-2 py-1.5 text-xs">
         {EVIDENCE_NOTE}
       </p>
-      {ROTATIONS.map((r) => (
+      {rotations.map((r) => (
         <EvidenceCardView key={r.id} card={r.card} name={r.isExisting ? `Existing rotation: ${r.name}` : r.name} />
       ))}
       <p className="text-xs text-ink-muted">{SUPPORT_SENTENCE}</p>

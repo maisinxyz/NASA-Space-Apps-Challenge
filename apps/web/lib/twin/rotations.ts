@@ -1,9 +1,9 @@
-// Agassiz twin: the three rotations to compare, and the pure logic behind the Compare screen.
-// IDs reuse the contract's rotation fixtures (packages/contracts/fixtures/rotations/terr_mock_hills.json):
-// rot_existing, rot_cover, rot_forage. Crop timing follows the season windows in packages/contracts/fixtures/crops.json
-// (corn planted ~mid-May, harvested ~mid-Sep; winter wheat sown ~early Oct, harvested ~late Jul; rye cover sown
-// after harvest, ended ~end of Apr). Those windows are marked `to_verify` in the fixture.
-// TODO(verify): Fraser Valley planting/harvest months with a local agronomist or BC Ministry of Agriculture guides.
+// Twin rotations: the regional rotation sets each twin farm compares, and the pure logic behind the Compare screen.
+// A farm's config (lib/farms/<id>.ts) names its set by `rotationSet`. Every set has exactly three rotations, ids
+// rot_existing (baseline), rot_cover, and one regional third option, so the store's defaults work for every farm.
+// Crop months are typical regional season windows, not observed on these fields. Scores are team assumptions
+// (1 weak .. 5 strong), relative within one set only. No yields, profits or soil-loss figures.
+// TODO(verify): planting/harvest months with Cornell Cooperative Extension (NY) and University of Maryland Extension (MD).
 import type { CropLook, FarmField } from "@/components/globe/types";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import type { EvidenceCard } from "@/lib/api/types";
@@ -28,12 +28,13 @@ export const PRIORITIES_NOTE = "Priorities change how options are ranked; they d
 
 export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
+/** Generic crop names; each farm's config gives its own regional names for the same looks (lib/farms/<id>.ts). */
 export const CROP_LABELS: Record<CropLook, string> = {
-  grass: "Grass / forage",
-  corn: "Silage corn",
-  cereal: "Winter wheat",
-  legume: "Alfalfa (legume)",
-  cover: "Cereal rye cover crop",
+  grass: "Grass / pasture",
+  corn: "Corn",
+  cereal: "Small grain",
+  legume: "Legume",
+  cover: "Cover crop",
   berry: "Berries",
   bare: "Bare soil",
 };
@@ -44,79 +45,159 @@ export type TwinRotation = {
   isExisting: boolean;
   /** One row per rotation year, 12 months each (Jan–Dec): what covers the ground that month. */
   years: CropLook[][];
-  /** 1 (weak) to 5 (strong). Our assumption, relative between these three only. */
+  /** 1 (weak) to 5 (strong). Our assumption, relative between the three rotations of one set only. */
   scores: Record<Priority, number>;
   card: EvidenceCard;
 };
 
 const B = "bare";
+const C = "corn";
+const G = "cereal";
+const L = "legume";
+const V = "cover";
 // Shared evidence lines: general agronomy principles, no site measurements yet.
 const COVER_PRINCIPLE = "General soil-conservation principle: living plants and residue protect the soil surface from raindrop impact and slow runoff, so fewer bare months usually means less erosion risk.";
 const ROOTS_PRINCIPLE = "Soil-health principles promoted by USDA NRCS include keeping the soil covered and keeping living roots in the ground as long as possible."; // TODO(verify): wording against an NRCS soil-health page.
-const WET_WINTER = "Coastal BC has its wettest months in late autumn and winter, so bare soil in that period is the main concern."; // TODO(verify): check against NASA POWER monthly precipitation for Agassiz (card C6).
+const LEGUME_PRINCIPLE = "Legumes such as alfalfa and soybean fix nitrogen from the air through root nodules, which can reduce the nitrogen needed by the following crop.";
+const NY_SPRING = "In upstate New York, snowmelt and spring rain on thawing, bare soil is a common time for runoff and soil loss."; // TODO(verify): check against NASA POWER monthly precipitation for Harford, NY.
+const MD_RAIN = "Central Maryland gets rain in every season, so soil left bare over winter and early spring is exposed to it."; // TODO(verify): check against NASA POWER monthly precipitation for Beltsville, MD.
+const NO_RECORDS = "Real crops and dates on this farm are not public: this sequence is illustrative.";
+const NO_SITE_DATA = "No measured soil, drainage or slope data for these fields.";
 
-export const ROTATIONS: TwinRotation[] = [
+/**
+ * Upstate New York dairy (Cornell Ruminant Center, Harford NY). Corn silage ~mid-May to ~mid-Sep, winter rye cover
+ * sown after silage harvest, oats as a nurse crop for alfalfa–grass hay.
+ */
+const NY_DAIRY: TwinRotation[] = [
   {
     id: "rot_existing",
-    name: "Silage corn / winter wheat",
+    name: "Corn silage, two years",
     isExisting: true,
     years: [
-      [B, B, B, B, B, "corn", "corn", "corn", "corn", B, "cereal", "cereal"],
-      ["cereal", "cereal", "cereal", "cereal", "cereal", "cereal", "cereal", B, B, B, B, B],
+      [B, B, B, B, B, C, C, C, C, B, B, B],
+      [B, B, B, B, B, C, C, C, C, B, B, B],
     ],
-    scores: { water: 2, erosion: 2, soilCover: 2, income: 4 },
+    scores: { water: 2, erosion: 1, soilCover: 1, income: 4 },
     card: {
       rotation_id: "rot_existing",
       why_suggested: "This is the illustrative current rotation: the baseline the other two are compared against.",
-      evidence: [COVER_PRINCIPLE, WET_WINTER],
-      benefits: ["Familiar crops and equipment.", "Silage corn feeds a dairy or livestock system directly."],
-      information_gaps: ["Real crops and dates on this farm are not public: this sequence is illustrative.", "No measured soil, drainage or yield data for these fields."],
-      risks_for_local_review: ["Long bare spells after corn harvest and after wheat harvest, overlapping the wet season.", "Nutrients left after corn may be lost over a wet winter without a cover crop."],
+      evidence: [COVER_PRINCIPLE, NY_SPRING],
+      benefits: ["Simple: one crop and one set of equipment.", "Corn silage feeds the dairy herd directly."],
+      information_gaps: [NO_RECORDS, NO_SITE_DATA],
+      risks_for_local_review: ["Silage harvest removes almost all residue, so the soil is bare from autumn to late spring.", "Bare soil during snowmelt and spring rain."],
       support_not_replace: SUPPORT_SENTENCE,
     },
   },
   {
     id: "rot_cover",
-    name: "Silage corn / winter wheat + rye cover",
+    name: "Corn silage + winter rye cover",
     isExisting: false,
     years: [
-      ["cover", "cover", "cover", "cover", B, "corn", "corn", "corn", "corn", B, "cereal", "cereal"],
-      ["cereal", "cereal", "cereal", "cereal", "cereal", "cereal", "cereal", B, "cover", "cover", "cover", "cover"],
+      [V, V, V, V, B, C, C, C, C, B, V, V],
+      [V, V, V, V, B, C, C, C, C, B, V, V],
     ],
-    scores: { water: 3, erosion: 4, soilCover: 5, income: 3 },
+    scores: { water: 3, erosion: 4, soilCover: 4, income: 3 },
     card: {
       rotation_id: "rot_cover",
-      why_suggested: "Keeps the same cash crops but fills the bare gap after wheat with a cereal rye cover crop that holds the soil over winter.",
-      evidence: [COVER_PRINCIPLE, ROOTS_PRINCIPLE, "Cover crops sown after harvest are a widely used practice to take up leftover nutrients before winter rain."],
-      benefits: ["Fewest bare months of the three.", "Same main crops, so little change to feed supply or equipment."],
-      information_gaps: ["Whether rye can be sown early enough after wheat harvest in a typical year here.", "Local seed cost and labour for an extra sowing and termination."],
-      risks_for_local_review: ["Rye left too long in spring can delay corn planting or tie up nitrogen.", "Extra field passes on wet soil can compact it."],
+      why_suggested: "Keeps corn silage but sows winter rye right after harvest, so living plants hold the soil over winter and through snowmelt.",
+      evidence: [COVER_PRINCIPLE, ROOTS_PRINCIPLE, "Cover crops sown after harvest are a widely used practice to take up leftover nutrients before winter."],
+      benefits: ["Far fewer bare months than the baseline.", "Same main crop, so little change to feed supply."],
+      information_gaps: ["Whether rye can be sown early enough after silage harvest in a typical year here.", "Seed cost and labour for an extra sowing and spring termination."],
+      risks_for_local_review: ["Rye left too long in spring can delay corn planting or dry out the seedbed.", "Extra field passes on wet spring soil can compact it."],
       support_not_replace: SUPPORT_SENTENCE,
     },
   },
   {
     id: "rot_forage",
-    name: "Silage corn / alfalfa / alfalfa",
+    name: "Corn silage / oats + alfalfa–grass / hay",
     isExisting: false,
     years: [
-      [B, B, B, B, B, "corn", "corn", "corn", "corn", B, B, B],
-      [B, B, B, B, "legume", "legume", "legume", "legume", "legume", "legume", "legume", "legume"],
-      Array<CropLook>(12).fill("legume"),
+      [B, B, B, B, B, C, C, C, C, B, V, V],
+      [V, V, V, B, G, G, G, L, L, L, L, L],
+      Array<CropLook>(12).fill(L),
     ],
-    scores: { water: 3, erosion: 4, soilCover: 3, income: 3 },
+    scores: { water: 3, erosion: 5, soilCover: 4, income: 3 },
     card: {
       rotation_id: "rot_forage",
-      why_suggested: "Adds a two-year perennial legume forage that fixes nitrogen and keeps living roots in the soil, while still supplying feed.",
-      evidence: [ROOTS_PRINCIPLE, "Legumes such as alfalfa fix atmospheric nitrogen through root nodules, which can reduce nitrogen needed by the following crop."],
-      benefits: ["No bare months in the third year.", "Perennial roots and less tillage can improve soil structure over time.", "Forage fits a dairy system."],
-      information_gaps: ["Field drainage: alfalfa does poorly on wet, poorly drained soils.", "Whether the farm needs the corn silage it would give up in years 2 and 3."],
-      risks_for_local_review: ["Bare soil after corn and before alfalfa establishes (autumn to spring of year 1).", "Alfalfa stand failure on wet or acidic soils."],
+      why_suggested: "Rotates corn silage into perennial alfalfa–grass hay, sown under an oat nurse crop, so living roots stay in the soil and the herd still gets forage.",
+      evidence: [ROOTS_PRINCIPLE, LEGUME_PRINCIPLE],
+      benefits: ["No bare months in the hay year.", "Perennial roots and less tillage can improve soil structure over time.", "Hay and silage both feed a dairy herd."],
+      information_gaps: ["Field drainage: alfalfa does poorly on wet, poorly drained soils.", "How much corn silage the herd needs in the years given to hay."],
+      risks_for_local_review: ["Bare soil between silage harvest and the cover crop in year 1.", "Alfalfa stand failure on wet or acidic soils."],
       support_not_replace: SUPPORT_SENTENCE,
     },
   },
 ];
 
-export const rotationById = (id: string) => ROTATIONS.find((r) => r.id === id);
+/**
+ * Mid-Atlantic grain (Beltsville, MD). Corn ~May to ~Sep, full-season soybean ~Jun to ~Oct, winter wheat sown ~Oct
+ * and harvested ~Jun, double-crop soybean after wheat ~Jul to ~Oct, cereal rye cover after harvest.
+ */
+const MD_GRAIN: TwinRotation[] = [
+  {
+    id: "rot_existing",
+    name: "Corn / soybean",
+    isExisting: true,
+    years: [
+      [B, B, B, B, C, C, C, C, C, B, B, B],
+      [B, B, B, B, B, L, L, L, L, L, B, B],
+    ],
+    scores: { water: 2, erosion: 2, soilCover: 2, income: 4 },
+    card: {
+      rotation_id: "rot_existing",
+      why_suggested: "This is the illustrative current rotation: the baseline the other two are compared against.",
+      evidence: [COVER_PRINCIPLE, MD_RAIN],
+      benefits: ["Familiar crops and equipment.", "Soybean fixes some of its own nitrogen."],
+      information_gaps: [NO_RECORDS, NO_SITE_DATA],
+      risks_for_local_review: ["Bare soil from harvest to the next planting, through winter and spring rain.", "Nutrients left after harvest may wash away over winter without a cover crop."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+  {
+    id: "rot_cover",
+    name: "Corn / soybean + rye cover",
+    isExisting: false,
+    years: [
+      [V, V, V, V, C, C, C, C, C, B, V, V],
+      [V, V, V, V, B, L, L, L, L, L, V, V],
+    ],
+    scores: { water: 3, erosion: 4, soilCover: 5, income: 3 },
+    card: {
+      rotation_id: "rot_cover",
+      why_suggested: "Keeps corn and soybean but adds a cereal rye cover crop after each harvest to hold the soil over winter.",
+      evidence: [COVER_PRINCIPLE, ROOTS_PRINCIPLE, "Cover crops sown after harvest are a widely used practice to take up leftover nutrients before winter rain."],
+      benefits: ["Fewest bare months of the three.", "Same cash crops and equipment."],
+      information_gaps: ["Whether rye can be sown early enough after soybean harvest.", "Seed cost and labour for an extra sowing and termination."],
+      risks_for_local_review: ["Rye left too long in spring can delay planting or tie up nitrogen.", "Extra field passes on wet soil can compact it."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+  {
+    id: "rot_wheat",
+    name: "Corn / wheat / double-crop soybean",
+    isExisting: false,
+    years: [
+      [B, B, B, B, C, C, C, C, C, G, G, G],
+      [G, G, G, G, G, G, L, L, L, L, B, B],
+    ],
+    scores: { water: 3, erosion: 3, soilCover: 4, income: 4 },
+    card: {
+      rotation_id: "rot_wheat",
+      why_suggested: "Sows winter wheat after corn and a second soybean crop right after the wheat harvest: three crops in two years, with the soil covered most of the time.",
+      evidence: [COVER_PRINCIPLE, LEGUME_PRINCIPLE],
+      benefits: ["Winter wheat covers the soil from autumn to early summer.", "Three harvests in two years."],
+      information_gaps: ["Whether double-crop soybean has enough season left after wheat in a typical year here.", "Local grain prices and contracts for wheat."],
+      risks_for_local_review: ["A dry summer can hurt the late-planted soybean.", "Bare soil before corn in spring of year 1 and after soybean in year 2."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+];
+
+export const ROTATION_SETS = { "ny-dairy": NY_DAIRY, "md-grain": MD_GRAIN } satisfies Record<string, TwinRotation[]>;
+export type RotationSetId = keyof typeof ROTATION_SETS;
+
+/** A rotation of the given set by id. */
+export const rotationById = (rotations: TwinRotation[], id: string) => rotations.find((r) => r.id === id);
 
 /** Months with bare soil in each rotation year, and the share of all months that are bare (0–1). Basis: derived. */
 export function bareMonths(r: Pick<TwinRotation, "years">) {

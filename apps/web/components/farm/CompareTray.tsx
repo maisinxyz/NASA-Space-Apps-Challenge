@@ -4,12 +4,12 @@
 import { type KeyboardEvent, type PointerEvent, useRef } from "react";
 
 import { useAppStore } from "@/lib/store";
-import { rotationById, ROTATIONS } from "@/lib/twin/rotations";
+import { rotationById, type TwinRotation } from "@/lib/twin/rotations";
 
-import { CoverCalendar, hudBtn, hudBtnOn, hudSelect } from "./shared";
+import { CoverCalendar, hudBtn, hudBtnOn, hudSelect, useTwin } from "./shared";
 
-const sideName = (id: string) => {
-  const r = rotationById(id);
+const sideName = (rotations: TwinRotation[], id: string) => {
+  const r = rotationById(rotations, id);
   return r ? (r.isExisting ? "Existing rotation" : r.name) : "";
 };
 
@@ -20,9 +20,10 @@ const SPLITS = [
 ];
 
 export function CompareTray({ className = "" }: { className?: string }) {
-  const { compareA, compareB, divider, twinYear, twinMonth } = useAppStore();
-  const a = rotationById(compareA)!;
-  const b = rotationById(compareB)!;
+  const { compareA, compareB, divider, twinYear, twinMonth, showCropFills } = useAppStore();
+  const { rotations } = useTwin();
+  const a = rotationById(rotations, compareA)!;
+  const b = rotationById(rotations, compareB)!;
   const years = Math.max(a.years.length, b.years.length);
   const rows = [
     ...a.years.map((months, i) => ({ label: `A · Year ${i + 1}`, months })),
@@ -43,7 +44,7 @@ export function CompareTray({ className = "" }: { className?: string }) {
             <span className="grid size-6 place-items-center rounded bg-white/15 text-xs font-bold">{i ? "B" : "A"}</span>
             <span className="sr-only">Rotation {i ? "B, right of the split" : "A, left of the split"}</span>
             <select className={`${hudSelect} max-w-[11rem]`} value={i ? compareB : compareA} onChange={(e) => pick(side, e.target.value)}>
-              {ROTATIONS.map((r) => (
+              {rotations.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.isExisting ? `Existing rotation (${r.name})` : r.name}
                 </option>
@@ -78,7 +79,11 @@ export function CompareTray({ className = "" }: { className?: string }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-        <span>Pick a month above · outlined = bare soil · fields are staggered by a year</span>
+        <label className="flex items-center gap-1.5 text-ink">
+          <input type="checkbox" checked={showCropFills} onChange={(e) => useAppStore.setState({ showCropFills: e.target.checked })} />
+          Show crops on map
+        </label>
+        <span>Crops are illustrative, not farm records. Hover a field to see its name and crop · in the calendar, outlined = bare soil · fields are staggered by a year</span>
         <label className="flex items-center gap-1.5">
           <input type="checkbox" disabled aria-describedby="diff-note" />
           Difference map:
@@ -96,6 +101,7 @@ export function CompareTray({ className = "" }: { className?: string }) {
 export function DividerHandle() {
   const divider = useAppStore((s) => s.divider);
   const { compareA, compareB } = useAppStore();
+  const { rotations } = useTwin();
   const root = useRef<HTMLDivElement>(null);
   const set = (d: number) => useAppStore.setState({ divider: Math.round(Math.min(1, Math.max(0, d)) * 1000) / 1000 });
 
@@ -119,12 +125,12 @@ export function DividerHandle() {
       <div className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white/85 shadow-[0_0_6px_#000]" style={{ left: x }} />
       {divider > 0.04 && (
         <span className="glass absolute top-28 -translate-x-[calc(100%+0.75rem)] px-2 py-0.5 text-xs font-semibold" style={{ left: x }}>
-          A · {sideName(compareA)}
+          A · {sideName(rotations, compareA)}
         </span>
       )}
       {divider < 0.96 && (
         <span className="glass absolute top-28 translate-x-3 px-2 py-0.5 text-xs font-semibold" style={{ left: x }}>
-          B · {sideName(compareB)}
+          B · {sideName(rotations, compareB)}
         </span>
       )}
       <div

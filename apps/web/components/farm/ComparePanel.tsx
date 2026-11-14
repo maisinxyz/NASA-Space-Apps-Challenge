@@ -3,9 +3,9 @@
 // baseline row, and the priority weights. The on-map A/B split and the cover calendar are in CompareTray.
 import { BasisChip, SourceFooter, Value } from "@/components/ui/Provenance";
 import { useAppStore } from "@/lib/store";
-import { bareMonths, DEFAULT_WEIGHTS, explainRanking, PRIORITIES, PRIORITIES_NOTE, PRIORITY_LABELS, type Priority, rankRotations, ROTATIONS, vsBaseline } from "@/lib/twin/rotations";
+import { bareMonths, DEFAULT_WEIGHTS, explainRanking, PRIORITIES, PRIORITIES_NOTE, PRIORITY_LABELS, type Priority, rankRotations, vsBaseline } from "@/lib/twin/rotations";
 
-import { hudBtn } from "./shared";
+import { hudBtn, useTwin } from "./shared";
 
 const WORD = { higher: "higher than existing", similar: "similar to existing", lower: "lower than existing" } as const;
 
@@ -23,8 +23,9 @@ export function ComparePanel() {
   const priorities = useAppStore((s) => s.priorities);
   const compareB = useAppStore((s) => s.compareB);
   const compareA = useAppStore((s) => s.compareA);
-  const ranked = rankRotations(ROTATIONS, priorities);
-  const baseline = ROTATIONS.find((r) => r.isExisting)!;
+  const { rotations } = useTwin();
+  const ranked = rankRotations(rotations, priorities);
+  const baseline = rotations.find((r) => r.isExisting)!;
   const rankOf = (id: string) => ranked.findIndex((x) => x.rotation.id === id) + 1;
   // Baseline pinned on top; the others in rank order. All three always shown.
   const rows = [baseline, ...ranked.map((x) => x.rotation).filter((r) => !r.isExisting)];
@@ -54,7 +55,7 @@ export function ComparePanel() {
             return (
               <li key={r.id} className={`rounded-md border p-2 ${r.isExisting ? "border-white/25 bg-white/5" : "border-white/10"}`}>
                 <div className="flex min-w-0 items-start gap-2">
-                  <span className="font-mono text-xs text-ink-muted tabular-nums" aria-label={`Ranked ${rankOf(r.id)} of ${ROTATIONS.length}`}>
+                  <span className="font-mono text-xs text-ink-muted tabular-nums" aria-label={`Ranked ${rankOf(r.id)} of ${rotations.length}`}>
                     #{rankOf(r.id)}
                   </span>
                   <p className="min-w-0 flex-1 leading-snug font-medium">

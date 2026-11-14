@@ -6,7 +6,10 @@ export type FarmTier = "twin" | "explore";
 export type Farm = {
   id: string;
   name: string;
-  /** Institution that operates the site. Public research/demonstration farms only, never private farms. */
+  /**
+   * Who operates the site. Public institutions are named; private farmland is described by area only
+   * (e.g. "Private working farmland"), never by owner (user decision for Lancaster County).
+   */
   owner: string;
   country: string;
   lon: number;
@@ -20,6 +23,13 @@ export type Farm = {
   coordsVerified: boolean;
   /** Camera is confined to this radius around the farm centre, metres. */
   radiusM: number;
+  /**
+   * Farm-view start framing (fly-in end and Reset view): orbit target, distance and angles. Defaults to the
+   * simulation-square centre (or the farm point) at the renderer's standard range/pitch when omitted.
+   */
+  framing?: { lon: number; lat: number; rangeM: number; pitchDeg: number; headingDeg?: number };
+  /** Closest allowed camera distance in farm view, metres (privacy for private farmland). Renderer default otherwise. */
+  minRangeM?: number;
 };
 
 export type GlobeView = "globe" | "farm";
@@ -91,6 +101,11 @@ export type FarmTwinProps = {
   compare?: { right: { cropByField?: Record<string, CropLook>; overlays?: GroundOverlay[] }; divider: number } | null;
   /** Illustrative look filter over the whole farm view (captioned "illustrative styling" by the UI; not sensor data). */
   look?: LookFilter;
+  /**
+   * Field crop colour fills (incl. per-side fills in the A/B split). Default false: fields are invisible except a
+   * hover label (name + crop) and a faint outline on the selected field, so the real imagery stays visible.
+   */
+  showCropFills?: boolean;
 };
 
 export type LookFilter = "none" | "thermal" | "vegetation" | "night";

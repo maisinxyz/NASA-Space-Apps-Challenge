@@ -1,10 +1,8 @@
 // Share links: the twin's view (farm, mode, field, A/B rotations, divider, surface, look, camera) in the URL hash.
 // decodeShare() keeps only values it can validate, so a hand-edited or stale link never puts bad state in the store.
 import type { CameraState, FarmSurface, LookFilter } from "@/components/globe/types";
-import { farmById } from "@/lib/farms";
+import { farmById, twinConfig } from "@/lib/farms";
 import { TWIN_MODES, type TwinMode } from "@/lib/store";
-import { twinFields } from "@/lib/twin/agassiz";
-import { rotationById } from "@/lib/twin/rotations";
 
 export type ShareState = {
   farm: string;
@@ -43,10 +41,12 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
   const mode = q.get("m") as TwinMode;
   if (TWIN_MODES.includes(mode)) out.mode = mode;
   const field = q.get("f");
-  if (field && twinFields(farm)?.some((f) => f.id === field)) out.field = field;
+  // Fields and rotations are checked against this farm's own twin (none for explore-only farms).
+  const twin = twinConfig(farm);
+  if (field && twin?.fields.some((f) => f.id === field)) out.field = field;
   for (const k of ["a", "b"] as const) {
     const id = q.get(k);
-    if (id && rotationById(id)) out[k] = id;
+    if (id && twin?.rotations.some((r) => r.id === id)) out[k] = id;
   }
   const d = Number(q.get("d"));
   if (q.has("d") && Number.isFinite(d)) out.divider = Math.min(1, Math.max(0, d));

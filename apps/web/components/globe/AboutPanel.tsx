@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { Card } from "@/components/ui/Card";
 
 const STEPS = [
-  { title: "Pick a farm", body: "Choose a farm on the globe and fly in to its 3D twin. Elevation always comes from open data." },
+  { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Full digital twin\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
   { title: "Replay a real storm", body: "Choose a storm from the NASA POWER record and watch where water runs and pools on a 3D model of the land." },
   { title: "Compare rotations", body: "Run the same storm on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];

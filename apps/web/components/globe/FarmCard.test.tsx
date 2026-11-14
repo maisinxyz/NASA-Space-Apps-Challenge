@@ -1,14 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { FARMS } from "@/lib/farms";
+import { farmById, FARMS } from "@/lib/farms";
 
 import { FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
 
 const noop = () => {};
 const hero = FARMS.find((f) => f.tier === "twin")!;
-const explore = FARMS.find((f) => f.tier === "explore" && f.coordsVerified && f.areaHa)!;
+const mead = farmById("unl-mead")!;
+const lancaster = farmById("lancaster-intercourse")!;
 
 describe("FarmCard", () => {
   it("shows the hero farm with an approximate-location note and a safe source link", () => {
@@ -24,12 +25,21 @@ describe("FarmCard", () => {
     expect(html).not.toContain("Simulation not available");
   });
 
-  it("shows explore farms as explore only, with area and unit", () => {
-    const html = renderToStaticMarkup(<FarmCard farm={explore} onClose={noop} onOpen={noop} />);
+  it("shows explore farms as explore only, with their note and link", () => {
+    const html = renderToStaticMarkup(<FarmCard farm={mead} onClose={noop} onOpen={noop} />);
     expect(html).toContain("Explore only");
     expect(html).toContain("Simulation not available for this farm yet");
-    expect(html).toContain(`${explore.areaHa} ha`);
+    expect(html).toContain("AmeriFlux");
+    expect(html).toContain('href="https://ameriflux.lbl.gov/sites/siteinfo/US-Ne3"');
     expect(html).not.toContain("Approximate location");
+    expect(html).not.toContain("Open twin");
+  });
+
+  it("shows Lancaster as private farmland, area only, approximate", () => {
+    const html = renderToStaticMarkup(<FarmCard farm={lancaster} onClose={noop} onOpen={noop} />);
+    expect(html).toContain("Private working farmland, area only. No owners or addresses are shown.");
+    expect(html).toContain("Private working farmland (area only)");
+    expect(html).toContain("Approximate location");
   });
 
   it("without a globe: no Open twin and no link to removed pages", () => {
@@ -46,6 +56,6 @@ describe("FarmList", () => {
     for (const f of FARMS) expect(html).toContain(f.name);
     expect(html.match(/<button/g)).toHaveLength(FARMS.length);
     expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(html.match(/Explore only/g)).toHaveLength(FARMS.length - 1);
+    expect(html.match(/Explore only/g)).toHaveLength(FARMS.filter((f) => f.tier === "explore").length);
   });
 });
