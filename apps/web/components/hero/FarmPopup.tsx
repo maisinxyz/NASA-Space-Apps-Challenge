@@ -111,7 +111,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
   const line = farm.note?.text ?? farm.owner;
   const gone = { opacity: 0, ...(reduced ? {} : { scale: card.fromScale }) };
   return (
-    <div ref={box} className="pointer-events-auto absolute top-0 left-0 z-30 will-change-transform" style={{ width: W, visibility: "hidden" }}>
+    <div ref={box} className="pointer-events-auto absolute top-0 left-0 z-[300] will-change-transform" style={{ width: W, visibility: "hidden" }}>
       <motion.div
         style={{ transformOrigin: "var(--ox, 50%) var(--oy, 100%)" }}
         initial={gone}
