@@ -71,6 +71,7 @@ import {
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
 
+import { type LoadTrack, startLoad, stepLoad } from "./loadProgress";
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
 
 // Camera framing (product choices, tune freely).
@@ -158,6 +159,10 @@ type Runtime = {
   prewarm: Prewarm | null;
   /** Terrain height at each farm's centre, from earlier samples (metres). */
   groundCache: Map<string, number>;
+  /** Real load progress of the prewarmed or landed farm view (GlobeProps.onFarmLoad); null when none is tracked. */
+  load: LoadTrack | null;
+  /** performance.now() of the last onFarmLoad report. */
+  loadReportAt: number;
 };
 
 /** A parked, hidden farm view (see GlobeProps.prewarm). `ground` is undefined until the terrain sample returns. */
@@ -353,6 +358,8 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
   // under the veil. The per-frame ground update corrects `ground` if the terrain sample had not returned yet.
   if (dive) {
     r.prewarm = null;
+    if (r.load?.farmId !== farm.id) r.load = startLoad(farm.id, performance.now());
+    if (!warm?.ground && !r.groundCache.has(farm.id) && r.tier) void r.tier.sampleGround(centre.lon, centre.lat).then((g) => r.groundCache.set(farm.id, g));
     r.farmGround = r.terrainGround = ground;
     land();
     return;
@@ -391,6 +398,7 @@ function parkPrewarm(r: Runtime, farm: Farm, simBbox: [number, number, number, n
   r.orbit = null;
   const pw: Prewarm = { farmId: farm.id, centre: target, framing: o, ground: r.groundCache.get(farm.id), at: performance.now(), loaded: false };
   r.prewarm = pw;
+  if (r.load?.farmId !== farm.id) r.load = startLoad(farm.id, pw.at);
   // Park on the cached ground height (or sea level), then re-park once the terrain sample returns.
   const place = (g: number) => {
     if (r.prewarm !== pw || viewer.isDestroyed()) return;
@@ -418,6 +426,7 @@ function releasePrewarm(r: Runtime) {
   const pw = r.prewarm;
   if (!pw) return;
   r.prewarm = null; // the per-frame sync switches the surface and camera limits back
+  if (r.load?.farmId === pw.farmId) r.load = null;
   const { scene } = r.viewer;
   scene.globe.maximumScreenSpaceError = GLOBE_SSE_DEFAULT;
   scene.globe.enableLighting = false;
@@ -428,6 +437,7 @@ function releasePrewarm(r: Runtime) {
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
   leaveOrbit(r);
+  r.load = null; // a later dive measures its own load again (tiles may have been evicted)
   r.pendingCamera = null;
   const { done } = startFlight(r);
   const here = r.viewer.camera.positionCartographic;
@@ -613,6 +623,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       landBy: 0,
       prewarm: null,
       groundCache: new Map(),
+      load: null,
+      loadReportAt: 0,
     };
     rt.current = r;
     prev.current = null;
@@ -830,6 +842,20 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (pw && !pw.loaded && pw.ground != null && r.tier && tilesLoaded && now - pw.at > PREWARM_SETTLE_MS && r.tier.surface === pickSurface({ tier: r.tier.tier, view: "farm", want: p.surface ?? "google", failed: r.tier.failed })) {
         pw.loaded = true;
         p.onPrewarmed?.(pw.farmId);
+      }
+      // Real load progress of the prewarmed or landed farm view (loadProgress.ts), reported ~10/s and at once when done.
+      const lt = r.load;
+      const tracking = lt && r.tier && (pw ? pw.farmId === lt.farmId : p.view === "farm" && !!r.orbit && p.selectedId === lt.farmId);
+      if (lt && r.tier && tracking && !lt.done) {
+        const farmSurface = pickSurface({ tier: r.tier.tier, view: "farm", want: p.surface ?? "google", failed: r.tier.failed });
+        const surfaceReady = r.tier.surface === farmSurface;
+        const firstView = surfaceReady && (farmSurface === "google" ? !scene.globe.show : tilesLoaded);
+        const groundKnown = (pw ? pw.ground != null : false) || r.groundCache.has(lt.farmId) || (!!r.orbit && r.tier.groundAt(Cartographic.fromDegrees(r.orbit.target.lon, r.orbit.target.lat)) != null);
+        const changed = stepLoad(lt, { surfaceReady, groundKnown, firstView, pending: r.tier.pending(), tilesLoaded }, now, dt);
+        if (lt.done || (changed && now - r.loadReportAt > 100)) {
+          r.loadReportAt = now;
+          p.onFarmLoad?.({ farmId: lt.farmId, progress: lt.value, done: lt.done });
+        }
       }
       // Tile detail: the `detail` setting, coarser while the camera moves (debounced 1 s), paused refinement for low + scenario.
       const scenario = !!p.weather || !!p.groundLayers?.length;

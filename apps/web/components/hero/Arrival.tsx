@@ -1,5 +1,5 @@
 "use client";
-// Arrival sequence after a dive: the hand-over veil, then the title (country, locality, farm name) top right.
+// Arrival sequence after a dive (the cloud loader, CloudLoader.tsx, covers the hand-over): the title (country, locality, farm name) top right.
 // The title sweeps in from the right edge toward the left (country letter by letter, then the lines below word by
 // word, each piece drifting slightly left into place) and sweeps out from the left toward the right. Timing lives in
 // tokens.arrivalTitle. The exit is driven by the parent's AnimatePresence, so the parent knows exactly when it ends.
@@ -10,27 +10,6 @@ import type { Farm } from "@/components/globe/types";
 
 import { heroWordFont } from "./fonts";
 import { arrivalTitle as T } from "./tokens";
-
-/** Hand-over veil: fades in over the end of the hero push-in, holds while the live farm settles, then clears. */
-export const HANDOFF_IN_MS = 120;
-export const HANDOFF_OUT_MS = 280;
-
-/**
- * Hand-over from the hero Earth to the live farm: a pale haze (entering the cloud layer) with darkened edges. Opacity
- * only, so it stays on the compositor (no repaint per frame). `clear` = the farm underneath is ready: fade out.
- */
-export function HandoffVeil({ clear, reducedMotion }: { clear: boolean; reducedMotion: boolean }) {
-  return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 will-change-[opacity]"
-      style={{ background: "radial-gradient(ellipse at 50% 45%, rgba(226,234,242,0.96) 0%, rgba(196,210,224,0.92) 45%, rgba(20,26,34,0.96) 100%)" }}
-      initial={{ opacity: reducedMotion ? 1 : 0 }}
-      animate={{ opacity: clear ? 0 : 1 }}
-      transition={{ duration: (clear ? HANDOFF_OUT_MS : HANDOFF_IN_MS) / 1000, ease: clear ? "easeOut" : "easeIn" }}
-    />
-  );
-}
 
 /** One piece of the sweep (a letter or a word). `inDelay` / `outDelay` are seconds. */
 type Piece = { inDelay: number; outDelay: number };

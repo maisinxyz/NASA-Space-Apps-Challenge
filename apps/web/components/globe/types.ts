@@ -244,6 +244,11 @@ export type GlobeProps = FarmTwinProps & {
   prewarm?: { farmId: string; simBbox?: [number, number, number, number] } | null;
   /** The prewarmed farm's view has finished loading its tiles (fired once per prewarm). */
   onPrewarmed?(farmId: string): void;
+  /**
+   * Real load progress of the farm view being prewarmed or just landed in (loadProgress.ts): 0..1, monotonic, eased,
+   * 1 only when its surface, ground height, first view and every pending tile are loaded. ~10 reports/s; `done` at once.
+   */
+  onFarmLoad?(info: { farmId: string; progress: number; done: boolean }): void;
 };
 
 /** Camera telemetry for the hero status bar (the hero Earth reports it). */

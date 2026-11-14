@@ -5,7 +5,7 @@
 // stays mounted underneath, hidden and idle, and takes over for the dive and the farm (real terrain and imagery). At
 // the hand-over Cesium jumps to the same whole-Earth view over the farm the hero Earth is showing.
 //   Hero states (globe view):  hero → dragging → centred → ui → (idle) → hero          (see tokens.hero)
-//   Farm phases (farm view):   dive → hold (dive film) → title (in, hold, out) → explore (controls appear)
+//   Farm phases (farm view):   dive (push-in + cloud loader with real progress, or a dive film: hold) → explore (title, controls)
 // Below 768 px, or if WebGL fails: the farm list fallback.
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useShallow } from "zustand/react/shallow";
@@ -15,8 +15,9 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { TwinPanel } from "@/components/farm/TwinPanel";
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
-import { ArrivalTitle, HANDOFF_IN_MS, HandoffVeil } from "@/components/hero/Arrival";
+import { ArrivalTitle } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
+import { CloudLoader, type CloudLoaderPhase } from "@/components/hero/CloudLoader";
 import { ControlCluster, type HeroSettings } from "@/components/hero/ControlCluster";
 import { DIVE_FILMS, DiveFilm } from "@/components/hero/DiveFilm";
 import { diveInteractive, diveStart } from "@/components/hero/divePerf";
@@ -59,13 +60,21 @@ const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Glo
 /** Share-link camera is applied after the fly-in: ground lookup + 3 s flight (Globe.tsx FLY_SECONDS), with margin. */
 const SHARE_CAMERA_DELAY_MS = 4500;
 /**
- * Click to interactive farm in 2 s: the hero Earth pushes in toward the farm (when it offers diveTo), then the hand-over
- * veil covers the switch to the live farm, which is already loaded underneath when it was prewarmed (pin hover, popup).
- * The veil clears once the farm's tiles have settled, after at least HANDOFF_MIN_MS and at most HANDOFF_MAX_MS.
+ * The dive: the hero Earth pushes in toward the farm (when it offers diveTo) while a cloud closes around the view
+ * (CloudLoader "in"); under the full cloud Cesium lands on the farm view, already loading or loaded since the pin hover
+ * (prewarm). The cloud holds with a REAL progress bar (Globe onFarmLoad, loadProgress.ts) until the farm is truly
+ * loaded, then the camera passes through the rest of the cloud into the farm (CloudLoader "out"), input live as it clears.
  */
 const PUSH_IN_MS = 1100;
-const HANDOFF_MIN_MS = 260;
-const HANDOFF_MAX_MS = 700;
+/** CloudLoader's fade-in (CloudLoader.tsx IN_MS) and when it starts, so the view is fully clouded by ~80 % of the push-in
+ * (the Earth texture goes soft over the last ~20 %). */
+const CLOUD_IN_MS = 700;
+const CLOUD_IN_AT_MS = Math.max(0, PUSH_IN_MS * 0.8 - CLOUD_IN_MS);
+/** Reduced motion: plain fades (CloudLoader's reduced fade-in). */
+const CLOUD_IN_REDUCED_MS = 200;
+/** Never keep the user in the cloud for ever: after this a calm note, then in they go. */
+const CLOUD_SLOW_MS = 12000;
+const CLOUD_SLOW_NOTE_MS = 1800;
 /** Release the prewarmed farm scene this long after nothing points at a farm any more. */
 const PREWARM_RELEASE_MS = 6000;
 /** The hero Earth's push-in, when it has one (components/hero/HeroEarth.tsx). */
@@ -267,7 +276,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       setPhase("explore");
       setFilmOn(false);
       setTitleOn(false);
-      setVeilEarly(false);
+      setCloud(null);
+      setFarmLoad(null);
       arrived.current = null;
       // The hero Earth held the end of its push-in: glide back out to the whole Earth.
       if (lastView.current === "farm") (heroEarth.current as (HeroEarthApi & PushIn) | null)?.cancelDive?.();
@@ -316,27 +326,50 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     filmDone();
   };
 
-  // Hand-over: once landed, hold the veil until the farm's tiles have settled (pending 0), within [MIN, MAX] of the
-  // switch to farm view, then clear it. A dive film instead holds until it has played (DiveFilm onFinish).
-  const [warmed, setWarmed] = useState<string | null>(null);
-  /** The veil starts fading in near the end of the hero push-in (before farm view), so the switch is never seen. */
-  const [veilEarly, setVeilEarly] = useState(false);
-  const veilTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(veilTimer.current), []);
-  useEffect(() => {
-    if (!veilEarly) return;
-    const t = setTimeout(() => setVeilEarly(false), PUSH_IN_MS + HANDOFF_MAX_MS + 500); // safety: never stuck on
-    return () => clearTimeout(t);
-  }, [veilEarly]);
-  const farmSettled = pending === 0 || (!!farmId && warmed === farmId);
+  // Dive cloud (CloudLoader): "in" over the push-in, "hold" with the real progress once in farm view, "out" when the farm
+  // is truly loaded (or after CLOUD_SLOW_MS), then gone. Null = no cloud (share link / reset fly-in, or a dive film).
+  const [cloud, setCloudState] = useState<{ farmId: string; phase: CloudLoaderPhase } | null>(null);
+  const cloudRef = useRef(cloud);
+  const setCloud = (c: typeof cloud) => {
+    cloudRef.current = c;
+    setCloudState(c);
+  };
+  const [cloudSlow, setCloudSlow] = useState(false);
+  /** Latest real load report of the prewarmed / landed farm view (Globe onFarmLoad). */
+  const [farmLoad, setFarmLoad] = useState<{ farmId: string; progress: number; done: boolean } | null>(null);
+  const cloudTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(cloudTimer.current), []);
+  const farmReady = !!farmId && farmLoad?.farmId === farmId && farmLoad.done;
+  // Landed: a dive film takes over (DiveFilm onFinish); a dive under the cloud waits for the real load; any other entry
+  // into farm view (share link, the non-dive fly-in) goes straight to explore.
   useEffect(() => {
     if (phase !== "dive" || view !== "farm" || arrived.current !== farmId) return;
-    if (filmOnRef.current) return setPhase("hold");
-    const since = performance.now() - diveAt.current;
-    const wait = farmSettled ? Math.max(0, HANDOFF_MIN_MS - since) : Math.max(0, HANDOFF_MAX_MS - since);
-    const t = setTimeout(toExplore, wait);
+    if (filmOnRef.current) {
+      setCloud(null);
+      return setPhase("hold");
+    }
+    if (!cloudRef.current) return toExplore();
+  }, [phase, view, farmId, arriveNonce]);
+  // Cloud hold: out as soon as the farm is loaded underneath; after CLOUD_SLOW_MS a calm note, then in anyway.
+  const holding = cloud?.phase === "hold" && view === "farm" && arrived.current === farmId;
+  const clearCloud = () => {
+    setCloud(cloudRef.current && { ...cloudRef.current, phase: "out" });
+    toExplore(); // input and panels live as the cloud clears; the farm is already drawn underneath
+  };
+  useEffect(() => {
+    if (!holding || !farmReady) return;
+    clearCloud();
+  }, [holding, farmReady, arriveNonce]);
+  useEffect(() => {
+    if (!holding) return;
+    const slow = setTimeout(() => setCloudSlow(true), Math.max(0, CLOUD_SLOW_MS - (performance.now() - diveAt.current)));
+    return () => clearTimeout(slow);
+  }, [holding]);
+  useEffect(() => {
+    if (!cloudSlow) return;
+    const t = setTimeout(clearCloud, CLOUD_SLOW_NOTE_MS);
     return () => clearTimeout(t);
-  }, [phase, view, farmId, arriveNonce, farmSettled]);
+  }, [cloudSlow]);
 
   const farm = farmById(farmId);
   const runSource = runSourceFor(farm, runSourceProp);
@@ -461,7 +494,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   };
   /**
    * The dive: the hero Earth pushes in toward the farm (if it can), then farm view; Cesium lands at once on the farm view
-   * it has prewarmed and the hand-over veil covers the switch.
+   * it has prewarmed, under the cloud loader, which holds until the farm is really loaded.
    */
   const startDive = (id: string) => {
     if (!farmById(id)) return;
@@ -469,18 +502,32 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     diveStart(id);
     setWarmId(id);
     arrived.current = null;
+    setCloudSlow(false);
+    if (farmLoad?.farmId !== id) setFarmLoad(null);
+    clearTimeout(cloudTimer.current);
     const push = heroEarth.current as (HeroEarthApi & PushIn) | null;
+    // A dive film (when one is ready) covers the approach itself; no cloud.
+    if (!reducedMotion && filmReady[id]) {
+      heroEarth.current?.resetZoom();
+      return dive(id);
+    }
+    // Under the full cloud: farm view (Cesium lands at once on the prewarmed view) and the hold with the real progress.
+    const intoCloud = () => {
+      clearTimeout(cloudTimer.current);
+      setCloud({ farmId: id, phase: "hold" });
+      dive(id);
+    };
     // The push-in needs the Earth centred (map UI), which it is whenever a popup or waypoint can be clicked.
     if (push?.diveTo && !reducedMotion && earthCentre) {
       selectFarm(id);
-      clearTimeout(veilTimer.current);
-      // The Earth texture goes soft over the last ~20% of the push-in (Kevin), so the veil is fully up by then.
-      veilTimer.current = setTimeout(() => setVeilEarly(true), PUSH_IN_MS * 0.8 - HANDOFF_IN_MS);
-      push.diveTo(id, PUSH_IN_MS, () => dive(id));
+      cloudTimer.current = setTimeout(() => setCloud({ farmId: id, phase: "in" }), CLOUD_IN_AT_MS);
+      push.diveTo(id, PUSH_IN_MS, intoCloud);
       return;
     }
+    // No push-in: the cloud closes in place, then the switch.
     heroEarth.current?.resetZoom();
-    dive(id);
+    setCloud({ farmId: id, phase: "in" });
+    cloudTimer.current = setTimeout(intoCloud, reducedMotion ? CLOUD_IN_REDUCED_MS : CLOUD_IN_MS);
   };
   /** Waypoint or "descend": dive now if the farm faces the viewer (or a dive film will cover the turn), else turn first. */
   const requestDive = (id: string) => {
@@ -539,7 +586,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               className="absolute inset-0 h-full w-full"
               onSelect={onGlobe ? () => {} : select}
               prewarm={warmId ? { farmId: warmId, simBbox: twinConfig(warmId)?.simBbox } : null}
-              onPrewarmed={setWarmed}
+              onFarmLoad={setFarmLoad}
               onArrive={(id) => {
                 arrived.current = id;
                 setArriveNonce((n) => n + 1);
@@ -649,8 +696,15 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
             onFail={filmFailed}
           />
         ))}
-      {(veilEarly || (inFarm && (phase === "dive" || phase === "explore"))) && !filmOn && (
-        <HandoffVeil key={farmId ?? "none"} clear={inFarm && phase === "explore"} reducedMotion={reducedMotion} />
+      {cloud && (
+        <>
+          <CloudLoader key={cloud.farmId} progress={farmLoad?.farmId === cloud.farmId ? farmLoad.progress : 0} phase={cloud.phase} onOutDone={() => setCloud(null)} />
+          {cloudSlow && cloud.phase === "hold" && (
+            <p role="status" className="pointer-events-none fixed inset-x-0 bottom-[6%] z-[401] text-center text-[12px] tracking-[0.04em] text-[rgba(40,52,76,0.72)]">
+              The farm is still loading. Taking you in; detail will keep sharpening.
+            </p>
+          )}
+        </>
       )}
       <AnimatePresence onExitComplete={titleExited}>
         {inFarm && titleOn && !titleLeaving && <ArrivalTitle key={farm.id} farm={farm} reducedMotion={reducedMotion} onHoldEnd={titleHoldEnd} />}
