@@ -274,6 +274,11 @@ const glowFrag = /* glsl */ `
   }
 `;
 
+/** Pins closer than this on screen (px) are fanned apart: glyph width and height. */
+const PIN_SEP_W = 38;
+const PIN_SEP_H = 32;
+type PinItem = { f: Farm; x: number; y: number; fdot: number; facing: boolean; alpha: number; tx: number };
+
 type Motion = {
   spin: number;
   tilt: number;
@@ -289,7 +294,7 @@ type Motion = {
   zoomTo: number;
 };
 
-function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; pinAlpha: MutableRefObject<Map<string, number>>; hovered: MutableRefObject<string | null> }) {
+function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; pinAlpha: MutableRefObject<Map<string, number>>; pinOff: MutableRefObject<Map<string, number>>; leaderEls: MutableRefObject<Map<string, SVGGElement>>; hovered: MutableRefObject<string | null> }) {
   const { camera, size, gl } = useThree();
   const [day, night] = useLoader(THREE.TextureLoader, [DAY, NIGHT]);
   const tilted = useRef<THREE.Group>(null);
@@ -394,34 +399,77 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     const world = spun.current?.matrixWorld;
     let trackSent = false;
     if (world) {
+      // Pass 1: project every farm and ease its fade.
+      const items: PinItem[] = [];
       for (const f of q.farms) {
-        const el = q.pinEls.current.get(f.id);
         lonLatToVec(f.lon, f.lat, tmp.v).applyMatrix4(world);
         tmp.n.copy(tmp.v).sub(tilted.current!.position).normalize();
         tmp.toCam.copy(cam.position).sub(tmp.v).normalize();
-        const facing = tmp.n.dot(tmp.toCam) > PIN_FACING;
+        const fdot = tmp.n.dot(tmp.toCam);
         const s = tmp.v.clone().project(cam);
-        const x = (s.x * 0.5 + 0.5) * size.width;
-        const y = (-s.y * 0.5 + 0.5) * size.height;
+        const target = q.showPins ? THREE.MathUtils.clamp((fdot - PIN_FACING) / 0.22, 0, 1) : 0;
+        const prev = q.pinAlpha.current.get(f.id) ?? 0;
+        const alpha = q.reducedMotion ? target : prev + (target - prev) * (1 - Math.exp(-dt / 0.06));
+        q.pinAlpha.current.set(f.id, alpha);
+        items.push({ f, x: (s.x * 0.5 + 0.5) * size.width, y: (-s.y * 0.5 + 0.5) * size.height, fdot, facing: fdot > PIN_FACING, alpha, tx: 0 });
+      }
+      // Pass 2: fan overlapping glyphs apart sideways (continuous in the positions, then eased, so no jitter while the Earth turns).
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const A = items[i];
+          const B = items[j];
+          if (!A.facing || !B.facing || A.alpha < 0.05 || B.alpha < 0.05) continue;
+          const dy = Math.abs(A.y - B.y);
+          if (dy >= PIN_SEP_H) continue;
+          const need = PIN_SEP_W * Math.sqrt(1 - (dy / PIN_SEP_H) ** 2);
+          const dx = B.x + B.tx - (A.x + A.tx);
+          const ad = Math.abs(dx);
+          if (ad >= need) continue;
+          const dir = ad > 0.5 ? Math.sign(dx) : A.f.id < B.f.id ? 1 : -1;
+          const push = (need - ad) / 2;
+          A.tx -= dir * push;
+          B.tx += dir * push;
+        }
+      }
+      // Pass 3: apply. The glyph sits at its displaced spot (lifted a little when displaced, on a hairline stem to the true spot); click and hover follow it.
+      for (const it of items) {
+        const { f, x, y, fdot, facing, alpha } = it;
+        const want = Math.abs(it.tx) < 0.5 ? 0 : it.tx;
+        const prevO = q.pinOff.current.get(f.id) ?? 0;
+        const off = q.reducedMotion ? want : prevO + (want - prevO) * (1 - Math.exp(-dt / 0.07));
+        q.pinOff.current.set(f.id, off);
+        const k = Math.min(1, Math.abs(off) / 10);
+        const dx = x + off;
+        const dyy = y - 9 * k;
+        const el = q.pinEls.current.get(f.id);
         if (el) {
-          el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -100%)`;
-          // Pins ride on the Earth: fade out smoothly toward the limb (foreshortened) and when switched off.
-          const fdot = tmp.n.dot(tmp.toCam);
-          const target = q.showPins ? THREE.MathUtils.clamp((fdot - PIN_FACING) / 0.22, 0, 1) : 0;
-          const prev = q.pinAlpha.current.get(f.id) ?? 0;
-          const alpha = q.reducedMotion ? target : prev + (target - prev) * (1 - Math.exp(-dt / 0.06));
-          q.pinAlpha.current.set(f.id, alpha);
+          el.style.transform = `translate3d(${dx.toFixed(2)}px, ${dyy.toFixed(2)}px, 0) translate(-50%, -100%)`;
+          // Pins ride on the Earth: fade out smoothly toward the limb (foreshortened) and when switched off. The nearer pin sits on top.
           el.style.opacity = alpha.toFixed(3);
+          el.style.zIndex = String(Math.round(THREE.MathUtils.clamp(fdot, 0, 1) * 100));
           el.style.setProperty("--f", THREE.MathUtils.clamp(fdot, 0, 1).toFixed(3));
           const show = alpha > 0.5 && facing;
           el.style.pointerEvents = show && !q.motion.current.dragging ? "auto" : "none";
           el.tabIndex = show ? 0 : -1;
         }
+        const lg = q.leaderEls.current.get(f.id);
+        if (lg) {
+          const lines = lg.children;
+          lg.style.opacity = (alpha * k).toFixed(3);
+          for (let i = 0; i < 2; i++) {
+            lines[i].setAttribute("x1", x.toFixed(2));
+            lines[i].setAttribute("y1", y.toFixed(2));
+            lines[i].setAttribute("x2", dx.toFixed(2));
+            lines[i].setAttribute("y2", dyy.toFixed(2));
+          }
+          lines[2].setAttribute("cx", x.toFixed(2));
+          lines[2].setAttribute("cy", y.toFixed(2));
+        }
         // The hovered waypoint's label follows it while the Earth moves.
-        if (f.id === q.hovered.current) q.onHover(facing && q.showPins ? { id: f.id, x, y } : null);
+        if (f.id === q.hovered.current) q.onHover(facing && q.showPins ? { id: f.id, x: dx, y: dyy } : null);
         if (f.id === q.selectedId) {
           trackSent = true;
-          q.onTrack(facing ? { id: f.id, x, y } : null);
+          q.onTrack(facing ? { id: f.id, x: dx, y: dyy } : null);
         }
       }
     }
@@ -473,6 +521,8 @@ export function HeroEarth(props: Props) {
   const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
   const pinAlpha = useRef(new Map<string, number>());
+  const pinOff = useRef(new Map<string, number>());
+  const leaderEls = useRef(new Map<string, SVGGElement>());
   const hovered = useRef<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   useLoadProgress(props.onProgress);
@@ -601,11 +651,28 @@ export function HeroEarth(props: Props) {
     >
       <Canvas linear flat dpr={[1, 2]} frameloop={props.active ? "always" : "never"} gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }} camera={{ position: [0, 0, CAM_DIST], fov: 35 }} onCreated={({ gl }) => gl.setClearColor("#000000", 1)}>
         <Suspense fallback={null}>
-          <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} hovered={hovered} />
+          <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} pinOff={pinOff} leaderEls={leaderEls} hovered={hovered} />
         </Suspense>
       </Canvas>
       {/* Waypoints: positioned every frame by the scene. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Hairline stems from a fanned-out glyph to its true spot (hidden until two pins overlap). */}
+        <svg className="absolute inset-0 h-full w-full" aria-hidden>
+          {props.farms.map((f) => (
+            <g
+              key={f.id}
+              opacity={0}
+              ref={(el) => {
+                if (el) leaderEls.current.set(f.id, el);
+                else leaderEls.current.delete(f.id);
+              }}
+            >
+              <line stroke="#0b0d12" strokeWidth={3} strokeLinecap="round" />
+              <line stroke="#ffc857" strokeWidth={1.2} strokeLinecap="round" />
+              <circle r={2.6} fill="#ffc857" stroke="#0b0d12" strokeWidth={1.2} />
+            </g>
+          ))}
+        </svg>
         {props.farms.map((f) => {
           const on = f.id === props.selectedId;
           const size = pinBox(f.pin, f.tier === "twin" ? { w: 22, h: 33 } : { w: 18, h: 27 });
