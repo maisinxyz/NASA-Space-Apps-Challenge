@@ -274,9 +274,9 @@ const glowFrag = /* glsl */ `
   }
 `;
 
-/** Pins closer than this on screen (px) are fanned apart: glyph width and height. */
-const PIN_SEP_W = 38;
-const PIN_SEP_H = 32;
+/** Pins closer than this on screen (px) are fanned apart: glyph width (36) plus a visible gap, and glyph height. */
+const PIN_SEP_W = 48;
+const PIN_SEP_H = 38;
 type PinItem = { f: Farm; x: number; y: number; fdot: number; facing: boolean; alpha: number; tx: number };
 
 type Motion = {
@@ -414,7 +414,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         items.push({ f, x: (s.x * 0.5 + 0.5) * size.width, y: (-s.y * 0.5 + 0.5) * size.height, fdot, facing: fdot > PIN_FACING, alpha, tx: 0 });
       }
       // Pass 2: fan overlapping glyphs apart sideways (continuous in the positions, then eased, so no jitter while the Earth turns).
-      for (let i = 0; i < items.length; i++) {
+      for (let pass = 0; pass < 3; pass++) for (let i = 0; i < items.length; i++) {
         for (let j = i + 1; j < items.length; j++) {
           const A = items[i];
           const B = items[j];
