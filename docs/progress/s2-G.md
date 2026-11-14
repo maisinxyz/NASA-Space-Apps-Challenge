@@ -19,7 +19,7 @@ From `apps/web`, using `corepack pnpm`:
 
 - Final `typecheck`: passed.
 - Final `lint`: zero errors; two pre-existing GlobeHome unused-variable warnings (`dev`, `tier`).
-- Final `test`: **305 passed, 12 failed**, 31 files (30 passed, one failed). Every failure is the unchanged product-owned `lib/twin/scenarios/registry.test.ts:42` expectation that ground is empty. The previous 11-failure exception becomes 12 because Trends now correctly supplies imagery. Request its owner update the assertion; do not remove scenario coverage.
+- Final `test`: **306 passed, 12 failed**, 31 files (30 passed, one failed). Every failure is the unchanged product-owned `lib/twin/scenarios/registry.test.ts:42` expectation that ground is empty. The previous 11-failure exception becomes 12 because Trends now correctly supplies imagery. Request its owner update the assertion; do not remove scenario coverage.
 - `build`: Next compilation, type validation, and prerendering succeeded. The postbuild verification-marker gate failed on the existing runtime string `Climate-change adjustment factors (TODO(verify): which source and scenario)` in product-owned `registry.ts`. Do not describe the whole build command as passing.
 - `git diff --check`: passed before committing.
 
@@ -34,7 +34,7 @@ Headed Chrome, localhost:3000, `/dev/scenarios?perf=1`, fixture checkbox enabled
 | Google | 29.7 | 32.8 | 60.0 |
 | Terrain | 59.5 | 59.9 | 60.0 |
 
-Samples were read while Storm displayed Pause (actively playing), at 0.5×, CSS viewport 1920×1080, resolution scale 1, after about five seconds per detail selection. Terrain hours were 6/11/17, Google hours 7/13/18. They are single rolling readout samples at different storm hours, not controlled averages. Google weather auto-stepped from high to low and medium to low; terrain weather retained each requested tier. Ground detail follows the requested tier. Raw readouts and screenshots: `s2-g-fps.json` / `s2-g-fps-{surface}-{tier}.jpg`.
+These browser samples precede the S2-W update `6236912` pulled during the final rebase; they have not been remeasured against its changed auto-tier logic. The combined rebased state was rechecked with typecheck, lint and tests (counts above). Samples were read while Storm displayed Pause (actively playing), at 0.5×, CSS viewport 1920×1080, resolution scale 1, after about five seconds per detail selection. Terrain hours were 6/11/17, Google hours 7/13/18. They are single rolling readout samples at different storm hours, not controlled averages. Google weather auto-stepped from high to low and medium to low; terrain weather retained each requested tier. Ground detail follows the requested tier. Raw readouts and screenshots: `s2-g-fps.json` / `s2-g-fps-{surface}-{tier}.jpg`.
 
 Reduced motion: DevTools emulation was confirmed through the CSS media query after reload. On Beltsville Storm hour 12, both surfaces showed sky `static`, weather off, ground off, and disabled autoplay with the reduced-motion explanation; step controls retained static states. Saved `s2-g-reduced-google.jpg` and `s2-g-reduced-terrain.jpg`. Emulation was restored to default and the media query confirmed false afterward. Beltsville (`usda-barc`) loaded its own field names and storm inputs, and both surfaces were exercised.
 
@@ -77,3 +77,7 @@ The perf `ground on` flag means an animated procedural layer is requesting conti
 7. Resolve the product-owned climate-source verification marker before release.
 
 Coordination: Vince owns viewer/simulator, Hansini terrain/imagery, Max integration. S2-W changes pulled from main were preserved. This committed document is the project-lead handoff; no separate person-directed message has been sent.
+
+## Publication
+
+Four S2-G commits were pushed to main after the required pull/rebase, preserving S2-W `6236912`. This note is updated after combined-state verification. The repository is clean. Browser acceptance remains open for the reasons above.
