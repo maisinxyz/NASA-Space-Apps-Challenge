@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./**/node_modules/**)",
+      "Read(./**/.next/**)",
+      "Read(./**/.venv/**)",
+      "Read(./**/__pycache__/**)",
+      "Read(./apps/web/public/cesium/**)",
+      "Read(./apps/web/public/mock/**)",
+      "Read(./data/cache/**)",
+      "Read(./data/uploads/**)",
+      "Read(./**/pnpm-lock.yaml)",
+      "Read(./**/uv.lock)",
+      "Read(./**/*.tsbuildinfo)",
+      "Read(./**/*.bin)",
+      "Read(./**/*.mp4)"
+    ]
+  }
+}

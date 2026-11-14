@@ -34,3 +34,12 @@ data/uploads/
 
 # Playwright MCP screenshots/logs (may contain ion URLs)
 .playwright-mcp/
+
+# macOS/Finder duplicate copies ("name 2.ext") - never commit
+* 2
+* 2.*
+
+# Shared token files and local Claude Code state
+team-test.env
+.claude/worktrees/
+.claude/settings.local.json

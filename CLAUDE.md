@@ -14,6 +14,11 @@ FieldTwin: a website that turns a farm photo + location into a 3D model, replays
 - **web:** Next.js App Router + TypeScript + Tailwind + react-three-fiber + MapLibre GL + Framer Motion + Zustand + Recharts. Package manager: pnpm.
 - **api:** Python 3.11+, FastAPI, NumPy, SciPy, rasterio, scikit-image, Pillow, httpx, pytest. Use `uv` if installed, else venv + pip.
 
+## Token hygiene
+- `prd.md` (~110 KB) and `Prompts.md` (~120 KB) are large: grep for the section/prompt you need, then Read with `offset`/`limit`. Never read them whole.
+- Read only the `docs/progress/` notes your prompt names. Skip lockfiles, fixtures (`*.bin`), media and generated dirs (`.claude/settings.json` denies them).
+- Finder-style duplicates ("name 2.ext") are junk and gitignored; delete them if you see any.
+
 ## Source of truth
 - `prd.md` §6 and `packages/contracts/openapi.yaml` define every schema, endpoint, and file format.
 - Never invent endpoints, fields, or enum values. If something is missing from the contract, STOP and ask the user instead of guessing.
