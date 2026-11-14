@@ -2,6 +2,16 @@
 
 import json
 
+from io import BytesIO
+from PIL import Image
+
+
+def make_image(fmt):
+    buffer = BytesIO()
+    Image.new("RGB", (10, 10), color="green").save(buffer, format=fmt)
+    return buffer.getvalue()
+
+
 import pytest
 
 from fixtures_lib import contract
@@ -146,7 +156,7 @@ def test_post_scan(client):
     r = client.post(
         f"{API}/scans",
         data={"lat": "49.1", "lon": "-119.6", "bbox": "-119.6,49.1,-119.59,49.11", "name": "My field"},
-        files=[("images", ("a.jpg", b"\xff\xd8fake", "image/jpeg")), ("images", ("b.png", PNG, "image/png"))],
+        files=[("images", ("a.jpg", make_image("JPEG"), "image/jpeg")), ("images", ("b.png", make_image("PNG"), "image/png"))],
     )
     assert r.status_code == 202, r.text
     contract.validate_response(r.json(), "/scans", "post", "202")
