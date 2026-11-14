@@ -12,7 +12,7 @@ describe("per-farm pins", () => {
   });
   it("draws every farm design at the shared box in one colour, whatever the tier", () => {
     const twin = renderToStaticMarkup(<Pin3D width={22} height={33} tone="twin" design="silo-pair" />);
-    const explore = renderToStaticMarkup(<Pin3D width={22} height={33} tone="explore" design="barn" />);
+    const explore = renderToStaticMarkup(<Pin3D width={22} height={33} tone="explore" design="grape-cluster" />);
     for (const html of [twin, explore]) {
       expect(html).toContain(`width="${FARM_PIN_BOX.w}"`);
       expect(html).toContain("[--col:#ffc857]");
