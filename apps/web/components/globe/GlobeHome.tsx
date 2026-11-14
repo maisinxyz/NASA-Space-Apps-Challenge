@@ -21,8 +21,8 @@ import { ControlCluster, type HeroSettings } from "@/components/hero/ControlClus
 import { DIVE_FILMS, DiveFilm } from "@/components/hero/DiveFilm";
 import { EarthLoading } from "@/components/hero/EarthLoading";
 import { HeroEarth, type HeroEarthApi } from "@/components/hero/HeroEarth";
+import { FarmPopup } from "@/components/hero/FarmPopup";
 import { MarkerPulse } from "@/components/hero/FarmCard";
-import { FarmDetail } from "@/components/hero/FarmDetail";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
 import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
@@ -379,9 +379,18 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   // Picking the farm that is already selected (e.g. after coming back from it) shows its card again with a pulse;
   // any other farm flies there first (the card follows onFlyDone).
   const pickFarm = (id: string) => {
-    if (id !== farmId) return select(id);
+    if (id !== farmId) {
+      select(id);
+      heroEarth.current?.face(id);
+      return;
+    }
     setCardFor(id);
     setPulseNonce((n) => n + 1);
+  };
+  /** A click on the pin itself: its popup opens in place; the globe stays exactly where it is. */
+  const pickPin = (id: string) => {
+    if (id !== farmId) select(id);
+    setCardFor(id);
   };
   /** Hand-over to Cesium: same whole-Earth view over the farm, then the dive. */
   const startDive = (id: string) => {
@@ -493,7 +502,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               onProgress={loadBus.set}
               onDragStart={() => void (pendingDive.current = null)}
               onDragEnd={() => {}}
-              onPinClick={pickFarm}
+              onPinClick={pickPin}
               onHover={onHoverPin}
               onTrack={trackBus.set}
               onFlyDone={(id) => {
@@ -522,7 +531,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           {hoverFarm && hoverFarm.id !== cardFor && <PinLabel key={hoverFarm.id} farm={hoverFarm} />}
           {pulseNonce > 0 && !reducedMotion && <MarkerPulse nonce={pulseNonce} />}
           <div className="pointer-events-auto">
-            <FarmDetail farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
+            <FarmPopup farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
           </div>
           <div className="pointer-events-auto absolute top-1/2 right-8 -translate-y-1/2">
             <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />
