@@ -178,7 +178,8 @@ export type GroundLayerKind =
   | "heatGlow" // heat stress glow on crop fields
   | "cropCover" // crop rows / bare soil by month
   | "vegetation" // greenness (NDVI-style) vs normal
-  | "organicMatter"; // gentle soil darkening, legume/cover markers
+  | "organicMatter" // gentle soil darkening, legume/cover markers
+  | "nasaImagery"; // regional NASA GIBS imagery layer for a date (trends); drawn continuously, never clipped to a field
 
 /**
  * One animated ground layer. Owned by the ground renderer (components/viewer/cesium/ground/**); written by
@@ -199,6 +200,11 @@ export type GroundLayerSpec = {
   params?: Record<string, number>;
   /** Raster source when real backend data exists (zones, depth frames). */
   overlay?: GroundOverlay;
+  /**
+   * kind "nasaImagery" only: a NASA GIBS layer. `layerId` must come from the live GIBS capabilities document (never
+   * guessed); `date` is YYYY-MM-DD; `credit` is shown on the map (e.g. "NASA Global Imagery Browse Services for EOSDIS").
+   */
+  imagery?: { layerId: string; date: string; credit: string };
 };
 
 export type LookFilter = "none" | "thermal" | "vegetation" | "night";
