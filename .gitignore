@@ -34,3 +34,7 @@ data/uploads/
 
 # Playwright MCP screenshots/logs (may contain ion URLs)
 .playwright-mcp/
+
+# Local agent tooling (Claude Code worktrees; Munder Difflin per-agent hooks, see docs/munder-difflin.md)
+.claude/worktrees/
+.claude/settings.local.json

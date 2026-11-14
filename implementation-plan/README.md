@@ -19,6 +19,8 @@ Each team folder has:
 - `Prompts.md`: numbered prompts for Claude Code, run in order. Each prompt is short and self-contained.
 - `progress.md`: append-only log. Every prompt ends by adding a 5-10 line entry. The next prompt reads only this, not old chats.
 
+Optional: to run the integrator and both sections as parallel agents in one app, see [`../docs/munder-difflin.md`](../docs/munder-difflin.md). It's a dev tool only and `CLAUDE.md` still governs.
+
 ## Rules for everyone
 
 1. **Update the PRD** whenever a decision changes or a question is answered. Add a row to its "Change log". An out-of-date PRD is a bug.
