@@ -153,3 +153,24 @@ Not committed. Contract `types.ts` (orchestrator) used as written: `Farm.framing
 - `Farm.framing` / `minRangeM` were checked by unit tests only; no browser run of a farm carrying them (PRODUCT's config was mid-refactor).
 - The selected-field edge on terrain (ground polyline) breaks up into dashes on slopes; on Google tiles it classifies the tiles.
 - Mead framing not screenshotted; Lancaster framing target is outside a default 1 km-radius box (would be clamped).
+
+## Step 0 render: engine seams, detail plumbing, lag pass
+Not committed. Contract `types.ts` used as written (`weather`, `groundLayers`, `detail`).
+
+**Seams.** `components/viewer/cesium/weather/index.ts` (owner Person 1: `WeatherEngine`, `createWeatherEngine` stub) and `ground/index.ts` (owner Person 2: `GroundRenderer`, `createGroundRenderer` stub), header comments carry the contract rules. `Globe.tsx` creates both once per viewer on the first farm-view frame (needs the tier), calls `weather.update(props.weather ?? null, ctx)` / `ground.update(props.groundLayers ?? [], ctx)` every preUpdate, calls `scene.requestRender()` only while either `active` (`needsContinuousRender`), and destroys them on leaving farm view / unmount. Nobody else needs to touch Globe.tsx.
+
+**Detail (perf.ts `qualityFor`, applied by tiles.ts `applyQuality`).** high = SSE 12, resolutionScale <=1.5; medium = 16, <=1.25 (default); low = 24, 1, and with a scenario active (weather or groundLayers) SSE 64 = effectively no new refinement while it plays (Cesium has no real "pause requests" switch; tiles already loaded stay).
+
+**Lag pass.**
+1. `scene.msaaSamples = 1` (Cesium default is 4; FXAA stays). This is what mattered.
+2. Farm view after landing: near 1 m, far 3 km, fog density 6e-4 (restored to 0.1 m / 5e8 / 2e-4 on the globe) via `setFarmCameraLimits`. Not measurable here (+-1 fps); fog does not touch Google tiles (Cesium culls globe tiles only); harmless.
+3. Dynamic quality: pointer/wheel orbit touches a debounced motion flag; moving or flying = SSE >= 32 and resolutionScale 1; detail setting returns after 1 s idle (`createMotionTracker`).
+4. Ground-height lookups (`tileset.getHeight` is a ray pick, ~4 ms settled, 50+ ms while streaming) are now <= 5 Hz. `enableCollision` set false on the Google tileset: getHeight does not need it (verified: still returns heights); it only fed camera collision (off in farm view) and clamp-to-ground entities on the tiles (none).
+5. Under Google in farm view: globe hidden (`globe.show=false`, so no globe tile requests); OSM Buildings hidden (`show=false`, no draw); only the Google tileset, the twin PrimitiveCollection (field/outline classification primitives each redraw the tiles, the known cost of "BOTH" classification: keep layers few) and billboards/labels of pins (others are below the horizon, the open farm's is hidden). Sky atmosphere, sky box and fog still draw (cheap).
+6. Dev readout: `window.__ftPerf()` (frame ms avg/p95, fps, render CPU ms, tiles pending/processing, tileset MB, resolution scale, SSE, engines active); overlay top-right toggled with the backtick key, shown from the start with `?perf=1`. Dev builds or `?perf=1` only.
+
+**Measured** (Playwright Chromium, Intel Arc iGPU, 1600x812 canvas, dpr 1, /dev/trace at the Cornell preset, Google tiles settled, ~640 m up, -30 deg; fps = 1000 / median of forced render + 1 px readPixels while rotating, so it is GPU-synchronous and not tied to rAF; the test browser is slower than a normal window): MSAA 4 + old frustum/fog 42-44 fps (22.7-23.7 ms) -> new 61-71 fps (14.0-16.2 ms). MSAA alone: 44.6 fps; frustum+fog alone (MSAA off): 65 fps, so MSAA accounts for essentially all of it. SSE 16 -> 32 while moving: 54 -> 64 fps in one run. Per-frame getHeight x2 vs throttled: +2 ms (settled). 60 fps is reached in this browser on this scene but not guaranteed with streaming tiles or classification layers on; `perf.avg` while idle-streaming showed ~53-57 fps. Used /dev/trace (same Globe, Cornell preset) rather than /dev/cesium because /dev/cesium only has the Agassiz test sites. 1 Google page load. Screenshot `.playwright-mcp/step0-render-perf-overlay.png`.
+
+**Tests.** New `perf.test.ts` (qualityFor, motion tracker, throttle, needsContinuousRender, frame stats). typecheck: only `lib/twin/scenario.ts` (PRODUCT's missing `./scenarios/registry`), lint pass, `components/viewer` tests 70 pass.
+
+**Gaps.** Weather/ground engines are stubs. MSAA off makes edges rely on FXAA (screenshot looks fine). Dynamic quality is not toggled by the share-link `setCamera`. Low-detail "pause" is a high SSE, not a true request stop.

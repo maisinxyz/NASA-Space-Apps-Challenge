@@ -6,12 +6,6 @@ import type { Farm } from "@/components/globe/types";
 type Framing = NonNullable<Farm["framing"]>;
 
 /**
- * Mead NE: over the US-Ne1 centre-pivot field (AmeriFlux point 41.1651, -96.4766) so the whole pivot circle reads.
- * Proposed, not screenshotted at these exact values (the Mead check used 400 m / -30 deg at US-Ne3 and closer views).
- */
-export const MEAD_FRAMING: Framing = { lon: -96.4766, lat: 41.1651, rangeM: 600, pitchDeg: -35, headingDeg: 0 };
-
-/**
  * Farmland near Intercourse PA: strip-cropped fields and farmsteads ~900 m E / 600 m N of the village centre
  * (-76.1075, 40.0383), looking NNW. Private farmland: pair with minRangeM 250 (no closer views). The target is
  * ~1.1 km from the village point, so the farm's radiusM must be at least ~1300 m (box half-side = radius / sqrt 2).

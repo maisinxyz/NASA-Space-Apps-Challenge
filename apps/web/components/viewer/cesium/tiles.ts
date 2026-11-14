@@ -19,6 +19,7 @@ import {
   Viewer,
 } from "cesium";
 import type { FarmSurface, GlobeView, TileTier } from "@/components/globe/types";
+import { qualityFor, type RenderQuality } from "./perf";
 
 const TIERS: readonly TileTier[] = ["A", "B", "C"];
 /** ion asset "Google Maps 2D Satellite", id as listed for the team's ion account (see tier B below). */
@@ -87,11 +88,36 @@ export function createViewer(container: HTMLElement): Viewer {
   });
   // Viewer's default double-click handler tracks the clicked entity; we drive the camera ourselves.
   viewer.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-  // Cesium renders at CSS pixels by default, which looks soft on HiDPI laptop screens. Cap at 1.25x: the demo
-  // laptop (Intel Arc 140T) is fill-rate bound on Google tiles at 1080p.
-  viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.25);
+  // Cesium renders at CSS pixels by default, which looks soft on HiDPI laptop screens. Capped by detail (perf.ts
+  // qualityFor): the demo laptop (Intel Arc 140T) is fill-rate bound on Google tiles at 1080p.
+  viewer.resolutionScale = qualityFor("medium", window.devicePixelRatio || 1).resolutionScale;
+  // MSAA 4x (Cesium default) multiplies fill cost on a fill-bound GPU; FXAA below keeps edges acceptable.
+  viewer.scene.msaaSamples = 1;
   viewer.scene.postProcessStages.fxaa.enabled = true;
   return viewer;
+}
+
+/** Apply a RenderQuality (see perf.ts qualityFor): tile screen-space error on Google's tileset, canvas resolution scale. Cheap when unchanged. */
+export function applyQuality(viewer: Viewer, tileset: Cesium3DTileset | undefined, q: RenderQuality) {
+  if (tileset && tileset.maximumScreenSpaceError !== q.sse) tileset.maximumScreenSpaceError = q.sse;
+  if (viewer.resolutionScale !== q.resolutionScale) viewer.resolutionScale = q.resolutionScale;
+}
+
+/** Farm-view camera limits: the camera is within 1.5 km of the target looking down, so 3 km of depth is plenty (fewer tiles drawn, better depth precision). */
+export const FARM_FAR_M = 3000;
+export const FARM_NEAR_M = 1;
+const FARM_FOG_DENSITY = 6.0e-4;
+const GLOBE_FOG_DENSITY = 2.0e-4; // Cesium default
+const GLOBE_NEAR_M = 0.1; // Cesium default
+const GLOBE_FAR_M = 500000000; // Cesium default
+
+/** Tighter frustum and fog in farm view (call once landed); `false` restores the globe-view defaults. */
+export function setFarmCameraLimits(viewer: Viewer, farm: boolean) {
+  const f = viewer.camera.frustum as { near: number; far: number };
+  f.near = farm ? FARM_NEAR_M : GLOBE_NEAR_M;
+  f.far = farm ? FARM_FAR_M : GLOBE_FAR_M;
+  viewer.scene.fog.density = farm ? FARM_FOG_DENSITY : GLOBE_FOG_DENSITY;
+  viewer.scene.requestRender();
 }
 
 /**
@@ -190,14 +216,15 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
       // Cesium resolves the Google asset itself (ion route: no asset id in our code; key route: Google's Map
       // Tiles API). onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google
       // geocoder; this app has no geocoder at all. TODO(verify): confirm "no geocoder" satisfies the terms.
-      // enableCollision: needed for tileset.getHeight() (camera floor). maximumScreenSpaceError 16 (Cesium's
+      // enableCollision false: getHeight() is a ray pick and does not need it; it only feeds camera collision (off in
+      // farm view, we clamp ourselves) and CLAMP_TO_GROUND entities on the tiles (none). maximumScreenSpaceError 16 (Cesium's
       // default): 8 looked a little sharper but cost ~20 % fps on the demo laptop (Phase 3 note). The streaming
       // optimisations below are Cesium's defaults (engine 26.5), set explicitly so a library change cannot drop them.
       // Google's logo/credits go to Cesium's credit display on both routes.
       const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim();
       const api = googleTilesRoute(key) === "google-key" ? { key, onlyUsingWithGoogleGeocoder: true as const } : { onlyUsingWithGoogleGeocoder: true as const };
       const ts = await createGooglePhotorealistic3DTileset(api, {
-        enableCollision: true,
+        enableCollision: false,
         maximumScreenSpaceError: 16,
         dynamicScreenSpaceError: true,
         foveatedScreenSpaceError: true,

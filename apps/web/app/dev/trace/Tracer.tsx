@@ -10,14 +10,12 @@ import type { Farm, GlobeHandle, TileTier } from "@/components/globe/types";
 import type { LoadedTier } from "@/components/viewer/cesium/tiles";
 import { type Ring, ringAreaHa, ringsToGeoJson, ringsToTs, squareBbox } from "@/components/viewer/cesium/trace";
 
-// Approximate points of the 5 new farms (sources and TODO(verify) in docs/progress/s1-C3-render.md, Phase A).
+// Approximate points of the new farms (sources and TODO(verify) in docs/progress/s1-C3-render.md, Phase A).
 const PRESETS: { id: string; name: string; lon: number; lat: number }[] = [
   { id: "cornell", name: "Cornell Ruminant Center barns (approx.)", lon: -76.2451, lat: 42.4425 },
   { id: "beltsville", name: "Beltsville ARC campus point (approx.)", lon: -76.8844, lat: 39.0319 },
   { id: "lancaster", name: "Intercourse PA village centre", lon: -76.1075, lat: 40.0383 },
   { id: "oakville", name: "Oakville Grade area, Napa (approx.)", lon: -122.4121, lat: 38.4201 },
-  { id: "mead-ne3", name: "Mead NE, AmeriFlux US-Ne3", lon: -96.4397, lat: 41.1797 },
-  { id: "mead-ne1", name: "Mead NE, AmeriFlux US-Ne1", lon: -96.4766, lat: 41.1651 },
 ];
 const TIER_A: TileTier[] = ["A", "B", "C"];
 

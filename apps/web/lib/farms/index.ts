@@ -9,12 +9,11 @@ import { ROTATION_SETS, type RotationSetId, type TwinRotation } from "@/lib/twin
 import { BELTSVILLE, BELTSVILLE_TWIN } from "./beltsville";
 import { CORNELL, CORNELL_TWIN } from "./cornell";
 import { LANCASTER } from "./lancaster";
-import { MEAD } from "./mead";
 import { OAKVILLE } from "./oakville";
 
 export type Bbox = [number, number, number, number];
 
-/** A pin plus an optional card note (e.g. privacy wording, a link to in-ground data). */
+/** A pin plus an optional card note (e.g. privacy wording, a link to a public source). */
 export type FarmInfo = Farm & { note?: { text: string; url?: string; linkText?: string } };
 
 /** What a farm file declares for its twin. */
@@ -41,7 +40,7 @@ export type TwinSpec = {
 
 export type TwinConfig = TwinSpec & { rotations: TwinRotation[] };
 
-export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, LANCASTER, OAKVILLE, MEAD];
+export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, LANCASTER, OAKVILLE];
 
 export const farmById = (id: string | null) => FARMS.find((f) => f.id === id) ?? null;
 

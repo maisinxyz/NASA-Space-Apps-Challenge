@@ -40,7 +40,7 @@ describe("share link", () => {
     // rot_forage is a New York rotation, rot_wheat a Maryland one.
     expect(decodeShare("#farm=usda-barc&a=rot_forage&b=rot_wheat")).toEqual({ farm: "usda-barc", b: "rot_wheat" });
     // Explore farms have no twin: only the farm (and view settings) survive.
-    expect(decodeShare("#farm=unl-mead&a=rot_cover&f=f1&m=compare")).toEqual({ farm: "unl-mead", mode: "compare" });
+    expect(decodeShare("#farm=ucdavis-oakville&a=rot_cover&f=f1&m=compare")).toEqual({ farm: "ucdavis-oakville", mode: "compare" });
   });
 
   it("rejects a camera below ground or off the globe", () => {

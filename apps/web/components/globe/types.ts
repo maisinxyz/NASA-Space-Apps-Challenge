@@ -106,6 +106,99 @@ export type FarmTwinProps = {
    * hover label (name + crop) and a faint outline on the selected field, so the real imagery stays visible.
    */
   showCropFills?: boolean;
+  /**
+   * Sky and air state for the weather engine (clouds, rain, fog, haze, lightning, tint, sun). Null/undefined = clear
+   * default sky and no weather objects. Illustrative mood effects; only `rainRateMmH` is data-driven.
+   */
+  weather?: AtmosphereState | null;
+  /** Animated ground layers drawn as materials on the terrain (wetness, water, frost, crop cover, ...). Empty = none. */
+  groundLayers?: GroundLayerSpec[];
+  /** Effects/render detail. "low" also lowers tile detail and resolution to protect frame rate. Default "medium". */
+  detail?: DetailLevel;
+};
+
+export type DetailLevel = "high" | "medium" | "low";
+
+/**
+ * Sky and air state, evaluated per frame from the scenario. All values 0..1 unless noted.
+ * Owned by the weather engine (components/viewer/cesium/weather/**); written by lib/twin/scenarios/atmosphere/**.
+ */
+export type AtmosphereState = {
+  /** 0 clear .. 1 full low cloud deck. */
+  cloudCover: number;
+  /** 0 white cloud .. 1 dark storm grey. */
+  cloudDarkness: number;
+  /** Rain rate, mm per hour (0 = none). Drives rain streak density and speed. The one data-driven field. */
+  rainRateMmH: number;
+  /** Fine slow drizzle, 0..1. */
+  drizzle: number;
+  /** Lightning likelihood weight 0..1. The engine must cap flashes at one per 3 s and disable them under reduced motion. */
+  lightning: number;
+  /** Ground fog / mist. */
+  fog: number;
+  /** Dust or heat haze. */
+  haze: number;
+  /** Heat shimmer distortion. */
+  heatShimmer: number;
+  /** Ice sparkle / frost air particles. */
+  frostSparkle: number;
+  /** Sun brightness, 1 = normal, up to 1.5. */
+  sunIntensity: number;
+  /** Colour grade [r, g, b] in 0..1 and strength 0..1 (0 = no grade). */
+  tint: [number, number, number, number];
+  /** Local solar hour 0..24 for sun direction (dawn/dusk/night). */
+  timeOfDayHours: number;
+  /** Rain slant from vertical, degrees (wind). */
+  windSlantDeg: number;
+};
+
+export const CLEAR_SKY: AtmosphereState = {
+  cloudCover: 0,
+  cloudDarkness: 0,
+  rainRateMmH: 0,
+  drizzle: 0,
+  lightning: 0,
+  fog: 0,
+  haze: 0,
+  heatShimmer: 0,
+  frostSparkle: 0,
+  sunIntensity: 1,
+  tint: [1, 1, 1, 0],
+  timeOfDayHours: 10,
+  windSlantDeg: 0,
+};
+
+export type GroundLayerKind =
+  | "wetness" // soil darkens / sheen
+  | "water" // standing water with ripples
+  | "runoff" // muddy runoff streaks on slopes
+  | "floodZones" // shallow water rising in low zones
+  | "dryness" // drying tan soil, cracks
+  | "frost" // white frost over cold-air pooling spots
+  | "heatGlow" // heat stress glow on crop fields
+  | "cropCover" // crop rows / bare soil by month
+  | "vegetation" // greenness (NDVI-style) vs normal
+  | "organicMatter"; // gentle soil darkening, legume/cover markers
+
+/**
+ * One animated ground layer. Owned by the ground renderer (components/viewer/cesium/ground/**); written by
+ * lib/twin/scenarios/ground/**. Values are 0..1 unless noted. With no real data, layers come only from the dev
+ * fixture page; the real twin shows "waiting for the backend" instead.
+ */
+export type GroundLayerSpec = {
+  id: string;
+  kind: GroundLayerKind;
+  /** Overall strength 0..1 (e.g. wetness amount, water level, frost cover). */
+  intensity: number;
+  opacity: number;
+  /** Animation clock, seconds (the renderer feeds it to the material time uniform). */
+  timeS?: number;
+  /** Per-field strength 0..1 keyed by field id; missing = intensity. */
+  byField?: Record<string, number>;
+  /** Extra numeric parameters per kind (documented by the layer owner). */
+  params?: Record<string, number>;
+  /** Raster source when real backend data exists (zones, depth frames). */
+  overlay?: GroundOverlay;
 };
 
 export type LookFilter = "none" | "thermal" | "vegetation" | "night";

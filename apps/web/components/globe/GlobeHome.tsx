@@ -6,10 +6,12 @@ import { useShallow } from "zustand/react/shallow";
 import dynamic from "next/dynamic";
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+import { useScenarioRun } from "@/components/farm/useScenarioRun";
 import { TwinPanel } from "@/components/farm/TwinPanel";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
+import type { RunSource } from "@/lib/twin/scenarios/runSource";
 import { selectFarm as select, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
@@ -67,7 +69,11 @@ function season(twin: TwinConfig | undefined, id: string, year: number, month: n
 }
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
-export function GlobeHome() {
+/**
+ * `runSource` is "none" in the product: the backend delivers no scenario runs yet, so Simulate renders no effect.
+ * Only the dev page /dev/scenarios passes "fixture".
+ */
+export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}) {
   const farmId = useAppStore((s) => s.farmId);
   const view = useAppStore((s) => s.globeView);
   const reducedMotion = !!useReducedMotion();
@@ -85,14 +91,17 @@ export function GlobeHome() {
   const twin = view === "farm" ? twinConfig(farm?.id ?? null) : undefined;
   const fields = twin?.fields;
   const inTwin = inFarm && !!twin;
-  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills })),
+  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail })),
   );
   // Compare paints rotation A (left of the split) and B (right) for the chosen season; other modes show current crops.
   const comparing = inTwin && twinMode === "compare";
   const cropA = useMemo(() => (comparing ? season(twin, compareA, twinYear, twinMonth) : undefined), [comparing, twin, compareA, twinYear, twinMonth]);
   const cropB = useMemo(() => (comparing ? season(twin, compareB, twinYear, twinMonth) : undefined), [comparing, twin, compareB, twinYear, twinMonth]);
   const compare = useMemo(() => (comparing ? { right: { cropByField: cropB }, divider } : null), [comparing, cropB, divider]);
+
+  // Scenario effect: only while Simulate is open in a twin AND a run source exists (never in the real twin yet).
+  const frame = useScenarioRun({ farmId: farm?.id ?? null, runSource, enabled: inTwin && twinMode === "simulate", reducedMotion });
 
   // Slim header while the twin workspace is on screen.
   useEffect(() => {
@@ -115,6 +124,8 @@ export function GlobeHome() {
       ...(d.divider !== undefined && { divider: d.divider }),
       ...(d.surface && { twinSurface: d.surface }),
       ...(d.look && { look: d.look }),
+      ...(d.detail && { detail: d.detail }),
+      ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
     });
   }, []);
   useEffect(() => {
@@ -208,6 +219,9 @@ export function GlobeHome() {
           surface={twinSurface}
           overlayMask={inTwin ? twin.overlayMask : undefined}
           showCropFills={comparing && showCropFills}
+          weather={frame?.atmosphere}
+          groundLayers={frame?.ground}
+          detail={detail}
         />
       </GlobeBoundary>
 
@@ -223,6 +237,8 @@ export function GlobeHome() {
             onBack={() => useAppStore.setState({ globeView: "globe" })}
             onReset={() => globe.current?.resetView()}
             getCamera={() => globe.current?.getCamera() ?? null}
+            runSource={runSource}
+            frame={frame}
           />
         ) : inFarm ? (
           <div className="absolute top-4 left-4 flex max-w-[calc(100%-22rem)] flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface/90 p-3">

@@ -4,15 +4,18 @@
 // panels, Esc close the inspector (R reset lives in TourController). Rendering is Globe.tsx; this file writes the store.
 import { useEffect, useState } from "react";
 
-import type { CameraState, CropLook, Farm, FarmField, FarmSurface, LookFilter } from "@/components/globe/types";
+import type { CameraState, CropLook, DetailLevel, Farm, FarmField, FarmSurface, LookFilter } from "@/components/globe/types";
 import { BasisChip } from "@/components/ui/Provenance";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { TWIN_MODES, type TwinMode, useAppStore } from "@/lib/store";
-import { encodeShare, LOOKS } from "@/lib/share";
+import { DETAILS, encodeShare, LOOKS } from "@/lib/share";
+import type { RunSource } from "@/lib/twin/scenarios/runSource";
+import type { ScenarioFrame } from "@/lib/twin/scenario";
 
 import { ComparePanel } from "./ComparePanel";
 import { CompareTray, DividerHandle } from "./CompareTray";
-import { EvidenceBody, ExploreBody, FieldCard, SimulateBody } from "./Inspector";
+import { EvidenceBody, ExploreBody, FieldCard } from "./Inspector";
+import { ScenarioClock, SimulateBody } from "./ScenarioPanel";
 import { CropSwatch, hudBtn, hudBtnOn, hudSelect, Kbd, Panel, useTwin } from "./shared";
 
 const MODE_LABEL: Record<TwinMode, string> = { explore: "Explore", simulate: "Simulate", compare: "Compare", evidence: "Evidence" };
@@ -23,7 +26,8 @@ const SURFACES: { id: FarmSurface; label: string }[] = [
 const LOOK_LABEL: Record<LookFilter, string> = { none: "None (true colour)", thermal: "Thermal style", vegetation: "Vegetation style", night: "Night style" };
 
 /** Compare and Evidence need the width: the left panel folds away there (the user can open it again). */
-export const setMode = (m: TwinMode) => useAppStore.setState({ twinMode: m, leftOpen: m === "explore" || m === "simulate" });
+export const setMode = (m: TwinMode) => useAppStore.setState({ twinMode: m, leftOpen: m === "explore" || m === "simulate", scenarioPlaying: false });
+const DETAIL_LABEL: Record<DetailLevel, string> = { high: "High", medium: "Medium", low: "Low" };
 
 type Props = {
   farm: Farm;
@@ -35,9 +39,13 @@ type Props = {
   onBack(): void;
   onReset(): void;
   getCamera(): CameraState | null;
+  /** Where scenario runs come from. "none" (the real twin) = cards and inputs only, empty state, no effect on the map. */
+  runSource: RunSource;
+  /** The composed scenario frame (readouts); null without a run. */
+  frame: ScenarioFrame | null;
 };
 
-export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset, getCamera }: Props) {
+export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset, getCamera, runSource, frame }: Props) {
   const { twinMode: mode, twinFieldId, panelsHidden, leftOpen, rightOpen } = useAppStore();
   const [msg, setMsg] = useState("");
   const twin = useTwin();
@@ -65,7 +73,7 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
 
   async function share() {
     const s = useAppStore.getState();
-    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera() });
+    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera(), scenario: s.scenarioId, inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined, detail: s.detail });
     history.replaceState(null, "", hash);
     try {
       await navigator.clipboard.writeText(location.href);
@@ -133,7 +141,7 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
             ) : mode === "explore" ? (
               <ExploreBody farm={farm} fieldCount={fields.length} />
             ) : mode === "simulate" ? (
-              <SimulateBody />
+              <SimulateBody runSource={runSource} frame={frame} />
             ) : compare ? (
               <ComparePanel />
             ) : (
@@ -142,6 +150,8 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
           </div>
         </Panel>
       )}
+
+      {show && mode === "simulate" && <ScenarioClock runSource={runSource} className={`absolute bottom-[6.5rem] left-3 mx-auto max-w-[42rem] ${rightOpen ? "right-[24.75rem]" : "right-3"}`} />}
 
       {show && compare && <CompareTray className={`absolute bottom-[6.5rem] left-3 mx-auto max-w-[42rem] ${rightOpen ? "right-[24.75rem]" : "right-3"}`} />}
 
@@ -175,7 +185,7 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
 }
 
 function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string, CropLook> | undefined }) {
-  const { twinFieldId: fieldId, twinSurface: surface, exaggeration, look } = useAppStore();
+  const { twinFieldId: fieldId, twinSurface: surface, exaggeration, look, detail } = useAppStore();
   const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
   return (
     <div className="grid gap-4 text-sm">
@@ -224,6 +234,18 @@ function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string
           <output className="text-right tabular-nums">{exaggeration}×</output>
         </label>
         <p className="-mt-1 text-[0.7rem] text-ink-muted">1× = true scale.</p>
+        <fieldset className="grid gap-1">
+          <legend className="mb-1 text-xs">Detail</legend>
+          <div className="flex gap-1">
+            {DETAILS.map((d) => (
+              <label key={d} className={`${detail === d ? hudBtnOn : hudBtn} cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent`}>
+                <input type="radio" name="twin-detail" className="sr-only" checked={detail === d} onChange={() => useAppStore.setState({ detail: d })} />
+                {DETAIL_LABEL[d]}
+              </label>
+            ))}
+          </div>
+          <p className="text-[0.7rem] text-ink-muted">Low protects the frame rate on slower computers. Weather effects scale with it.</p>
+        </fieldset>
         <label className="grid gap-1 text-xs">
           Look
           <select className={hudSelect} value={look} onChange={(e) => useAppStore.setState({ look: e.target.value as LookFilter })} aria-describedby="look-note">

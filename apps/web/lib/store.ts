@@ -2,7 +2,9 @@
 // Update with useAppStore.setState({...}); reset() restores initialState (demo Reset key).
 import { create } from "zustand";
 
-import type { FarmSurface, GlobeView, LookFilter } from "@/components/globe/types";
+import type { DetailLevel, FarmSurface, GlobeView, LookFilter } from "@/components/globe/types";
+import type { ScenarioSpeed } from "@/lib/twin/scenarios/clock";
+import type { ScenarioId } from "@/lib/twin/scenario";
 import { DEFAULT_WEIGHTS, type Weights } from "@/lib/twin/rotations";
 
 export type TwinMode = "explore" | "simulate" | "compare" | "evidence";
@@ -36,6 +38,17 @@ export interface AppState {
   panelsHidden: boolean;
   leftOpen: boolean;
   rightOpen: boolean;
+  /** Simulate: the chosen scenario (null = the card list), its inputs per scenario id, and the scenario clock. */
+  scenarioId: ScenarioId | null;
+  scenarioInputs: Record<string, Record<string, number>>;
+  /** 0..1 along the scenario's own clock. */
+  scenarioProgress: number;
+  scenarioPlaying: boolean;
+  scenarioSpeed: ScenarioSpeed;
+  /** Rotation used by rotation-dependent scenarios (one of the farm's rotation ids). */
+  scenarioRotation: string;
+  /** Effects/render detail for the 3D farm. */
+  detail: DetailLevel;
 }
 
 export const initialState: AppState = {
@@ -56,6 +69,13 @@ export const initialState: AppState = {
   panelsHidden: false,
   leftOpen: true,
   rightOpen: true,
+  scenarioId: null,
+  scenarioInputs: {},
+  scenarioProgress: 0,
+  scenarioPlaying: false,
+  scenarioSpeed: 1,
+  scenarioRotation: "rot_existing",
+  detail: "medium",
 };
 
 export const useAppStore = create<AppState & { reset(): void }>()((set) => ({
@@ -64,7 +84,7 @@ export const useAppStore = create<AppState & { reset(): void }>()((set) => ({
 }));
 
 /** Twin state that belongs to one farm (field ids, rotation ids): reset whenever another farm is chosen. */
-const perFarm = (({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen }: AppState) => ({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen }))(initialState);
+const perFarm = (({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation }: AppState) => ({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation }))(initialState);
 
 /** Pick a farm (null = none, back to the whole globe). A different farm starts from the default twin state. */
 export function selectFarm(id: string | null) {

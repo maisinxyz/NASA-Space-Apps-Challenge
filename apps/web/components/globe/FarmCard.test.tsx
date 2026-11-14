@@ -8,7 +8,7 @@ import { FarmList } from "./FarmList";
 
 const noop = () => {};
 const hero = FARMS.find((f) => f.tier === "twin")!;
-const mead = farmById("unl-mead")!;
+const oakville = farmById("ucdavis-oakville")!;
 const lancaster = farmById("lancaster-intercourse")!;
 
 describe("FarmCard", () => {
@@ -25,13 +25,11 @@ describe("FarmCard", () => {
     expect(html).not.toContain("Simulation not available");
   });
 
-  it("shows explore farms as explore only, with their note and link", () => {
-    const html = renderToStaticMarkup(<FarmCard farm={mead} onClose={noop} onOpen={noop} />);
+  it("shows explore farms as explore only", () => {
+    const html = renderToStaticMarkup(<FarmCard farm={oakville} onClose={noop} onOpen={noop} />);
     expect(html).toContain("Explore only");
     expect(html).toContain("Simulation not available for this farm yet");
-    expect(html).toContain("AmeriFlux");
-    expect(html).toContain('href="https://ameriflux.lbl.gov/sites/siteinfo/US-Ne3"');
-    expect(html).not.toContain("Approximate location");
+    expect(html).toContain("Approximate location");
     expect(html).not.toContain("Open twin");
   });
 

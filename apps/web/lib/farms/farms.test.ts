@@ -9,8 +9,8 @@ const WEB = join(__dirname, "..", "..");
 const twins = FARMS.filter((f) => f.tier === "twin");
 
 describe("farm list", () => {
-  it("has the 5 chosen farms, Cornell and Beltsville as twins, Agassiz gone", () => {
-    expect(FARMS.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc", "lancaster-intercourse", "ucdavis-oakville", "unl-mead"]);
+  it("has the 4 chosen farms, Cornell and Beltsville as twins, Agassiz gone", () => {
+    expect(FARMS.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc", "lancaster-intercourse", "ucdavis-oakville"]);
     expect(twins.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc"]);
     expect(farmById("agassiz")).toBeNull();
   });
@@ -25,8 +25,8 @@ describe("farm list", () => {
     if (f.note?.url) expect(f.note.url).toMatch(/^https:\/\/\S+$/);
   });
 
-  it("only Mead has verified (published) coordinates", () => {
-    expect(FARMS.filter((f) => f.coordsVerified).map((f) => f.id)).toEqual(["unl-mead"]);
+  it("no pin has verified (published) coordinates", () => {
+    expect(FARMS.filter((f) => f.coordsVerified)).toEqual([]);
   });
 
   it("describes Lancaster farmland by area only, with a privacy zoom limit", () => {

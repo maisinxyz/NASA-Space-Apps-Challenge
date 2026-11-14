@@ -1,5 +1,5 @@
 "use client";
-// Right inspector content: the click-to-inspect field card, and the Explore / Simulate / Evidence mode bodies.
+// Right inspector content: the click-to-inspect field card, and the Explore / Evidence mode bodies (Simulate: ScenarioPanel.tsx).
 // Compare's body is ComparePanel. Every value carries unit + basis + source (components/ui/Provenance).
 import type { CropLook, Farm, FarmField } from "@/components/globe/types";
 import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
@@ -7,7 +7,6 @@ import { BasisChip, SourceFooter, Value } from "@/components/ui/Provenance";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { useAppStore } from "@/lib/store";
 import { bareMonths, rotationById } from "@/lib/twin/rotations";
-import { SCENARIOS } from "@/lib/twin/scenario";
 
 import { CoverCalendar, CropSwatch, useTwin } from "./shared";
 
@@ -84,18 +83,6 @@ export function ExploreBody({ farm, fieldCount }: { farm: Farm; fieldCount: numb
         <dd>{simAreaLabel}; the thin outline on the map marks where simulation layers apply.</dd>
       </dl>
       <p className="text-xs text-ink-muted">Keys: 1–4 modes · H hide panels · R reset · Esc close.</p>
-    </div>
-  );
-}
-
-export function SimulateBody() {
-  return (
-    <div className="grid gap-3 text-sm">
-      <div className="rounded-md border border-dashed border-white/20 p-3 text-center">
-        <p className="font-semibold">Climate scenarios arrive with real NASA data</p>
-        <p className="mt-1 text-xs text-ink-muted">Storms, heat, drought and frost will be replayed here once they are built from NASA records for this farm. Nothing is simulated yet.</p>
-      </div>
-      <p className="text-xs text-ink-muted">{SCENARIOS.length ? `${SCENARIOS.length} scenarios` : "No scenarios yet."} Controls appear when the first one exists.</p>
     </div>
   );
 }

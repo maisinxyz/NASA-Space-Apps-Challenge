@@ -47,7 +47,9 @@ import {
   startFraming,
 } from "@/components/viewer/cesium/clamp";
 import { activeLook, createLookLayer, type LookLayer } from "@/components/viewer/cesium/look";
-import { createViewer, type LoadedTier, loadTier, pickSurface, progressToReport, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
+import { createGroundRenderer, type GroundRenderer } from "@/components/viewer/cesium/ground";
+import { createFrameStats, createMotionTracker, createThrottle, GROUND_QUERY_MS, needsContinuousRender, qualityFor } from "@/components/viewer/cesium/perf";
+import { applyQuality, createViewer, type LoadedTier, loadTier, pickSurface, progressToReport, setFarmCameraLimits, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
 import {
   createFieldCanvas,
   createFieldLayer,
@@ -63,7 +65,9 @@ import {
   type SquareOutline,
 } from "@/components/viewer/cesium/twin";
 
-import type { CameraState, Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
+import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
+
+import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
 
 // Camera framing (product choices, tune freely).
 /** Whole-Earth view: camera height above the ellipsoid, metres. */
@@ -124,6 +128,12 @@ type Runtime = {
   fieldCanvasB: ReturnType<typeof createFieldCanvas>;
   outline: SquareOutline;
   look: LookLayer;
+  /** Effect engines (weather, ground layers): created on entering farm view, destroyed on leaving. */
+  weather: WeatherEngine | null;
+  ground: GroundRenderer | null;
+  /** Debounced camera-motion flag (dynamic tile quality) and the ~5 Hz gate for ground-height queries. */
+  motion: ReturnType<typeof createMotionTracker>;
+  groundDue: ReturnType<typeof createThrottle>;
   /** Last onLoadProgress report. */
   progress: { pending: number; at: number } | null;
   /** setCamera() received before the farm-view landing: applied when the orbit starts. */
@@ -342,6 +352,70 @@ function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, he
   r.viewer.camera.flyTo({ destination: Cartesian3.fromDegrees(lon, lat, heightM), duration: reducedMotion ? 0 : FLY_SECONDS, complete: done, cancel: done });
 }
 
+/**
+ * Dev performance readout: window.__ftPerf() returns frame ms (avg/p95 between rendered frames), fps while rendering
+ * continuously, render CPU ms, tile requests/processing, tileset memory and the active effect engines. A small overlay
+ * (toggle: backtick key; shown from the start with ?perf=1) prints the same. Only in dev builds or with ?perf=1.
+ */
+function installPerfProbe(r: Runtime): () => void {
+  const params = new URLSearchParams(window.location.search);
+  if (process.env.NODE_ENV === "production" && params.get("perf") !== "1") return () => {};
+  const { scene } = r.viewer;
+  const frames = createFrameStats();
+  const cpu = createFrameStats();
+  let lastRender = 0;
+  let renderStart = 0;
+  const offPre = scene.preRender.addEventListener(() => (renderStart = performance.now()));
+  const offPost = scene.postRender.addEventListener(() => {
+    const t = performance.now();
+    if (lastRender && t - lastRender < 250) frames.push(t - lastRender); // longer gaps = idle (requestRenderMode), not slow frames
+    lastRender = t;
+    if (renderStart) cpu.push(t - renderStart);
+  });
+  const snapshot = () => {
+    const ts = r.tier?.tileset;
+    const st = (ts as unknown as { statistics?: { numberOfPendingRequests: number; numberOfTilesProcessing: number } } | undefined)?.statistics; // not in the typings
+    const f = frames.read();
+    return {
+      frameMsAvg: +f.avgMs.toFixed(1),
+      frameMsP95: +f.p95Ms.toFixed(1),
+      fps: +f.fps.toFixed(1),
+      renderCpuMsAvg: +cpu.read().avgMs.toFixed(1),
+      tilesPending: st?.numberOfPendingRequests ?? 0,
+      tilesProcessing: st?.numberOfTilesProcessing ?? 0,
+      tilesetMemoryMB: ts ? Math.round(ts.totalMemoryUsageInBytes / 1048576) : 0,
+      resolutionScale: +r.viewer.resolutionScale.toFixed(2),
+      sse: ts?.maximumScreenSpaceError ?? null,
+      engines: { weather: !!r.weather?.active, ground: !!r.ground?.active },
+    };
+  };
+  (window as unknown as { __ftPerf?: typeof snapshot }).__ftPerf = snapshot;
+  const box = document.createElement("pre");
+  Object.assign(box.style, { position: "absolute", right: "8px", top: "8px", zIndex: "20", margin: "0", padding: "6px 8px", font: "11px/1.4 ui-monospace, monospace", color: "#d7f3ee", background: "rgba(16,32,30,.82)", borderRadius: "6px", pointerEvents: "none", display: params.get("perf") === "1" ? "block" : "none" });
+  r.viewer.container.appendChild(box);
+  const draw = () => {
+    if (box.style.display === "none") return;
+    const s = snapshot();
+    const fx = `weather ${s.engines.weather ? "on" : "off"}, ground ${s.engines.ground ? "on" : "off"}`;
+    box.textContent = [`${s.fps} fps  ${s.frameMsAvg} ms avg  ${s.frameMsP95} ms p95`, `render cpu ${s.renderCpuMsAvg} ms  res ${s.resolutionScale}  sse ${s.sse}`, `tiles pending ${s.tilesPending}  processing ${s.tilesProcessing}`, `tileset ${s.tilesetMemoryMB} MB  fx ${fx}`].join("\n");
+  };
+  const timer = setInterval(draw, 500);
+  const onKey = (e: KeyboardEvent) => {
+    if (e.code !== "Backquote") return;
+    box.style.display = box.style.display === "none" ? "block" : "none";
+    draw();
+  };
+  window.addEventListener("keydown", onKey);
+  return () => {
+    offPre();
+    offPost();
+    clearInterval(timer);
+    window.removeEventListener("keydown", onKey);
+    box.remove();
+    delete (window as unknown as { __ftPerf?: unknown }).__ftPerf;
+  };
+}
+
 const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function Globe(props, ref) {
   const { farms, selectedId, view, className } = props;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -435,6 +509,10 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       fieldCanvasB: createFieldCanvas("ft-fields-b"),
       outline: createSquareOutline(outlineCol),
       look: createLookLayer(viewer.scene),
+      weather: null,
+      ground: null,
+      motion: createMotionTracker(),
+      groundDue: createThrottle(GROUND_QUERY_MS),
       progress: null,
       pendingCamera: null,
       twinLayers,
@@ -553,6 +631,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       } else if (e.buttons & 1) {
         st.o = { ...st.o, heading: st.o.heading - dx * ORBIT_RAD_PER_PX, pitch: st.o.pitch - dy * ORBIT_RAD_PER_PX };
       } else return;
+      r.motion.touch(performance.now());
       applyOrbit(r, live.current, farm);
     };
     const onUp = (e: PointerEvent) => {
@@ -565,6 +644,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (!st || !farm || r.flying) return;
       e.preventDefault();
       st.o = { ...st.o, range: st.o.range * Math.exp(e.deltaY * WHEEL_ZOOM_PER_DELTA) };
+      r.motion.touch(performance.now());
       applyOrbit(r, live.current, farm);
     };
     const onLeave = () => setFieldHover(r, live.current, null, 0);
@@ -601,7 +681,15 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (!!r.orbit !== landed) {
         landed = !!r.orbit;
         syncRef.current();
+        setFarmCameraLimits(viewer, landed); // 3 km far plane + tighter fog in farm view, defaults on the globe
       }
+      // Tile detail: the `detail` setting, coarser while the camera moves (debounced 1 s), paused refinement for low + scenario.
+      const scenario = !!p.weather || !!p.groundLayers?.length;
+      applyQuality(
+        viewer,
+        r.tier?.tileset,
+        qualityFor(landed ? (p.detail ?? "medium") : "medium", window.devicePixelRatio || 1, { moving: landed && (r.flying || r.motion.moving(now)), scenario: landed && scenario }),
+      );
       // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
 
@@ -632,6 +720,21 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         p.onLoadProgress?.({ pending: report.pending });
       }
 
+      // Effect engines (farm view only, one per viewer). They cost nothing while idle; while one animates we keep rendering.
+      if (p.view === "farm" && r.tier) {
+        r.weather ??= createWeatherEngine(viewer);
+        r.ground ??= createGroundRenderer(viewer);
+        const surf: FarmSurface = r.tier.surface === "google" ? "google" : "terrain";
+        const base = { detail: p.detail ?? "medium", reducedMotion: p.reducedMotion, dtS: dt, nowS: now / 1000, surface: surf } as const;
+        r.weather.update(p.weather ?? null, base);
+        r.ground.update(p.groundLayers ?? [], { ...base, fields: p.fields ?? [], simBbox: p.simBbox, overlayMask: p.overlayMask, cropByField: p.cropByField });
+        if (needsContinuousRender(r.weather, r.ground)) scene.requestRender();
+      } else if (r.weather || r.ground) {
+        r.weather?.destroy();
+        r.ground?.destroy();
+        r.weather = r.ground = null;
+      }
+
       // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth, and in
       // farm view the open farm's own pin and label (they would sit over the fields).
       const occluder = new EllipsoidalOccluder(Ellipsoid.WGS84, camera.positionWC);
@@ -654,24 +757,32 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (!farm || !st || !r.tier) return;
       // Ground under the target and under the camera (for the 20 m floor); re-apply the orbit when they change
       // (terrain tiles streaming in) or when the square changed.
-      const ground = r.tier.groundAt(Cartographic.fromDegrees(st.target.lon, st.target.lat));
-      if (ground != null && Math.abs(ground - st.ground) > 0.25) {
-        st.ground = ground;
-        r.farmGround = ground;
-        st.dirty = true;
-      }
-      const camGround = r.tier.groundAt(camera.positionCartographic);
-      if (camGround != null && Math.abs(camGround - st.camGround) > 0.25) {
-        st.camGround = camGround;
-        st.dirty = true;
+      // The height lookup is a ray pick against the tileset: at most ~5 Hz (the last values are kept in between).
+      if (r.groundDue(now)) {
+        const ground = r.tier.groundAt(Cartographic.fromDegrees(st.target.lon, st.target.lat));
+        if (ground != null && Math.abs(ground - st.ground) > 0.25) {
+          st.ground = ground;
+          r.farmGround = ground;
+          st.dirty = true;
+        }
+        const camGround = r.tier.groundAt(camera.positionCartographic);
+        if (camGround != null && Math.abs(camGround - st.camGround) > 0.25) {
+          st.camGround = camGround;
+          st.dirty = true;
+        }
       }
       if (st.dirty) applyOrbit(r, p, farm);
     });
+
+    const offPerf = installPerfProbe(r);
 
     return () => {
       cancelled = true;
       live.current.onViewer?.(null);
       offPreUpdate();
+      offPerf();
+      r.weather?.destroy();
+      r.ground?.destroy();
       offRenderError();
       handler.destroy();
       canvas.removeEventListener("pointerdown", onDown);

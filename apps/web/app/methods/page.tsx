@@ -369,7 +369,7 @@ export default function MethodsPage() {
           <li>FieldTwin gives no yield, profit or absolute soil-loss figures. The erosion index only ranks options against each other.</li>
           <li>Weather records are much coarser than a single field. A real storm can be stronger or weaker on your land than shown.</li>
           <li>Field outlines on the farm twins are approximate, and their crops and rotations are illustrative, not surveyed boundaries or farm records.</li>
-          <li>Most farm pins are approximate locations; only the Mead pin uses published coordinates (an AmeriFlux tower).</li>
+          <li>Farm pins are approximate locations: the sources publish no exact coordinates for these sites.</li>
           <li>Coarse data stays labelled coarse. Stretching it over a detailed 3D surface does not add detail.</li>
           <li>Photos you upload only change how the land looks. Elevation always comes from open data.</li>
           <li>Drone and video capture are on the roadmap only. They do not work in this version.</li>
