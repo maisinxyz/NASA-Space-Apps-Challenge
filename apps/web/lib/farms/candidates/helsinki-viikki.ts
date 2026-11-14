@@ -17,6 +17,7 @@ export const HELSINKI_VIIKKI: Candidate = {
     sourceUrl: "https://www.helsinki.fi/en/research-stations/science-trails/viikki-research-farm-science-trail/welcome-viikki-research-farm",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "plot-grid",
   },
   privacy: "public",
   expected3d: "high",

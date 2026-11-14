@@ -10,6 +10,22 @@ The first session (commits 872717c..21ffecd) could not render Google tiles from 
 - **Not checked (13):** capped by the user at 15 sites (Cornell plus 14 candidates) to keep the run fast. They stay as `not-validated` candidates.
 - Target was 15 PASS. Reached 9 within the cap. Run the remaining 13 candidates with `/dev/farms-check` to add more.
 
+## Gap-fill round (same day, later)
+
+- **New pins:** `pirque-vineyards` (Chile) and `ntu-farm` (Taipei, new file) passed. The globe now has 14 pins.
+- **Failed, flat or broken:**
+  - Kadoorie Farm, Hong Kong.
+  - 7 unchecked candidates in Africa, Colombia, India and the Philippines.
+  - 13 probed city campuses in Africa, Asia and Brazil (details in FARMS.md).
+  - Africa has no pin: no African farm checked had real Google 3D.
+- **Kadoorie bug:** the farm-view orbit put the camera at -7215 m on Kadoorie's hillside. This is the same bug that sinks a -89° camera. The review routine should fix `orbitFromCamera` / `applyOrbit` in `components/globe/Globe.tsx`, then recheck Kadoorie.
+- **Pin designs:** a teammate's merge (`d14fc66`) added per-farm pin designs (`Farm.pin`). Pinned farms got one of the 3 existing designs:
+  - `grape-cluster`: vineyards (Pirque, Waite).
+  - `silo-pair`: barns (UIUC, Hokudai, Reckenholz, INTA).
+  - `plot-grid`: trial plots (WUR, UBC, UTokyo, Helsinki, NTU).
+- **New dev hook:** `window.__ftFarmsCheck.probe(lon, lat)` checks any point without writing a farm file.
+- **Lint:** fails on 1 error in the teammate's `components/hero/Pin3D.tsx`, not touched here: `useId` is called conditionally (react-hooks/rules-of-hooks). Tell them.
+
 ## What changed
 
 - **Unvalidated farms are no longer bundled into the app.**

@@ -1,8 +1,28 @@
 # Farm scouting: results (2026-11-14)
 
-**9 farms PASSED the 3D check and are pins on the home globe** (`apps/web/lib/farms/pinned.ts`): Wageningen Unifarm, UBC Farm, Hokkaido University farm, University of Tokyo ISAS, Agroscope Reckenholz, UIUC South Farms, Waite Campus Adelaide, Helsinki Viikki, INTA Castelar. With Cornell, Beltsville and Napa the globe has 12 pins, all at least 500 km apart (tested).
+**11 farms PASSED the 3D check and are pins on the home globe** (9 in round 1, 2 in the gap-fill round below) (`apps/web/lib/farms/pinned.ts`): Wageningen Unifarm, UBC Farm, Hokkaido University farm, University of Tokyo ISAS, Agroscope Reckenholz, UIUC South Farms, Waite Campus Adelaide, Helsinki Viikki, INTA Castelar, NTU Farm Taipei, Pirque vineyards. With Cornell, Beltsville and Napa the globe has 14 pins, all at least 500 km apart (tested).
 1 WEAK (UP Hatfield, no pin), 4 FAIL (IARI, CIMMYT, CIP, ESALQ). The other 13 candidates were not checked: the user capped this run at 15 sites (Cornell plus 14 candidates) for speed. Fewer than the 15 PASS target; more can be added later with `/dev/farms-check`.
 Unvalidated, weak and failed farms are not bundled into the app: the candidate list (`lib/farms/candidates/index.ts`) is imported only by the dev page.
+
+## Gap-fill round (2026-11-14, evening): Africa, South America, mainland Asia
+
+Asked to fill the empty parts of the globe. Same stage-1 numbers (fast mode or the `probe(lon, lat)` hook, which reproduced UBC exactly: 90 %, 10.1 m, relief 43 %), then one oblique for survivors.
+
+| site | country | source of location | stage 1 (bldgs; share >= 3 m; median; relief share / p90) | verdict |
+|---|---|---|---|---|
+| `pirque-vineyards` | Chile | candidate file | 60; 83 %; 5.8 m; 24 % / 7.1 m | **PASS**: winery buildings and trees 3D, vine rows sharp (`pirque-vineyards-oblique.png`) |
+| `ntu-farm` (new file) | Taiwan | OSM node 3012324209 | 60; 72 %; 4.8 m; 50 % / 14.9 m | **PASS**: plots beside 3D campus, greenhouses, sharp (`ntu-farm-oblique.png`) |
+| `kadoorie-farm` (new file) | Hong Kong | OSM node 4959391427 | 16; 63 %; 3.3 m; 76 % / 11.3 m | **FAIL**: the app's farm view lands the camera at -7215 m (underground) on this hillside, so "Fly in" is broken there. Camera bug, see progress note |
+| `su-welgevallen` | South Africa | candidate file | 60; 8 %; 0.4 m; 11 % / 3.5 m | FAIL: flat |
+| `ilri-nairobi` | Kenya | candidate file | 60; 20 %; 1.6 m; 21 % / 3.6 m | FAIL: mostly flat |
+| `ilri-addis` | Ethiopia | candidate file | 60; 0 %; 0.6 m; 0 % / 1.0 m | FAIL: flat |
+| `iita-ibadan` | Nigeria | candidate file | 60; 13 %; 1.6 m; 1 % / 2.0 m | FAIL: flat |
+| `ciat-palmira` | Colombia | candidate file | 6; 0 %; 0.9 m; 0 % / 0.7 m | FAIL: flat |
+| `icrisat-patancheru` | India | candidate file | 60; 3 %; 1.0 m; 0 % / 1.2 m | FAIL: flat |
+| `irri-los-banos` | Philippines | candidate file | 60; 2 %; 0.7 m; 1 % / 1.7 m | FAIL: flat |
+| probe only (no file) | | OSM via Nominatim | | all FAIL, flat: UPM Serdang MY (25 %, 1.4 m), GKVK Bengaluru IN (0 %), Ankara Univ. agriculture TR (5 %), IAC Campinas BR (10 %), Univ. Nairobi Kabete KE (20 %), IAV Hassan II Rabat MA (0 %), Elsenburg ZA (0 %), Cairo Univ. agriculture EG (0 %), VNUA Hanoi VN (0 %), IPB Bogor ID (12 %), Kasetsart Bangkok TH (2 %), UFU Água Limpa BR (no OSM bldgs, relief 0 %), Rehovot IL (memory coords, 0 %) |
+
+**Africa stays empty.** All 9 African sites checked read flat: Google Photorealistic 3D Tiles had no real 3D mesh at those farms, and UP Hatfield (WEAK) was the only one with partial 3D. Under the "good 3D only" rule none gets a pin.
 
 ## Method (what actually ran)
 

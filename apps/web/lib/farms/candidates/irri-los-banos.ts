@@ -22,5 +22,5 @@ export const IRRI_LOS_BANOS: Candidate = {
   expected3d: "med",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

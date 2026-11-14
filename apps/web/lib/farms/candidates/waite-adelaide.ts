@@ -17,6 +17,7 @@ export const WAITE_ADELAIDE: Candidate = {
     sourceUrl: "https://waite.adelaide.edu.au",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "grape-cluster",
   },
   privacy: "public",
   expected3d: "high",

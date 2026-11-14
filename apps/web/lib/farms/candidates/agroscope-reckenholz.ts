@@ -17,6 +17,7 @@ export const AGROSCOPE_RECKENHOLZ: Candidate = {
     sourceUrl: "https://www.agroscope.admin.ch/agroscope/en/home/about-us/locations-contacts/reckenholz.html",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "silo-pair",
   },
   privacy: "public",
   expected3d: "high",

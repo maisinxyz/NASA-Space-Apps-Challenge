@@ -17,6 +17,7 @@ export const UBC_FARM: Candidate = {
     sourceUrl: "https://ubcfarm.ubc.ca/about/",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "plot-grid",
   },
   privacy: "public",
   expected3d: "high",

@@ -22,5 +22,5 @@ export const SU_WELGEVALLEN: Candidate = {
   expected3d: "med",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

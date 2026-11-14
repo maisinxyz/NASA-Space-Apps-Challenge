@@ -17,6 +17,7 @@ export const WUR_UNIFARM: Candidate = {
     sourceUrl: "https://www.wur.nl/en/research/facilities/unifarm",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "plot-grid",
   },
   privacy: "public",
   expected3d: "high",

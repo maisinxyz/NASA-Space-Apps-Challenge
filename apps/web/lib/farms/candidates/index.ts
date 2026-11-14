@@ -23,7 +23,9 @@ import { ILRI_NAIROBI } from "./ilri-nairobi";
 import { IMIDRA_ENCIN } from "./imidra-encin";
 import { INTA_CASTELAR } from "./inta-castelar";
 import { IRRI_LOS_BANOS } from "./irri-los-banos";
+import { KADOORIE_FARM } from "./kadoorie-farm";
 import { MASSEY_DAIRY1 } from "./massey-dairy1";
+import { NTU_FARM } from "./ntu-farm";
 import { PIRQUE_VINEYARDS } from "./pirque-vineyards";
 import { SGGW_SKIERNIEWICE } from "./sggw-skierniewice";
 import { SU_WELGEVALLEN } from "./su-welgevallen";
@@ -64,5 +66,7 @@ export const CANDIDATES: Candidate[] = [
   CIAT_PALMIRA,
   ICRISAT_PATANCHERU,
   IRRI_LOS_BANOS,
+  NTU_FARM,
+  KADOORIE_FARM,
 ];
 

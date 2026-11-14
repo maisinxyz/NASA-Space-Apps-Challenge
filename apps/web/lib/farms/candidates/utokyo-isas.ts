@@ -17,6 +17,7 @@ export const UTOKYO_ISAS: Candidate = {
     sourceUrl: "https://www.isas.a.u-tokyo.ac.jp/en/page/about/info",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "plot-grid",
   },
   privacy: "public",
   expected3d: "high",

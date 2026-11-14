@@ -22,5 +22,5 @@ export const ICRISAT_PATANCHERU: Candidate = {
   expected3d: "med",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

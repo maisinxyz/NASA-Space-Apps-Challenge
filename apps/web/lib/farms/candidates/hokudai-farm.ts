@@ -17,6 +17,7 @@ export const HOKUDAI_FARM: Candidate = {
     sourceUrl: "https://www.fsc.hokudai.ac.jp/farm/en/?p=128",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "silo-pair",
   },
   privacy: "public",
   expected3d: "high",

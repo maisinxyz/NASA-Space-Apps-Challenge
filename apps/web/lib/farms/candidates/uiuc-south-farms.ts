@@ -17,6 +17,7 @@ export const UIUC_SOUTH_FARMS: Candidate = {
     sourceUrl: "https://research.illinois.edu/researchunit/crop-science-research-and-education-center",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "silo-pair",
   },
   privacy: "public",
   expected3d: "high",

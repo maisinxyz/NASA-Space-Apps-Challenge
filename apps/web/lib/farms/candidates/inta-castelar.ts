@@ -17,6 +17,7 @@ export const INTA_CASTELAR: Candidate = {
     sourceUrl: "https://www.argentina.gob.ar/node/138206",
     coordsVerified: false,
     radiusM: 1500,
+    pin: "silo-pair",
   },
   privacy: "public",
   expected3d: "high",
