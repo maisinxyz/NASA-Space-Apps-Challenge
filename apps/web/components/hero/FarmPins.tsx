@@ -25,8 +25,8 @@ const GrapeCluster: Mark = () => (
   </>
 );
 
-/** Lancaster: working barn-and-farmstead country. A gambrel barn with its door cut out. */
-const Barn: Mark = () => <path d="M11 29V19.2L14.2 14H25.8L29 19.2V29H23V23.2H17V29Z" />;
+/** Lancaster: working barn-and-farmstead country. A gambrel barn (two-pitch roof to a ridge) with the door and hayloft cut out. */
+const Barn: Mark = () => <path fillRule="evenodd" d="M10.5 29V20.4L13 15.6L20 12L27 15.6L29.5 20.4V29H23V23.4H17V29ZM18.7 16.4H21.3V19H18.7Z" />;
 
 /** Cornell: dairy research farm (corn silage). Two domed silos of different height. */
 const SiloPair: Mark = () => (
