@@ -15,6 +15,7 @@ export const BELTSVILLE: FarmInfo = {
   name: "Beltsville Agricultural Research Center",
   owner: "USDA Agricultural Research Service",
   country: "United States",
+  locality: "Beltsville, Maryland", // from the source cited above
   lon: -76.8844,
   lat: 39.0319,
   tier: "twin",

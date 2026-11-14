@@ -1,5 +1,7 @@
 "use client";
-// The Cesium Earth globe: stars, farm pins, fly-in to a farm, turntable orbit around the simulation square in farm view.
+// The Cesium Earth globe: farm pins, the dive / fly-in to a farm, turntable orbit around the simulation square in farm
+// view. On the homepage it sits hidden under the hero Earth (components/hero/HeroEarth.tsx) and takes over at the dive
+// (jumpTo hands over the whole-Earth view); space is pitch black to match the hero.
 // Client-only (load with next/dynamic { ssr: false }). Contract: ./types.ts.
 import "@/components/viewer/cesium/base";
 import "cesium/Build/Cesium/Widgets/widgets.css";
@@ -66,6 +68,7 @@ import {
 } from "@/components/viewer/cesium/twin";
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
+import { dive as DIVE, easeInFlashOut } from "@/components/hero/tokens";
 
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
 
@@ -82,6 +85,9 @@ const FLY_SECONDS = 3;
 /** Fly-in safety nets: give up waiting for the terrain height after this, and force the landing this long after the flight should have ended. */
 const GROUND_TIMEOUT_S = 4;
 const LAND_GRACE_S = 2;
+/** Quick dive: cut the camera once the dive film is opaque (its fade-in is 120 ms), and wait this long for terrain at most. */
+const CUT_AFTER_MS = 150;
+const CUT_GROUND_TIMEOUT_S = 0.5;
 const HOME = { lon: -100, lat: 25 };
 /** Auto-rotate speed, radians per second (one turn in about three minutes). */
 const AUTO_ROTATE_RAD_S = CesiumMath.toRadians(2);
@@ -104,6 +110,17 @@ export type GlobeDevProps = {
 
 /** Turntable orbit around the simulation square. target = the point at the screen centre (stays inside the square). */
 type OrbitState = { target: LonLat; o: Orbit; ground: number; camGround: number; dirty: boolean };
+
+/** A running dive: the camera orbits the waypoint's ENU frame, so the waypoint stays dead centre every frame. */
+type DiveState = {
+  seq: number;
+  target: LonLat;
+  ground: number;
+  t0: number;
+  from: { heading: number; pitch: number; range: number };
+  to: Orbit;
+  land(): void;
+};
 
 type Runtime = {
   viewer: Viewer;
@@ -141,6 +158,8 @@ type Runtime = {
   twinLayers: PrimitiveCollection;
   /** Non-null only in farm view after the fly-in; the camera then sits in the target's ENU frame. */
   orbit: OrbitState | null;
+  /** The dive from space into a farm while it runs (driven per frame by stepDive). */
+  dive: DiveState | null;
   /** Pending farm landing: enters the orbit framing. Forced by the watchdog at `landBy` (performance.now ms). */
   land: (() => void) | null;
   landBy: number;
@@ -286,6 +305,7 @@ function startFlight(r: Runtime) {
 /** Camera back to the normal globe frame (the orbit uses a local ENU frame). */
 function leaveOrbit(r: Runtime) {
   r.orbit = null;
+  r.dive = null;
   r.land = null;
   r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
 }
@@ -304,7 +324,62 @@ function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
   r.viewer.scene.requestRender();
 }
 
-function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
+/** Pure: the dive's progress curve over log-distance. Accelerates (quadratic) until `brakeAt`, then brakes (quadratic). */
+export function diveProgress(t: number) {
+  const b = DIVE.brakeAt;
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  if (t < b) return b * (t / b) * (t / b);
+  const u = (t - b) / (1 - b);
+  return b + (1 - b) * (1 - (1 - u) * (1 - u));
+}
+
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+const lerpAngle = (a: number, b: number, w: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * w;
+
+/** Heading / pitch / range of the camera as seen from a target's ENU frame (inverse of Cesium's lookAt offset). */
+function hprFrom(r: Runtime, target: LonLat, ground: number) {
+  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(target.lon, target.lat, ground));
+  const local = Matrix4.multiplyByPoint(Matrix4.inverseTransformation(frame, new Matrix4()), r.viewer.camera.positionWC, new Cartesian3());
+  const range = Cartesian3.magnitude(local);
+  return { heading: Math.atan2(-local.x, -local.y), pitch: -Math.asin(Math.min(1, Math.max(-1, local.z / range))), range };
+}
+
+/** One frame of the dive. Returns false when it has finished (and landed). */
+function stepDive(r: Runtime, now: number): boolean {
+  const d = r.dive;
+  if (!d) return false;
+  if (d.seq !== r.flightSeq || r.viewer.isDestroyed()) {
+    r.dive = null;
+    return false;
+  }
+  const t = Math.min(1, (now - d.t0) / (DIVE.fallSeconds * 1000));
+  const s = diveProgress(t);
+  const range = Math.exp(Math.log(d.from.range) + (Math.log(d.to.range) - Math.log(d.from.range)) * s);
+  // Pitch: straight down while far away, a low skim toward the waypoint across the land, then the farm framing.
+  const skim = CesiumMath.toRadians(DIVE.skimPitchDeg);
+  let pitch = d.from.pitch + (skim - d.from.pitch) * smooth(DIVE.skimFrom, DIVE.skimTo, s);
+  pitch = pitch + (d.to.pitch - pitch) * smooth(DIVE.skimTo, 1, s);
+  // Keep a safe height over the target while skimming.
+  pitch = Math.min(pitch, -Math.asin(Math.min(1, DIVE.minHeightM / range)));
+  const heading = lerpAngle(d.from.heading, d.to.heading, smooth(DIVE.skimFrom - 0.15, DIVE.skimTo, s));
+  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(d.target.lon, d.target.lat, d.ground));
+  r.viewer.camera.lookAtTransform(frame, new HeadingPitchRange(heading, pitch, range));
+  r.viewer.scene.requestRender();
+  if (t < 1) return true;
+  r.dive = null;
+  d.land();
+  return false;
+}
+
+/**
+ * Fly to the farm's orbit framing. `dive` = the hero's approach from space: swing the farm to the centre, then fall
+ * (stepDive), or with `quickDive` (a dive film covers the screen) cut straight to the framing. Reduced motion: no dive.
+ */
+function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
   leaveOrbit(r);
   const { seq, done } = startFlight(r);
   const { target: centre, o: framing } = startFraming(boxOf(p, farm), farm.framing, farm.minRangeM);
@@ -319,9 +394,12 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
     r.orbit = { target: centre, o: framing, ground, camGround: ground, dirty: true };
     if (r.pendingCamera) setOrbitCamera(r, r.pendingCamera);
     r.pendingCamera = null;
+    p.onArrive?.(farm.id);
   };
+  const cut = dive && !p.reducedMotion && !!p.quickDive;
+  const meteor = dive && !p.reducedMotion && !cut;
   r.land = land;
-  r.landBy = performance.now() + (GROUND_TIMEOUT_S + FLY_SECONDS + LAND_GRACE_S) * 1000;
+  r.landBy = performance.now() + (GROUND_TIMEOUT_S + (meteor ? DIVE.centreSeconds + DIVE.fallSeconds : FLY_SECONDS) + LAND_GRACE_S) * 1000;
   let started = false;
   const go = (g: number) => {
     if (started || seq !== r.flightSeq || r.viewer.isDestroyed()) return;
@@ -330,16 +408,41 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
     r.farmGround = g;
     r.terrainGround = g;
     if (r.tier) syncOutline(r, p, r.tier.surface);
-    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
-      offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
-      duration: p.reducedMotion ? 0 : FLY_SECONDS,
-      complete: land,
-      cancel: land, // a no-op when a newer flight superseded this one (seq changed)
+    if (!meteor)
+      return r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
+        offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
+        duration: p.reducedMotion || cut ? 0 : FLY_SECONDS,
+        complete: land,
+        cancel: land, // a no-op when a newer flight superseded this one (seq changed)
+      });
+    // Dive: the farm is held dead centre the whole way (stepDive runs every frame in preUpdate).
+    const fall = () => {
+      if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
+      r.dive = { seq, target: centre, ground: g, t0: performance.now(), from: hprFrom(r, centre, g), to: framing, land };
+      r.viewer.scene.requestRender();
+    };
+    // First swing the farm to the centre of the view along a great circle, unless it is already there (jumpTo).
+    const cam = r.viewer.camera;
+    const toTarget = Cartesian3.normalize(Cartesian3.subtract(Cartesian3.fromDegrees(centre.lon, centre.lat, g), cam.positionWC, new Cartesian3()), new Cartesian3());
+    const offCentre = Math.acos(Math.min(1, Cartesian3.dot(toTarget, cam.directionWC)));
+    if (offCentre < CesiumMath.toRadians(1.5)) return fall();
+    cam.flyTo({
+      destination: Cartesian3.fromDegrees(centre.lon, centre.lat, cam.positionCartographic.height),
+      orientation: { heading: 0, pitch: -CesiumMath.PI_OVER_TWO, roll: 0 },
+      duration: DIVE.centreSeconds,
+      easingFunction: easeInFlashOut,
+      maximumHeight: cam.positionCartographic.height,
+      complete: fall,
+      cancel: land,
     });
   };
   // The target height comes from terrain so the flight does not end underground at high sites; do not wait forever.
-  (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
-  setTimeout(() => go(ground), GROUND_TIMEOUT_S * 1000);
+  const lookup = () => {
+    (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
+    setTimeout(() => go(ground), (cut ? CUT_GROUND_TIMEOUT_S : meteor ? 1 : GROUND_TIMEOUT_S) * 1000);
+  };
+  if (cut) setTimeout(lookup, CUT_AFTER_MS);
+  else lookup();
 }
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
@@ -470,6 +573,15 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         } else if (r.orbit && !r.flying) setOrbitCamera(r, c);
         else r.pendingCamera = c; // still flying in: applied on landing
       },
+      // Hand-over from the hero Earth: whole-Earth view straight over a point, instantly (no flight).
+      jumpTo: (lon: number, lat: number) => {
+        const r = rt.current;
+        if (!r) return;
+        r.viewer.camera.cancelFlight();
+        leaveOrbit(r);
+        r.viewer.camera.setView({ destination: Cartesian3.fromDegrees(lon, lat, GLOBE_HEIGHT_M), orientation: { heading: 0, pitch: -CesiumMath.PI_OVER_TWO, roll: 0 } });
+        r.viewer.scene.requestRender();
+      },
     }),
     [],
   );
@@ -517,6 +629,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       pendingCamera: null,
       twinLayers,
       orbit: null,
+      dive: null,
       land: null,
       landBy: 0,
     };
@@ -525,6 +638,11 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const { scene } = viewer;
     const { camera, canvas } = scene;
     scene.screenSpaceCameraController.maximumZoomDistance = MAX_ZOOM_OUT_M;
+    // Pitch-black space, as in the hero: no star field, sun or moon disc (the dive starts from the hero's black).
+    if (scene.skyBox) scene.skyBox.show = false;
+    if (scene.sun) scene.sun.show = false;
+    if (scene.moon) scene.moon.show = false;
+    scene.backgroundColor = Color.BLACK;
     viewer.clock.shouldAnimate = false; // the sun time is fixed (set per farm in the view effect), never animating
     camera.setView({ destination: Cartesian3.fromDegrees(HOME.lon, HOME.lat, GLOBE_HEIGHT_M) });
 
@@ -692,6 +810,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       );
       // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
+      // The dive drives the camera itself.
+      if (r.dive) stepDive(r, now);
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
       // A/B split: A's overlays (and field fills, as a canvas) left of the divider, B's right of it; one camera.
@@ -908,7 +1028,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     prev.current = { view, selectedId };
     const farm = live.current.farms.find((f) => f.id === selectedId);
     const reduced = live.current.reducedMotion;
-    if (view === "farm" && farm) flyToFarm(r, live.current, farm);
+    // From the globe (the hero hand-over) the farm is reached by the dive; a share link or reset flies in.
+    if (view === "farm" && farm) flyToFarm(r, live.current, farm, was?.view === "globe");
     else if (view === "globe" && was?.view === "farm") flyToGlobe(r, farm, GLOBE_HEIGHT_M, reduced);
     else if (view === "globe" && farm && was?.selectedId !== selectedId) flyToGlobe(r, farm, CONTINENT_HEIGHT_M, reduced);
   }, [view, selectedId]);
