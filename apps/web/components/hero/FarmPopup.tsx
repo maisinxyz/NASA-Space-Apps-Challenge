@@ -6,9 +6,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
-import type { FarmInfo } from "@/lib/farms";
+import { FARMS, type FarmInfo } from "@/lib/farms";
 
-import { trackBus } from "./buses";
+import { hoverBus, trackBus } from "./buses";
 import { card, color, ease } from "./tokens";
 
 const W = 248;
@@ -28,7 +28,7 @@ function Photo({ farm }: { farm: FarmInfo }) {
     <div className="relative aspect-[16/10] w-full overflow-hidden bg-white/[0.04]">
       {photo && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element -- small local photo, no optimiser needed
-        <img src={photo.src} alt={photo.alt} width={W} height={Math.round(W * 0.625)} draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover" />
+        <img src={photo.src} alt={photo.alt} width={W} height={Math.round(W * 0.625)} draggable={false} onError={() => setFailed(true)} onLoad={(e) => e.currentTarget.naturalWidth === 0 && setFailed(true)} className="h-full w-full object-cover" />
       ) : (
         <div aria-hidden className="h-full w-full bg-gradient-to-br from-white/[0.06] to-white/[0.015]" />
       )}
@@ -41,7 +41,25 @@ function Photo({ farm }: { farm: FarmInfo }) {
   );
 }
 
+/** Hovering a pin starts loading that farm's photo, so it is in the cache by the time the pin is clicked. */
+const warmed = new Set<string>();
+function useWarmPhotoOnHover() {
+  useEffect(() => {
+    const warm = () => {
+      const id = hoverBus.get()?.id;
+      const src = FARMS.find((f) => f.id === id)?.image?.src;
+      if (!src || warmed.has(src)) return;
+      warmed.add(src);
+      const img = new Image();
+      img.onerror = () => warmed.delete(src); // retry on the next hover
+      img.src = src;
+    };
+    return hoverBus.subscribe(warm);
+  }, []);
+}
+
 export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInfo | null; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
+  useWarmPhotoOnHover();
   return (
     <AnimatePresence>
       {farm && <Card key={farm.id} farm={farm} reduced={reduced} onClose={onClose} onDescend={onDescend} />}
