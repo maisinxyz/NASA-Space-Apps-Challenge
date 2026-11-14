@@ -2,7 +2,30 @@ import { describe, expect, it } from "vitest";
 
 import type { CropLook } from "@/components/globe/types";
 
-import { CROP_COLORS, fieldIdFromPick, fieldStyle, lonLatToPx, planOverlays } from "./twin";
+import { CROP_COLORS, fieldIdFromPick, fieldsBbox, fieldStyle, lonLatToPx, planOverlays, sideValue, splitSides } from "./twin";
+
+describe("splitSides", () => {
+  it("draws A everywhere and B nowhere without a comparison", () => {
+    expect(splitSides(null)).toMatchObject({ a: "both", b: null });
+    expect(splitSides(undefined)).toMatchObject({ a: "both", b: null });
+  });
+  it("puts A left and B right of a clamped divider", () => {
+    expect(splitSides({ divider: 0.3 })).toEqual({ a: "left", b: "right", divider: 0.3 });
+    expect(splitSides({ divider: 1.4 }).divider).toBe(1);
+    expect(splitSides({ divider: -1 }).divider).toBe(0);
+  });
+  it("maps sides to the shader's sign", () => {
+    expect([sideValue("left"), sideValue("both"), sideValue("right")]).toEqual([-1, 0, 1]);
+  });
+});
+
+describe("fieldsBbox", () => {
+  it("spans every ring", () => {
+    const ring = (x: number, y: number): [number, number][] => [[x, y], [x + 1, y], [x + 1, y + 1]];
+    const f = (id: string, r: [number, number][]) => ({ id, name: id, ring: r, areaHa: 1, crop: "corn" as const });
+    expect(fieldsBbox([f("a", ring(0, 0)), f("b", ring(3, -2))])).toEqual([0, -2, 4, 1]);
+  });
+});
 
 describe("fieldStyle", () => {
   it("gives every crop look its own colour", () => {

@@ -1,7 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { boxOfBbox, boxOfRadius, clampOrbit, clampTarget, fromOffsetM, localMorningUtcMs, MAX_PITCH_RAD, MAX_RANGE_M, MIN_PITCH_RAD, MIN_RANGE_M, offsetM } from "./clamp";
+import {
+  boxOfBbox,
+  boxOfRadius,
+  cameraFromOrbit,
+  clampOrbit,
+  clampTarget,
+  fromOffsetM,
+  localMorningUtcMs,
+  MAX_PITCH_RAD,
+  MAX_RANGE_M,
+  MIN_PITCH_RAD,
+  MIN_RANGE_M,
+  offsetM,
+  orbitFromCamera,
+} from "./clamp";
 
 const bbox: [number, number, number, number] = [-121.765, 49.238, -121.755, 49.246];
+
+describe("camera pose <-> orbit", () => {
+  const target = { lon: -121.76, lat: 49.24 };
+  it("puts the camera behind and above the target (Cesium lookAt convention)", () => {
+    const c = cameraFromOrbit(target, 10, { heading: 0, pitch: -Math.PI / 4, range: 1000 });
+    expect(c.height).toBeCloseTo(10 + 1000 * Math.SQRT1_2, 6);
+    expect(c.lat).toBeLessThan(target.lat); // heading north: camera south of the target
+    expect(c.lon).toBeCloseTo(target.lon, 9);
+    expect(c.heading).toBeCloseTo(0, 9);
+    expect(c.pitch).toBeCloseTo(-45, 9);
+  });
+  it("round-trips orbit -> camera -> orbit", () => {
+    const o = { heading: 2.1, pitch: -0.6, range: 1400 };
+    const back = orbitFromCamera(cameraFromOrbit(target, 12, o), 12);
+    expect(back.o.heading).toBeCloseTo(o.heading, 9);
+    expect(back.o.pitch).toBeCloseTo(o.pitch, 9);
+    expect(back.o.range).toBeCloseTo(o.range, 3);
+    expect(offsetM(back.target, target).x).toBeCloseTo(0, 2);
+    expect(offsetM(back.target, target).y).toBeCloseTo(0, 2);
+  });
+  it("limits the pitch of a pose that looks at the horizon", () => {
+    expect(orbitFromCamera({ ...target, height: 500, heading: 0, pitch: 0 }, 0).o.pitch).toBe(MAX_PITCH_RAD);
+  });
+});
 
 describe("box + offsets", () => {
   it("round-trips lon/lat through metres", () => {

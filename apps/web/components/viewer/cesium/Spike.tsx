@@ -5,7 +5,7 @@ import type { Viewer } from "cesium";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { GlobeDev } from "@/components/globe/Globe";
-import type { CropLook, Farm, FarmField, FarmSurface, GlobeHandle, GlobeView, GroundOverlay, TileTier } from "@/components/globe/types";
+import type { CameraState, CropLook, Farm, FarmField, FarmSurface, GlobeHandle, GlobeView, GroundOverlay, LookFilter, TileTier } from "@/components/globe/types";
 
 import { createDrape, type Drape, type DrapeMethod, type DrapeSource } from "./drape";
 import type { LoadedTier } from "./tiles";
@@ -132,6 +132,11 @@ export default function Spike() {
   const [overlayAnim, setOverlayAnim] = useState(false);
   const [opacity, setOpacity] = useState(0.8);
   const [overlay, setOverlay] = useState<GroundOverlay | null>(null);
+  const [look, setLook] = useState<LookFilter>("none");
+  const [pending, setPending] = useState<number | null>(null);
+  const [spin, setSpin] = useState(false);
+  const [spinFps, setSpinFps] = useState<number | null>(null);
+  const [saved, setSaved] = useState<CameraState | null>(null);
   const globe = useRef<GlobeHandle>(null);
   const drapes = useRef<Drape[]>([]);
   const patterns = useMemo(() => [testFrames(128, 128, 1), testFrames(90, 150, 0.55)], []);
@@ -160,6 +165,37 @@ export default function Spike() {
     return () => clearInterval(timer);
   }, [overlayOn, overlayAnim]);
   const overlays = useMemo(() => (overlay ? [{ ...overlay, opacity }] : []), [overlay, opacity]);
+  // A/B compare (dev): B = the other crop set + the blob at half opacity, right of the divider.
+  const compare = useMemo(
+    () => (split ? { right: { cropByField: swap ? undefined : SWAPPED, overlays: overlay ? [{ ...overlay, id: "test-blob-b", opacity: opacity * 0.4 }] : [] }, divider } : null),
+    [split, swap, overlay, opacity, divider],
+  );
+
+  // Spin: turn the camera 0.5 deg per animation frame through getCamera/setCamera and count rendered frames.
+  useEffect(() => {
+    if (!spin || !live) return;
+    let raf = 0;
+    let rendered = 0;
+    let since = performance.now();
+    const off = live.viewer.scene.postRender.addEventListener(() => rendered++);
+    const tick = () => {
+      const c = globe.current?.getCamera();
+      if (c) globe.current?.setCamera({ ...c, heading: c.heading + 0.5 });
+      const now = performance.now();
+      if (now - since >= 2000) {
+        setSpinFps(Math.round((rendered * 1000) / (now - since)));
+        rendered = 0;
+        since = now;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      off();
+      setSpinFps(null);
+    };
+  }, [spin, live]);
 
   // Build the drape(s) for the selected test location.
   useEffect(() => {
@@ -234,8 +270,11 @@ export default function Spike() {
         exaggeration={exaggeration}
         surface={surface}
         overlayMask={maskOn ? SAMPLE_MASK : undefined}
+        compare={compare}
+        look={look}
+        onLoadProgress={(i) => setPending(i.pending)}
       />
-      {split && drapeOn && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80" style={{ left: `${divider * 100}%` }} />}
+      {split && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80" style={{ left: `${divider * 100}%` }} />}
       <div className="absolute left-3 top-3 flex max-h-[calc(100%-1.5rem)] max-w-xs flex-col gap-2 overflow-y-auto rounded-md bg-surface/95 p-3 text-sm text-ink shadow">
         <p className="font-semibold">Cesium spike (dev only, test pattern, not data)</p>
         <p data-testid="tier">
@@ -293,6 +332,31 @@ export default function Spike() {
             <option value="terrain">terrain</option>
           </select>
         </label>
+        <p data-testid="pending">Tiles pending: {pending ?? "…"}</p>
+        <label className={label}>
+          Look
+          <select className="rounded border border-line bg-surface-2 px-1" value={look} onChange={(e) => setLook(e.target.value as LookFilter)}>
+            {(["none", "thermal", "vegetation", "night"] as const).map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <button className="rounded border border-line px-2" onClick={() => setSaved(globe.current?.getCamera() ?? null)}>
+            Save camera
+          </button>
+          <button className="rounded border border-line px-2" disabled={!saved} onClick={() => saved && globe.current?.setCamera(saved)}>
+            Restore camera
+          </button>
+          <label className={label}>
+            <input type="checkbox" checked={spin} onChange={(e) => setSpin(e.target.checked)} /> Spin {spinFps != null && `(${spinFps} fps)`}
+          </label>
+        </div>
+        <p data-testid="camera" className="text-xs">
+          {saved ? `saved: ${saved.lon.toFixed(5)}, ${saved.lat.toFixed(5)}, h ${saved.height.toFixed(0)} m, hdg ${saved.heading.toFixed(1)}, pitch ${saved.pitch.toFixed(1)}` : "no saved camera"}
+        </p>
         <p data-testid="surface">Surface shown: {live?.tier.surface ?? "…"} (updates on the next control change)</p>
         <label className={label}>
           <input type="checkbox" checked={overlayOn} onChange={(e) => setOverlayOn(e.target.checked)} /> Overlay blob
@@ -328,7 +392,7 @@ export default function Spike() {
           <input type="checkbox" checked={playing} onChange={(e) => setPlaying(e.target.checked)} /> Play {fps != null && `(${fps} rendered frames/s)`}
         </label>
         <label className={label}>
-          <input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} /> Split A | B
+          <input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} /> Split A | B (compare: fields + overlay; drape if on)
         </label>
         <label className={label}>
           Divider {divider.toFixed(2)}

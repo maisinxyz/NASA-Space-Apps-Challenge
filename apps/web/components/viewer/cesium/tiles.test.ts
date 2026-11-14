@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { googleTilesRoute, pickSurface, selectTierOrder, type Surface } from "./tiles";
+import { googleTilesRoute, pickSurface, PROGRESS_INTERVAL_MS, progressToReport, selectTierOrder, type Surface } from "./tiles";
+
+describe("progressToReport", () => {
+  it("reports the first value, then changes at most every interval", () => {
+    const a = progressToReport(null, 30, 0)!;
+    expect(a).toEqual({ pending: 30, at: 0 });
+    expect(progressToReport(a, 25, PROGRESS_INTERVAL_MS - 1)).toBeNull();
+    expect(progressToReport(a, 25, PROGRESS_INTERVAL_MS)).toEqual({ pending: 25, at: PROGRESS_INTERVAL_MS });
+  });
+  it("skips unchanged values and reports settled (0) at once", () => {
+    const a = { pending: 5, at: 100 };
+    expect(progressToReport(a, 5, 10_000)).toBeNull();
+    expect(progressToReport(a, 0, 101)).toEqual({ pending: 0, at: 101 });
+  });
+});
 
 describe("selectTierOrder", () => {
   it("uses only the keyless tier when there is no token", () => {

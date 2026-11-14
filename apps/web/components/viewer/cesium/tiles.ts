@@ -51,6 +51,19 @@ export function googleTilesRoute(key: string | null | undefined = process.env.NE
   return key?.trim() ? "google-key" : "ion";
 }
 
+/** Minimum gap between onLoadProgress reports, ms (~4/s). */
+export const PROGRESS_INTERVAL_MS = 250;
+
+/**
+ * Pure throttle for the pending-tile count: report a change at most every PROGRESS_INTERVAL_MS, but report
+ * "settled" (0) at once. `last` = what was last reported and when (null = nothing yet). Returns the new `last` or null (skip).
+ */
+export function progressToReport(last: { pending: number; at: number } | null, pending: number, now: number): { pending: number; at: number } | null {
+  if (last && last.pending === pending) return null;
+  if (last && pending !== 0 && now - last.at < PROGRESS_INTERVAL_MS) return null;
+  return { pending, at: now };
+}
+
 /** A Cesium Viewer with every default widget off. The credit container is left in place (required attribution). */
 export function createViewer(container: HTMLElement): Viewer {
   const viewer = new Viewer(container, {
@@ -74,8 +87,9 @@ export function createViewer(container: HTMLElement): Viewer {
   });
   // Viewer's default double-click handler tracks the clicked entity; we drive the camera ourselves.
   viewer.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-  // Cesium renders at CSS pixels by default, which looks soft on HiDPI laptop screens. Cap at 2x for fps.
-  viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 2);
+  // Cesium renders at CSS pixels by default, which looks soft on HiDPI laptop screens. Cap at 1.25x: the demo
+  // laptop (Intel Arc 140T) is fill-rate bound on Google tiles at 1080p.
+  viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.25);
   viewer.scene.postProcessStages.fxaa.enabled = true;
   return viewer;
 }
@@ -114,6 +128,8 @@ export type LoadedTier = {
   groundAt(c: Cartographic): number | undefined;
   /** Terrain height at a point, metres (async, most detailed). 0 when no terrain source is available (tier C). */
   sampleGround(lonDeg: number, latDeg: number): Promise<number>;
+  /** Tiles still loading on what is shown: globe tile queue + pending requests and tiles processing of shown tilesets. */
+  pending(): number;
 };
 
 /** Try each tier in order and return the first that loads. Rejects only if every tier fails. */
@@ -152,6 +168,11 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
   let tileset: Cesium3DTileset | undefined;
   let googleShowing = false; // true once the tileset's first view has loaded: only then hide the globe
   const failed = new Set<Surface>();
+  // Load progress from Cesium's events: Globe.tileLoadProgressEvent(queueLength), Cesium3DTileset.loadProgress(requests, processing).
+  let globeQueue = 0;
+  scene.globe.tileLoadProgressEvent.addEventListener((n: number) => (globeQueue = n));
+  const tsPending = new Map<Cesium3DTileset, number>();
+  const track = (ts: Cesium3DTileset) => ts.loadProgress.addEventListener((req: number, proc: number) => tsPending.set(ts, req + proc));
 
   const show = (s: Surface) => {
     surface = s;
@@ -169,18 +190,25 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
       // Cesium resolves the Google asset itself (ion route: no asset id in our code; key route: Google's Map
       // Tiles API). onlyUsingWithGoogleGeocoder: Google's terms forbid pairing these tiles with a non-Google
       // geocoder; this app has no geocoder at all. TODO(verify): confirm "no geocoder" satisfies the terms.
-      // enableCollision: needed for tileset.getHeight() (camera floor). maximumScreenSpaceError 8 (default 16):
-      // finer tiles, sharper farm view. Google's logo/credits go to Cesium's credit display on both routes.
+      // enableCollision: needed for tileset.getHeight() (camera floor). maximumScreenSpaceError 16 (Cesium's
+      // default): 8 looked a little sharper but cost ~20 % fps on the demo laptop (Phase 3 note). The streaming
+      // optimisations below are Cesium's defaults (engine 26.5), set explicitly so a library change cannot drop them.
+      // Google's logo/credits go to Cesium's credit display on both routes.
       const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY?.trim();
       const api = googleTilesRoute(key) === "google-key" ? { key, onlyUsingWithGoogleGeocoder: true as const } : { onlyUsingWithGoogleGeocoder: true as const };
       const ts = await createGooglePhotorealistic3DTileset(api, {
         enableCollision: true,
-        maximumScreenSpaceError: 8,
+        maximumScreenSpaceError: 16,
+        dynamicScreenSpaceError: true,
+        foveatedScreenSpaceError: true,
+        cullRequestsWhileMoving: true,
+        preloadWhenHidden: false,
         cacheBytes: GOOGLE_CACHE_BYTES,
         maximumCacheOverflowBytes: GOOGLE_CACHE_OVERFLOW_BYTES,
       });
       alive();
       ts.show = false;
+      track(ts);
       scene.primitives.add(ts);
       ts.initialTilesLoaded.addEventListener(() => {
         googleShowing = true;
@@ -210,6 +238,7 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
         .then((b) => {
           if (viewer.isDestroyed()) return;
           osm = b;
+          track(b);
           scene.primitives.add(b);
           show(surface);
         })
@@ -245,6 +274,11 @@ export async function loadTier(viewer: Viewer, order: readonly TileTier[]): Prom
     setSurface,
     groundAt: (c) => (surface === "google" && tileset ? tileset.getHeight(c, scene) : scene.globe.getHeight(c)),
     sampleGround,
+    pending: () => {
+      let n = scene.globe.show ? globeQueue : 0;
+      for (const [ts, k] of tsPending) if (ts.show) n += k;
+      return n;
+    },
   });
 
   let lastError: unknown;

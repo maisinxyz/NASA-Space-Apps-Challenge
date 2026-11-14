@@ -33,6 +33,7 @@ import {
   type Box,
   boxOfBbox,
   boxOfRadius,
+  cameraFromOrbit,
   clampOrbit,
   clampTarget,
   fromOffsetM,
@@ -41,28 +42,38 @@ import {
   MIN_HEIGHT_ABOVE_GROUND_M,
   offsetM,
   type Orbit,
+  orbitFromCamera,
 } from "@/components/viewer/cesium/clamp";
-import { createViewer, type LoadedTier, loadTier, pickSurface, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
+import { activeLook, createLookLayer, type LookLayer } from "@/components/viewer/cesium/look";
+import { createViewer, type LoadedTier, loadTier, pickSurface, progressToReport, type Surface, tierOrderFromEnv } from "@/components/viewer/cesium/tiles";
 import {
+  createFieldCanvas,
   createFieldLayer,
   createOverlayLayer,
   createSquareOutline,
   type FieldLayer,
   fieldIdFromPick,
   type OverlayLayer,
+  splitSides,
+  SQUARE_RAISE_M,
   type SquareOutline,
 } from "@/components/viewer/cesium/twin";
 
-import type { Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
+import type { CameraState, Farm, GlobeHandle, GlobeProps, TileTier } from "./types";
 
 // Camera framing (product choices, tune freely).
 /** Whole-Earth view: camera height above the ellipsoid, metres. */
 const GLOBE_HEIGHT_M = 2.0e7;
 /** Continental-scale view used when a pin is selected in globe view, metres. */
 const CONTINENT_HEIGHT_M = 7.0e6;
-/** Orbit framing after the fly-in: range = this many times the square's longer side (then clamped to 150 m - 2.5 km). */
-const FRAME_RANGE_PER_SIDE = 1.4;
-const FARM_PITCH_RAD = CesiumMath.toRadians(45);
+/**
+ * Orbit framing after the fly-in: low and oblique so barns, trees and relief read as 3D (Google's rural mesh is
+ * coarse; from far above at -45 deg it looks like a photo). Range = 0.45 x the square's longer side, kept in 400-600 m.
+ */
+const FRAME_RANGE_PER_SIDE = 0.45;
+const FRAME_RANGE_MIN_M = 400;
+const FRAME_RANGE_MAX_M = 600;
+const FARM_PITCH_RAD = CesiumMath.toRadians(30);
 /** Drag sensitivity, radians per pixel; wheel zoom is exponential in deltaY. */
 const ORBIT_RAD_PER_PX = 0.005;
 const WHEEL_ZOOM_PER_DELTA = 0.0015;
@@ -102,9 +113,21 @@ type Runtime = {
   flightSeq: number;
   interacted: boolean;
   farmGround: number | undefined;
+  /** Terrain height at the farm centre from the fly-in's terrain sample (not roofs/trees), metres. */
+  terrainGround: number | undefined;
   fields: FieldLayer;
+  /** Overlays of A (whole screen, or left of the divider when comparing) and of B (right of the divider only). */
   overlays: OverlayLayer;
+  overlaysB: OverlayLayer;
+  /** Field fills as canvases for the A/B split (one per side). */
+  fieldCanvasA: ReturnType<typeof createFieldCanvas>;
+  fieldCanvasB: ReturnType<typeof createFieldCanvas>;
   outline: SquareOutline;
+  look: LookLayer;
+  /** Last onLoadProgress report. */
+  progress: { pending: number; at: number } | null;
+  /** setCamera() received before the farm-view landing: applied when the orbit starts. */
+  pendingCamera: CameraState | null;
   twinLayers: PrimitiveCollection;
   /** Non-null only in farm view after the fly-in; the camera then sits in the target's ENU frame. */
   orbit: OrbitState | null;
@@ -112,6 +135,25 @@ type Runtime = {
   land: (() => void) | null;
   landBy: number;
 };
+
+/**
+ * Sim-square outline: ground-clamped on terrain; on Google tiles a raised polyline at the terrain height (the
+ * classified ground polyline breaks up on the tiles).
+ */
+function syncOutline(r: Runtime, p: GlobeProps, surface: Surface) {
+  r.outline.set(p.simBbox, classificationFor(surface), surface === "google" ? (r.terrainGround ?? r.farmGround ?? 0) + SQUARE_RAISE_M : undefined);
+  r.viewer.scene.requestRender();
+}
+
+/** Point the orbit at a camera pose (share link). The hard clamps apply on the next applyOrbit. */
+function setOrbitCamera(r: Runtime, c: CameraState) {
+  const s = r.orbit;
+  if (!s) return;
+  const { target, o } = orbitFromCamera(c, s.ground);
+  s.target = target;
+  s.o = o;
+  s.dirty = true;
+}
 
 /** The area the farm-view camera is confined to: the simulation square, else a box inscribed in the farm radius. */
 const boxOf = (p: GlobeProps, farm: Farm): Box => (p.simBbox ? boxOfBbox(p.simBbox) : boxOfRadius(farm, farm.radiusM));
@@ -212,7 +254,9 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
   const { seq, done } = startFlight(r);
   const box = boxOf(p, farm);
   const centre: LonLat = { lon: box.lon, lat: box.lat };
-  const framing = clampOrbit({ heading: 0, pitch: -FARM_PITCH_RAD, range: 2 * Math.max(box.halfX, box.halfY) * FRAME_RANGE_PER_SIDE });
+  const side = 2 * Math.max(box.halfX, box.halfY);
+  const range = Math.min(FRAME_RANGE_MAX_M, Math.max(FRAME_RANGE_MIN_M, side * FRAME_RANGE_PER_SIDE));
+  const framing = clampOrbit({ heading: 0, pitch: -FARM_PITCH_RAD, range });
   let ground = r.farmGround ?? 0;
   // Landing = the orbit framing, exactly where a completed flight ends. It also runs when the flight is cancelled
   // without being superseded, and from the per-frame watchdog if the flight never finishes, so "Open twin" always
@@ -222,6 +266,8 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
     r.land = null;
     done();
     r.orbit = { target: centre, o: framing, ground, camGround: ground, dirty: true };
+    if (r.pendingCamera) setOrbitCamera(r, r.pendingCamera);
+    r.pendingCamera = null;
   };
   r.land = land;
   r.landBy = performance.now() + (GROUND_TIMEOUT_S + FLY_SECONDS + LAND_GRACE_S) * 1000;
@@ -231,6 +277,8 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
     started = true;
     ground = g;
     r.farmGround = g;
+    r.terrainGround = g;
+    if (r.tier) syncOutline(r, p, r.tier.surface);
     r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
       offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
       duration: p.reducedMotion ? 0 : FLY_SECONDS,
@@ -245,6 +293,7 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm) {
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
   leaveOrbit(r);
+  r.pendingCamera = null;
   const { done } = startFlight(r);
   const here = r.viewer.camera.positionCartographic;
   const lon = at?.lon ?? CesiumMath.toDegrees(here.longitude);
@@ -284,7 +333,31 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   useEffect(() => {
     resetRef.current = resetView;
   });
-  useImperativeHandle(ref, () => ({ resetView: () => resetRef.current() }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      resetView: () => resetRef.current(),
+      getCamera: () => {
+        const r = rt.current;
+        if (!r) return null;
+        if (r.orbit) return cameraFromOrbit(r.orbit.target, r.orbit.ground, r.orbit.o);
+        const c = r.viewer.camera;
+        const pc = c.positionCartographic;
+        const deg = CesiumMath.toDegrees;
+        return { lon: deg(pc.longitude), lat: deg(pc.latitude), height: pc.height, heading: deg(c.heading), pitch: deg(c.pitch) };
+      },
+      setCamera: (c) => {
+        const r = rt.current;
+        if (!r) return;
+        if (live.current.view !== "farm") {
+          const rad = CesiumMath.toRadians;
+          r.viewer.camera.setView({ destination: Cartesian3.fromDegrees(c.lon, c.lat, c.height), orientation: { heading: rad(c.heading), pitch: rad(c.pitch), roll: 0 } });
+        } else if (r.orbit && !r.flying) setOrbitCamera(r, c);
+        else r.pendingCamera = c; // still flying in: applied on landing
+      },
+    }),
+    [],
+  );
 
   // Viewer lifecycle: create once, destroy on unmount (safe under strict-mode double mount).
   useEffect(() => {
@@ -299,6 +372,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const twinLayers = viewer.scene.primitives.add(new PrimitiveCollection({ show: false })) as PrimitiveCollection;
     const fieldsCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const overlaysCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
+    const overlaysBCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const outlineCol = twinLayers.add(new PrimitiveCollection()) as PrimitiveCollection;
     const r: Runtime = {
       viewer,
@@ -309,9 +383,16 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       flightSeq: 0,
       interacted: false,
       farmGround: undefined,
+      terrainGround: undefined,
       fields: createFieldLayer(fieldsCol),
       overlays: createOverlayLayer(overlaysCol),
+      overlaysB: createOverlayLayer(overlaysBCol),
+      fieldCanvasA: createFieldCanvas("ft-fields-a"),
+      fieldCanvasB: createFieldCanvas("ft-fields-b"),
       outline: createSquareOutline(outlineCol),
+      look: createLookLayer(viewer.scene),
+      progress: null,
+      pendingCamera: null,
       twinLayers,
       orbit: null,
       land: null,
@@ -477,13 +558,36 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
+      // A/B split: A's overlays (and field fills, as a canvas) left of the divider, B's right of it; one camera.
       if (r.fields.flush()) scene.requestRender();
-      if (r.tier && r.overlays.sync(p.overlays ?? [], classificationFor(r.tier.surface), p.overlayMask)) scene.requestRender();
+      if (r.tier) {
+        const cls = classificationFor(r.tier.surface);
+        const sides = splitSides(p.compare);
+        const right = p.compare?.right;
+        const fieldsA = right ? r.fieldCanvasA(p.fields ?? [], p.cropByField, p.selectedFieldId) : null;
+        const fieldsB = right ? r.fieldCanvasB(p.fields ?? [], right.cropByField, p.selectedFieldId) : null;
+        const ovA = fieldsA ? [fieldsA, ...(p.overlays ?? [])] : (p.overlays ?? []);
+        const ovB = right ? (fieldsB ? [fieldsB, ...(right.overlays ?? [])] : (right.overlays ?? [])) : [];
+        if (r.overlays.sync(ovA, cls, p.overlayMask, sides.a)) scene.requestRender();
+        if (r.overlaysB.sync(ovB, cls, p.overlayMask, sides.b ?? "both")) scene.requestRender();
+        if (sides.b && scene.splitPosition !== sides.divider) {
+          scene.splitPosition = sides.divider;
+          scene.requestRender();
+        }
+      }
 
-      // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth.
+      // Tile streaming progress (farm view only), throttled by progressToReport.
+      const report = progressToReport(r.progress, p.view === "farm" && r.tier ? r.tier.pending() : 0, now);
+      if (report) {
+        r.progress = report;
+        p.onLoadProgress?.({ pending: report.pending });
+      }
+
+      // Pins ignore the depth buffer (so terrain/tiles never bury them); hide the ones behind the Earth, and in
+      // farm view the open farm's own pin and label (they would sit over the fields).
       const occluder = new EllipsoidalOccluder(Ellipsoid.WGS84, camera.positionWC);
-      for (const { entity, position } of r.pins.values()) {
-        const visible = occluder.isPointVisible(position);
+      for (const [id, { entity, position }] of r.pins) {
+        const visible = occluder.isPointVisible(position) && !(p.view === "farm" && id === p.selectedId);
         if (entity.show !== visible) entity.show = visible;
       }
 
@@ -609,10 +713,15 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   useEffect(() => {
     const r = rt.current;
     if (!r || !surface) return;
-    r.outline.set(simBbox, classificationFor(surface));
+    syncOutline(r, live.current, surface);
     if (r.orbit) r.orbit.dirty = true;
-    r.viewer.scene.requestRender();
   }, [simBbox, surface]);
+
+  // Look filter (post-process), farm view only.
+  const { look } = props;
+  useEffect(() => {
+    rt.current?.look.set(activeLook(look, view === "farm"));
+  }, [look, view]);
 
   // Fields: rebuild when the list or the surface changes; recolour otherwise.
   useEffect(() => {
@@ -621,9 +730,11 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     r.fields.setFields(fields ?? [], classificationFor(surface));
     r.viewer.scene.requestRender();
   }, [fields, surface]);
+  // While comparing, the fills come from the per-side canvases (preUpdate); the fill primitive stays for picking.
+  const comparing = !!props.compare;
   useEffect(() => {
-    rt.current?.fields.paint(cropByField, selectedFieldId);
-  }, [fields, surface, cropByField, selectedFieldId]);
+    rt.current?.fields.paint(cropByField, selectedFieldId, comparing);
+  }, [fields, surface, cropByField, selectedFieldId, comparing]);
 
   // Camera: fly in / out / to the selected pin's region.
   useEffect(() => {

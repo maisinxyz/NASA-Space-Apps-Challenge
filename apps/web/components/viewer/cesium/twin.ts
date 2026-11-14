@@ -17,6 +17,9 @@ import {
   PolygonGeometry,
   PolygonHierarchy,
   PolylineColorAppearance,
+  PolylineGeometry,
+  PolylineMaterialAppearance,
+  Primitive,
   PrimitiveCollection,
   Rectangle,
   RectangleGeometry,
@@ -24,6 +27,8 @@ import {
 } from "cesium";
 
 import type { CropLook, FarmField, GroundOverlay } from "@/components/globe/types";
+
+import { offsetM } from "./clamp";
 
 // ---- Fields ----------------------------------------------------------------------------------------------
 
@@ -69,8 +74,11 @@ const colorValue = (css: string, alpha: number) => ColorGeometryInstanceAttribut
 export type FieldLayer = {
   /** Rebuild the primitives (fields or classification changed). Async in Cesium: colours apply once ready. */
   setFields(fields: readonly FarmField[], classification: ClassificationType): void;
-  /** Recolour without rebuilding (crop override or selection changed). */
-  paint(cropByField: Record<string, CropLook> | undefined, selectedId: string | null | undefined): void;
+  /**
+   * Recolour without rebuilding (crop override or selection changed). `fillsOnCanvas`: fills drawn elsewhere
+   * (A/B split, see createFieldCanvas): the fill primitive goes fully transparent but stays pickable.
+   */
+  paint(cropByField: Record<string, CropLook> | undefined, selectedId: string | null | undefined, fillsOnCanvas?: boolean): void;
   /** Call every frame: applies a pending paint once the primitives are ready. Returns true if it painted. */
   flush(): boolean;
 };
@@ -79,10 +87,13 @@ export function createFieldLayer(collection: PrimitiveCollection): FieldLayer {
   let fields: readonly FarmField[] = [];
   let fill: GroundPrimitive | undefined;
   let outline: GroundPolylinePrimitive | undefined;
-  let look: { crop?: Record<string, CropLook>; selected?: string | null } = {};
+  let look: { crop?: Record<string, CropLook>; selected?: string | null; hidden?: boolean } = {};
   let dirty = false;
 
-  const styleOf = (f: FarmField) => fieldStyle(look.crop?.[f.id] ?? f.crop, f.id === look.selected);
+  const styleOf = (f: FarmField) => {
+    const s = fieldStyle(look.crop?.[f.id] ?? f.crop, f.id === look.selected);
+    return look.hidden ? { ...s, fillAlpha: 0 } : s;
+  };
 
   return {
     setFields(next, classification) {
@@ -121,8 +132,8 @@ export function createFieldLayer(collection: PrimitiveCollection): FieldLayer {
       ) as GroundPolylinePrimitive;
       dirty = false; // built with the current look
     },
-    paint(crop, selected) {
-      look = { crop, selected };
+    paint(crop, selected, hidden) {
+      look = { crop, selected, hidden };
       dirty = true;
     },
     flush() {
@@ -135,6 +146,67 @@ export function createFieldLayer(collection: PrimitiveCollection): FieldLayer {
       }
       return true;
     },
+  };
+}
+
+/** Pure: [west, south, east, north] around all field rings. */
+export function fieldsBbox(fields: readonly FarmField[]): [number, number, number, number] {
+  let [w, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const f of fields)
+    for (const [lon, lat] of f.ring) {
+      w = Math.min(w, lon);
+      e = Math.max(e, lon);
+      s = Math.min(s, lat);
+      n = Math.max(n, lat);
+    }
+  return [w, s, e, n];
+}
+
+/** Longest side of a field canvas, px, and the finest ground resolution it uses, px per metre. */
+const FIELD_CANVAS_MAX_PX = 2048;
+const FIELD_CANVAS_PX_PER_M = 2;
+
+/**
+ * Field fills rasterised into a GroundOverlay canvas, so they can be limited to one side of the A/B split
+ * (classification fills with per-instance colours have no split test). Memoised on (fields, crop, selected):
+ * a new overlay version only when one of them changes.
+ */
+export function createFieldCanvas(id: string) {
+  const canvas = document.createElement("canvas");
+  let key: unknown[] = [];
+  let out: GroundOverlay | null = null;
+  let version = 0;
+  return (fields: readonly FarmField[], crop: Record<string, CropLook> | undefined, selected: string | null | undefined): GroundOverlay | null => {
+    const k = [fields, crop, selected];
+    if (k.every((v, i) => v === key[i])) return out;
+    key = k;
+    const list = fields.filter((f) => f.ring.length >= 3);
+    if (!list.length) return (out = null);
+    const bbox = fieldsBbox(list);
+    const [w, s, e, n] = bbox;
+    const wM = Math.abs(offsetM({ lon: e, lat: (s + n) / 2 }, { lon: w, lat: (s + n) / 2 }).x);
+    const hM = Math.abs(offsetM({ lon: w, lat: n }, { lon: w, lat: s }).y);
+    const pxPerM = Math.min(FIELD_CANVAS_PX_PER_M, FIELD_CANVAS_MAX_PX / Math.max(wM, hM, 1));
+    const width = Math.max(1, Math.round(wM * pxPerM));
+    const height = Math.max(1, Math.round(hM * pxPerM));
+    if (canvas.width !== width || canvas.height !== height) Object.assign(canvas, { width, height });
+    const g = canvas.getContext("2d")!;
+    g.clearRect(0, 0, width, height);
+    for (const f of list) {
+      const st = fieldStyle(crop?.[f.id] ?? f.crop, f.id === selected);
+      g.globalAlpha = st.fillAlpha;
+      g.fillStyle = st.fill;
+      g.beginPath();
+      f.ring.forEach(([lon, lat], i) => {
+        const [x, y] = lonLatToPx(bbox, width, height, lon, lat);
+        if (i) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      });
+      g.closePath();
+      g.fill();
+    }
+    g.globalAlpha = 1;
+    return (out = { id, bbox, canvas, version: ++version, opacity: 1 });
   };
 }
 
@@ -155,14 +227,28 @@ export function planOverlays(prev: readonly OverlayKey[], next: readonly Overlay
   return { rebuild: false, upload: next.filter((o, i) => o.version !== prev[i].version).map((o) => o.id) };
 }
 
+// side: 0 = whole screen, -1 = left of the split divider only, 1 = right only. Same fragment test as C1's drape
+// (czm_splitPosition is scene.splitPosition in drawing-buffer pixels).
 const OVERLAY_MATERIAL_SOURCE = `
 czm_material czm_getMaterial(czm_materialInput materialInput) {
   czm_material material = czm_getDefaultMaterial(materialInput);
   vec4 c = texture(image, materialInput.st);
+  if ((side < 0.0 && gl_FragCoord.x > czm_splitPosition) || (side > 0.0 && gl_FragCoord.x < czm_splitPosition)) c.a = 0.0;
   material.diffuse = c.rgb;
   material.alpha = c.a * opacity;
   return material;
 }`;
+
+/** Which part of a split screen a layer draws on. */
+export type SplitSide = "both" | "left" | "right";
+/** Pure: shader value of a side. */
+export const sideValue = (s: SplitSide) => (s === "left" ? -1 : s === "right" ? 1 : 0);
+
+/** Pure: which side the A layers (left) and B layers (right) draw on, and the divider; B draws nothing without a split. */
+export function splitSides(compare: { divider: number } | null | undefined): { a: SplitSide; b: SplitSide | null; divider: number } {
+  if (!compare) return { a: "both", b: null, divider: 0.5 };
+  return { a: "left", b: "right", divider: Math.min(1, Math.max(0, compare.divider)) };
+}
 
 /** Pure: [lon, lat] -> canvas pixel [x, y] for a north-up canvas of width x height covering bbox [w, s, e, n]. */
 export function lonLatToPx(bbox: readonly [number, number, number, number], width: number, height: number, lon: number, lat: number): [number, number] {
@@ -200,7 +286,7 @@ export type OverlayLayer = {
    * Cheap when nothing changed (safe to call every frame). Returns true if anything needs a re-render.
    * `mask` polygons are cut out of every overlay; a new mask (by reference) re-uploads every overlay.
    */
-  sync(overlays: readonly GroundOverlay[], classification: ClassificationType, mask?: OverlayMask): boolean;
+  sync(overlays: readonly GroundOverlay[], classification: ClassificationType, mask?: OverlayMask, side?: SplitSide): boolean;
 };
 
 export function createOverlayLayer(collection: PrimitiveCollection): OverlayLayer {
@@ -223,7 +309,8 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
   };
 
   return {
-    sync(overlays, classification, maskIn) {
+    sync(overlays, classification, maskIn, sideIn = "both") {
+      const side = sideValue(sideIn);
       const mask = maskIn?.length ? maskIn : undefined; // an empty mask is a no-op (no re-uploads when [] is re-created)
       const plan = planOverlays(keys, overlays, classification !== cls);
       const maskChanged = mask !== lastMask;
@@ -237,7 +324,7 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
           const canvases: [HTMLCanvasElement, HTMLCanvasElement] = [document.createElement("canvas"), document.createElement("canvas")];
           const material = new Material({
             translucent: true,
-            fabric: { uniforms: { image: canvases[0], opacity: o.opacity }, source: OVERLAY_MATERIAL_SOURCE },
+            fabric: { uniforms: { image: canvases[0], opacity: o.opacity, side }, source: OVERLAY_MATERIAL_SOURCE },
           });
           slots.set(o.id, { material, canvases, flip: 1 });
           collection.add(
@@ -256,8 +343,9 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
       for (const o of overlays) {
         const slot = slots.get(o.id)!;
         const opacity = Math.min(1, Math.max(0, o.opacity));
-        if (slot.material.uniforms.opacity !== opacity) {
+        if (slot.material.uniforms.opacity !== opacity || slot.material.uniforms.side !== side) {
           slot.material.uniforms.opacity = opacity;
+          slot.material.uniforms.side = side;
           changed = true;
         }
         if (maskChanged || toUpload.has(o.id)) {
@@ -274,26 +362,59 @@ export function createOverlayLayer(collection: PrimitiveCollection): OverlayLaye
 
 const SQUARE_OUTLINE = "#f4ecd2";
 const SQUARE_OUTLINE_ALPHA = 0.8;
+/** Where the outline is hidden behind trees/roofs on Google tiles it still draws, dimmer. */
+const SQUARE_OUTLINE_HIDDEN_ALPHA = 0.45;
+const SQUARE_WIDTH_PX = 1.5;
+/** Raised outline on Google tiles: this far above the farm's ground height, metres. */
+export const SQUARE_RAISE_M = 1;
 
 export type SquareOutline = {
-  /** Thin ground-clamped outline of the simulation square [west, south, east, north]; undefined removes it. */
-  set(bbox: readonly [number, number, number, number] | undefined, classification: ClassificationType): void;
+  /**
+   * Outline of the simulation square [west, south, east, north]; undefined removes it. Without `heightM` it is
+   * a ground-clamped polyline (classifies `classification`): right on terrain, but it breaks up on Google's tiles
+   * (classification volumes miss the mesh in places). With `heightM` (Google surface) it is a plain polyline at that
+   * ellipsoid height, drawn through anything in front of it (depth-fail appearance), so it stays continuous.
+   */
+  set(bbox: readonly [number, number, number, number] | undefined, classification: ClassificationType, heightM?: number): void;
 };
 
 export function createSquareOutline(collection: PrimitiveCollection): SquareOutline {
   return {
-    set(bbox, classification) {
+    set(bbox, classification, heightM) {
       collection.removeAll();
       if (!bbox) return;
       const [w, s, e, n] = bbox;
-      collection.add(
-        new GroundPolylinePrimitive({
-          geometryInstances: new GeometryInstance({
-            geometry: new GroundPolylineGeometry({ positions: Cartesian3.fromDegreesArray([w, s, e, s, e, n, w, n, w, s]), width: 1.5 }),
-            attributes: { color: ColorGeometryInstanceAttribute.fromColor(Color.fromCssColorString(SQUARE_OUTLINE).withAlpha(SQUARE_OUTLINE_ALPHA)) },
+      const ring = [w, s, e, s, e, n, w, n, w, s];
+      const color = Color.fromCssColorString(SQUARE_OUTLINE);
+      if (heightM == null) {
+        collection.add(
+          new GroundPolylinePrimitive({
+            geometryInstances: new GeometryInstance({
+              geometry: new GroundPolylineGeometry({ positions: Cartesian3.fromDegreesArray(ring), width: SQUARE_WIDTH_PX }),
+              attributes: { color: ColorGeometryInstanceAttribute.fromColor(color.withAlpha(SQUARE_OUTLINE_ALPHA)) },
+            }),
+            appearance: new PolylineColorAppearance(),
+            classificationType: classification,
           }),
-          appearance: new PolylineColorAppearance(),
-          classificationType: classification,
+        );
+        return;
+      }
+      // ponytail: one height for the whole square (the farm's ground at the orbit target). Fine on flat farms;
+      // on a slope the line floats or sinks (still visible via depth-fail). Sample heights per vertex if a farm needs it.
+      const appearance = (alpha: number) =>
+        new PolylineMaterialAppearance({ material: Material.fromType("Color", { color: color.withAlpha(alpha) }), translucent: true });
+      collection.add(
+        new Primitive({
+          geometryInstances: new GeometryInstance({
+            geometry: new PolylineGeometry({
+              positions: Cartesian3.fromDegreesArrayHeights(ring.flatMap((v, i) => (i % 2 ? [v, heightM] : [v]))),
+              width: SQUARE_WIDTH_PX,
+              vertexFormat: PolylineMaterialAppearance.VERTEX_FORMAT,
+            }),
+          }),
+          appearance: appearance(SQUARE_OUTLINE_ALPHA),
+          depthFailAppearance: appearance(SQUARE_OUTLINE_HIDDEN_ALPHA),
+          asynchronous: false,
         }),
       );
     },
