@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clipRingToBbox, heightsToRgba, indexToCoverage, lonLatToUv, pointInRing, rasterizeFieldIndex, ringsInBbox, type Bbox } from "./geometry";
+import { bakeKey, clipRingToBbox, heightsToRgba, indexToCoverage, lonLatToUv, pointInRing, rasterizeFieldIndex, ringsInBbox, type Bbox } from "./geometry";
 
 const bbox: Bbox = [10, 50, 11, 51];
 const sq = (w: number, s: number, e: number, n: number): [number, number][] => [[w, s], [e, s], [e, n], [w, n]];
@@ -57,4 +57,33 @@ describe("geometry", () => {
     expect(out[(n - 1) * 4]).toBe(255);
     expect(out[1 * 4 + 1]).toBeLessThan(128); // downhill = west (negative u)
   });
+});
+
+describe("height normalization", () => {
+  it("keeps small depressions when percentile endpoints coincide", () => {
+    const h = Float64Array.from({ length: 100 }, (_, i) => i < 4 ? 0 : 10);
+    const rgba = heightsToRgba(h, 10);
+    expect(rgba[0]).toBe(0);
+    expect(rgba[4 * 4]).toBe(255);
+  });
+
+  it("preserves local relief in the presence of extreme outliers", () => {
+    const n = 10;
+    const h = Float64Array.from({ length: n * n }, (_, i) => i % n);
+    h[0] = -10000;
+    h[h.length - 1] = 10000;
+    const rgba = heightsToRgba(h, n);
+    expect(rgba[(5 * n + 2) * 4]).toBeLessThan(100);
+    expect(rgba[(5 * n + 7) * 4]).toBeGreaterThan(155);
+    expect(rgba[(5 * n + 5) * 4 + 1]).toBeLessThan(128);
+  });
+});
+
+
+it("invalidates the bake when a field or mask vertex changes", () => {
+  const field = { id: "a", ring: sq(10, 50, 11, 51) };
+  const mask = [sq(10.1, 50.1, 10.2, 50.2)];
+  const key = bakeKey(bbox, "google", [field], mask);
+  expect(bakeKey(bbox, "google", [{ ...field, ring: sq(10, 50, 10.9, 51) }], mask)).not.toBe(key);
+  expect(bakeKey(bbox, "google", [field], [sq(10.1, 50.1, 10.3, 50.2)])).not.toBe(key);
 });

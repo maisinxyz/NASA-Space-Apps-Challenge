@@ -113,17 +113,26 @@ export function indexToCoverage(index: Uint8Array, plane: number): Uint8ClampedA
 
 /**
  * Normalise a heights grid (row 0 = south, metres) to RGBA: R = height 0..1, G/B = downhill direction in uv space
- * (0.5 = none, scaled so the steepest cell is 0/1). Flat or tiny relief (< 0.5 m) gives mid-grey so low-spot layers spread evenly.
+ * (0.5 = none, scaled so the steepest cell is 0/1). Height and gradients use the 5th–95th percentile range
+ * to prevent isolated outliers from flattening local relief. If that range collapses, use the observed range so
+ * small depressions remain visible in this relative visualization. Tiny relief (< 0.5 m) gives mid-grey.
  */
 export function heightsToRgba(heights: ArrayLike<number>, n: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(n * n * 4);
-  let lo = Infinity, hi = -Infinity;
-  for (let i = 0; i < heights.length; i++) {
-    lo = Math.min(lo, heights[i]);
-    hi = Math.max(hi, heights[i]);
+  const values = Array.from({ length: n * n }, (_, i) => heights[i]).sort((a, b) => a - b);
+  const percentile = (q: number) => {
+    const pos = (values.length - 1) * q;
+    const i = Math.floor(pos);
+    return values[i] + (values[Math.ceil(pos)] - values[i]) * (pos - i);
+  };
+  let lo = percentile(0.05), hi = percentile(0.95);
+  if (hi - lo < 0.5) {
+    lo = values[0];
+    hi = values[values.length - 1];
   }
   const flat = !(hi - lo >= 0.5);
-  const h = (x: number, y: number) => heights[Math.min(n - 1, Math.max(0, y)) * n + Math.min(n - 1, Math.max(0, x))];
+  const clampHeight = (v: number) => Math.min(hi, Math.max(lo, v));
+  const h = (x: number, y: number) => clampHeight(heights[Math.min(n - 1, Math.max(0, y)) * n + Math.min(n - 1, Math.max(0, x))]);
   const gx = new Float32Array(n * n);
   const gy = new Float32Array(n * n);
   let gmax = 1e-6;
@@ -137,7 +146,7 @@ export function heightsToRgba(heights: ArrayLike<number>, n: number): Uint8Clamp
         gmax = Math.max(gmax, Math.hypot(dx, dy));
       }
   for (let i = 0; i < n * n; i++) {
-    out[i * 4] = flat ? 128 : ((heights[i] - lo) / (hi - lo)) * 255;
+    out[i * 4] = flat ? 128 : ((clampHeight(heights[i]) - lo) / (hi - lo)) * 255;
     out[i * 4 + 1] = flat ? 128 : 127.5 + (gx[i] / gmax) * 127.5;
     out[i * 4 + 2] = flat ? 128 : 127.5 + (gy[i] / gmax) * 127.5;
     out[i * 4 + 3] = 255;
@@ -145,9 +154,7 @@ export function heightsToRgba(heights: ArrayLike<number>, n: number): Uint8Clamp
   return out;
 }
 
-/** Change key for the baked textures / primitive: bbox, surface, field ids+rings, mask (count + sampled coordinates). */
+/** Change key for all geometry used by the baked textures and primitive. */
 export function bakeKey(bbox: Bbox, surface: string, fields: readonly { id: string; ring: Ring }[], mask: readonly Ring[] | undefined): string {
-  const f = fields.map((x) => `${x.id}:${x.ring.length}:${x.ring[0]?.join(",") ?? ""}`).join("|");
-  const m = mask?.length ? `${mask.length}:${mask[0][0]?.join(",")}:${mask[mask.length - 1][0]?.join(",")}` : "0";
-  return `${bbox.join(",")};${surface};${f};${m}`;
+  return JSON.stringify([bbox, surface, fields.map(({ id, ring }) => [id, ring]), mask ?? []]);
 }
