@@ -128,3 +128,5 @@ Branch `fe/S1-cesium-globe`. Not committed (orchestrator commits). I did not edi
 - The FarmCard line "not from coordinates published by the operator" reads oddly for private farmland. Consider farm-specific wording.
 - `showCropFills` is not in the share link. The contract lists no key for it; add one only if wanted.
 - The explore-farm card button now says "Fly in" instead of "Open twin".
+
+> 2026-11-14 (FARM-SCOUT): the Lancaster County / Intercourse PA farm was removed from the app. Mentions above are historical.

@@ -8,7 +8,7 @@ describe("runSourceFor", () => {
     expect(runSourceFor(farmById("usda-barc"))).toBe("fixture");
   });
   it("explore-only farms and no farm use none", () => {
-    expect(runSourceFor(farmById("lancaster-intercourse"))).toBe("none");
+    expect(runSourceFor(farmById("ucdavis-oakville"))).toBe("none");
     expect(runSourceFor(null)).toBe("none");
   });
   it("override wins", () => {

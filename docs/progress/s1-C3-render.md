@@ -174,3 +174,5 @@ Not committed. Contract `types.ts` used as written (`weather`, `groundLayers`, `
 **Tests.** New `perf.test.ts` (qualityFor, motion tracker, throttle, needsContinuousRender, frame stats). typecheck: only `lib/twin/scenario.ts` (PRODUCT's missing `./scenarios/registry`), lint pass, `components/viewer` tests 70 pass.
 
 **Gaps.** Weather/ground engines are stubs. MSAA off makes edges rely on FXAA (screenshot looks fine). Dynamic quality is not toggled by the share-link `setCamera`. Low-detail "pause" is a high SSE, not a true request stop.
+
+> 2026-11-14 (FARM-SCOUT): the Lancaster County / Intercourse PA farm was removed from the app. Mentions above are historical.

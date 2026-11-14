@@ -7,8 +7,8 @@ import type { SourceId } from "@/lib/provenance";
 import { ROTATION_SETS, type RotationSetId, type TwinRotation } from "@/lib/twin/rotations";
 
 import { BELTSVILLE, BELTSVILLE_TWIN } from "./beltsville";
+import { CANDIDATE_DATASETS, type CandidateDatasetId, passedCandidates } from "./candidates";
 import { CORNELL, CORNELL_TWIN } from "./cornell";
-import { LANCASTER } from "./lancaster";
 import { OAKVILLE } from "./oakville";
 
 export type Bbox = [number, number, number, number];
@@ -40,7 +40,14 @@ export type TwinSpec = {
 
 export type TwinConfig = TwinSpec & { rotations: TwinRotation[] };
 
-export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, LANCASTER, OAKVILLE];
+export { CANDIDATE_DATASETS, CANDIDATES, type Candidate, type CandidateDatasetId } from "./candidates";
+
+/** Home-globe pins: the three chosen farms plus every scouted candidate that passed the 3D check (candidates/index.ts). */
+export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, OAKVILLE, ...passedCandidates().map((c) => c.farm)];
+
+/** Elevation and boundary datasets of the pinned candidate farms (Methods page), without duplicates. */
+export const pinnedCandidateDatasets = () =>
+  [...new Set(passedCandidates().flatMap((c): CandidateDatasetId[] => [c.elevation, c.boundaries]))].map((id) => ({ id, ...CANDIDATE_DATASETS[id] }));
 
 export const farmById = (id: string | null) => FARMS.find((f) => f.id === id) ?? null;
 

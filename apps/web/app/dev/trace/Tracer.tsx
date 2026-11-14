@@ -14,7 +14,6 @@ import { type Ring, ringAreaHa, ringsToGeoJson, ringsToTs, squareBbox } from "@/
 const PRESETS: { id: string; name: string; lon: number; lat: number }[] = [
   { id: "cornell", name: "Cornell Ruminant Center barns (approx.)", lon: -76.2451, lat: 42.4425 },
   { id: "beltsville", name: "Beltsville ARC campus point (approx.)", lon: -76.8844, lat: 39.0319 },
-  { id: "lancaster", name: "Intercourse PA village centre", lon: -76.1075, lat: 40.0383 },
   { id: "oakville", name: "Oakville Grade area, Napa (approx.)", lon: -122.4121, lat: 38.4201 },
 ];
 const TIER_A: TileTier[] = ["A", "B", "C"];

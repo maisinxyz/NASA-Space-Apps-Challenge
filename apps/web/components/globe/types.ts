@@ -8,7 +8,7 @@ export type Farm = {
   name: string;
   /**
    * Who operates the site. Public institutions are named; private farmland is described by area only
-   * (e.g. "Private working farmland"), never by owner (user decision for Lancaster County).
+   * (e.g. "Private working farmland"), never by owner (user decision).
    */
   owner: string;
   country: string;
