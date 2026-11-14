@@ -15,10 +15,11 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { TwinPanel } from "@/components/farm/TwinPanel";
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
-import { ArrivalTitle, DiveVeil } from "@/components/hero/Arrival";
+import { ArrivalTitle, HANDOFF_IN_MS, HandoffVeil } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
 import { ControlCluster, type HeroSettings } from "@/components/hero/ControlCluster";
 import { DIVE_FILMS, DiveFilm } from "@/components/hero/DiveFilm";
+import { diveInteractive, diveStart } from "@/components/hero/divePerf";
 import { EarthLoading } from "@/components/hero/EarthLoading";
 import { HeroEarth, type HeroEarthApi } from "@/components/hero/HeroEarth";
 import { FarmPopup } from "@/components/hero/FarmPopup";
@@ -57,6 +58,18 @@ const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Glo
 
 /** Share-link camera is applied after the fly-in: ground lookup + 3 s flight (Globe.tsx FLY_SECONDS), with margin. */
 const SHARE_CAMERA_DELAY_MS = 4500;
+/**
+ * Click to interactive farm in 2 s: the hero Earth pushes in toward the farm (when it offers diveTo), then the hand-over
+ * veil covers the switch to the live farm, which is already loaded underneath when it was prewarmed (pin hover, popup).
+ * The veil clears once the farm's tiles have settled, after at least HANDOFF_MIN_MS and at most HANDOFF_MAX_MS.
+ */
+const PUSH_IN_MS = 1100;
+const HANDOFF_MIN_MS = 260;
+const HANDOFF_MAX_MS = 700;
+/** Release the prewarmed farm scene this long after nothing points at a farm any more. */
+const PREWARM_RELEASE_MS = 6000;
+/** The hero Earth's push-in, when it has one (components/hero/HeroEarth.tsx). */
+type PushIn = { diveTo?(farmId: string, durationMs: number, onDone: () => void): void; cancelDive?(): void };
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
 const dev = process.env.NODE_ENV !== "production";
 const PITCH = "See how the same storm moves across real farmland under different crop rotations.";
@@ -103,10 +116,11 @@ function season(twin: TwinConfig | undefined, id: string, year: number, month: n
 }
 
 /**
- * Farm view after a dive: the dive (veil, or the dive film for farms that have one), "hold" while a dive film that is
- * still playing covers the landed farm, the arrival title, then free exploration with the farm panels.
+ * Farm view after a dive: "dive" while the hand-over veil (or the dive film, for farms that have one) covers the landing,
+ * "hold" while a dive film that is still playing covers the landed farm, then "explore": camera input and panels live,
+ * with the arrival title playing over the farm (it no longer holds the panels back).
  */
-type Phase = "dive" | "hold" | "title" | "explore";
+type Phase = "dive" | "hold" | "explore";
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
 /**
@@ -216,6 +230,9 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       setHoverId(id);
     }
   };
+  // Prewarm target: the farm the pointer or keyboard is on (hovered pin, open popup, selection). Kept after the pointer
+  // leaves, so the parked view stays loaded; Globe parks its hidden camera there (GlobeProps.prewarm).
+  const [warmId, setWarmId] = useState<string | null>(null);
   // Selected waypoint in globe view: the card shows once the fly-to has landed, with one confirm pulse.
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [pulseNonce, setPulseNonce] = useState(0);
@@ -233,14 +250,27 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const filmCan = useRef(false);
   filmCan.current = !reducedMotion && !!farmId && !!filmReady[farmId];
   const lastView = useRef(view);
+  // Arrival: Globe lands (onArrive) during the same commit that enters farm view, before this component's effects run,
+  // so the landing is kept in a ref and read by the phase logic below rather than through setPhase.
+  const arrived = useRef<string | null>(null);
+  const [arriveNonce, setArriveNonce] = useState(0);
+  const [titleOn, setTitleOn] = useState(false);
+  const diveAt = useRef(0);
   useEffect(() => {
     if (view === "farm" && lastView.current === "globe") {
       setPhase("dive");
       setFilmOn(filmCan.current);
+      diveAt.current = performance.now();
+      setPending(-1); // unknown until the farm view reports its first tile progress
     }
     if (view === "globe") {
       setPhase("explore");
       setFilmOn(false);
+      setTitleOn(false);
+      setVeilEarly(false);
+      arrived.current = null;
+      // The hero Earth held the end of its push-in: glide back out to the whole Earth.
+      if (lastView.current === "farm") (heroEarth.current as (HeroEarthApi & PushIn) | null)?.cancelDive?.();
       // Back from a farm: land in the map UI with the Earth centred; idle returns to the hero as usual.
       if (lastView.current === "farm") {
         setHs("ui");
@@ -256,20 +286,57 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     if (cardFor && cardFor !== farmId) setCardFor(null);
   }, [farmId, cardFor]);
   cardOpenRef.current = !!cardFor;
+  useEffect(() => {
+    const id = hoverId ?? cardFor ?? (view === "globe" ? farmId : null);
+    if (id) return setWarmId(id);
+    // Nothing pointed at: release the parked scene after a while (one prewarmed scene at most, and only while wanted).
+    const t = setTimeout(() => setWarmId(null), PREWARM_RELEASE_MS);
+    return () => clearTimeout(t);
+  }, [hoverId, cardFor, farmId, view]);
   // Arrival title: in, hold (then `titleLeaving`), out; the farm controls mount only when its exit has finished.
   const [titleLeaving, setTitleLeaving] = useState(false);
   const titleHoldEnd = useCallback(() => setTitleLeaving(true), []);
   const titleExited = useCallback(() => {
     setTitleLeaving(false);
-    setPhase((p) => (p === "title" ? "explore" : p));
+    setTitleOn(false);
   }, []);
-  // The film has begun dissolving into the landed farm: on to the title.
-  const filmDone = () => setPhase((p) => (p === "hold" ? "title" : p));
+  /** Dive over: camera input and panels live, the arrival title plays over the farm. */
+  const toExplore = () => {
+    setPhase("explore");
+    setTitleOn(true);
+    if (farmId) diveInteractive(farmId);
+  };
+  // The film has begun dissolving into the landed farm.
+  const filmDone = () => {
+    if (phase === "hold") toExplore();
+  };
   // The film could not play: the procedural dive takes over (veil if still diving, title if already landed).
   const filmFailed = () => {
     setFilmOn(false);
     filmDone();
   };
+
+  // Hand-over: once landed, hold the veil until the farm's tiles have settled (pending 0), within [MIN, MAX] of the
+  // switch to farm view, then clear it. A dive film instead holds until it has played (DiveFilm onFinish).
+  const [warmed, setWarmed] = useState<string | null>(null);
+  /** The veil starts fading in near the end of the hero push-in (before farm view), so the switch is never seen. */
+  const [veilEarly, setVeilEarly] = useState(false);
+  const veilTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(veilTimer.current), []);
+  useEffect(() => {
+    if (!veilEarly) return;
+    const t = setTimeout(() => setVeilEarly(false), PUSH_IN_MS + HANDOFF_MAX_MS + 500); // safety: never stuck on
+    return () => clearTimeout(t);
+  }, [veilEarly]);
+  const farmSettled = pending === 0 || (!!farmId && warmed === farmId);
+  useEffect(() => {
+    if (phase !== "dive" || view !== "farm" || arrived.current !== farmId) return;
+    if (filmOnRef.current) return setPhase("hold");
+    const since = performance.now() - diveAt.current;
+    const wait = farmSettled ? Math.max(0, HANDOFF_MIN_MS - since) : Math.max(0, HANDOFF_MAX_MS - since);
+    const t = setTimeout(toExplore, wait);
+    return () => clearTimeout(t);
+  }, [phase, view, farmId, arriveNonce, farmSettled]);
 
   const farm = farmById(farmId);
   const runSource = runSourceFor(farm, runSourceProp);
@@ -392,13 +459,26 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     if (id !== farmId) select(id);
     setCardFor(id);
   };
-  /** Hand-over to Cesium: same whole-Earth view over the farm, then the dive. */
+  /**
+   * The dive: the hero Earth pushes in toward the farm (if it can), then farm view; Cesium lands at once on the farm view
+   * it has prewarmed and the hand-over veil covers the switch.
+   */
   const startDive = (id: string) => {
-    const f = farmById(id);
-    if (!f) return;
+    if (!farmById(id)) return;
     pendingDive.current = null;
+    diveStart(id);
+    setWarmId(id);
+    arrived.current = null;
+    const push = heroEarth.current as (HeroEarthApi & PushIn) | null;
+    // The push-in needs the Earth centred (map UI), which it is whenever a popup or waypoint can be clicked.
+    if (push?.diveTo && !reducedMotion && earthCentre) {
+      selectFarm(id);
+      clearTimeout(veilTimer.current);
+      veilTimer.current = setTimeout(() => setVeilEarly(true), PUSH_IN_MS - HANDOFF_IN_MS);
+      push.diveTo(id, PUSH_IN_MS, () => dive(id));
+      return;
+    }
     heroEarth.current?.resetZoom();
-    globe.current?.jumpTo(f.lon, f.lat);
     dive(id);
   };
   /** Waypoint or "descend": dive now if the farm faces the viewer (or a dive film will cover the turn), else turn first. */
@@ -457,8 +537,12 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               reducedMotion={reducedMotion}
               className="absolute inset-0 h-full w-full"
               onSelect={onGlobe ? () => {} : select}
-              quickDive={filmCan.current}
-              onArrive={() => setPhase((p) => (p === "dive" ? (filmOnRef.current ? "hold" : "title") : p))}
+              prewarm={warmId ? { farmId: warmId, simBbox: twinConfig(warmId)?.simBbox } : null}
+              onPrewarmed={setWarmed}
+              onArrive={(id) => {
+                arrived.current = id;
+                setArriveNonce((n) => n + 1);
+              }}
               onReady={(info) => {
                 setTier(info.tier);
                 setLoad("ready");
@@ -564,9 +648,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
             onFail={filmFailed}
           />
         ))}
-      {inFarm && phase === "dive" && !filmOn && <DiveVeil reducedMotion={reducedMotion} />}
+      {(veilEarly || (inFarm && (phase === "dive" || phase === "explore"))) && !filmOn && (
+        <HandoffVeil key={farmId ?? "none"} clear={inFarm && phase === "explore"} reducedMotion={reducedMotion} />
+      )}
       <AnimatePresence onExitComplete={titleExited}>
-        {inFarm && phase === "title" && !titleLeaving && <ArrivalTitle key={farm.id} farm={farm} reducedMotion={reducedMotion} onHoldEnd={titleHoldEnd} />}
+        {inFarm && titleOn && !titleLeaving && <ArrivalTitle key={farm.id} farm={farm} reducedMotion={reducedMotion} onHoldEnd={titleHoldEnd} />}
       </AnimatePresence>
 
       {/* Farm view controls: mounted only once the title has gone (phase "explore"), then fade in. */}

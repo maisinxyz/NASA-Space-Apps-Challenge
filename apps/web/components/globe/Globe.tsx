@@ -70,7 +70,6 @@ import {
 } from "@/components/viewer/cesium/twin";
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
-import { dive as DIVE, easeInFlashOut } from "@/components/hero/tokens";
 
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
 
@@ -89,9 +88,11 @@ const FLY_SECONDS = 3;
 /** Fly-in safety nets: give up waiting for the terrain height after this, and force the landing this long after the flight should have ended. */
 const GROUND_TIMEOUT_S = 4;
 const LAND_GRACE_S = 2;
-/** Quick dive: cut the camera once the dive film is opaque (its fade-in is 120 ms), and wait this long for terrain at most. */
-const CUT_AFTER_MS = 150;
-const CUT_GROUND_TIMEOUT_S = 0.5;
+/** Prewarm: wait this long after hover before parking (pins brushed in passing), and after returning from a farm. */
+const PREWARM_DEBOUNCE_MS = 150;
+const PREWARM_AFTER_RETURN_MS = 700;
+/** A parked view counts as loaded only after its tile requests have had this long to start. */
+const PREWARM_SETTLE_MS = 400;
 const HOME = { lon: -100, lat: 25 };
 /** Auto-rotate speed, radians per second (one turn in about three minutes). */
 const AUTO_ROTATE_RAD_S = CesiumMath.toRadians(2);
@@ -114,17 +115,6 @@ export type GlobeDevProps = {
 
 /** Turntable orbit around the simulation square. target = the point at the screen centre (stays inside the square). */
 type OrbitState = { target: LonLat; o: Orbit; ground: number; camGround: number; dirty: boolean };
-
-/** A running dive: the camera orbits the waypoint's ENU frame, so the waypoint stays dead centre every frame. */
-type DiveState = {
-  seq: number;
-  target: LonLat;
-  ground: number;
-  t0: number;
-  from: { heading: number; pitch: number; range: number };
-  to: Orbit;
-  land(): void;
-};
 
 type Runtime = {
   viewer: Viewer;
@@ -161,12 +151,17 @@ type Runtime = {
   twinLayers: PrimitiveCollection;
   /** Non-null only in farm view after the fly-in; the camera then sits in the target's ENU frame. */
   orbit: OrbitState | null;
-  /** The dive from space into a farm while it runs (driven per frame by stepDive). */
-  dive: DiveState | null;
   /** Pending farm landing: enters the orbit framing. Forced by the watchdog at `landBy` (performance.now ms). */
   land: (() => void) | null;
   landBy: number;
+  /** Globe view: the farm whose landing view is parked (hidden) and loading, so the dive can land on it instantly. */
+  prewarm: Prewarm | null;
+  /** Terrain height at each farm's centre, from earlier samples (metres). */
+  groundCache: Map<string, number>;
 };
+
+/** A parked, hidden farm view (see GlobeProps.prewarm). `ground` is undefined until the terrain sample returns. */
+type Prewarm = { farmId: string; centre: LonLat; framing: Orbit; ground: number | undefined; at: number; loaded: boolean };
 
 /** Field look: invisible unless showCropFills (and not comparing: the split draws fills on canvases), faint edge on hover/selection. */
 function repaintFields(r: Runtime, p: GlobeProps) {
@@ -233,7 +228,7 @@ const boxOf = (p: GlobeProps, farm: Farm): Box => (p.simBbox ? boxOfBbox(p.simBb
 function syncSurface(r: Runtime, p: GlobeProps, onShown: (s: Surface) => void, onGoogleFailed: () => void) {
   const t = r.tier;
   if (!t) return;
-  const want = pickSurface({ tier: t.tier, view: p.view === "farm" && r.orbit ? "farm" : "globe", want: p.surface ?? "google", failed: t.failed });
+  const want = pickSurface({ tier: t.tier, view: (p.view === "farm" && r.orbit) || r.prewarm ? "farm" : "globe", want: p.surface ?? "google", failed: t.failed });
   void t.setSurface(want).then((ok) => {
     if (r.viewer.isDestroyed()) return;
     if (ok) return onShown(t.surface);
@@ -299,7 +294,6 @@ function startFlight(r: Runtime) {
 /** Camera back to the normal globe frame (the orbit uses a local ENU frame). */
 function leaveOrbit(r: Runtime) {
   r.orbit = null;
-  r.dive = null;
   r.land = null;
   r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
 }
@@ -331,66 +325,16 @@ function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
   r.viewer.scene.requestRender();
 }
 
-/** Pure: the dive's progress curve over log-distance. Accelerates (quadratic) until `brakeAt`, then brakes (quadratic). */
-export function diveProgress(t: number) {
-  const b = DIVE.brakeAt;
-  if (t <= 0) return 0;
-  if (t >= 1) return 1;
-  if (t < b) return b * (t / b) * (t / b);
-  const u = (t - b) / (1 - b);
-  return b + (1 - b) * (1 - (1 - u) * (1 - u));
-}
-
-const smooth = (a: number, b: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
-const lerpAngle = (a: number, b: number, w: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * w;
-
-/** Heading / pitch / range of the camera as seen from a target's ENU frame (inverse of Cesium's lookAt offset). */
-function hprFrom(r: Runtime, target: LonLat, ground: number) {
-  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(target.lon, target.lat, ground));
-  const local = Matrix4.multiplyByPoint(Matrix4.inverseTransformation(frame, new Matrix4()), r.viewer.camera.positionWC, new Cartesian3());
-  const range = Cartesian3.magnitude(local);
-  return { heading: Math.atan2(-local.x, -local.y), pitch: -Math.asin(Math.min(1, Math.max(-1, local.z / range))), range };
-}
-
-/** One frame of the dive. Returns false when it has finished (and landed). */
-function stepDive(r: Runtime, now: number): boolean {
-  const d = r.dive;
-  if (!d) return false;
-  if (d.seq !== r.flightSeq || r.viewer.isDestroyed()) {
-    r.dive = null;
-    return false;
-  }
-  const t = Math.min(1, (now - d.t0) / (DIVE.fallSeconds * 1000));
-  const s = diveProgress(t);
-  const range = Math.exp(Math.log(d.from.range) + (Math.log(d.to.range) - Math.log(d.from.range)) * s);
-  // Pitch: straight down while far away, a low skim toward the waypoint across the land, then the farm framing.
-  const skim = CesiumMath.toRadians(DIVE.skimPitchDeg);
-  let pitch = d.from.pitch + (skim - d.from.pitch) * smooth(DIVE.skimFrom, DIVE.skimTo, s);
-  pitch = pitch + (d.to.pitch - pitch) * smooth(DIVE.skimTo, 1, s);
-  // Keep a safe height over the target while skimming.
-  pitch = Math.min(pitch, -Math.asin(Math.min(1, DIVE.minHeightM / range)));
-  const heading = lerpAngle(d.from.heading, d.to.heading, smooth(DIVE.skimFrom - 0.15, DIVE.skimTo, s));
-  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(d.target.lon, d.target.lat, d.ground));
-  r.viewer.camera.lookAtTransform(frame, new HeadingPitchRange(heading, pitch, range));
-  r.viewer.scene.requestRender();
-  if (t < 1) return true;
-  r.dive = null;
-  d.land();
-  return false;
-}
-
 /**
- * Fly to the farm's orbit framing. `dive` = the hero's approach from space: swing the farm to the centre, then fall
- * (stepDive), or with `quickDive` (a dive film covers the screen) cut straight to the framing. Reduced motion: no dive.
+ * Fly to the farm's orbit framing (share link, Reset view), or with `dive` (the hand-over from the hero Earth) land
+ * there at once. Reduced motion: no flight.
  */
 function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
+  const warm = dive && r.prewarm?.farmId === farm.id ? r.prewarm : null;
   leaveOrbit(r);
   const { seq, done } = startFlight(r);
   const { target: centre, o: framing } = startFraming(boxOf(p, farm), farm.framing, farm.minRangeM);
-  let ground = r.farmGround ?? 0;
+  let ground = warm?.ground ?? r.groundCache.get(farm.id) ?? r.farmGround ?? 0;
   // Landing = the orbit framing, exactly where a completed flight ends. It also runs when the flight is cancelled
   // without being superseded, and from the per-frame watchdog if the flight never finishes, so "Open twin" always
   // ends in the same framing as Reset view. The per-frame ground update then corrects `ground` if it was a guess.
@@ -403,10 +347,17 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
     r.pendingCamera = null;
     p.onArrive?.(farm.id);
   };
-  const cut = dive && !p.reducedMotion && !!p.quickDive;
-  const meteor = dive && !p.reducedMotion && !cut;
   r.land = land;
-  r.landBy = performance.now() + (GROUND_TIMEOUT_S + (meteor ? DIVE.centreSeconds + DIVE.fallSeconds : FLY_SECONDS) + LAND_GRACE_S) * 1000;
+  // The dive from the hero lands at once: the hero Earth's push-in and the hand-over veil cover the approach, and a
+  // prewarmed farm (camera parked here, tiles loaded) is already drawn underneath. Without a prewarm the tiles stream in
+  // under the veil. The per-frame ground update corrects `ground` if the terrain sample had not returned yet.
+  if (dive) {
+    r.prewarm = null;
+    r.farmGround = r.terrainGround = ground;
+    land();
+    return;
+  }
+  r.landBy = performance.now() + (GROUND_TIMEOUT_S + FLY_SECONDS + LAND_GRACE_S) * 1000;
   let started = false;
   const go = (g: number) => {
     if (started || seq !== r.flightSeq || r.viewer.isDestroyed()) return;
@@ -414,41 +365,65 @@ function flyToFarm(r: Runtime, p: GlobeProps, farm: Farm, dive = false) {
     ground = g;
     r.farmGround = g;
     r.terrainGround = g;
-    if (!meteor)
-      return r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
-        offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
-        duration: p.reducedMotion || cut ? 0 : FLY_SECONDS,
-        complete: land,
-        cancel: land, // a no-op when a newer flight superseded this one (seq changed)
-      });
-    // Dive: the farm is held dead centre the whole way (stepDive runs every frame in preUpdate).
-    const fall = () => {
-      if (seq !== r.flightSeq || r.viewer.isDestroyed()) return;
-      r.dive = { seq, target: centre, ground: g, t0: performance.now(), from: hprFrom(r, centre, g), to: framing, land };
-      r.viewer.scene.requestRender();
-    };
-    // First swing the farm to the centre of the view along a great circle, unless it is already there (jumpTo).
-    const cam = r.viewer.camera;
-    const toTarget = Cartesian3.normalize(Cartesian3.subtract(Cartesian3.fromDegrees(centre.lon, centre.lat, g), cam.positionWC, new Cartesian3()), new Cartesian3());
-    const offCentre = Math.acos(Math.min(1, Cartesian3.dot(toTarget, cam.directionWC)));
-    if (offCentre < CesiumMath.toRadians(1.5)) return fall();
-    cam.flyTo({
-      destination: Cartesian3.fromDegrees(centre.lon, centre.lat, cam.positionCartographic.height),
-      orientation: { heading: 0, pitch: -CesiumMath.PI_OVER_TWO, roll: 0 },
-      duration: DIVE.centreSeconds,
-      easingFunction: easeInFlashOut,
-      maximumHeight: cam.positionCartographic.height,
-      complete: fall,
-      cancel: land,
+    r.viewer.camera.flyToBoundingSphere(new BoundingSphere(Cartesian3.fromDegrees(centre.lon, centre.lat, g), 1), {
+      offset: new HeadingPitchRange(framing.heading, framing.pitch, framing.range),
+      duration: p.reducedMotion ? 0 : FLY_SECONDS,
+      complete: land,
+      cancel: land, // a no-op when a newer flight superseded this one (seq changed)
     });
   };
   // The target height comes from terrain so the flight does not end underground at high sites; do not wait forever.
-  const lookup = () => {
-    (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
-    setTimeout(() => go(ground), (cut ? CUT_GROUND_TIMEOUT_S : meteor ? 1 : GROUND_TIMEOUT_S) * 1000);
+  (r.tier ? r.tier.sampleGround(centre.lon, centre.lat) : Promise.resolve(0)).then(go, () => go(0));
+  setTimeout(() => go(ground), GROUND_TIMEOUT_S * 1000);
+}
+
+/**
+ * Park the (hidden) camera at a farm's landing framing and give it the farm-view scene, so its tiles stream, upload and
+ * draw before the dive: surface (via the per-frame sync), far plane and fog, sun lighting at local mid-morning, tile
+ * detail. Same framing as flyToFarm's landing for the same box.
+ */
+function parkPrewarm(r: Runtime, farm: Farm, simBbox: [number, number, number, number] | undefined) {
+  const box = simBbox ? boxOfBbox(simBbox) : boxOfRadius(farm, farm.radiusM);
+  const { target, o } = startFraming(box, farm.framing, farm.minRangeM);
+  const { viewer } = r;
+  viewer.camera.cancelFlight();
+  r.land = null;
+  r.orbit = null;
+  const pw: Prewarm = { farmId: farm.id, centre: target, framing: o, ground: r.groundCache.get(farm.id), at: performance.now(), loaded: false };
+  r.prewarm = pw;
+  // Park on the cached ground height (or sea level), then re-park once the terrain sample returns.
+  const place = (g: number) => {
+    if (r.prewarm !== pw || viewer.isDestroyed()) return;
+    const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(target.lon, target.lat, g));
+    viewer.camera.lookAtTransform(frame, new HeadingPitchRange(o.heading, o.pitch, o.range));
+    viewer.scene.requestRender();
   };
-  if (cut) setTimeout(lookup, CUT_AFTER_MS);
-  else lookup();
+  place(pw.ground ?? 0);
+  if (pw.ground === undefined && r.tier)
+    void r.tier.sampleGround(target.lon, target.lat).then((g) => {
+      r.groundCache.set(farm.id, g);
+      if (r.prewarm !== pw) return;
+      pw.ground = g;
+      place(g);
+    });
+  const { scene } = viewer;
+  scene.globe.maximumScreenSpaceError = GLOBE_SSE_FARM;
+  scene.globe.enableLighting = true;
+  viewer.clock.currentTime = JulianDate.fromDate(new Date(localMorningUtcMs(farm.lon)));
+  scene.requestRender();
+}
+
+/** Undo parkPrewarm while the globe is still hidden: globe surface and scene, camera back over the last farm. */
+function releasePrewarm(r: Runtime) {
+  const pw = r.prewarm;
+  if (!pw) return;
+  r.prewarm = null; // the per-frame sync switches the surface and camera limits back
+  const { scene } = r.viewer;
+  scene.globe.maximumScreenSpaceError = GLOBE_SSE_DEFAULT;
+  scene.globe.enableLighting = false;
+  r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
+  r.viewer.camera.setView({ destination: Cartesian3.fromDegrees(pw.centre.lon, pw.centre.lat, GLOBE_HEIGHT_M) });
+  scene.requestRender();
 }
 
 function flyToGlobe(r: Runtime, at: { lon: number; lat: number } | undefined, heightM: number, reducedMotion: boolean) {
@@ -585,6 +560,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         if (!r) return;
         r.viewer.camera.cancelFlight();
         leaveOrbit(r);
+        r.prewarm = null;
         r.viewer.camera.setView({ destination: Cartesian3.fromDegrees(lon, lat, GLOBE_HEIGHT_M), orientation: { heading: 0, pitch: -CesiumMath.PI_OVER_TWO, roll: 0 } });
         r.viewer.scene.requestRender();
       },
@@ -633,9 +609,10 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       pendingCamera: null,
       twinLayers,
       orbit: null,
-      dive: null,
       land: null,
       landBy: 0,
+      prewarm: null,
+      groundCache: new Map(),
     };
     rt.current = r;
     prev.current = null;
@@ -842,10 +819,17 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       if (!tilesLoaded || !tilesWereLoaded) scene.requestRender();
       tilesWereLoaded = tilesLoaded;
       // Landing in / leaving farm view switches the surface (Google only after the fly-in).
-      if (!!r.orbit !== landed) {
-        landed = !!r.orbit;
+      // A parked prewarm counts as farm view here, so landing on it switches nothing (no re-tile at the hand-over).
+      if ((!!r.orbit || !!r.prewarm) !== landed) {
+        landed = !!r.orbit || !!r.prewarm;
         syncRef.current();
         setFarmCameraLimits(viewer, landed); // 3 km far plane + tighter fog in farm view, defaults on the globe
+      }
+      // Prewarm done: the parked view's tiles have loaded on the farm surface (allow a moment for requests to start).
+      const pw = r.prewarm;
+      if (pw && !pw.loaded && pw.ground != null && r.tier && tilesLoaded && now - pw.at > PREWARM_SETTLE_MS && r.tier.surface === pickSurface({ tier: r.tier.tier, view: "farm", want: p.surface ?? "google", failed: r.tier.failed })) {
+        pw.loaded = true;
+        p.onPrewarmed?.(pw.farmId);
       }
       // Tile detail: the `detail` setting, coarser while the camera moves (debounced 1 s), paused refinement for low + scenario.
       const scenario = !!p.weather || !!p.groundLayers?.length;
@@ -856,8 +840,6 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       );
       // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
-      // The dive drives the camera itself.
-      if (r.dive) stepDive(r, now);
 
       // Twin layers: apply pending field colours once Cesium has built them; overlays re-upload on version change.
       // A/B split: A's overlays (and field fills, as a canvas) left of the divider, B's right of it; one camera.
@@ -915,7 +897,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       }
       if (r.flying) return;
       if (p.view === "globe") {
-        if (!r.interacted && !p.reducedMotion && p.selectedId == null) camera.rotate(Cartesian3.UNIT_Z, -AUTO_ROTATE_RAD_S * dt);
+        if (!r.interacted && !p.reducedMotion && p.selectedId == null && !r.prewarm) camera.rotate(Cartesian3.UNIT_Z, -AUTO_ROTATE_RAD_S * dt);
         return;
       }
       const farm = p.farms.find((f) => f.id === p.selectedId);
@@ -1078,6 +1060,33 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     else if (view === "globe" && was?.view === "farm") flyToGlobe(r, farm, GLOBE_HEIGHT_M, reduced);
     else if (view === "globe" && farm && was?.selectedId !== selectedId) flyToGlobe(r, farm, CONTINENT_HEIGHT_M, reduced);
   }, [view, selectedId]);
+
+  // Prewarm (globe view): park the hidden camera at the farm's landing view so its tiles load before the dive. Debounced
+  // (pins brushed in passing), and held back a little after coming back from a farm (the globe is still fading out).
+  const warmId = view === "globe" ? (props.prewarm?.farmId ?? null) : null;
+  const warmBox = props.prewarm?.simBbox?.join(",");
+  const leftFarmAt = useRef(0);
+  const lastView = useRef(view);
+  useEffect(() => {
+    if (view === "globe" && lastView.current === "farm") leftFarmAt.current = performance.now();
+    lastView.current = view;
+  }, [view]);
+  useEffect(() => {
+    const r = rt.current;
+    if (!r || !surface) return;
+    // Released (nothing pointed at any more): back to the plain hidden globe, so at most one scene is ever kept warm.
+    if (!warmId) {
+      if (r.prewarm && view === "globe") releasePrewarm(r);
+      return;
+    }
+    const farm = live.current.farms.find((f) => f.id === warmId);
+    if (!farm || (r.prewarm?.farmId === warmId && !r.orbit)) return;
+    const wait = Math.max(PREWARM_DEBOUNCE_MS, leftFarmAt.current + PREWARM_AFTER_RETURN_MS - performance.now());
+    const t = setTimeout(() => {
+      if (live.current.view === "globe" && !r.viewer.isDestroyed()) parkPrewarm(r, farm, live.current.prewarm?.simBbox);
+    }, wait);
+    return () => clearTimeout(t);
+  }, [warmId, warmBox, surface, view]);
 
   return <div ref={containerRef} className={className ?? "h-full w-full"} role="application" aria-label="Interactive 3D globe with research farm pins" />;
 });

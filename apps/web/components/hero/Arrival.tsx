@@ -1,5 +1,5 @@
 "use client";
-// Arrival sequence after a dive: the atmospheric-entry veil, then the title (country, locality, farm name) top right.
+// Arrival sequence after a dive: the hand-over veil, then the title (country, locality, farm name) top right.
 // The title sweeps in from the right edge toward the left (country letter by letter, then the lines below word by
 // word, each piece drifting slightly left into place) and sweeps out from the left toward the right. Timing lives in
 // tokens.arrivalTitle. The exit is driven by the parent's AnimatePresence, so the parent knows exactly when it ends.
@@ -9,42 +9,26 @@ import { useEffect } from "react";
 import type { Farm } from "@/components/globe/types";
 
 import { heroWordFont } from "./fonts";
-import { arrivalTitle as T, dive } from "./tokens";
+import { arrivalTitle as T } from "./tokens";
 
-/** Dive veil length: the swing to centre plus the fall (tokens dive). */
-export const DIVE_VEIL_S = dive.centreSeconds + dive.fallSeconds;
+/** Hand-over veil: fades in over the end of the hero push-in, holds while the live farm settles, then clears. */
+export const HANDOFF_IN_MS = 120;
+export const HANDOFF_OUT_MS = 280;
 
-/** Atmospheric entry during the dive: edges darken and fine radial streaks rush outward, then everything clears. */
-export function DiveVeil({ reducedMotion }: { reducedMotion: boolean }) {
-  if (reducedMotion) return null;
+/**
+ * Hand-over from the hero Earth to the live farm: a pale haze (entering the cloud layer) with darkened edges. Opacity
+ * only, so it stays on the compositor (no repaint per frame). `clear` = the farm underneath is ready: fade out.
+ */
+export function HandoffVeil({ clear, reducedMotion }: { clear: boolean; reducedMotion: boolean }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <motion.div
-        className="absolute inset-[-30%]"
-        style={{
-          background: "repeating-conic-gradient(from 0deg at 50% 50%, rgba(242,244,247,0.09) 0deg 0.35deg, transparent 0.35deg 5deg)",
-          maskImage: "radial-gradient(circle at 50% 50%, transparent 18%, #000 62%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 50%, transparent 18%, #000 62%)",
-        }}
-        initial={{ opacity: 0, scale: 1 }}
-        animate={{ opacity: [0, 0.35, 1, 0], scale: [1, 1.15, 1.6, 1.9] }}
-        transition={{ duration: DIVE_VEIL_S, times: [0, 0.3, 0.58, 1], ease: "easeIn" }}
-      />
-      <motion.div
-        className="absolute inset-0"
-        style={{ background: "radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.85) 100%)" }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.9, 0.9, 0] }}
-        transition={{ duration: DIVE_VEIL_S, times: [0, 0.4, 0.62, 1] }}
-      />
-      {/* Atmosphere: a soft pale haze at the hand-over from the dive to the brake. */}
-      <motion.div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(220,232,245,0.35),transparent_70%)]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0, 0.8, 0] }}
-        transition={{ duration: DIVE_VEIL_S, times: [0, 0.5, 0.6, 0.85] }}
-      />
-    </div>
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 will-change-[opacity]"
+      style={{ background: "radial-gradient(ellipse at 50% 45%, rgba(226,234,242,0.96) 0%, rgba(196,210,224,0.92) 45%, rgba(20,26,34,0.96) 100%)" }}
+      initial={{ opacity: reducedMotion ? 1 : 0 }}
+      animate={{ opacity: clear ? 0 : 1 }}
+      transition={{ duration: (clear ? HANDOFF_OUT_MS : HANDOFF_IN_MS) / 1000, ease: clear ? "easeOut" : "easeIn" }}
+    />
   );
 }
 

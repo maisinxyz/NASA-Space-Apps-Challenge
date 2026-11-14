@@ -233,13 +233,17 @@ export type GlobeProps = FarmTwinProps & {
   onError(e: Error): void;
   /** Tile streaming progress in farm view: tiles still loading (0 = settled). Throttled (~4/s). */
   onLoadProgress?(info: { pending: number }): void;
-  /**
-   * Dive with a film over it: skip the swing and fall and cut the camera to the farm framing once the film covers the
-   * globe, so the farm tiles load while the film plays. Read when the dive begins.
-   */
-  quickDive?: boolean;
   /** Fired once the camera has landed in farm view (after the dive or a reset). */
   onArrive?(farmId: string): void;
+  /**
+   * Prewarm (globe view only): while the globe is hidden, park the farm-view camera at this farm's landing framing,
+   * switch on the farm surface (Google tiles), lighting and tile detail, so the farm is already loaded and drawn when the
+   * dive hands over. Entering farm view for a prewarmed farm lands instantly. `simBbox` = the twin's square (if any), so
+   * the parked framing matches the landing. Null = nothing to prewarm.
+   */
+  prewarm?: { farmId: string; simBbox?: [number, number, number, number] } | null;
+  /** The prewarmed farm's view has finished loading its tiles (fired once per prewarm). */
+  onPrewarmed?(farmId: string): void;
 };
 
 /** Camera telemetry for the hero status bar (the hero Earth reports it). */
