@@ -41,6 +41,9 @@ export const AGASSIZ_FIELDS: FarmField[] = [
   },
 ];
 
+/** The twin's fields for a farm; only Agassiz has one so far. Another farm = another data module here. */
+export const twinFields = (farmId: string | null) => (farmId === "agassiz" ? AGASSIZ_FIELDS : undefined);
+
 /**
  * Fields that follow the chosen rotation, with a year offset so neighbouring fields are at different stages
  * (as on a real farm). The others are perennial (grass, berries) and keep their crop.

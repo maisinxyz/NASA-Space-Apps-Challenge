@@ -1,0 +1,117 @@
+"use client";
+// Right inspector content: the click-to-inspect field card, and the Explore / Simulate / Evidence mode bodies.
+// Compare's body is ComparePanel. Every value carries unit + basis + source (components/ui/Provenance).
+import type { CropLook, Farm, FarmField } from "@/components/globe/types";
+import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
+import { BasisChip, SourceFooter, Value } from "@/components/ui/Provenance";
+import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
+import { useAppStore } from "@/lib/store";
+import { ROTATING_FIELDS, SIM_AREA_LABEL } from "@/lib/twin/agassiz";
+import { bareMonths, rotationById, ROTATIONS } from "@/lib/twin/rotations";
+import { SCENARIOS } from "@/lib/twin/scenario";
+
+import { CoverCalendar, CropSwatch } from "./shared";
+
+/** OSM base timestamp of the field-outline download (lib/twin/agassiz.ts). */
+const OSM_DATE = "2026-11-13";
+
+export const EVIDENCE_NOTE = "Decision support, not agronomic advice: talk to a local agronomist or adviser before changing a rotation.";
+
+export function FieldCard({ field, cropA, cropB }: { field: FarmField; cropA: CropLook; cropB?: CropLook }) {
+  const compareA = useAppStore((s) => s.compareA);
+  const rotation = rotationById(compareA)!;
+  const phase = ROTATING_FIELDS[field.id];
+  // Rows start at this field's own stage: fields in rotation are staggered by `phase` years.
+  const rows =
+    phase === undefined
+      ? []
+      : rotation.years.map((_, k) => ({ label: `Year ${k + 1}`, months: rotation.years[(k + phase) % rotation.years.length] }));
+  const bare = bareMonths({ years: rows.map((r) => r.months) });
+
+  return (
+    <div className="grid gap-3 text-sm">
+      <dl className="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1.5">
+        <dt className="text-ink-muted">Area</dt>
+        <dd>
+          <Value value={field.areaHa} meta={{ basis: "derived", unit: "ha", sourceId: "osm", observedAt: OSM_DATE, spatialResolution: "volunteer-mapped outline", qualityNote: "Flat-map estimate of the mapped outline; the managed field may differ." }} />
+        </dd>
+        <dt className="text-ink-muted">{cropB ? "Crop shown, A" : "Crop shown"}</dt>
+        <dd className="flex flex-wrap items-center gap-1.5">
+          <CropSwatch crop={cropA} /> <BasisChip basis="assumed" />
+        </dd>
+        {cropB && (
+          <>
+            <dt className="text-ink-muted">Crop shown, B</dt>
+            <dd className="flex flex-wrap items-center gap-1.5">
+              <CropSwatch crop={cropB} /> <BasisChip basis="assumed" />
+            </dd>
+          </>
+        )}
+        {rows.length > 0 && (
+          <>
+            <dt className="text-ink-muted">Bare soil</dt>
+            <dd>
+              <Value value={`${bare.total} of ${rows.length * 12}`} meta={{ basis: "derived", unit: "months", sourceId: "rotationCalendar", qualityNote: "Counted from typical season windows, not observed on this field." }} />
+            </dd>
+          </>
+        )}
+      </dl>
+      {rows.length ? (
+        <div className="grid gap-1">
+          <p className="text-xs text-ink-muted">
+            Rotation A on this field: <span className="text-ink">{rotation.isExisting ? "Existing rotation" : rotation.name}</span>
+          </p>
+          <CoverCalendar rows={rows} />
+        </div>
+      ) : (
+        <p className="text-xs text-ink-muted">Perennial: this field keeps the same cover every year and does not follow the rotation.</p>
+      )}
+      <SourceFooter ids={["osm", "illustrativeCrops", ...(rows.length ? (["rotationCalendar"] as const) : [])]} />
+    </div>
+  );
+}
+
+export function ExploreBody({ farm, fieldCount }: { farm: Farm; fieldCount: number }) {
+  return (
+    <div className="grid gap-2 text-sm">
+      <p>Click a field on the map, or pick one under Fields &amp; layers, to inspect it.</p>
+      <dl className="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-1 text-xs">
+        <dt className="text-ink-muted">Farm</dt>
+        <dd>
+          {farm.name}, {farm.owner}
+        </dd>
+        <dt className="text-ink-muted">Fields</dt>
+        <dd>{fieldCount} shown</dd>
+        <dt className="text-ink-muted">Model area</dt>
+        <dd>{SIM_AREA_LABEL}; the thin outline on the map marks where simulation layers apply.</dd>
+      </dl>
+      <p className="text-xs text-ink-muted">Keys: 1–4 modes · H hide panels · R reset · Esc close.</p>
+    </div>
+  );
+}
+
+export function SimulateBody() {
+  return (
+    <div className="grid gap-3 text-sm">
+      <div className="rounded-md border border-dashed border-white/20 p-3 text-center">
+        <p className="font-semibold">Climate scenarios arrive with real NASA data</p>
+        <p className="mt-1 text-xs text-ink-muted">Storms, heat, drought and frost will be replayed here once they are built from NASA records for this farm. Nothing is simulated yet.</p>
+      </div>
+      <p className="text-xs text-ink-muted">{SCENARIOS.length ? `${SCENARIOS.length} scenarios` : "No scenarios yet."} Controls appear when the first one exists.</p>
+    </div>
+  );
+}
+
+export function EvidenceBody() {
+  return (
+    <div className="grid gap-3">
+      <p role="note" className="sticky top-0 z-10 rounded-md border border-amber-300/50 bg-[#2a2210] px-2 py-1.5 text-xs">
+        {EVIDENCE_NOTE}
+      </p>
+      {ROTATIONS.map((r) => (
+        <EvidenceCardView key={r.id} card={r.card} name={r.isExisting ? `Existing rotation: ${r.name}` : r.name} />
+      ))}
+      <p className="text-xs text-ink-muted">{SUPPORT_SENTENCE}</p>
+    </div>
+  );
+}

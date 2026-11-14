@@ -16,8 +16,15 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   water: "Water conservation",
   erosion: "Erosion control",
   soilCover: "Soil cover",
-  income: "Income suitability",
+  // Proxy only: FieldTwin gives no profit figures. Wording not validated with farmers (docs/progress/s1-phase1-3-product.md).
+  income: "Economic fit (proxy)",
 };
+
+/** Default priority weight (middle of 0–5): equal weights, so no priority is favoured until the user says so. */
+export const DEFAULT_WEIGHT = 3;
+export const DEFAULT_WEIGHTS: Weights = { water: DEFAULT_WEIGHT, erosion: DEFAULT_WEIGHT, soilCover: DEFAULT_WEIGHT, income: DEFAULT_WEIGHT };
+
+export const PRIORITIES_NOTE = "Priorities change how options are ranked; they do not change scenario results.";
 
 export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
@@ -124,6 +131,34 @@ export function rankRotations<T extends Pick<TwinRotation, "scores">>(rotations:
     .map((r, i) => ({ r, i, total: PRIORITIES.reduce((s, p) => s + w[p] * r.scores[p], 0) }))
     .sort((a, b) => b.total - a.total || a.i - b.i)
     .map(({ r, total }) => ({ rotation: r, total }));
+}
+
+/** A score in words against the existing rotation's score for the same priority. */
+export function vsBaseline(score: number, baseline: number): "lower" | "similar" | "higher" {
+  return score > baseline ? "higher" : score < baseline ? "lower" : "similar";
+}
+
+type Ranked = { rotation: Pick<TwinRotation, "name" | "isExisting" | "scores">; total: number }[];
+
+const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+/** One sentence saying why the first-ranked rotation is first (compared with the second), from the weights alone. */
+export function explainRanking(ranked: Ranked, w: Weights): string {
+  const [top, next] = ranked;
+  if (!top) return "";
+  if (!next) return `${top.rotation.name} is the only option.`;
+  if (PRIORITIES.every((p) => w[p] === 0)) return "All priorities are set to 0, so the rotations are not ranked and keep their original order.";
+  if (top.total === next.total) {
+    const why = top.rotation.isExisting ? "it is the existing rotation" : "it comes first in the list";
+    return `${top.rotation.name} and ${next.rotation.name} tie on your priorities; ${top.rotation.name} is listed first only because ${why}.`;
+  }
+  // The priorities where the top option beats the runner-up, biggest weighted gain first (at most two named).
+  const gains = PRIORITIES.map((p) => ({ p, g: w[p] * (top.rotation.scores[p] - next.rotation.scores[p]) }))
+    .filter((x) => x.g > 0)
+    .sort((a, b) => b.g - a.g)
+    .slice(0, 2)
+    .map((x) => PRIORITY_LABELS[x.p].toLowerCase());
+  return `${top.rotation.name} is first because, with the weights you set, it scores higher than ${next.rotation.name} on ${list(gains)}.`;
 }
 
 /** Crop look per field for a rotation at (year, month). Rotating fields are offset by their phase; others keep their crop. */

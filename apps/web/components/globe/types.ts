@@ -84,7 +84,19 @@ export type FarmTwinProps = {
   overlayMask?: [number, number][][];
   /** Terrain vertical exaggeration in farm view, 1 = true scale. */
   exaggeration?: number;
+  /**
+   * A/B comparison: when set, the screen is split at `divider` (0..1 of canvas width, left = A). The left half
+   * shows cropByField/overlays (A); the right half shows `right` (B). One shared camera. Null/undefined = no split.
+   */
+  compare?: { right: { cropByField?: Record<string, CropLook>; overlays?: GroundOverlay[] }; divider: number } | null;
+  /** Illustrative look filter over the whole farm view (captioned "illustrative styling" by the UI; not sensor data). */
+  look?: LookFilter;
 };
+
+export type LookFilter = "none" | "thermal" | "vegetation" | "night";
+
+/** Camera state for share links (degrees, metres). */
+export type CameraState = { lon: number; lat: number; height: number; heading: number; pitch: number };
 
 export type GlobeProps = FarmTwinProps & {
   farms: Farm[];
@@ -97,9 +109,15 @@ export type GlobeProps = FarmTwinProps & {
   onSelect(id: string | null): void;
   onReady(info: { tier: TileTier }): void;
   onError(e: Error): void;
+  /** Tile streaming progress in farm view: tiles still loading (0 = settled). Throttled (~4/s). */
+  onLoadProgress?(info: { pending: number }): void;
 };
 
 export type GlobeHandle = {
   /** Re-centre: whole Earth in "globe" view, the farm overview in "farm" view. */
   resetView(): void;
+  /** Current camera (farm view), for share links. Null before the viewer is ready. */
+  getCamera(): CameraState | null;
+  /** Move the camera (still clamped to the farm limits). */
+  setCamera(c: CameraState): void;
 };

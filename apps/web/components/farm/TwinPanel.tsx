@@ -1,230 +1,246 @@
 "use client";
-// Farm twin overlay for "twin" farms in farm view: top bar (back, reset, modes) and a right-docked panel per mode.
-// Rendering lives in components/globe/Globe.tsx; this file only writes the store (lib/store.ts).
-import { type KeyboardEvent, useId } from "react";
+// Farm twin workspace HUD over the full-bleed 3D farm: honesty notes (top centre), "Fields & layers" (left, ≤300 px),
+// inspector (right, ≤360 px), Compare tray + split handle, and the bottom command dock. Keys: 1–4 modes, H hide
+// panels, Esc close the inspector (R reset lives in TourController). Rendering is Globe.tsx; this file writes the store.
+import { useEffect, useState } from "react";
 
-import type { Farm, FarmSurface } from "@/components/globe/types";
-import { EvidenceCardView } from "@/components/lab/EvidenceCardView";
-import { BasisChip } from "@/components/ui/BasisChip";
-import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
-import { type TwinMode, useAppStore } from "@/lib/store";
-import { AGASSIZ_FIELDS, FIELDS_ATTRIBUTION, FIELDS_NOTES, SIM_AREA_LABEL } from "@/lib/twin/agassiz";
-import { ROTATIONS } from "@/lib/twin/rotations";
-import { SCENARIOS } from "@/lib/twin/scenario";
+import type { CameraState, CropLook, Farm, FarmField, FarmSurface, LookFilter } from "@/components/globe/types";
+import { BasisChip } from "@/components/ui/Provenance";
+import { hasModifier, isTextEntry } from "@/lib/keys";
+import { TWIN_MODES, type TwinMode, useAppStore } from "@/lib/store";
+import { encodeShare, LOOKS } from "@/lib/share";
+import { FIELDS_ATTRIBUTION, FIELDS_NOTES } from "@/lib/twin/agassiz";
 
 import { ComparePanel } from "./ComparePanel";
-import { CropSwatch } from "./shared";
+import { CompareTray, DividerHandle } from "./CompareTray";
+import { EvidenceBody, ExploreBody, FieldCard, SimulateBody } from "./Inspector";
+import { CropSwatch, hudBtn, hudBtnOn, hudSelect, Kbd, Panel } from "./shared";
 
-const MODES: { id: TwinMode; label: string }[] = [
-  { id: "explore", label: "Explore" },
-  { id: "simulate", label: "Simulate" },
-  { id: "compare", label: "Compare" },
-  { id: "evidence", label: "Evidence" },
-];
-const WIDTH: Record<TwinMode, string> = { explore: "w-[22rem]", simulate: "w-[22rem]", compare: "w-[44rem]", evidence: "w-[30rem]" };
-const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
+const MODE_LABEL: Record<TwinMode, string> = { explore: "Explore", simulate: "Simulate", compare: "Compare", evidence: "Evidence" };
 const SURFACES: { id: FarmSurface; label: string }[] = [
-  { id: "google", label: "Photoreal 3D (Google)" },
+  { id: "google", label: "Photoreal 3D" },
   { id: "terrain", label: "Terrain only" },
 ];
+const LOOK_LABEL: Record<LookFilter, string> = { none: "None (true colour)", thermal: "Thermal style", vegetation: "Vegetation style", night: "Night style" };
 
-/** The twin's fields for a farm; only Agassiz has one so far. */
-export const twinFields = (farmId: string | null) => (farmId === "agassiz" ? AGASSIZ_FIELDS : undefined);
+/** Compare and Evidence need the width: the left panel folds away there (the user can open it again). */
+export const setMode = (m: TwinMode) => useAppStore.setState({ twinMode: m, leftOpen: m === "explore" || m === "simulate" });
 
-export function TwinPanel({ farm, onBack, onReset }: { farm: Farm; onBack(): void; onReset(): void }) {
-  const mode = useAppStore((s) => s.twinMode);
-  const base = useId();
+type Props = {
+  farm: Farm;
+  fields: FarmField[];
+  /** Crop shown on each side (A = left/whole map, B = right half in Compare). */
+  cropA: Record<string, CropLook> | undefined;
+  cropB: Record<string, CropLook> | undefined;
+  pending: number;
+  onBack(): void;
+  onReset(): void;
+  getCamera(): CameraState | null;
+};
 
-  function onKeyDown(e: KeyboardEvent) {
-    const i = MODES.findIndex((m) => m.id === mode);
-    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: MODES.length - 1 }[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    const id = MODES[(next + MODES.length) % MODES.length].id;
-    useAppStore.setState({ twinMode: id });
-    document.getElementById(`${base}-${id}`)?.focus();
+export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset, getCamera }: Props) {
+  const { twinMode: mode, twinFieldId, panelsHidden, leftOpen, rightOpen } = useAppStore();
+  const [msg, setMsg] = useState("");
+  const field = fields.find((f) => f.id === twinFieldId);
+  const compare = mode === "compare";
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (hasModifier(e) || isTextEntry(e.target) || document.querySelector("dialog[open]")) return;
+      const s = useAppStore.getState();
+      const n = Number(e.key);
+      if (n >= 1 && n <= TWIN_MODES.length) setMode(TWIN_MODES[n - 1]);
+      else if (e.key === "h" || e.key === "H") useAppStore.setState({ panelsHidden: !s.panelsHidden });
+      else if (e.key === "Escape") useAppStore.setState(s.twinFieldId ? { twinFieldId: null } : { rightOpen: false });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!msg) return;
+    const t = setTimeout(() => setMsg(""), 4000);
+    return () => clearTimeout(t);
+  }, [msg]);
+
+  async function share() {
+    const s = useAppStore.getState();
+    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera() });
+    history.replaceState(null, "", hash);
+    try {
+      await navigator.clipboard.writeText(location.href);
+      setMsg("Link copied");
+    } catch {
+      setMsg("Link is in the address bar");
+    }
   }
 
+  const show = !panelsHidden;
+  const inspectorTitle = field ? field.name : MODE_LABEL[mode];
   return (
     <>
-      <div className="absolute top-4 left-4 grid max-w-[calc(100%-47rem)] gap-2 rounded-lg border border-line bg-surface/90 p-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <button type="button" className={btn} onClick={onBack}>
-            ← Back to globe
-          </button>
-          <button type="button" className={btn} onClick={onReset}>
-            Reset view
-          </button>
-          <h1 className="font-display text-lg">{farm.name}</h1>
-        </div>
-        <div role="tablist" aria-label="Twin mode" onKeyDown={onKeyDown} className="flex gap-1">
-          {MODES.map((m) => {
-            const on = m.id === mode;
-            return (
-              <button
-                key={m.id}
-                id={`${base}-${m.id}`}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                aria-controls={`${base}-panel`}
-                tabIndex={on ? 0 : -1}
-                onClick={() => useAppStore.setState({ twinMode: m.id })}
-                className={`rounded-md px-3 py-1 text-sm ${on ? "bg-accent font-semibold text-accent-ink" : "text-ink-muted hover:bg-surface-2 hover:text-ink"}`}
-              >
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
+      {compare && <DividerHandle />}
+
+      {/* Always visible, even with panels hidden: what the fields are, and the OSM credit. */}
+      <div className="!pointer-events-none absolute top-3 left-1/2 flex max-w-[calc(100%-44rem)] -translate-x-1/2 flex-wrap justify-center gap-1.5 text-[0.7rem]">
+        {FIELDS_NOTES.map((n) => (
+          <span key={n} className="glass !rounded-md border-dashed px-2 py-0.5">
+            {n}
+          </span>
+        ))}
+        <span className="glass !rounded-md px-2 py-0.5 text-ink-muted">{FIELDS_ATTRIBUTION}</span>
+        {pending > 0 && (
+          <span role="status" className="glass basis-full !rounded-full px-3 py-0.5 text-center text-xs sm:basis-auto">
+            Loading 3D detail…
+          </span>
+        )}
       </div>
 
-      <section
-        id={`${base}-panel`}
-        role="tabpanel"
-        aria-labelledby={`${base}-${mode}`}
-        className={`absolute top-4 right-4 flex max-h-[calc(100%-4.5rem)] max-w-[calc(100%-2rem)] flex-col rounded-lg border border-line bg-surface/95 shadow-lg ${WIDTH[mode]}`}
-      >
-        <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2 text-xs">
-          {FIELDS_NOTES.map((n) => (
-            <span key={n} className="rounded border border-dashed border-ink-muted px-1.5 py-px">
-              {n}
-            </span>
+      {show && (
+        <Panel title="Fields & layers" open={leftOpen} onToggle={() => useAppStore.setState({ leftOpen: !leftOpen })} className="absolute top-3 left-3 max-h-[calc(100%-8rem)] w-[18.75rem]">
+          <LeftBody fields={fields} crops={cropA} />
+        </Panel>
+      )}
+
+      {show && (
+        <Panel
+          title={
+            field ? (
+              <span className="flex items-center gap-2">
+                {inspectorTitle}
+                <span className="text-xs font-normal text-ink-muted">field</span>
+              </span>
+            ) : (
+              inspectorTitle
+            )
+          }
+          open={rightOpen}
+          onToggle={() => useAppStore.setState({ rightOpen: !rightOpen })}
+          className="absolute top-3 right-3 max-h-[calc(100%-10rem)] w-[22.5rem]"
+        >
+          <div id="twin-inspector" tabIndex={-1} className="outline-none">
+            {field ? (
+              <div className="grid gap-2">
+                <button type="button" className={`${hudBtn} w-fit !min-h-6 text-xs`} onClick={() => useAppStore.setState({ twinFieldId: null })}>
+                  ← Back to {MODE_LABEL[mode]} <Kbd>Esc</Kbd>
+                </button>
+                <FieldCard field={field} cropA={cropA?.[field.id] ?? field.crop} cropB={compare ? (cropB?.[field.id] ?? field.crop) : undefined} />
+              </div>
+            ) : mode === "explore" ? (
+              <ExploreBody farm={farm} fieldCount={fields.length} />
+            ) : mode === "simulate" ? (
+              <SimulateBody />
+            ) : compare ? (
+              <ComparePanel />
+            ) : (
+              <EvidenceBody />
+            )}
+          </div>
+        </Panel>
+      )}
+
+      {show && compare && <CompareTray className={`absolute bottom-[6.5rem] left-3 mx-auto max-w-[42rem] ${rightOpen ? "right-[24.75rem]" : "right-3"}`} />}
+
+      <nav id="twin-dock" tabIndex={-1} aria-label="Twin commands" className="glass absolute bottom-9 left-1/2 flex -translate-x-1/2 items-center gap-1 p-1.5 whitespace-nowrap">
+        <div role="group" aria-label="Mode" className="flex gap-1">
+          {TWIN_MODES.map((m, i) => (
+            <button key={m} type="button" aria-pressed={mode === m} aria-keyshortcuts={String(i + 1)} onClick={() => setMode(m)} className={mode === m ? hudBtnOn : hudBtn}>
+              {MODE_LABEL[m]} <Kbd>{i + 1}</Kbd>
+            </button>
           ))}
-        </header>
-        <div className="overflow-y-auto p-4">
-          {mode === "explore" && <Explore />}
-          {mode === "simulate" && <Simulate />}
-          {mode === "compare" && <ComparePanel />}
-          {mode === "evidence" && <Evidence />}
         </div>
-        <footer className="border-t border-line px-4 py-1.5 text-[0.7rem] text-ink-muted">{FIELDS_ATTRIBUTION}</footer>
-      </section>
+        <span className="mx-1 h-5 w-px bg-white/15" aria-hidden />
+        <button type="button" className={hudBtn} aria-keyshortcuts="R" onClick={onReset} title="Reset view (R resets everything)">
+          Reset view
+        </button>
+        <button type="button" className={hudBtn} onClick={onBack}>
+          Back to globe
+        </button>
+        <button type="button" className={hudBtn} onClick={share}>
+          Share link
+        </button>
+        <button type="button" className={hudBtn} aria-pressed={panelsHidden} aria-keyshortcuts="H" onClick={() => useAppStore.setState({ panelsHidden: !panelsHidden })}>
+          {panelsHidden ? "Show panels" : "Hide panels"} <Kbd>H</Kbd>
+        </button>
+        <span aria-live="polite" className={msg ? "px-1.5 text-xs text-accent" : "sr-only"}>
+          {msg}
+        </span>
+      </nav>
     </>
   );
 }
 
-function Explore() {
-  const exaggeration = useAppStore((s) => s.exaggeration);
-  const surface = useAppStore((s) => s.twinSurface);
-  const fieldId = useAppStore((s) => s.twinFieldId);
-  const crops = useAppStore((s) => s.twinRotationId);
-  const field = AGASSIZ_FIELDS.find((f) => f.id === fieldId);
-
+function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string, CropLook> | undefined }) {
+  const { twinFieldId: fieldId, twinSurface: surface, exaggeration, look } = useAppStore();
+  const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
   return (
-    <div className="grid gap-4">
-      <section aria-labelledby="layers-h" className="grid gap-2">
-        <h2 id="layers-h" className="text-sm font-semibold">
-          Layers
-        </h2>
-        <p className="text-sm">
-          <span className="font-semibold">{SIM_AREA_LABEL}</span>
-          <span className="block text-xs text-ink-muted">The thin outline on the map marks where simulation layers apply; they only cover this area.</span>
-        </p>
-        <fieldset className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <legend className="sr-only">Map surface</legend>
-          {SURFACES.map((s) => (
-            <label key={s.id} className="flex items-center gap-1.5">
-              <input type="radio" name="twin-surface" checked={surface === s.id} onChange={() => useAppStore.setState({ twinSurface: s.id })} className="accent-accent" />
-              {s.label}
-            </label>
-          ))}
-        </fieldset>
-        <label className="grid grid-cols-[auto_1fr_2.5rem] items-center gap-2 text-sm">
-          Vertical exaggeration (1× = true scale)
-          <input type="range" min={1} max={3} step={0.5} value={exaggeration} onChange={(e) => useAppStore.setState({ exaggeration: Number(e.target.value) })} className="accent-accent" />
-          <output className="text-right tabular-nums">{exaggeration}×</output>
-        </label>
-      </section>
-
-      <section aria-labelledby="field-h" className="grid gap-2">
-        <h2 id="field-h" className="text-sm font-semibold">
-          Selected field
-        </h2>
-        {field ? (
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md border border-line bg-surface-2/60 p-3 text-sm">
-            <dt className="text-ink-muted">Name</dt>
-            <dd>{field.name}</dd>
-            <dt className="text-ink-muted">Area</dt>
-            <dd>
-              {field.areaHa.toLocaleString("en", { maximumFractionDigits: 1 })} ha <BasisChip basis="derived" />
-            </dd>
-            <dt className="text-ink-muted">Crop now</dt>
-            <dd>
-              <CropSwatch crop={field.crop} /> <BasisChip basis="assumed" />
-            </dd>
-          </dl>
-        ) : (
-          <p className="text-sm text-ink-muted">Click a field on the map or pick one below.</p>
-        )}
-        <ul className="grid gap-1">
-          {AGASSIZ_FIELDS.map((f) => (
+    <div className="grid gap-4 text-sm">
+      <section aria-labelledby="fl-fields">
+        <h3 id="fl-fields" className={h}>
+          Fields
+        </h3>
+        <ul className="grid gap-0.5">
+          {fields.map((f) => (
             <li key={f.id}>
               <button
                 type="button"
                 aria-pressed={f.id === fieldId}
-                onClick={() => useAppStore.setState({ twinFieldId: f.id === fieldId ? null : f.id })}
-                className={`flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left text-sm ${f.id === fieldId ? "bg-accent/20 ring-1 ring-accent" : "hover:bg-surface-2"}`}
+                onClick={() => useAppStore.setState({ twinFieldId: f.id === fieldId ? null : f.id, rightOpen: true })}
+                className={`flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left ${f.id === fieldId ? "bg-accent/20 ring-1 ring-accent" : "hover:bg-white/10"}`}
               >
-                <span>{f.name}</span>
+                <span className="font-medium">{f.name}</span>
                 <span className="text-xs text-ink-muted">
-                  <CropSwatch crop={f.crop} /> · {Math.round(f.areaHa)} ha
+                  <CropSwatch crop={crops?.[f.id] ?? f.crop} /> · {f.areaHa.toLocaleString("en-US", { maximumFractionDigits: 1 })} ha
                 </span>
               </button>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-ink-muted">Area is computed from the mapped outline. Crops are illustrative{crops ? "; the map currently shows a rotation (see Compare)" : ""}.</p>
+        <p className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-ink-muted">
+          Area <BasisChip basis="derived" /> from the mapped outline; crops <BasisChip basis="assumed" /> illustrative.
+        </p>
       </section>
-    </div>
-  );
-}
 
-const off = "rounded border border-line bg-surface-2 px-2 py-0.5 text-sm opacity-50";
-
-function Simulate() {
-  return (
-    <div className="grid gap-4">
-      <div className="rounded-md border border-dashed border-line p-4 text-center">
-        <p className="font-semibold">Climate scenarios arrive with real NASA data</p>
-        <p className="mt-1 text-sm text-ink-muted">Storms, heat, drought and frost will be replayed here once they are built from NASA records for this farm. Nothing is simulated yet.</p>
-      </div>
-      <fieldset disabled className="grid gap-2" aria-describedby="sim-off">
-        <legend className="text-sm font-semibold">Scenario</legend>
-        <select className={off} aria-label="Scenario">
-          <option>{SCENARIOS.length ? "Choose a scenario" : "No scenarios yet"}</option>
-        </select>
-        <label className="grid gap-1 text-sm">
-          Rotation
-          <select className={off}>
-            {ROTATIONS.map((r) => (
-              <option key={r.id}>{r.name}</option>
+      <section aria-labelledby="fl-map" className="grid gap-2">
+        <h3 id="fl-map" className={h}>
+          Map
+        </h3>
+        <fieldset className="flex gap-1">
+          <legend className="sr-only">Map surface</legend>
+          {SURFACES.map((s) => (
+            <label key={s.id} className={`${surface === s.id ? hudBtnOn : hudBtn} cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent`}>
+              <input type="radio" name="twin-surface" className="sr-only" checked={surface === s.id} onChange={() => useAppStore.setState({ twinSurface: s.id })} />
+              {s.label}
+            </label>
+          ))}
+        </fieldset>
+        <label className="grid grid-cols-[1fr_6rem_2rem] items-center gap-2 text-xs">
+          Height exaggeration
+          <input type="range" min={1} max={3} step={0.5} value={exaggeration} onChange={(e) => useAppStore.setState({ exaggeration: Number(e.target.value) })} className="accent-accent" />
+          <output className="text-right tabular-nums">{exaggeration}×</output>
+        </label>
+        <p className="-mt-1 text-[0.7rem] text-ink-muted">1× = true scale.</p>
+        <label className="grid gap-1 text-xs">
+          Look
+          <select className={hudSelect} value={look} onChange={(e) => useAppStore.setState({ look: e.target.value as LookFilter })} aria-describedby="look-note">
+            {LOOKS.map((l) => (
+              <option key={l} value={l}>
+                {LOOK_LABEL[l]}
+              </option>
             ))}
           </select>
+          <span id="look-note" className="text-[0.7rem] text-ink-muted">
+            Illustrative styling, not sensor data.
+          </span>
         </label>
-        <div className="flex items-center gap-2">
-          <button type="button" className={off}>
-            Play
-          </button>
-          <input type="range" aria-label="Scenario time" className="flex-1 opacity-50" />
-        </div>
-      </fieldset>
-      <p id="sim-off" className="text-xs text-ink-muted">
-        Controls are disabled until a scenario exists.
-      </p>
-    </div>
-  );
-}
+      </section>
 
-function Evidence() {
-  return (
-    <div className="grid gap-3">
-      <p role="note" className="rounded border border-line bg-surface-2 px-2 py-1 text-xs">
-        {SUPPORT_SENTENCE}
-      </p>
-      {ROTATIONS.map((r) => (
-        <EvidenceCardView key={r.id} card={r.card} name={`${r.name}${r.isExisting ? " (existing)" : ""}`} />
-      ))}
+      <fieldset disabled aria-describedby="nasa-note" className="grid gap-1 rounded-md border border-dashed border-white/15 p-2 opacity-70">
+        <legend className={`${h} px-1`}>NASA layers</legend>
+        <p id="nasa-note" className="text-xs">
+          NASA regional context — coming soon
+        </p>
+      </fieldset>
     </div>
   );
 }

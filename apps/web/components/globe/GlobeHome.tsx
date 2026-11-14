@@ -6,24 +6,29 @@ import { useShallow } from "zustand/react/shallow";
 import dynamic from "next/dynamic";
 import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
-import { TwinPanel, twinFields } from "@/components/farm/TwinPanel";
+import { TwinPanel } from "@/components/farm/TwinPanel";
 import { FARMS, farmById } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
-import { useAppStore } from "@/lib/store";
-import { AGASSIZ_BUILDINGS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS } from "@/lib/twin/agassiz";
+import { decodeShare } from "@/lib/share";
+import { useAppStore, useChrome } from "@/lib/store";
+import { AGASSIZ_BUILDINGS, AGASSIZ_SIM_BBOX, ROTATING_FIELDS, twinFields } from "@/lib/twin/agassiz";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 
 import { EXPLORE_NOTE, FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
-import type { GlobeHandle, TileTier } from "./types";
+import type { CameraState, FarmField, GlobeHandle, TileTier } from "./types";
 
 const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Globe), {
   ssr: false,
   loading: () => <p className="grid h-full place-items-center text-sm text-ink-muted">Loading the 3D globe…</p>,
 });
 
-/** The viewport minus the sticky header and banner. */
+/** The viewport minus the sticky header and banner; in the twin the header is a 2.5rem slim bar (Header.tsx). */
 const GLOBE_H = "h-[calc(100dvh-5.5rem)] min-h-[34rem]";
+const TWIN_H = "h-[calc(100dvh-2.5rem)] min-h-[34rem]";
+/** Share-link camera is applied after the fly-in: ground lookup + 3 s flight (Globe.tsx FLY_SECONDS), with margin. */
+// ponytail: fixed wait; switch to a "landed" callback if the contract ever gets one.
+const SHARE_CAMERA_DELAY_MS = 4500;
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
 const PITCH = "See how the same storm moves across real farmland under different crop rotations.";
 const dev = process.env.NODE_ENV !== "production";
@@ -56,6 +61,12 @@ class GlobeBoundary extends Component<{ onError(e: Error): void; children: React
   }
 }
 
+/** Crop per field for a rotation at (year, month); undefined without fields or a known rotation. */
+function season(fields: FarmField[] | undefined, id: string, year: number, month: number) {
+  const r = rotationById(id);
+  return fields && r ? cropsForSeason(fields, ROTATING_FIELDS, r, year, month) : undefined;
+}
+
 const select = (id: string | null) => useAppStore.setState(id ? { farmId: id } : { farmId: null, globeView: "globe" });
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
@@ -68,19 +79,55 @@ export function GlobeHome() {
   const [load, setLoad] = useState<"loading" | "ready" | "error">("loading");
   const [tier, setTier] = useState<TileTier | null>(null);
   const [hint, setHint] = useState(true);
+  const [pending, setPending] = useState(0);
+  const sharedCamera = useRef<CameraState | null>(null);
   const farm = farmById(farmId);
   const showGlobe = wide && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
   // Farm twin (only "twin" farms with field data): fields + the season of the rotation chosen in Compare.
   const fields = view === "farm" && farm?.tier === "twin" ? twinFields(farm.id) : undefined;
   const inTwin = inFarm && !!fields;
-  const { twinFieldId, twinRotationId, twinYear, twinMonth, exaggeration, twinSurface } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinRotationId: s.twinRotationId, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface })),
+  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look })),
   );
-  const cropByField = useMemo(() => {
-    const r = rotationById(twinRotationId ?? "");
-    return fields && r ? cropsForSeason(fields, ROTATING_FIELDS, r, twinYear, twinMonth) : undefined;
-  }, [fields, twinRotationId, twinYear, twinMonth]);
+  // Compare paints rotation A (left of the split) and B (right) for the chosen season; other modes show current crops.
+  const comparing = inTwin && twinMode === "compare";
+  const cropA = useMemo(() => (comparing ? season(fields, compareA, twinYear, twinMonth) : undefined), [comparing, fields, compareA, twinYear, twinMonth]);
+  const cropB = useMemo(() => (comparing ? season(fields, compareB, twinYear, twinMonth) : undefined), [comparing, fields, compareB, twinYear, twinMonth]);
+  const compare = useMemo(() => (comparing ? { right: { cropByField: cropB }, divider } : null), [comparing, cropB, divider]);
+
+  // Slim header while the twin workspace is on screen.
+  useEffect(() => {
+    useChrome.setState({ twinFarm: inTwin ? farm.name : null });
+    return () => useChrome.setState({ twinFarm: null });
+  }, [inTwin, farm?.name]);
+
+  // Share link (#farm=…): restore the view once on load; the camera follows after the fly-in.
+  useEffect(() => {
+    const d = decodeShare(window.location.hash);
+    if (!d) return;
+    sharedCamera.current = d.camera ?? null;
+    useAppStore.setState({
+      farmId: d.farm,
+      globeView: "farm",
+      ...(d.mode && { twinMode: d.mode, leftOpen: d.mode === "explore" || d.mode === "simulate" }),
+      ...(d.field && { twinFieldId: d.field }),
+      ...(d.a && { compareA: d.a }),
+      ...(d.b && { compareB: d.b }),
+      ...(d.divider !== undefined && { divider: d.divider }),
+      ...(d.surface && { twinSurface: d.surface }),
+      ...(d.look && { look: d.look }),
+    });
+  }, []);
+  useEffect(() => {
+    const cam = sharedCamera.current;
+    if (!cam || load !== "ready" || !inFarm) return;
+    const t = setTimeout(() => {
+      sharedCamera.current = null;
+      globe.current?.setCamera(cam);
+    }, reducedMotion ? 800 : SHARE_CAMERA_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [load, inFarm, reducedMotion]);
 
   // Global Reset key: TourController resets the store (back to the globe, no farm); re-centre the camera too.
   useEffect(() => {
@@ -131,7 +178,12 @@ export function GlobeHome() {
 
   const hideHint = () => setHint(false);
   return (
-    <div className={`theme-dark relative overflow-hidden ${GLOBE_H} ${SPACE_BG} text-ink`} onPointerDownCapture={hideHint} onWheelCapture={hideHint} onKeyDownCapture={hideHint}>
+    <div className={`theme-dark relative overflow-hidden ${inTwin ? TWIN_H : GLOBE_H} ${SPACE_BG} text-ink`} onPointerDownCapture={hideHint} onWheelCapture={hideHint} onKeyDownCapture={hideHint}>
+      {inTwin && (
+        <a href="#twin-dock" className="sr-only z-50 rounded bg-surface p-2 focus:not-sr-only focus:absolute focus:top-3 focus:left-3">
+          Skip the 3D map
+        </a>
+      )}
       <GlobeBoundary onError={() => setLoad("error")}>
         <Globe
           ref={globe}
@@ -149,7 +201,10 @@ export function GlobeHome() {
           fields={fields}
           selectedFieldId={twinFieldId}
           onSelectField={(id) => useAppStore.setState({ twinFieldId: id })}
-          cropByField={cropByField}
+          cropByField={cropA}
+          compare={compare}
+          look={inFarm ? look : "none"}
+          onLoadProgress={(p) => setPending(p.pending)}
           simBbox={inTwin ? AGASSIZ_SIM_BBOX : undefined}
           exaggeration={inTwin ? exaggeration : 1}
           surface={twinSurface}
@@ -160,7 +215,16 @@ export function GlobeHome() {
       {/* Overlays: the layer lets pointer events through to the globe; each panel takes them back. */}
       <div className="pointer-events-none absolute inset-0 p-4 *:pointer-events-auto">
         {inTwin ? (
-          <TwinPanel farm={farm} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
+          <TwinPanel
+            farm={farm}
+            fields={fields}
+            cropA={cropA}
+            cropB={cropB}
+            pending={pending}
+            onBack={() => useAppStore.setState({ globeView: "globe" })}
+            onReset={() => globe.current?.resetView()}
+            getCamera={() => globe.current?.getCamera() ?? null}
+          />
         ) : inFarm ? (
           <div className="absolute top-4 left-4 flex max-w-[calc(100%-22rem)] flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface/90 p-3">
             <button type="button" className={btn} onClick={() => useAppStore.setState({ globeView: "globe" })}>
@@ -184,7 +248,7 @@ export function GlobeHome() {
         {cardOpen && <FarmCard farm={farm} onClose={() => select(null)} onOpen={() => useAppStore.setState({ globeView: "farm" })} className="absolute bottom-10 left-4 w-80 max-w-[calc(100%-22rem)]" />}
 
         {dev && tier && (
-          <p data-dev-only className="absolute right-4 bottom-10 rounded bg-black/70 px-2 py-0.5 font-mono text-xs text-white">
+          <p data-dev-only className="!pointer-events-none absolute right-3 bottom-3 rounded bg-black/70 px-2 py-0.5 font-mono text-xs text-white">
             tiles: tier {tier}
           </p>
         )}

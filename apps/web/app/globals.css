@@ -97,6 +97,21 @@ body {
   }
 }
 
+/* Twin workspace HUD: dark glass panels floating over the full-bleed 3D farm. Dark enough behind text for
+   contrast over bright imagery; one radius and border for every panel. */
+.glass {
+  background: rgb(14 16 20 / 0.82);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+/* The twin has its own slim header line with the support sentence; the full-width banner would cost map height. */
+[data-twin] [data-support-banner] {
+  display: none;
+}
+
 /* Presenter mode (header toggle): larger type for a projector; dev-only markers hidden. The header
    keeps a visible "mock data" note whenever the data is mock, so honesty never depends on dev badges. */
 [data-presenter] {

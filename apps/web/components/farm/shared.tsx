@@ -1,7 +1,8 @@
 "use client";
+import { type ReactNode, useId } from "react";
+
 import type { CropLook } from "@/components/globe/types";
-import { useAppStore } from "@/lib/store";
-import { CROP_LABELS, MONTHS, rotationById } from "@/lib/twin/rotations";
+import { CROP_LABELS, MONTHS } from "@/lib/twin/rotations";
 
 /** UI swatch colours for the crop legend and cover calendars (the 3D look is drawn by Globe.tsx). */
 export const CROP_COLOR: Record<CropLook, string> = {
@@ -17,50 +18,82 @@ export const CROP_COLOR: Record<CropLook, string> = {
 export function CropSwatch({ crop }: { crop: CropLook }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span aria-hidden className="size-3 rounded-sm" style={{ background: CROP_COLOR[crop] }} />
+      <span aria-hidden className="size-3 rounded-sm ring-1 ring-white/20" style={{ background: CROP_COLOR[crop] }} />
       {CROP_LABELS[crop]}
     </span>
   );
 }
 
-const sel = "rounded border border-line bg-surface-2 px-2 py-0.5 text-sm";
+/** HUD button: ≥24 px target, visible focus ring from globals.css. */
+export const hudBtn = "inline-flex min-h-7 items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-2.5 text-sm hover:bg-white/15 disabled:opacity-50";
+export const hudBtnOn = "inline-flex min-h-7 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-sm font-semibold text-accent-ink";
+export const hudSelect = "min-h-7 rounded-md border border-white/15 bg-[#1b1e24] px-2 text-sm";
 
-/** Which rotation year and month the fields show. Only meaningful once a rotation is shown on the fields. */
-export function SeasonPicker() {
-  const rotation = rotationById(useAppStore((s) => s.twinRotationId) ?? "");
-  const year = useAppStore((s) => s.twinYear);
-  const month = useAppStore((s) => s.twinMonth);
-  if (!rotation) return <p className="text-sm text-ink-muted">Choose “Show on fields” to see a rotation’s crops on the farm.</p>;
-  const years = rotation.years.length;
+export function Kbd({ children }: { children: ReactNode }) {
+  return <kbd className="rounded border border-current/40 px-1 font-mono text-[0.65rem] leading-4 opacity-80">{children}</kbd>;
+}
+
+/** Dark glass floating panel with a title bar and a collapse toggle. */
+export function Panel({ title, open, onToggle, className = "", children, footer }: { title: ReactNode; open: boolean; onToggle(): void; className?: string; children: ReactNode; footer?: ReactNode }) {
+  const id = useId();
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span>
-        Fields show <b>{rotation.name}</b> in
-      </span>
-      <label>
-        <span className="sr-only">Rotation year</span>
-        <select className={sel} value={year % years} onChange={(e) => useAppStore.setState({ twinYear: Number(e.target.value) })}>
-          {Array.from({ length: years }, (_, i) => (
-            <option key={i} value={i}>
-              Year {i + 1}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span className="sr-only">Month</span>
-        <select className={sel} value={month} onChange={(e) => useAppStore.setState({ twinMonth: Number(e.target.value) })}>
-          {MONTHS.map((m, i) => (
-            <option key={m} value={i}>
+    <section aria-labelledby={`${id}-h`} className={`glass flex flex-col overflow-hidden ${className}`}>
+      <header className="flex items-center gap-2 border-b border-white/10 py-1 pr-1 pl-3">
+        <h2 id={`${id}-h`} className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {title}
+        </h2>
+        <button type="button" aria-expanded={open} aria-controls={id} onClick={onToggle} className="grid size-7 place-items-center rounded-md text-ink-muted hover:bg-white/10 hover:text-ink">
+          <span aria-hidden>{open ? "−" : "+"}</span>
+          <span className="sr-only">{open ? "Collapse" : "Expand"} panel</span>
+        </button>
+      </header>
+      {open && (
+        <>
+          <div id={id} className="min-h-0 overflow-x-hidden overflow-y-auto p-3">
+            {children}
+          </div>
+          {footer && <footer className="border-t border-white/10 px-3 py-1.5">{footer}</footer>}
+        </>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Month-by-year ground-cover calendar; bare months are outlined. `rows` = one 12-month row per label. Month labels
+ * on top; with `onPickMonth` they are buttons that pick the month shown on the fields.
+ */
+export function CoverCalendar({ rows, month, onPickMonth, activeRow }: { rows: { label: string; months: CropLook[] }[]; month?: number; onPickMonth?(m: number): void; activeRow?: number }) {
+  const grid = "grid grid-cols-[4.5rem_repeat(12,minmax(0,1fr))] items-center gap-px";
+  return (
+    <div className="grid gap-0.5 text-[0.65rem]">
+      <div className={`${grid} text-center text-ink-muted`}>
+        <span />
+        {MONTHS.map((m, i) =>
+          onPickMonth ? (
+            <button key={m} type="button" aria-pressed={i === month} aria-label={`Show ${m} on the fields`} onClick={() => onPickMonth(i)} className={`min-h-6 rounded ${i === month ? "bg-accent font-semibold text-accent-ink" : "hover:bg-white/10"}`}>
               {m}
-            </option>
+            </button>
+          ) : (
+            <span key={m} className={i === month ? "font-semibold text-ink" : ""}>
+              {m}
+            </span>
+          ),
+        )}
+      </div>
+      {rows.map((r, ri) => (
+        <div key={r.label} role="group" className={grid} aria-label={`${r.label}: ${r.months.filter((c) => c === "bare").length} bare months`}>
+          <span className={`truncate ${ri === activeRow ? "font-semibold text-ink" : "text-ink-muted"}`}>{r.label}</span>
+          {r.months.map((c, m) => (
+            <span
+              key={m}
+              title={`${r.label}, ${MONTHS[m]}: ${CROP_LABELS[c]}`}
+              className={`h-3 rounded-[2px] ${c === "bare" ? "outline outline-1 -outline-offset-1 outline-amber-300" : ""} ${m === month && ri === activeRow ? "ring-2 ring-white" : ""}`}
+              style={{ background: CROP_COLOR[c] }}
+            />
           ))}
-        </select>
-      </label>
-      <button type="button" className="text-accent underline underline-offset-2" onClick={() => useAppStore.setState({ twinRotationId: null })}>
-        Show current crops
-      </button>
-      <p className="basis-full text-xs text-ink-muted">Fields in rotation are staggered by a year or two, as on a real farm; grass and berry fields stay as they are.</p>
+        </div>
+      ))}
     </div>
   );
 }

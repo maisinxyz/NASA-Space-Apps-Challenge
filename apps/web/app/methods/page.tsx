@@ -54,6 +54,59 @@ function Section({ id, title, children }: { id: string; title: string; children:
   );
 }
 
+/**
+ * Sources of the farm twin (3D surface, field outlines, weather). Static: these are not in the per-terrain provenance
+ * API. Unknown licence details say "not yet verified" on screen and carry a TODO(verify) here.
+ */
+const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licence: string; attribution: string; url?: string; note: string }[] = [
+  {
+    name: "Google Photorealistic 3D Tiles, streamed through Cesium ion",
+    role: "farm view, photoreal 3D",
+    basis: "measured",
+    // TODO(verify): exact Google Map Tiles API terms and the Cesium ion plan terms for this use; link to both.
+    licence: "Google Map Tiles terms via a personal, non-commercial Cesium ion plan (not yet verified for commercial use). Not redistributed.",
+    attribution: "Google logo and data attribution, shown on the map (bottom left) and never covered",
+    note: "Photogrammetry mesh; capture date and accuracy on farmland not known. Trees and buildings are Google's, not ours.",
+  },
+  {
+    name: "Bing Maps Aerial, streamed through Cesium ion",
+    role: "farm view, terrain-only surface imagery",
+    basis: "measured",
+    // TODO(verify): Bing Maps imagery terms as provided through Cesium ion.
+    licence: "Bing Maps terms via Cesium ion (not yet verified)",
+    attribution: "Shown in the map credits",
+    note: "Capture date not shown; imagery can be several years old.",
+  },
+  {
+    name: "Cesium World Terrain",
+    role: "farm view, ground elevation",
+    basis: "measured",
+    // TODO(verify): Cesium World Terrain licence/attribution text from the Cesium ion asset page.
+    licence: "Cesium ion terms (not yet verified)",
+    attribution: "Shown in the map credits",
+    note: "Global elevation model; much coarser than a field survey. Height exaggeration defaults to 1× (true scale).",
+  },
+  {
+    name: "OpenStreetMap",
+    role: "field outlines",
+    basis: "measured",
+    licence: "Open Database License (ODbL) 1.0",
+    attribution: "© OpenStreetMap contributors",
+    url: "https://www.openstreetmap.org/copyright",
+    note: "Volunteer-mapped landuse outlines, downloaded 2026-11-13; may not match the farm's managed fields. Field names and crops are made up by us.",
+  },
+  {
+    name: "NASA POWER",
+    role: "weather for storm replay (coming)",
+    basis: "measured",
+    // TODO(verify): NASA POWER data-use / citation policy wording.
+    licence: "NASA open data (citation wording not yet verified)",
+    attribution: "NASA Langley Research Center POWER Project",
+    url: "https://power.larc.nasa.gov/docs/services/api/",
+    note: "Checked to return data for the Agassiz location. Reanalysis grid of about 0.5° (roughly 55 km): one value covers the whole farm and much more.",
+  },
+];
+
 type State = { kind: "loading" } | { kind: "error"; error: unknown } | { kind: "ok"; prov: Provenance };
 
 export default function MethodsPage() {
@@ -209,6 +262,33 @@ export default function MethodsPage() {
             )}
           </>
         )}
+      </Section>
+
+      <Section id="twin-sources" title="Farm twin: map, 3D and weather sources">
+        <div className="grid gap-4">
+          {TWIN_SOURCES.map((d) => (
+            <Card key={d.name}>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-ink">{d.name}</h3>
+                <span className="text-xs tracking-wide text-ink-muted uppercase">{d.role}</span>
+                <BasisChip basis={d.basis} />
+              </div>
+              <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
+                <dt className="text-ink-muted">Licence</dt>
+                <dd>{d.licence}</dd>
+                <dt className="text-ink-muted">Attribution</dt>
+                <dd>{d.attribution}</dd>
+                <dt className="text-ink-muted">Source</dt>
+                <dd>
+                  <SourceLink url={d.url} />
+                </dd>
+                <dt className="text-ink-muted">Limitation</dt>
+                <dd>{d.note}</dd>
+              </dl>
+            </Card>
+          ))}
+        </div>
+        <p className="mt-4 text-sm text-ink-muted">Look filters (thermal, vegetation, night) are illustrative styling of the imagery, not sensor data.</p>
       </Section>
 
       <Section id="assumptions" title="Assumptions">
