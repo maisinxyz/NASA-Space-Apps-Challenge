@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createAutoTier, createLightning, rainDensity, rainSpeed, stepDown, sunFor, tierSettings } from "./logic";
+import { cloudProfile, createAutoTier, createLightning, rainDensity, rainFall, rainSpeed, stepDown, sunFor, tierSettings, windDir } from "./logic";
 
 describe("rain mapping", () => {
   it("is 0 without rain, rises monotonically and saturates below 1", () => {
@@ -103,6 +103,38 @@ describe("auto step-down", () => {
     feed(a, "high", 20, 6);
     expect(feed(a, "medium", 60, 1)).toBe("medium");
     expect(a.steps).toBe(0);
+  });
+});
+
+describe("cloud profile", () => {
+  it("is 0 at base and top, 1 mid-slab, with a short base fade and a longer top fade", () => {
+    expect(cloudProfile(0)).toBe(0);
+    expect(cloudProfile(1)).toBe(0);
+    for (const h of [0.2, 0.35, 0.5, 0.55]) expect(cloudProfile(h)).toBeCloseTo(1);
+    expect(cloudProfile(0.1)).toBeCloseTo(0.5);
+    expect(cloudProfile(0.9)).toBeLessThan(cloudProfile(0.1)); // rounded top: thinner near the top than the base
+    for (let h = 0; h <= 1; h += 0.05) expect(cloudProfile(h)).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("wind and rain fall", () => {
+  it("wind is a unit horizontal direction (the cloud drift: west-south-west)", () => {
+    for (const deg of [0, 6, 18]) {
+      const w = windDir((deg * Math.PI) / 180);
+      expect(Math.hypot(...w)).toBeCloseTo(1);
+      expect(w[0]).toBeLessThan(0);
+      expect(w[1]).toBeLessThan(0);
+    }
+  });
+  it("falls straight down without slant and leans downwind by the slant angle", () => {
+    expect(rainFall([1, 0], 0)).toEqual([0, 0, -1]);
+    const w = windDir(0.3);
+    const f = rainFall(w, 0.3);
+    expect(Math.hypot(...f)).toBeCloseTo(1);
+    expect(f[2]).toBeCloseTo(-Math.cos(0.3)); // angle from vertical = slant
+    expect(f[0] * w[0] + f[1] * w[1]).toBeCloseTo(Math.sin(0.3)); // leans along the wind
+    expect(rainFall(w, -1)[2]).toBe(-1); // negative slant clamps to vertical
+    expect(rainFall(w, 10)[2]).toBeLessThan(-0.3); // huge slant stays well below horizontal
   });
 });
 

@@ -1,12 +1,16 @@
 // The weather post-process pass (one full-screen pass per side). Depth-aware: every pixel is lifted to a local
 // east/north/up frame anchored on the farm (z = 0 at the ground), so clouds, their shadows, fog, haze and frost sit
-// in the world while rain is screen space. Uniforms are set in index.ts; tier settings become #defines.
-import type { TierSettings } from "./logic";
+// in the world. Rain streaks are drawn in screen space but placed in the world: only below the cloud base, only under
+// cloud, leaning with the world wind (u_fall) and hidden behind both near geometry and the clouds above them.
+// Uniforms are set in index.ts; tier settings become #defines.
+import { CLOUD_MARCH_M, CLOUD_SIGMA, type TierSettings } from "./logic";
 
 export function weatherShader(t: TierSettings): string {
   return /* glsl */ `
 precision highp float;
 #define CLOUD_STEPS ${t.cloudSteps}
+#define CLOUD_MARCH ${CLOUD_MARCH_M.toFixed(1)}
+#define CLOUD_SIGMA ${CLOUD_SIGMA.toFixed(4)}
 #define FBM_OCT ${t.fbmOctaves}
 #define RAIN_LAYERS ${t.rainLayers}
 #define SHIMMER ${t.shimmer ? 1 : 0}
@@ -26,6 +30,7 @@ uniform vec4 u_tint;     // rgb, strength
 uniform vec4 u_sun;      // dir east/north/up, exposure
 uniform vec3 u_sunColor;
 uniform vec3 u_misc;     // lightning flash 0..1, parallax x, parallax y
+uniform vec3 u_fall;     // rain fall direction, local east/north/up (unit, z < 0): leans with the world wind
 
 uniform vec2 u_slab;     // cloud slab base, top (m above the ground), kept below the camera
 #define CLOUD_BASE u_slab.x
@@ -55,9 +60,21 @@ float fbm(vec2 p) {
   }
   return s / n;
 }
-// Cloud field at a local xy (m): one puff scale ~130 m, drifting with the wind.
-float cloudField(vec2 xy) { return fbm((xy + u_cloud.zw) / 130.0); }
+// Cloud field at a local xy (m) and slab height h (0 base .. 1 top): one puff scale ~130 m, drifting with the wind,
+// sheared a little with height so a puff is a leaning column, not the same 2D sheet extruded.
+float cloudField(vec2 xy, float h) { return fbm((xy + u_cloud.zw + vec2(32.0, 11.0) * h) / 130.0); }
 float cloudThreshold() { return mix(0.86, 0.5, u_cloud.x); }
+// Vertical profile, mirrors cloudProfile() in logic.ts: soft short base fade, full mid-slab, long rounded top.
+float cloudProfile(float h) { return smoothstep(0.0, 0.2, h) * (1.0 - smoothstep(0.55, 1.0, h)); }
+// Density 0..1: the field above the cover threshold, eroded toward the top and bottom (soft edges, dense cores).
+float cloudDensity(float f, float thr, float h) { return clamp((f - thr) * 6.0 - (1.0 - cloudProfile(h)) * 0.9, 0.0, 1.0); }
+// Interleaved gradient noise: a fixed per-pixel step offset (deterministic, no time term so it does not crawl).
+float ign(vec2 px) { return fract(52.9829189 * fract(dot(px, vec2(0.06711056, 0.00583715)))); }
+// Opacity of the whole cloud column over a point, from one mid-slab sample (h = 0.4, profile 1): the profile
+// averages ~0.6 over the slab, so optical depth ~ sigma * thickness * 0.6 * density. Shared by shadows and rain.
+float columnOpacity(vec2 xy, float thr) {
+  return 1.0 - exp(-CLOUD_SIGMA * (CLOUD_TOP - CLOUD_BASE) * 0.6 * cloudDensity(cloudField(xy, 0.4), thr, 0.4));
+}
 
 // Rain streaks in screen space (aspect-corrected uv). One layer = a grid of columns with sparse falling drops.
 float rainLayer(vec2 uv, float scale, float speed, float len, float density, float seed) {
@@ -110,13 +127,12 @@ void main(void) {
   float dark = u_cloud.y;
   float thr = cloudThreshold();
 
-  // Overcast dims the ground; cloud shadows (same field as the clouds, projected along the sun) drift over it.
+  // Overcast dims the ground; cloud shadows (same density as the clouds, projected along the sun) drift over it.
   col *= mix(1.0, 0.7, cover * dark);
   if (!sky && cover > 0.0) {
     float lz = max(L.z, 0.2);
-    vec3 ps = P + L * ((CLOUD_BASE + CLOUD_TOP) * 0.5 - P.z) / lz;
-    float cov = smoothstep(thr - 0.03, thr + 0.1, cloudField(ps.xy));
-    col *= 1.0 - cov * 0.45 * (1.0 - 0.6 * dark) * smoothstep(0.0, 0.3, L.z);
+    vec3 ps = P + L * (mix(CLOUD_BASE, CLOUD_TOP, 0.4) - P.z) / lz;
+    col *= 1.0 - columnOpacity(ps.xy, thr) * 0.5 * (1.0 - 0.6 * dark) * smoothstep(0.0, 0.3, L.z);
   }
 
   // Sun / time of day.
@@ -149,53 +165,72 @@ void main(void) {
     col = mix(col, hazeC, clamp(f, 0.0, 0.8));
   }
 
-  // Low broken cloud layer: march the slab between the camera and the surface.
+  // Rain (data-driven density) and drizzle, drawn before the clouds: it falls from the cloud base to the surface, so
+  // the cloud march below hides it where the deck is thick. Streak patterns are screen space; where they show is
+  // decided in the world: only on rays that pass below the cloud base, only under cloud, in front of the surface.
+  if ((u_rain.x > 0.0 || u_rain.z > 0.0) && rd.z < -1e-3) {
+    float tA = max((CLOUD_BASE - ro.z) / rd.z, 0.0);
+    float tB = min(dist, tA + 600.0);
+    if (tB > tA) {
+      // Is there cloud over this rain? Climb from a point in the rain column back up the fall line to the base.
+      vec3 Q = ro + rd * mix(tA, tB, 0.35);
+      vec3 Qb = Q - u_fall * ((CLOUD_BASE - Q.z) / max(-u_fall.z, 0.2));
+      float mask = smoothstep(0.1, 0.5, columnOpacity(Qb.xy, thr));
+      if (mask > 0.0) {
+        // Screen direction of the world fall line (wind lean): one direction per frame, turns with the heading.
+        vec3 Fe = transpose(mat3(u_eyeToLocal)) * u_fall;
+        vec2 ey = dot(Fe.xy, Fe.xy) > 1e-6 ? -normalize(Fe.xy) : vec2(0.0, 1.0);
+        vec2 ex = vec2(ey.y, -ey.x);
+        vec2 suv = vec2(uv0.x * czm_viewport.z / czm_viewport.w, uv0.y);
+        suv = vec2(dot(suv, ex), dot(suv, ey));
+        float len = 0.3 + 0.35 * u_rain.x; // heavier rain: longer streaks (density is u_rain.x itself)
+        float r = 0.0;
+        for (int i = 0; i < RAIN_LAYERS; i++) {
+          float fi = float(i);
+          float zi = ro.z + rd.z * mix(tA, tB, (fi + 0.5) / float(RAIN_LAYERS));
+          float fromBase = 1.0 - smoothstep(CLOUD_BASE - 25.0, CLOUD_BASE, zi); // streaks start at the cloud base
+          vec2 q = suv + u_misc.yz * (1.0 / (1.0 + fi));
+          r += rainLayer(q, 70.0 + fi * 55.0, (2.2 - fi * 0.45) * u_rain.y, len - fi * 0.1, u_rain.x, fi * 7.3) * (1.0 - fi * 0.25) * fromBase;
+        }
+        float dz = rainLayer(suv + u_misc.yz * 0.4, 220.0, 0.35, 0.18, u_rain.z * 0.7, 91.0) * 0.6;
+        vec3 rainC = vec3(0.8, 0.84, 0.9) * max(u_sun.w, 0.5);
+        col = mix(col, rainC, clamp((r * 0.32 + dz * 0.25) * mask, 0.0, 0.6));
+        col = mix(col, col * vec3(0.9, 0.93, 0.97), clamp(u_rain.x, 0.0, 1.0) * 0.3 * mask); // wet, flat light
+      }
+    }
+  }
+
+  // Low cloud deck: march the slab between the camera and the surface. Density = 2D field x vertical profile, so a
+  // ray crosses one continuous mass; full per-pixel jitter turns step banding into fine grain instead of sheets.
   if (cover > 0.0 && abs(rd.z) > 1e-4) {
     float ta = (CLOUD_BASE - ro.z) / rd.z;
     float tb = (CLOUD_TOP - ro.z) / rd.z;
     float t0 = max(min(ta, tb), 0.0);
-    float t1 = min(min(max(ta, tb), dist), t0 + 2500.0);
+    float t1 = min(min(max(ta, tb), dist), t0 + CLOUD_MARCH);
     if (t1 > t0) {
       float dt = (t1 - t0) / float(CLOUD_STEPS);
-      float jitter = hash12(gl_FragCoord.xy) - 0.5;
+      float jitter = ign(gl_FragCoord.xy);
+      float sStep = CLOUD_SIGMA * min(dt, 60.0); // long grazing steps must not turn one sample into a wall
+      float veil = cover * cover * 0.3;          // rough mean density, what long grazing paths fade to (no aliasing)
       float T = 1.0;
       vec3 acc = vec3(0.0);
       vec3 lit = mix(vec3(0.97, 0.97, 0.98), vec3(0.55, 0.57, 0.62), dark);
       for (int i = 0; i < CLOUD_STEPS; i++) {
-        float t = t0 + (float(i) + 0.5 + jitter * 0.25) * dt;
+        float t = t0 + (float(i) + jitter) * dt;
         vec3 p = ro + rd * t;
         float h = clamp((p.z - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE), 0.0, 1.0);
-        float d = clamp((cloudField(p.xy) - thr - abs(h - 0.45) * 0.22) * 5.0, 0.0, 1.0);
+        float d = mix(cloudDensity(cloudField(p.xy, h), thr, h), veil * cloudProfile(h), smoothstep(300.0, 1100.0, t - t0));
         if (d > 0.0) {
-          float a = (1.0 - exp(-d * dt * 0.03)) * smoothstep(15.0, 90.0, t); // fade puffs right at the lens
-          vec3 c = lit * mix(0.72, 1.06, h) * mix(vec3(1.0), u_sunColor, 0.6) * max(u_sun.w, 0.45) + u_misc.x * 0.5;
+          float a = (1.0 - exp(-d * sStep)) * smoothstep(15.0, 90.0, t); // fade puffs right at the lens
+          // Lit from above: bright tops, darker dense undersides.
+          vec3 c = lit * mix(0.62, 1.08, h) * (1.0 - 0.22 * d * (1.0 - h)) * mix(vec3(1.0), u_sunColor, 0.6) * max(u_sun.w, 0.45) + u_misc.x * 0.5;
           acc += T * a * c;
           T *= 1.0 - a;
+          if (T < 0.03) break;
         }
       }
       col = col * T + acc;
     }
-  }
-
-  // Rain (data-driven density) and drizzle, in screen space; each layer hides behind closer geometry.
-  if (u_rain.x > 0.0 || u_rain.z > 0.0) {
-    vec2 suv = vec2(uv0.x * czm_viewport.z / czm_viewport.w, uv0.y);
-    float cs = cos(u_rain.w);
-    float sn = sin(u_rain.w);
-    suv = mat2(cs, -sn, sn, cs) * suv;
-    float r = 0.0;
-    for (int i = 0; i < RAIN_LAYERS; i++) {
-      float fi = float(i);
-      float layerDist = 12.0 + fi * fi * 45.0; // ~12, 57, 192 m
-      if (dist > layerDist) {
-        vec2 q = suv + u_misc.yz * (1.0 / (1.0 + fi));
-        r += rainLayer(q, 70.0 + fi * 55.0, (2.2 - fi * 0.45) * u_rain.y, 0.55 - fi * 0.12, u_rain.x, fi * 7.3) * (1.0 - fi * 0.25);
-      }
-    }
-    float dz = rainLayer(suv + u_misc.yz * 0.4, 220.0, 0.35, 0.18, u_rain.z * 0.7, 91.0) * 0.6;
-    vec3 rainC = vec3(0.8, 0.84, 0.9) * max(u_sun.w, 0.5);
-    col = mix(col, rainC, clamp(r * 0.32 + dz * 0.25, 0.0, 0.6));
-    col = mix(col, col * vec3(0.9, 0.93, 0.97), clamp(u_rain.x, 0.0, 1.0) * 0.3); // wet, flat light
   }
 
   // Colour grade, then the soft lightning pulse (never close to white).

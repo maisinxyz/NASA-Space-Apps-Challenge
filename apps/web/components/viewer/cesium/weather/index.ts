@@ -18,7 +18,7 @@ import { Cartesian2, Cartesian3, Cartesian4, DirectionalLight, Matrix4, PostProc
 import type { AtmosphereState, DetailLevel, FarmSurface } from "@/components/globe/types";
 import type { AtmosphereWithBaseline } from "@/lib/twin/scenarios/atmosphere";
 
-import { cloudSlab, createAutoTier, createLightning, rainDensity, rainSpeed, sunFor, tierSettings } from "./logic";
+import { cloudSlab, createAutoTier, createLightning, rainDensity, rainFall, rainSpeed, sunFor, tierSettings, windDir } from "./logic";
 import { weatherShader } from "./shader";
 
 export interface WeatherContext {
@@ -45,9 +45,10 @@ type Params = {
   tint: Cartesian4;
   sun: Cartesian4;
   sunColor: Cartesian3;
+  fall: Cartesian3;
   gate: Cartesian2;
 };
-const newParams = (): Params => ({ cloud: new Cartesian4(), rain: new Cartesian4(), air: new Cartesian4(), tint: new Cartesian4(), sun: new Cartesian4(), sunColor: new Cartesian3(1, 1, 1), gate: new Cartesian2() });
+const newParams = (): Params => ({ cloud: new Cartesian4(), rain: new Cartesian4(), air: new Cartesian4(), tint: new Cartesian4(), sun: new Cartesian4(), sunColor: new Cartesian3(1, 1, 1), fall: new Cartesian3(0, 0, -1), gate: new Cartesian2() });
 
 const DEG = Math.PI / 180;
 const WIND_M_S = 5; // cloud drift speed (mood)
@@ -63,6 +64,10 @@ function fillParams(p: Params, s: AtmosphereState, drift: { x: number; y: number
   p.rain.y = rainSpeed(s.rainRateMmH);
   p.rain.z = reduced ? 0 : s.drizzle;
   p.rain.w = s.windSlantDeg * DEG;
+  const fall = rainFall(windDir(p.rain.w), p.rain.w);
+  p.fall.x = fall[0];
+  p.fall.y = fall[1];
+  p.fall.z = fall[2];
   p.air.x = s.fog;
   p.air.y = s.haze;
   p.air.z = reduced ? 0 : s.heatShimmer;
@@ -179,6 +184,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
     u_tint: () => p.tint,
     u_sun: () => p.sun,
     u_sunColor: () => p.sunColor,
+    u_fall: () => p.fall,
     u_misc: () => misc,
     u_slab: () => slab,
   });
@@ -267,9 +273,10 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
 
       if (!reduced) {
         time.t = ctx.nowS % 3600; // keep float precision in the shader
-        const slant = state.windSlantDeg * DEG;
-        drift.x += WIND_M_S * Math.cos(slant * 0.5) * ctx.dtS;
-        drift.y += WIND_M_S * 0.35 * ctx.dtS;
+        // The shader samples the field at xy + drift, so the clouds move along -drift, i.e. with the wind.
+        const w = windDir(state.windSlantDeg * DEG);
+        drift.x -= WIND_M_S * w[0] * ctx.dtS;
+        drift.y -= WIND_M_S * w[1] * ctx.dtS;
       }
       // Camera heading/pitch shift the rain layers a little (parallax); heading is unwrapped so it never jumps.
       const h = scene.camera.heading;
