@@ -5,8 +5,12 @@ description = "FieldTwin back-end API"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi==0.162.5",
+    "numpy>=2.0",
+    "pillow>=10.0",
     "python-multipart==0.0.33",
     "pyyaml==6.0.3",
+    "rasterio>=1.3",
+    "scipy>=1.11",
     "uvicorn[standard]==0.54.0",
 ]
 
