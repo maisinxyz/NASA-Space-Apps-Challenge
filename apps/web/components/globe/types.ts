@@ -12,6 +12,8 @@ export type Farm = {
    */
   owner: string;
   country: string;
+  /** Town and region for the arrival title, from the farm's cited source. Omitted when no source gives one. */
+  locality?: string;
   lon: number;
   lat: number;
   /** "twin" = full digital twin (simulation available); "explore" = landscape only. */
@@ -225,7 +227,20 @@ export type GlobeProps = FarmTwinProps & {
   onError(e: Error): void;
   /** Tile streaming progress in farm view: tiles still loading (0 = settled). Throttled (~4/s). */
   onLoadProgress?(info: { pending: number }): void;
+  /**
+   * Dive with a film over it: skip the swing and fall and cut the camera to the farm framing once the film covers the
+   * globe, so the farm tiles load while the film plays. Read when the dive begins.
+   */
+  quickDive?: boolean;
+  /** Fired once the camera has landed in farm view (after the dive or a reset). */
+  onArrive?(farmId: string): void;
 };
+
+/** Camera telemetry for the hero status bar (the hero Earth reports it). */
+export type CameraTelemetry = { lon: number; lat: number; altKm: number; headingDeg: number };
+
+/** A waypoint and its screen position (CSS px). */
+export type PinHover = { id: string; x: number; y: number };
 
 export type GlobeHandle = {
   /** Re-centre: whole Earth in "globe" view, the farm overview in "farm" view. */
@@ -234,4 +249,6 @@ export type GlobeHandle = {
   getCamera(): CameraState | null;
   /** Move the camera (still clamped to the farm limits). */
   setCamera(c: CameraState): void;
+  /** Whole-Earth view straight over a point, instantly (hand-over from the hero Earth before a dive). */
+  jumpTo(lon: number, lat: number): void;
 };

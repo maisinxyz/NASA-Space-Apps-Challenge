@@ -15,6 +15,7 @@ export const CORNELL: FarmInfo = {
   name: "Cornell University Ruminant Center",
   owner: "Cornell University (Department of Animal Science)",
   country: "United States",
+  locality: "Harford, New York", // from the source cited above
   lon: -76.2541,
   lat: 42.4409,
   tier: "twin",

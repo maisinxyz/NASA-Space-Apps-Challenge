@@ -10,6 +10,7 @@ export const LANCASTER: FarmInfo = {
   name: "Farmland near Intercourse, Lancaster County, PA",
   owner: "Private working farmland (area only)",
   country: "United States",
+  locality: "Intercourse, Pennsylvania", // from the source cited above
   lon: -76.1075,
   lat: 40.0383,
   tier: "explore",

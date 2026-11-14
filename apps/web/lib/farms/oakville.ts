@@ -11,6 +11,7 @@ export const OAKVILLE: FarmInfo = {
   name: "Oakville Grade area, Napa Valley (near the UC Davis Oakville Experimental Vineyard)",
   owner: "Area only (UC Davis plot location not yet verified)",
   country: "United States",
+  locality: "Napa Valley, California", // from the source cited above
   lon: -122.4121,
   lat: 38.4201,
   tier: "explore",
