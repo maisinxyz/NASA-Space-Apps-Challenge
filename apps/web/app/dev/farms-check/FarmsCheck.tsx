@@ -32,7 +32,7 @@ type Row = Stage1 & {
 declare global {
   interface Window {
     /** Dev only: results of the farm check, for a browser script. */
-    __ftFarmsCheck?: { rows: Row[]; running: boolean; sample?: (pts: [number, number][]) => Promise<(number | undefined)[]> };
+    __ftFarmsCheck?: { rows: Row[]; running: boolean; sample?: (pts: [number, number][]) => Promise<(number | undefined)[]>; run?: (ids: string[], fast?: boolean) => void };
   }
 }
 
@@ -101,14 +101,67 @@ export default function FarmsCheck() {
   const stop = useRef(false);
 
   useEffect(() => {
-    window.__ftFarmsCheck = { rows, running, sample: live ? (pts) => heights(live.viewer, pts) : undefined };
-  }, [rows, running, live]);
+    window.__ftFarmsCheck = {
+      rows,
+      running,
+      sample: live ? (pts) => heights(live.viewer, pts) : undefined,
+      run: (ids, fast = true) => void runAll(farms.filter((f) => ids.includes(f.id)), fast),
+    };
+  });
 
-  const checkOne = async (f: Farm): Promise<Row> => {
+  /**
+   * `fast`: numbers only (about 1 min per site instead of 3): fly in and wait for tiles, but skip the oblique and
+   * top-down views, the detail proxy, the terrain metric and the open-ground control. Sampling with the camera
+   * elsewhere was tried and is far slower (the sampler then loads every tile level itself).
+   */
+  const checkOne = async (f: Farm, fast = false): Promise<Row> => {
     if (!live) throw new Error("viewer not ready");
     const row: Row = { id: f.id, name: f.name, status: "flying", buildingsSampled: 0, share3dLocal: null, share3dTerrain: null, medianLocalM: null, medianTerrainM: null, minGeomErrorM: null, openShare3d: null, openPoints: 0, reliefShare3: null, reliefP90M: null };
     const put = (r: Partial<Row>) => setRows((rs) => [...rs.filter((x) => x.id !== f.id), { ...row, ...r }]);
     put({});
+    if (!fast) await flyAndWatch(f, row);
+    else {
+      setSelectedId(f.id);
+      await sleep(6000); // fly-in
+      await settle(live);
+    }
+    row.surface = live.tier.surface;
+
+    // Relief grid (no OSM needed): only meaningful on the Google surface.
+    if (live.tier.surface === "google") {
+      const g = reliefGrid(f.lon, f.lat);
+      const h = await heights(live.viewer, [...g.centres, ...g.rings]);
+      Object.assign(row, reliefStats(h.slice(0, g.centres.length), h.slice(g.centres.length)));
+    }
+
+    put({ status: "sampling" });
+    let b: BuildingPoint[] = [];
+    try {
+      b = (await osmBuildings(f.lon, f.lat)).sort((x, y) => distanceKm(f, x) - distanceKm(f, y)).slice(0, MAX_BUILDINGS);
+    } catch (e) {
+      row.osmError = e instanceof Error ? e.message : String(e);
+    }
+    const roofs = await heights(live.viewer, b.map((x) => [x.lon, x.lat]));
+    const rings = b.map((x) => groundRing(x));
+    const ringH = await heights(live.viewer, rings.flat());
+    const terr = fast ? b.map(() => undefined) : await Promise.all(b.map((x) => live.tier.sampleGround(x.lon, x.lat)));
+    const samples: BuildingSample[] = b.map((_, i) => {
+      const hs = ringH.slice(i * 6, i * 6 + 6).filter((h): h is number => h !== undefined);
+      return { roof: roofs[i], localGround: hs.length ? Math.min(...hs) : undefined, terrain: terr[i] };
+    });
+    // Open-ground control: tileset vs terrain at points away from buildings (trees can still read as 3D).
+    const open = fast ? [] : openPoints(f.lon, f.lat, b);
+    const oh = await heights(live.viewer, open);
+    const ot = await Promise.all(open.map(([lon, lat]) => live.tier.sampleGround(lon, lat)));
+    const od = oh.map((h, i) => (h === undefined ? undefined : h - ot[i])).filter((d): d is number => d !== undefined);
+    const done: Row = { ...row, ...stage1(samples), status: "done", openPoints: od.length, openShare3d: od.length ? od.filter((d) => d >= 3).length / od.length : null };
+    put(done);
+    return done;
+  };
+
+  /** Fly in, show the oblique and top-down views, and record the detail proxy (smallest tile geometric error). */
+  const flyAndWatch = async (f: Farm, row: Row) => {
+    if (!live) return;
     setSelectedId(f.id);
     await sleep(6000); // fly-in
     await settle(live);
@@ -135,47 +188,16 @@ export default function FarmsCheck() {
     }
     ts?.tileVisible.removeEventListener(onVisible);
     row.minGeomErrorM = Number.isFinite(minErr) ? minErr : null;
-    row.surface = live.tier.surface;
-
-    // Relief grid (no OSM needed): only meaningful on the Google surface.
-    if (live.tier.surface === "google") {
-      const g = reliefGrid(f.lon, f.lat);
-      const h = await heights(live.viewer, [...g.centres, ...g.rings]);
-      Object.assign(row, reliefStats(h.slice(0, g.centres.length), h.slice(g.centres.length)));
-    }
-
-    put({ status: "sampling" });
-    let b: BuildingPoint[] = [];
-    try {
-      b = (await osmBuildings(f.lon, f.lat)).sort((x, y) => distanceKm(f, x) - distanceKm(f, y)).slice(0, MAX_BUILDINGS);
-    } catch (e) {
-      row.osmError = e instanceof Error ? e.message : String(e);
-    }
-    const roofs = await heights(live.viewer, b.map((x) => [x.lon, x.lat]));
-    const rings = b.map((x) => groundRing(x));
-    const ringH = await heights(live.viewer, rings.flat());
-    const terr = await Promise.all(b.map((x) => live.tier.sampleGround(x.lon, x.lat)));
-    const samples: BuildingSample[] = b.map((_, i) => {
-      const hs = ringH.slice(i * 6, i * 6 + 6).filter((h): h is number => h !== undefined);
-      return { roof: roofs[i], localGround: hs.length ? Math.min(...hs) : undefined, terrain: terr[i] };
-    });
-    // Open-ground control: tileset vs terrain at points away from buildings (trees can still read as 3D).
-    const open = openPoints(f.lon, f.lat, b);
-    const oh = await heights(live.viewer, open);
-    const ot = await Promise.all(open.map(([lon, lat]) => live.tier.sampleGround(lon, lat)));
-    const od = oh.map((h, i) => (h === undefined ? undefined : h - ot[i])).filter((d): d is number => d !== undefined);
-    const done: Row = { ...row, ...stage1(samples), status: "done", openPoints: od.length, openShare3d: od.length ? od.filter((d) => d >= 3).length / od.length : null };
-    put(done);
-    return done;
   };
 
-  const runAll = async (list: Farm[]) => {
+  const runAll = async (list: Farm[], fast = false) => {
     stop.current = false;
     setRunning(true);
     try {
+      // Fast mode samples 4 sites at once (no camera involved); the full run goes one site at a time.
       for (const f of list) {
         if (stop.current) break;
-        await checkOne(f);
+        await checkOne(f, fast);
       }
     } catch (e) {
       setNote(`Stopped: ${e instanceof Error ? e.message : String(e)}`);
@@ -222,6 +244,9 @@ export default function FarmsCheck() {
         <div className="flex flex-wrap gap-2">
           <button className={btn} disabled={!live || running} onClick={() => void runAll(farms)}>
             Run all
+          </button>
+          <button className={btn} disabled={!live || running} onClick={() => void runAll(farms, true)}>
+            Numbers only (fast)
           </button>
           <button className={btn} disabled={!live || running} onClick={() => void runAll([selected])}>
             Run this site
