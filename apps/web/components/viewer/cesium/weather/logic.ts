@@ -66,7 +66,8 @@ export function createAutoTier(fpsFloor = 45, holdS = 2, graceS = 1) {
         grace = graceS;
         steps = 0;
       }
-      if (dtS <= 0) return cap;
+      // dt arrives capped at 0.1 s: a capped gap is a stall or a throttled background window, not a slow render.
+      if (dtS <= 0 || dtS >= 0.099) return cap;
       if (grace > 0) {
         grace -= dtS;
         ema = 60;

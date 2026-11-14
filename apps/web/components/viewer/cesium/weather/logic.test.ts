@@ -93,6 +93,11 @@ describe("auto step-down", () => {
     expect(feed(a, "high", 30, 4)).toBe("low");
     expect(feed(a, "high", 30, 10)).toBe("low");
   });
+  it("ignores capped gaps (throttled or stalled window), which are not slow renders", () => {
+    const a = createAutoTier();
+    for (let t = 0; t < 20; t += 0.1) a.update("high", 0.1);
+    expect(a.update("high", 0.1)).toBe("high");
+  });
   it("a new requested detail resets the cap", () => {
     const a = createAutoTier();
     feed(a, "high", 20, 6);

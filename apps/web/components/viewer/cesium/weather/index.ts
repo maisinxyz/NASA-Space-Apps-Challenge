@@ -147,6 +147,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   const time = { t: 0 };
   let anchor: Cartesian3 | null = null;
   let anchorCheckS = 0;
+  let anchorGuess = true;
   let stages: { left: PostProcessStage; right: PostProcessStage } | null = null;
   let builtTier: DetailLevel | null = null;
   let last: AtmosphereState | null = null;
@@ -200,11 +201,25 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
     builtTier = tier;
   };
 
-  /** Anchor the local frame on the ground at the screen centre (re-anchored if the camera wanders > 4 km away). */
+  /** Camera height above a ground point, along that point's up direction (m). */
+  const heightAbove = (p: Cartesian3) => {
+    const up = scene.globe.ellipsoid.geodeticSurfaceNormal(p, new Cartesian3());
+    return Cartesian3.dot(Cartesian3.subtract(scene.camera.positionWC, p, new Cartesian3()), up);
+  };
+  const plausible = (p: Cartesian3) => {
+    const h = heightAbove(p);
+    return h > 15 && h < 3000 && Cartesian3.distance(p, scene.camera.positionWC) < 4000;
+  };
+
+  /**
+   * Anchor the local frame on the ground at the screen centre. A depth pick made while tiles still stream can land
+   * anywhere, so the anchor is re-checked every second and replaced when the camera is not 15 m - 3 km above it.
+   * The ellipsoid is only a stand-in until a plausible depth pick exists.
+   */
   const updateAnchor = (nowS: number) => {
     if (anchor && nowS - anchorCheckS < 1) return;
     anchorCheckS = nowS;
-    if (anchor && Cartesian3.distance(anchor, scene.camera.positionWC) < 4000) return;
+    if (anchor && !anchorGuess && plausible(anchor)) return;
     const c = new Cartesian2(scene.canvas.clientWidth / 2, scene.canvas.clientHeight / 2);
     let p: Cartesian3 | undefined;
     try {
@@ -212,7 +227,11 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
     } catch {
       p = undefined;
     }
-    p ??= scene.camera.pickEllipsoid(c) ?? undefined;
+    anchorGuess = !p || !plausible(p);
+    if (anchorGuess) {
+      if (anchor) return; // keep the current stand-in, try again next second
+      p = scene.camera.pickEllipsoid(c) ?? undefined;
+    }
     if (!p) return;
     anchor = p;
     Transforms.eastNorthUpToFixedFrame(anchor, undefined, localToWorld);
@@ -294,7 +313,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
 
       if (ctx.nowS - perfAt > 0.5) {
         perfAt = ctx.nowS;
-        const stepped = auto.steps ? ` (auto-stepped ${auto.steps} from ${ctx.detail})` : "";
+        const stepped = tier !== ctx.detail ? ` (auto-stepped from ${ctx.detail})` : "";
         perf.set(`sky tier ${tier}${stepped}${moving ? `  fx fps ${auto.fps.toFixed(0)}` : "  static"}${split ? "  split" : ""}  cam ${eyeToLocal[14].toFixed(0)} m above anchor`);
       }
     },
