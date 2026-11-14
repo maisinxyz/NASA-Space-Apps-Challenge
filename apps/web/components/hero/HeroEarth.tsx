@@ -173,7 +173,7 @@ const earthFrag = /* glsl */ `
     // Sun on the sea: a broad soft sheen plus a tighter glint that sparkles as the swell moves.
     vec3 h = normalize(sunV + v);
     float nh = max(dot(n, h), 0.0);
-    float sheen = pow(nh, 110.0) * 0.05 + pow(nh, 700.0) * 0.5;
+    float sheen = pow(nh, 260.0) * 0.025 + pow(nh, 900.0) * 0.4;
     col += vec3(0.92, 0.96, 1.0) * sheen * water * smoothstep(0.0, 0.3, ndlW) * dayMix;
 
     // Inner rim: thin atmosphere seen edge-on, strongest on the lit side.
