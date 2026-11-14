@@ -3,7 +3,7 @@
 // TODO(verify): location -33.637, -70.575 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://conchaytoro.com/en/blog/concha-y-toro-wine-center-a-place-where-heritage-lives-in-every-corner/ (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Private company land: area only, no owner named; source page is the estate's own visitor blog.
 // Private land: described by area only, never by owner or address (user rule).
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const PIRQUE_VINEYARDS: Candidate = {
   farm: {

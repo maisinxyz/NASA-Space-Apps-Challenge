@@ -2,7 +2,7 @@
 // Why: Urban experimental farm next to campus (dairy, field trials) in a large city.
 // TODO(verify): location -25.75, 28.258 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.up.ac.za/news/post_2903902-newly-appointed-director-at-the-university-of-pretorias-innovation-africaup-unit-aims-to-strengthen-ties-with-the-agriculture-sector (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Part of the farm is being built on (Future Africa campus).
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const UP_HATFIELD: Candidate = {
   farm: {
@@ -22,5 +22,5 @@ export const UP_HATFIELD: Candidate = {
   expected3d: "high",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "weak",
 };

@@ -2,7 +2,7 @@
 // Why: Large research campus between Cali and Palmira; tropical valley fields.
 // TODO(verify): location 3.503, -76.356 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://alliancebioversityciat.org/fr/taxonomy/term/6397 (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates unverified; Google 3D in Colombia unknown.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const CIAT_PALMIRA: Candidate = {
   farm: {

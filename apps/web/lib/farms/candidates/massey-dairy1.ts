@@ -2,7 +2,7 @@
 // Why: 142 ha farm inside the city boundary on the Manawatu River (flood relevance).
 // TODO(verify): location -40.38, 175.62 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://massey.ac.nz/about/massey-subsidiaries-and-commercial-ventures/massey-farms/dairy-farm-1 (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Pasture (dairy), not arable rotations.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const MASSEY_DAIRY1: Candidate = {
   farm: {

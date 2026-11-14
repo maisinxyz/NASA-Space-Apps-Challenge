@@ -2,7 +2,7 @@
 // Why: Long-term fertilisation trials since 1921 in a mid-size town; continental climate.
 // TODO(verify): location 51.96, 20.16 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://ir.sggw.edu.pl/en/institute-of-agriculture/about-the-institute/experimental-station-in-skierniewice/about-the-station (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Mid-size town: Google 3D may be thinner.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const SGGW_SKIERNIEWICE: Candidate = {
   farm: {

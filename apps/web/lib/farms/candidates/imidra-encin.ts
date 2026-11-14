@@ -2,7 +2,7 @@
 // Why: Regional research farm with vineyard and field crops near Madrid; semi-arid Mediterranean.
 // TODO(verify): location 40.52, -3.29 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://www.comunidad.madrid/centros/finca-encin-alcala-henares (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Coordinates need care.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const IMIDRA_ENCIN: Candidate = {
   farm: {

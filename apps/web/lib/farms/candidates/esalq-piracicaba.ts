@@ -2,7 +2,7 @@
 // Why: Historic agricultural campus inside a city; sugarcane, soybean, maize.
 // TODO(verify): location -22.711, -47.631 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://jornal.usp.br/?p=880936 (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Point is the campus; Fazenda Areao location unverified.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const ESALQ_PIRACICABA: Candidate = {
   farm: {
@@ -22,5 +22,5 @@ export const ESALQ_PIRACICABA: Candidate = {
   expected3d: "med",
   elevation: "copDem30",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "fail",
 };

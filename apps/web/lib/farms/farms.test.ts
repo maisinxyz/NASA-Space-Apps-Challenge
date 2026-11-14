@@ -81,8 +81,8 @@ describe("components stay farm-agnostic", () => {
       .filter((p) => /\.tsx?$/.test(p))
       .map((p) => join(dir, p));
 
-  it("no component or page imports a specific farm file", () => {
-    const bad = [...files("components"), ...files("app")].filter((p) => /from\s+["']@\/lib\/farms\/(?!index["'])|lib\/twin\/agassiz/.test(readFileSync(join(WEB, p), "utf8")));
+  it("no component or page imports a specific farm file (dev pages may read the candidate list)", () => {
+    const bad = [...files("components"), ...files("app")].filter((p) => !/^app[\\/]dev[\\/]/.test(p)).filter((p) => /from\s+["']@\/lib\/farms\/(?!index["'])|lib\/twin\/agassiz/.test(readFileSync(join(WEB, p), "utf8")));
     expect(bad).toEqual([]);
   });
 });

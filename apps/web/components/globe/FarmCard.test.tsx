@@ -51,7 +51,7 @@ describe("FarmCard", () => {
 describe("FarmList", () => {
   it("lists every farm as a button with its tier in words and marks the selection", () => {
     const html = renderToStaticMarkup(<FarmList farms={FARMS} selectedId={hero.id} onSelect={noop} />);
-    for (const f of FARMS) expect(html).toContain(f.name);
+    for (const f of FARMS) expect(html).toContain(f.name.replace(/&/g, "&amp;")); // names like "Wageningen University & Research" are HTML-escaped
     expect(html.match(/<button/g)).toHaveLength(FARMS.length);
     expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
     expect(html.match(/Explore only/g)).toHaveLength(FARMS.filter((f) => f.tier === "explore").length);

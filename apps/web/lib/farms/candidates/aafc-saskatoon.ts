@@ -2,7 +2,7 @@
 // Why: Prairie grain research farm on the city edge; cold semi-arid climate.
 // TODO(verify): location 52.158512, -106.580521 is from https://www.tbs-sct.gc.ca/fcsi-rscf/fsi-isf/00001375-eng.aspx (an institute or campus point, not a surveyed farm centre); confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://profils-profiles.science.gc.ca/en/research-centre/saskatoon-research-and-development-centre/saskatoon-research-and-development-centre (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Point is the federal property record, not a confirmed building.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const AAFC_SASKATOON: Candidate = {
   farm: {

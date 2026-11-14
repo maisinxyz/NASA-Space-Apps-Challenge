@@ -1,8 +1,8 @@
-// UBC Farm, University of British Columbia (Canada). Scouting candidate, NOT VALIDATED: needs the 3D check in /dev/farms-check and a visual check by a person.
+// UBC Farm, University of British Columbia (Canada). Scouting candidate, 3D check PASS (2026-11-14, docs/farm-scouting/FARMS.md).
 // Why: 20 to 24 ha teaching farm inside a major city; dense Google 3D expected.
 // TODO(verify): location 49.251, -123.238 is from memory; confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://ubcfarm.ubc.ca/about/ (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Small fields; mixed vegetables rather than field crops.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const UBC_FARM: Candidate = {
   farm: {
@@ -22,5 +22,5 @@ export const UBC_FARM: Candidate = {
   expected3d: "high",
   elevation: "canHrdem",
   boundaries: "osm",
-  validation: "not-validated",
+  validation: "pass",
 };

@@ -42,6 +42,27 @@ export function stage1(samples: BuildingSample[], minM = MIN_BUILDING_M): Stage1
   return { buildingsSampled: samples.length, share3dLocal: share(local), share3dTerrain: share(terr), medianLocalM: median(local), medianTerrainM: median(terr) };
 }
 
+/**
+ * Relief grid: points every `stepM` over a square of half-size `halfM`, each with a 6-point ring of `ringM`. Works with
+ * no OSM buildings. A draped/flat mesh gives ~0 everywhere; buildings and trees both raise it (screenshots tell them apart).
+ */
+export function reliefGrid(lon: number, lat: number, halfM = 240, stepM = 40, ringM = 15) {
+  const centres: [number, number][] = [];
+  for (let e = -halfM; e <= halfM; e += stepM) for (let n = -halfM; n <= halfM; n += stepM) centres.push(offsetM(lon, lat, e, n));
+  return { centres, rings: centres.flatMap(([x, y]) => groundRing({ lon: x, lat: y, radiusM: 0 }, 6, ringM)) };
+}
+
+/** Share of relief-grid points >= minM above their ring's lowest point, and the 90th percentile of that rise. */
+export function reliefStats(centreH: (number | undefined)[], ringH: (number | undefined)[], minM = MIN_BUILDING_M) {
+  const d: number[] = [];
+  centreH.forEach((h, i) => {
+    const r = ringH.slice(i * 6, i * 6 + 6).filter((x): x is number => x !== undefined);
+    if (h !== undefined && r.length) d.push(h - Math.min(...r));
+  });
+  d.sort((a, b) => a - b);
+  return { reliefShare3: d.length ? d.filter((x) => x >= minM).length / d.length : null, reliefP90M: d.length ? d[Math.floor(d.length * 0.9)] : null };
+}
+
 const M_PER_DEG = 111320;
 
 /** Offset a lon/lat by east/north metres (small distances). */
@@ -89,6 +110,23 @@ export function buildingsFromOverpass(json: { elements?: { geometry?: { lat: num
       return { lon, lat, radiusM: Math.max(hM, wM) / 2 };
     });
 }
+
+type OsmApiElement = { type: string; id: number; lat?: number; lon?: number; nodes?: number[]; tags?: Record<string, string> };
+
+/** Buildings from an OSM API 0.6 `map.json` answer (nodes and ways by reference). https://wiki.openstreetmap.org/wiki/API_v0.6#Retrieving_map_data_by_bounding_box:_GET_/api/0.6/map */
+export function buildingsFromOsmApi(json: { elements?: OsmApiElement[] }): BuildingPoint[] {
+  const els = json.elements ?? [];
+  const nodes = new Map(els.filter((e) => e.type === "node").map((e) => [e.id, { lat: e.lat!, lon: e.lon! }]));
+  const ways = els.filter((e) => e.type === "way" && e.tags?.building && e.nodes);
+  return buildingsFromOverpass({ elements: ways.map((w) => ({ geometry: w.nodes!.map((id) => nodes.get(id)).filter((p): p is { lat: number; lon: number } => !!p) })) });
+}
+
+/** OSM API bbox [w,s,e,n] covering `radiusM` around a point (the API caps a request at 0.25 deg²). */
+export const osmApiBbox = (lon: number, lat: number, radiusM: number) => {
+  const [w, s] = offsetM(lon, lat, -radiusM, -radiusM);
+  const [e, n] = offsetM(lon, lat, radiusM, radiusM);
+  return `${w.toFixed(5)},${s.toFixed(5)},${e.toFixed(5)},${n.toFixed(5)}`;
+};
 
 /** Overpass QL: building ways within `radiusM` of a point, with node geometry. https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL */
 export const overpassQuery = (lon: number, lat: number, radiusM: number, max = 150) => `[out:json][timeout:25];way["building"](around:${radiusM},${lat},${lon});out geom ${max};`;

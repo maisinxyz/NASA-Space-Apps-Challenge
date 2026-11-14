@@ -1,70 +1,83 @@
-# FARM-SCOUT: farm scouting and pins (2026-11-14)
+# FARM-SCOUT: farm scouting and pins (2026-11-14, second session)
 
-> **3D VALIDATION DID NOT RUN. All 27 new candidates are NOT VALIDATED and need a visual check by a person.** The sandbox network policy blocks Cesium ion (`api.cesium.com`, `assets.ion.cesium.com`: proxy 403 on CONNECT). The app viewer in headless Chromium (SwiftShader WebGL) loaded `/dev/farms-check` but fell back to tier C, so no Google tile was ever streamed. Overpass, openstreetmap.org, NASA POWER, Wikipedia and developers.google.com were blocked too. The numeric sampling method is therefore **untested**: no numbers were measured and no screenshots were taken. No new pin is on the public home globe.
+The first session (commits 872717c..21ffecd) could not render Google tiles from its sandbox. This session ran the check on a team laptop, where Cesium ion and Google Photorealistic 3D Tiles load (tier A, surface google). Full results: `docs/farm-scouting/FARMS.md`.
 
-## What was built
+## Result
 
-- **Lancaster County removed** (Intercourse PA): `lib/farms/lancaster.ts`, its registry entry and pin, its framing in `traced/framings.ts`, its `/dev/trace` preset, its tests (`farms.test.ts`, `FarmCard.test.tsx`, `runSource.test.ts`) and the `types.ts` comment. HANDOFF farm list updated. Historical progress notes got a removal line.
-- **27 candidate farm files**, one per farm, in `apps/web/lib/farms/candidates/<id>.ts`.
-  - Each file holds a `FarmInfo` (same `Farm` schema, no new fields) plus scouting facts: privacy, expected 3D, elevation and boundary dataset ids, and `validation`.
-  - All are explore tier, `coordsVerified: false`, with a TODO(verify) location and a source URL taken from search results.
-  - The one private site (Pirque vineyards) is area only, with the privacy note and `minRangeM: 250`.
-- **Registry flag:** `validation: "pass"` in a candidate file is the switch. `FARMS` in `lib/farms/index.ts` = Cornell, Beltsville, Oakville + `passedCandidates()`.
-  - Pins, the farm card, "Fly in" (explore view) and the Methods page all read `FARMS`, so a passed farm needs no component change.
-  - All 27 are `"not-validated"` now, so the globe still shows 3 pins.
-- **Methods page:** a section "Open data for the newer farm pins" lists the datasets of pinned candidates. It is hidden while none are pinned. `CANDIDATE_DATASETS` holds name, URL, licence and attribution.
-- **Dev helper `/dev/farms-check`** (`app/dev/farms-check/`, helpers in `lib/scouting/check.ts`). It flies the app's own viewer through Cornell (known-3D control) and all candidates. For each one it:
-  - shows an oblique view (-30°, 350 m) and a top-down view (-89°, 1000 m) for 5 s each;
-  - fetches OSM buildings from Overpass;
-  - samples `scene.sampleHeightMostDetailed` at each centroid, against the local mesh ground and against World Terrain;
-  - records the smallest visible tile geometric error, and an open-ground flat control.
+- **PASS, now pins (9):** `wur-unifarm`, `ubc-farm`, `hokudai-farm`, `utokyo-isas`, `agroscope-reckenholz`, `uiuc-south-farms`, `waite-adelaide`, `helsinki-viikki`, `inta-castelar`. With Cornell, Beltsville and Napa: 12 pins, at least 500 km apart (tested).
+- **WEAK, no pin (1):** `up-hatfield` (blurred patch with spike artefacts over the trial fields).
+- **FAIL at stage 1 (4):** `iari-pusa`, `cimmyt-el-batan`, `cip-la-molina`, `esalq-piracicaba` (buildings or ground read flat).
+- **Not checked (13):** capped by the user at 15 sites (Cornell plus 14 candidates) to keep the run fast. They stay as `not-validated` candidates.
+- Target was 15 PASS. Reached 9 within the cap. Run the remaining 13 candidates with `/dev/farms-check` to add more.
 
-  It prints a table, offers "Copy markdown", and exposes `window.__ftFarmsCheck`. It stores no tiles.
-- **Tests:** `lib/farms/candidates/candidates.test.ts` covers:
-  - unique ids and Lancaster gone;
-  - only "pass" candidates become pins;
-  - per-farm schema and privacy;
-  - every pair at least 500 km apart, so pins do not cluster at globe zoom;
-  - dataset URLs;
-  - the stage-1 maths, camera placement and Overpass parsing.
-- **Docs:** `docs/farm-scouting/FARMS.md` has the ranked table, reserves, rejected sites, datasets, the policy notes and the validation steps.
+## What changed
+
+- **Unvalidated farms are no longer bundled into the app.**
+  - New `lib/farms/pinned.ts` imports each PASS farm file by itself. `lib/farms/index.ts` (the registry) builds `FARMS` from it.
+  - `lib/farms/candidates/index.ts` (all 27) is now imported only by `/dev/farms-check`.
+  - Shared types and `CANDIDATE_DATASETS` moved to `lib/farms/datasets.ts`.
+  - Pins, the farm card, "Fly in" (explore view) and the Methods dataset list all read `FARMS` / `pinnedCandidateDatasets()`. No component changed.
+- **Verdicts:** each candidate file has `validation`: 9 `pass`, 1 `weak`, 4 `fail`, 13 `not-validated`.
+- **`/dev/farms-check` changes:**
+  - OSM buildings now come from the OSM API 0.6 bbox call (about 1 s), because Overpass gave HTTP 504 or took 30-210 s. Overpass is kept as a fallback.
+  - New **relief grid** metric (no OSM needed).
+  - **Numbers only (fast)** mode: fly in, wait for tiles, sample, no dwell. About 1.5 min per site instead of 3.
+  - `window.__ftFarmsCheck.run(ids)` / `view(id, range, pitch)` / `cam()` hooks for scripted checks.
+- **Screenshots:** 10 oblique PNGs in `docs/farm-scouting/<id>-oblique.png`, about 1000 px wide and under 400 KB.
+- **Tests:**
+  - `lib/scouting/check.test.ts` is new.
+  - `candidates.test.ts`: pins = `pinned.ts`, all `pass`.
+  - `farms.test.ts`: dev pages may import the candidate list.
+  - `FarmCard.test.tsx`: HTML-escaped `&` in farm names.
+
+## Did the numeric method work?
+
+Mostly yes.
+- **Controls:** relief on Cayuga Lake water read 0 % (flat), and Cornell read 25 % / p90 11.8 m.
+- **Cornell building metric:** could not be checked, because OSM maps only 1 building near the pin.
+- **Agreement with screenshots:** every farm with a high building share (53-95 %) looked 3D in its screenshot.
+- **Detail proxy:** the smallest tile geometric error was unreliable. It read 4109 m at Reckenholz, which looked sharp.
+- **Rejected without screenshots:** the four 0-22 % farms were dropped on numbers alone, as the funnel prescribes.
+
+## Screenshot budget
+
+12 taken:
+- 10 obliques, used for the verdicts.
+- 2 top-downs of WUR, unusable. At pitch -89° the farm-view orbit puts the camera underground, and a direct camera set is reset to -30° by the orbit. So no top-down shots exist. This is a farm-view camera bug for the later review routine (`components/globe/Globe.tsx` `setCamera` / `orbitFromCamera`).
 
 ## How to run
 
 - `apps/web`: `corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test`.
-  - Result: typecheck clean.
-  - Lint: 0 errors, 2 existing warnings in `GlobeHome.tsx`, not from this work.
-  - Tests: 362/362 pass.
-- **Validate:** follow "How to validate" in `docs/farm-scouting/FARMS.md`. It needs a machine with Cesium ion access: `corepack pnpm dev`, then `/dev/farms-check`, then **Run all**. That takes about 1 min per site.
-
-## Results
-
-- **Passed / weak / failed:** none. Nothing was measured, so all 27 are NOT VALIDATED.
-- **Needs a person's visual check:** all 27.
-- **Did the numeric method work:** unknown, because it never ran against real tiles. Check it on Cornell first, as FARMS.md says.
-
-## Realistic number
-
-27 candidates were written, against a target of 15 PASS. Google's rural detail is weak, and every location is approximate, so a pass rate of about 55 to 70 % is plausible. That would give roughly 15 to 19 passes. The 12 researched reserves in FARMS.md can replace failures. Full twins for all of them by Sunday is not realistic: each twin needs traced fields, a framing and rotations. Pin the passing ones as explore-only, and build full twins for the top 5 first.
-
-## Build full twins first (if they pass)
-
-1. `wur-unifarm`: AHN4 0.5 m lidar (CC0), BRP crop parcels (CC0), real field boundaries.
-2. `agroscope-reckenholz`: swissALTI3D, sits inside Zürich.
-3. `uiuc-south-farms`: USGS 3DEP 1 m, Corn Belt rotation (maize-soybean).
-4. `ubc-farm`: CanElevation HRDEM, inside Vancouver.
-5. `waite-adelaide`: ELVIS lidar, vineyards, Mediterranean climate.
-
-Next in line: `helsinki-viikki`, `utokyo-isas` (MAFF fude parcels), `iari-pusa`, `cimmyt-el-batan`.
+  - Typecheck: clean.
+  - Lint: 0 errors. The 2 warnings in `GlobeHome.tsx` predate this work.
+  - Tests: 374/374 pass.
+- **Check more farms:**
+  1. `corepack pnpm dev`, then open `/dev/farms-check`.
+  2. In the console, run `window.__ftFarmsCheck.run(["imidra-encin", ...])`, or press **Numbers only (fast)** to check all sites.
+  3. For each site worth keeping, take one oblique shot. If it passes, set `validation: "pass"` and add the farm to `pinned.ts`.
 
 ## Known gaps
 
-- Coordinates for 21 of 27 sites are from memory. The other 6 come from search results: cgiar.org, tbs-sct.gc.ca, and Wikipedia for CIP. All are TODO(verify).
-- No candidate has a framing: the default framing is used, so the view centres on the pin. Set a framing in `/dev/trace` before passing a farm.
-- Licences come from search snippets; the pages were not opened. Check each one, especially NLS Finland, GUGiK, MAFF, the AHN official page and the HRDEM OGL version.
-- **Google policy:** the full Map Tiles policy page was not readable here. Before using or publishing the height-sampling numbers, read whether sampling tile heights counts as "derived" content (see FARMS.md).
-- **Not pushed?** `git push` returned 403: the Claude GitHub App has no access to this repository for the organization. If these commits are not on `origin/main`, push them from a machine with access.
+- Pins are approximate (`coordsVerified: false`). Most were cross-checked against OSM Nominatim (within about 1 km).
+  - Helsinki: pin is on the campus buildings, not the fields.
+  - Waite: pin is on woodland; trial plots lie about 400-500 m NE.
+  - UIUC: the barns are north of the pin.
+  - Move these pins with `/dev/trace` (Copy framing).
+- Dataset URLs for the pinned farms all answered HTTP 200 on 2026-11-14. The licence wording is still from search results (`TODO(verify)` where marked).
+- The Google Map Tiles policy page was not read in this session (user's decision). The open question about height sampling as "derived" content remains.
+- Crops on the new farms are not modelled: they are explore-only, with no twin.
+
+## Full twins first (ranked)
+
+1. `wur-unifarm`: AHN 0.5 m lidar (CC0), BRP crop parcels (CC0), sharp 3D.
+2. `ubc-farm`: CanElevation HRDEM, dense 3D.
+3. `agroscope-reckenholz`: swissALTI3D, arable trials beside 3D farm buildings.
+4. `hokudai-farm`: large fields, sharp 3D, cold climate.
+5. `uiuc-south-farms`: USGS 3DEP 1 m, Corn Belt; move the pin to the barns first.
 
 ## When done, tell
 
-Frontend owners (Track owners table in `Prompts.md`): the farm registry now has a `candidates/` folder. Lancaster is gone. Nobody should hard-code farm counts in tests: use `FARMS.length`.
+Frontend owners (Track owners table in `Prompts.md`):
+- The globe now has 12 pins.
+- The registry reads `lib/farms/pinned.ts`.
+- Do not hard-code farm counts: use `FARMS.length`.

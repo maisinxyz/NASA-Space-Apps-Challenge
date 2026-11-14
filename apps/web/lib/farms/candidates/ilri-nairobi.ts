@@ -2,7 +2,7 @@
 // Why: Large campus with paddocks inside Nairobi; equatorial highland, two rainy seasons.
 // TODO(verify): location -1.2699, 36.7258 is from https://www.cgiar.org/node/986 (an institute or campus point, not a surveyed farm centre); confirm on the source page or OpenStreetMap, then frame the main buildings.
 // Source: https://ilri.org/knowledge/publications/whos-who-ilri-nairobi-campus (found by web search 2026-11-14; not opened, sandbox network policy). Risk: Mostly livestock and pasture, few crop rotations.
-import type { Candidate } from "./index";
+import type { Candidate } from "../datasets";
 
 export const ILRI_NAIROBI: Candidate = {
   farm: {
