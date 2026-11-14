@@ -17,9 +17,9 @@ describe("provenance components", () => {
     expect(html).toMatch(/aria-describedby="([^"]+)"[\s\S]*id="\1"/);
   });
 
-  it("BasisChip covers synthetic and rejects unknown", () => {
+  it("BasisChip covers synthetic and renders unknown neutrally", () => {
     expect(renderToStaticMarkup(<BasisChip basis="synthetic" />)).toContain(">synthetic<");
-    expect(() => renderToStaticMarkup(<BasisChip basis={"guess" as "synthetic"} />)).toThrow(/unknown basis/);
+    expect(renderToStaticMarkup(<BasisChip basis={"guess" as "synthetic"} />)).toContain('data-basis="unknown"');
   });
 
   it("SourceFooter drops duplicate sources", () => {

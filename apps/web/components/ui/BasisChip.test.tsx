@@ -18,7 +18,11 @@ describe("BasisChip", () => {
     expect(Object.keys(BASIS_DESCRIPTIONS).sort()).toEqual(["assumed", "derived", "measured", "modeled", "relative"]);
   });
 
-  it("rejects values outside the enum", () => {
-    expect(() => renderToStaticMarkup(<BasisChip basis={"estimated" as BasisOrRelative} />)).toThrow(/unknown basis/);
+  it("renders values outside the enum as a neutral unknown chip", () => {
+    const html = renderToStaticMarkup(<BasisChip basis={"estimated" as BasisOrRelative} />);
+    expect(html).toContain('data-basis="unknown"');
+    expect(html).toContain(">unknown<");
+    expect(html).toContain("bg-line");
+    expect(html).not.toContain("estimated");
   });
 });
