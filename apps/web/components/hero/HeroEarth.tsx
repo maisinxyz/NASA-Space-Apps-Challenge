@@ -1,7 +1,7 @@
 "use client";
 // The hero's Earth: a Three.js sphere (react-three-fiber) with NASA Blue Marble day imagery, NASA "Earth at night"
 // lights on the far side of a soft terminator, a gentle ocean glint, an inner rim and an outer atmosphere glow, on a
-// pure black background. The sun is fixed to the viewer (upper left), so the face you see is always lit while the
+// pure black background. The sun is fixed to the viewer (left, toward the headline), so the face you see is always lit while the
 // Earth turns under it. Rotation is a pure mesh rotation (no camera moves), so it is perfectly smooth.
 //
 // Interaction: drag rotates the Earth (about its axis left-right, tilt up-down, clamped) with inertia after release;
@@ -33,8 +33,8 @@ const SPIN_RAD_S = THREE.MathUtils.degToRad(2);
 /** Drag: radians of rotation per pixel = 1 / Earth radius in px (the point under the cursor follows it). Inertia decay /s. */
 const INERTIA_DECAY = 3.2;
 const MAX_TILT = THREE.MathUtils.degToRad(70);
-/** Sun direction in view space (upper left, in front). */
-const SUN = new THREE.Vector3(-0.62, 0.38, 0.69).normalize();
+/** Sun direction in view space: from the left, where the headline sits (slightly above and in front), so the face toward the text is lit and the far limb falls into shade. */
+const SUN = new THREE.Vector3(-0.86, 0.2, 0.46).normalize();
 /** Atmosphere shell radius, Earth radii. */
 const GLOW_SCALE = 1.06;
 /** Pin facing threshold: hide waypoints on the far side and right at the limb. */
@@ -95,8 +95,12 @@ const earthVert = /* glsl */ `
   varying vec2 vUv;
   varying vec3 vNormalV;
   varying vec3 vPosV;
+  varying vec3 vObj;
+  varying mat3 vNM;
   void main() {
     vUv = uv;
+    vObj = position;
+    vNM = normalMatrix;
     vNormalV = normalize(normalMatrix * normal);
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vPosV = mv.xyz;
@@ -109,31 +113,75 @@ const earthFrag = /* glsl */ `
   uniform vec3 sunV;
   uniform vec3 rimColor;
   uniform float rimOn;
+  uniform float time;
   varying vec2 vUv;
   varying vec3 vNormalV;
   varying vec3 vPosV;
+  varying vec3 vObj;
+  varying mat3 vNM;
   vec3 grade(vec3 c) {
     // A little more contrast and colour, kept natural.
     c = (c - 0.5) * 1.12 + 0.5;
     float l = dot(c, vec3(0.299, 0.587, 0.114));
     return clamp(mix(vec3(l), c, 1.22), 0.0, 1.0);
   }
+  // Ocean swell: a few travelling waves on the sphere (analytic gradient, no noise texture). Returns d(height)/d(position).
+  vec3 swell(vec3 p, float t) {
+    vec3 g = vec3(0.0);
+    g += normalize(vec3( 0.83, 0.31, 0.46)) * cos(dot(p, vec3( 0.83, 0.31, 0.46)) * 71.0 + t * 0.34) * 0.80;
+    g += normalize(vec3(-0.42, 0.77, 0.48)) * cos(dot(p, vec3(-0.42, 0.77, 0.48)) * 113.0 - t * 0.47) * 0.55;
+    g += normalize(vec3( 0.15, -0.58, 0.80)) * cos(dot(p, vec3( 0.15, -0.58, 0.80)) * 167.0 + t * 0.61) * 0.40;
+    g += normalize(vec3(-0.71, -0.24, 0.66)) * cos(dot(p, vec3(-0.71, -0.24, 0.66)) * 241.0 - t * 0.83) * 0.26;
+    g += normalize(vec3( 0.52, 0.64, -0.56)) * cos(dot(p, vec3( 0.52, 0.64, -0.56)) * 331.0 + t * 1.07) * 0.16;
+    return g;
+  }
   void main() {
-    vec3 n = normalize(vNormalV);
+    vec3 n0 = normalize(vNormalV);
     vec3 v = normalize(-vPosV);
-    float ndl = dot(n, sunV);
-    float dayMix = smoothstep(-0.12, 0.28, ndl);
     vec3 day = grade(texture2D(dayMap, vUv).rgb);
     vec3 night = texture2D(nightMap, vUv).rgb;
-    vec3 lit = day * (0.18 + 0.92 * clamp(ndl * 0.85 + 0.25, 0.0, 1.0));
+
+    // Water mask: blue clearly dominating (soft, so coasts blend).
+    float water = smoothstep(0.015, 0.11, day.b - max(day.r, day.g));
+
+    // Ocean: perturb the normal with the moving swell (restrained), land stays on the geometric normal.
+    vec3 po = normalize(vObj);
+    vec3 gObj = swell(po, time);
+    gObj -= po * dot(gObj, po);
+    vec3 n = normalize(n0 + normalize(vNM * gObj + 1e-5) * min(length(gObj), 2.0) * 0.011 * water);
+
+    float ndl = dot(n0, sunV);
+    float ndlW = dot(n, sunV);
+    // Soft terminator: wide, gentle roll-off from day into night.
+    float dayMix = smoothstep(-0.2, 0.34, ndl);
+    float diffuse = clamp(ndl * 0.8 + 0.22, 0.0, 1.0);
+
+    // Land relief from the imagery's own shading (screen derivatives of luminance), subtle.
+    float lum = dot(day, vec3(0.299, 0.587, 0.114));
+    vec2 gl2 = vec2(dFdx(lum), dFdy(lum));
+    float relief = clamp(dot(gl2, normalize(sunV.xy + 1e-4)) * 14.0, -0.12, 0.12);
+
+    // Ocean colour: deeper where the view is face-on, a little lighter and more teal toward the limb.
+    vec3 deep = day * vec3(1.0, 1.12, 1.22) + vec3(0.004, 0.012, 0.03);
+    float ang = 1.0 - max(dot(n0, v), 0.0);
+    vec3 oceanC = mix(deep, day * vec3(1.05, 1.08, 1.06) + vec3(0.0, 0.015, 0.03), pow(ang, 2.0) * 0.6);
+    vec3 base = mix(day * (1.0 + relief), oceanC, water);
+
+    vec3 lit = base * (0.07 + 1.38 * diffuse);
     vec3 col = mix(night * vec3(1.0, 0.85, 0.6) * 0.9, lit, dayMix);
-    // Ocean glint: water is where blue clearly dominates.
-    float water = smoothstep(0.02, 0.12, day.b - max(day.r, day.g));
+
+    // Sun on the sea: a broad soft sheen plus a tighter glint that sparkles as the swell moves.
     vec3 h = normalize(sunV + v);
-    col += vec3(0.9, 0.95, 1.0) * pow(max(dot(n, h), 0.0), 160.0) * 0.32 * water * dayMix;
-    // Inner rim: thin atmosphere seen edge-on.
-    float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-    col += rimColor * fres * (0.25 + 0.75 * dayMix) * 0.75 * rimOn;
+    float nh = max(dot(n, h), 0.0);
+    float sheen = pow(nh, 110.0) * 0.05 + pow(nh, 700.0) * 0.5;
+    col += vec3(0.92, 0.96, 1.0) * sheen * water * smoothstep(0.0, 0.3, ndlW) * dayMix;
+
+    // Inner rim: thin atmosphere seen edge-on, strongest on the lit side.
+    float fres = pow(1.0 - max(dot(n0, v), 0.0), 3.0);
+    col += rimColor * fres * (0.12 + 0.88 * dayMix) * 0.7 * rimOn;
+    // A faint warm-to-blue scatter right at the terminator.
+    float term = exp(-pow(ndl / 0.16, 2.0));
+    col += vec3(0.05, 0.07, 0.12) * term * (0.4 + 0.6 * fres) * rimOn;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -160,7 +208,7 @@ const glowFrag = /* glsl */ `
     // edge, so the glow starts at the limb (no dark gap) and fades out into space.
     float k = clamp(-dot(n, v) / shellCos, 0.0, 1.0);
     float a = pow(k, 2.2) * 0.9;
-    float sunSide = 0.35 + 0.65 * smoothstep(-0.5, 0.5, dot(n, sunV));
+    float sunSide = 0.18 + 0.82 * smoothstep(-0.45, 0.6, dot(n, sunV));
     gl_FragColor = vec4(glowColor * a * sunSide, a * sunSide);
   }
 `;
@@ -203,6 +251,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       sunV: { value: SUN.clone() },
       rimColor: { value: new THREE.Color("#7fb2ff") },
       rimOn: { value: 1 },
+      time: { value: 0 },
     }),
     [day, night],
   );
@@ -273,7 +322,11 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     }
     if (spun.current) spun.current.rotation.y = m.spin;
     if (tilted.current) tilted.current.rotation.x = m.tilt;
-    if (earthMat.current) earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
+    if (earthMat.current) {
+      earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
+      // Ocean swell clock (frozen under reduced motion).
+      if (!q.reducedMotion) earthMat.current.uniforms.time.value += dt;
+    }
 
     // Waypoints: project to the screen; hide those facing away.
     tilted.current?.updateMatrixWorld();
@@ -382,9 +435,7 @@ export function HeroEarth(props: Props) {
   };
   const faceRef = useRef(face);
   faceRef.current = face;
-  useEffect(() => {
-    faceRef.current(farms.find((x) => x.id === selectedId));
-  }, [selectedId, farms]);
+  // Selecting does not turn the Earth (a pin click must leave the camera alone); callers use apiRef.face(id) when they want a turn.
 
   // Public: is this farm already facing the viewer (no turn needed before a dive)?
   useEffect(() => {
@@ -521,11 +572,12 @@ export function HeroEarth(props: Props) {
               className="group absolute top-0 left-0 opacity-0 outline-none"
               style={{ willChange: "transform", width: size.w, height: size.h }}
             >
-              {/* The tip of the pin sits on the farm. Hover lifts it, press scales to 0.97, the selected one stands taller. */}
+              {/* The tip of the pin sits on the farm. Hover lifts it 2 px, press sinks it 1 px and squeezes to 0.9 (fast in, eased spring-back out), the selected one stands taller. */}
               <Pin3D
                 width={size.w}
                 height={size.h}
-                className="block origin-bottom transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-[0.97]"
+                tone={f.tier}
+                className="block origin-bottom transition-transform duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:-translate-y-[2px] group-hover:scale-[1.08] group-focus-visible:-translate-y-[2px] group-focus-visible:scale-[1.08] group-active:translate-y-px group-active:scale-[0.9] group-active:duration-[60ms] group-active:ease-out motion-reduce:transition-none"
                 style={{ transform: on ? "scale(1.18)" : undefined }}
               />
             </button>
