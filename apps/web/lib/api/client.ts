@@ -86,9 +86,9 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
-const live = <T>(path: string, init?: RequestInit) => request<T>(`${apiBase}${path}`, init);
+export const live = <T>(path: string, init?: RequestInit) => request<T>(`${apiBase}${path}`, init);
 const mock = <T>(rel: string) => request<T>(`${MOCK_ROOT}/${rel}`);
-const postJson = (body: unknown): RequestInit => ({
+export const postJson = (body: unknown): RequestInit => ({
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(body),
