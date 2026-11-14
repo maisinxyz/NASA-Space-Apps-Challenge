@@ -6,23 +6,22 @@
 //  - Read run.inputs by the input ids in lib/twin/scenarios/registry.ts; run.progress is 0..1; run.timeS is wall seconds.
 //  - Only rainRateMmH is data-driven; everything else is mood. The UI captions it "Illustrative weather effect".
 //  - Test on /dev/scenarios (turn on "Fixture run source"); the real twin never calls these until the backend exists.
-import { type AtmosphereState, CLEAR_SKY } from "@/components/globe/types";
-
 import type { AtmosphereEvaluator, ScenarioId } from "../../scenario";
+import { calm, climateShift, compound, drought, frost, heatWave, storm, wetSpell } from "./evaluators";
 
-const clear: AtmosphereEvaluator = (): AtmosphereState => CLEAR_SKY;
+export { compoundHandoff, stormCurve, type AtmosphereWithBaseline } from "./evaluators";
 
 export const ATMOSPHERE: Record<ScenarioId, AtmosphereEvaluator> = {
-  storm: clear,
-  "wet-spell": clear,
-  "flood-zones": clear,
-  drought: clear,
-  "heat-wave": clear,
-  frost: clear,
-  "bare-soil": clear,
-  "veg-stress": clear,
-  "multi-year": clear,
-  trends: clear,
-  "climate-shift": clear,
-  compound: clear,
+  storm,
+  "wet-spell": wetSpell,
+  "flood-zones": calm,
+  drought,
+  "heat-wave": heatWave,
+  frost,
+  "bare-soil": calm,
+  "veg-stress": calm,
+  "multi-year": calm,
+  trends: calm,
+  "climate-shift": climateShift,
+  compound,
 };

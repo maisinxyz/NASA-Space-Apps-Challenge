@@ -38,7 +38,7 @@ describe("scenario registry", () => {
   it.each(SCENARIO_DEFS)("composeFrame($id) is a clear sky with no ground layers until the owners fill it in", (d) => {
     const run = { scenarioId: d.id, farmId: "cornell-ruminant", progress: 0.5, inputs: resolveInputs(d, undefined), rotationId: null, timeS: 3 };
     const f = composeFrame(run);
-    expect(f.atmosphere).toEqual(CLEAR_SKY);
+    if (/^No weather effect/.test(d.effectCaption)) expect(f.atmosphere).toEqual(CLEAR_SKY); // sky owner fills the rest (S2-W)
     expect(f.ground).toEqual([]);
     expect(f.readouts).toHaveLength(d.inputs.length);
     expect(composeFrame(run)).toEqual(f);
