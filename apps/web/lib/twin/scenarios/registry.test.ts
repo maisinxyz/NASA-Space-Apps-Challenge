@@ -35,11 +35,13 @@ describe("scenario registry", () => {
     for (const d of SCENARIO_DEFS.filter((x) => !/^No weather effect/.test(x.effectCaption))) expect(d.effectCaption).toContain("Illustrative weather effect");
   });
 
-  it.each(SCENARIO_DEFS)("composeFrame($id) is a clear sky with no ground layers until the owners fill it in", (d) => {
+  it.each(SCENARIO_DEFS)("composeFrame($id) returns a sensible, deterministic frame", (d) => {
     const run = { scenarioId: d.id, farmId: "cornell-ruminant", progress: 0.5, inputs: resolveInputs(d, undefined), rotationId: null, timeS: 3 };
     const f = composeFrame(run);
-    if (/^No weather effect/.test(d.effectCaption)) expect(f.atmosphere).toEqual(CLEAR_SKY); // sky owner fills the rest (S2-W)
-    expect(f.ground).toEqual([]);
+    expect(f.atmosphere).toBeTruthy();
+    if (/^No weather effect/.test(d.effectCaption)) expect(f.atmosphere).toEqual(CLEAR_SKY);
+    for (const k of ["cloudCover", "rainRateMmH", "sunIntensity"] as const) expect(Number.isFinite(f.atmosphere[k])).toBe(true);
+    expect(Array.isArray(f.ground)).toBe(true);
     expect(f.readouts).toHaveLength(d.inputs.length);
     expect(composeFrame(run)).toEqual(f);
   });

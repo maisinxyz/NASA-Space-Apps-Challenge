@@ -66,8 +66,10 @@ export function progressToReport(last: { pending: number; at: number } | null, p
 }
 
 /** A Cesium Viewer with every default widget off. The credit container is left in place (required attribution). */
-export function createViewer(container: HTMLElement): Viewer {
+/** creditContainer: where Cesium renders its attribution (owned by the caller, so destroy() never fights a moved node). */
+export function createViewer(container: HTMLElement, creditContainer?: HTMLElement | null): Viewer {
   const viewer = new Viewer(container, {
+    ...(creditContainer ? { creditContainer } : {}),
     animation: false,
     baseLayerPicker: false,
     fullscreenButton: false,

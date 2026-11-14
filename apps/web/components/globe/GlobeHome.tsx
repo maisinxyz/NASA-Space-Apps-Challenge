@@ -48,8 +48,8 @@ type HeroState = "hero" | "dragging" | "centred" | "ui";
 // It is moved into its own slot above every overlay and set in the accent colour; the logo is tinted with a CSS
 // filter, nothing is hidden.
 const CREDITS_CSS = `
-.hero-root .cesium-widget-credits { position: static !important; color: ${color.accent} !important; font-size: 11px; white-space: nowrap; display: flex !important; align-items: center; }
-.hero-root .cesium-widget-credits a, .hero-root .cesium-credit-textContainer, .hero-root .cesium-credit-textContainer * { color: ${color.accent} !important; }
+.hero-root .ft-credits { color: ${color.accent} !important; font-size: 11px; white-space: nowrap; display: flex !important; align-items: center; }
+.hero-root .ft-credits a, .hero-root .cesium-credit-textContainer, .hero-root .cesium-credit-textContainer * { color: ${color.accent} !important; }
 .hero-root .cesium-credit-logoContainer img { filter: brightness(0) saturate(100%) invert(80%) sepia(14%) saturate(900%) hue-rotate(185deg) brightness(98%); opacity: 0.9; }
 `;
 
@@ -441,6 +441,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
             <Globe
               ref={globe}
               farms={FARMS}
+              creditContainer={creditSlot}
               selectedId={onGlobe ? null : farmId}
               view={view}
               reducedMotion={reducedMotion}
@@ -451,8 +452,6 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
               onReady={(info) => {
                 setTier(info.tier);
                 setLoad("ready");
-                const credits = root.current?.querySelector(".cesium-widget-credits");
-                if (credits && creditSlot.current && credits.parentElement !== creditSlot.current) creditSlot.current.appendChild(credits);
               }}
               onError={() => setLoad("error")}
               fields={fields}
@@ -539,7 +538,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
       )}
-      <div ref={creditSlot} className="absolute z-10 -translate-x-1/2 translate-y-1/2" style={{ left: "50%", bottom: "1.5rem", display: onGlobe ? "none" : undefined }} />
+      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.25rem", display: onGlobe ? "none" : undefined }} />
 
       {/* Dive film: above the globe, below the attribution, the title and the panels. */}
       {ready &&

@@ -218,6 +218,8 @@ export type GlobeProps = FarmTwinProps & {
   farms: Farm[];
   /** Highlighted farm (card open). */
   selectedId: string | null;
+  /** Element that receives Cesium's credit line (attribution stays visible; set at construction). */
+  creditContainer?: { current: HTMLElement | null };
   /** "globe" = free orbit of Earth; "farm" = flown in to selectedId and clamped to its radius. */
   view: GlobeView;
   reducedMotion: boolean;

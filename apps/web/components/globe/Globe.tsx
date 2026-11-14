@@ -590,7 +590,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
   useEffect(() => {
     let viewer: Viewer;
     try {
-      viewer = createViewer(containerRef.current!);
+      viewer = createViewer(containerRef.current!, live.current.creditContainer?.current);
     } catch (e) {
       live.current.onError(toError(e)); // WebGL unavailable
       return;
