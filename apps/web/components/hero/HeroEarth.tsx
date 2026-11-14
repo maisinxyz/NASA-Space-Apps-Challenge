@@ -28,7 +28,7 @@ const NIGHT = "/hero/earth/earth-night-3840.jpg";
 const CAM_DIST = (6371 + 20000) / 6371;
 /** Cesium's default frustum: 60 degrees across the wider screen dimension. */
 const CESIUM_FOV_RAD = THREE.MathUtils.degToRad(60);
-/** Auto-rotation: one turn in about three minutes (matches the Cesium globe). */
+/** Auto-rotation: one turn in about three minutes. Clockwise seen from above the north pole: the near surface drifts to the left (applied as a negative spin below). */
 const SPIN_RAD_S = THREE.MathUtils.degToRad(2);
 /** Drag: radians of rotation per pixel = 1 / Earth radius in px (the point under the cursor follows it). Inertia decay /s. */
 const INERTIA_DECAY = 3.2;
@@ -125,61 +125,122 @@ const earthFrag = /* glsl */ `
     float l = dot(c, vec3(0.299, 0.587, 0.114));
     return clamp(mix(vec3(l), c, 1.22), 0.0, 1.0);
   }
-  // Ocean swell: a few travelling waves on the sphere (analytic gradient, no noise texture). Returns d(height)/d(position).
-  vec3 swell(vec3 p, float t) {
+  float waterOf(vec3 c) { return smoothstep(0.012, 0.1, c.b - max(c.r, c.g)); }
+  float hash3(vec3 p) {
+    p = fract(p * 0.1031);
+    p += dot(p, p.zyx + 31.32);
+    return fract((p.x + p.y) * p.z);
+  }
+  float vnoise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    return mix(
+      mix(mix(hash3(i), hash3(i + vec3(1, 0, 0)), f.x), mix(hash3(i + vec3(0, 1, 0)), hash3(i + vec3(1, 1, 0)), f.x), f.y),
+      mix(mix(hash3(i + vec3(0, 0, 1)), hash3(i + vec3(1, 0, 1)), f.x), mix(hash3(i + vec3(0, 1, 1)), hash3(i + vec3(1, 1, 1)), f.x), f.y),
+      f.z);
+  }
+  vec3 rotY(vec3 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
+  }
+  // Cloud density at a surface direction: stretched east-west (bands), fewer in the subtropics, more at the equator and mid-latitudes.
+  float cloudAt(vec3 po, int oct) {
+    vec3 cp = rotY(po, time * 0.0035);
+    float lat = abs(cp.y);
+    float bias = 0.10 * (1.0 - smoothstep(0.0, 0.2, lat)) + 0.14 * smoothstep(0.42, 0.78, lat) - 0.10 * smoothstep(0.16, 0.3, lat) * (1.0 - smoothstep(0.3, 0.46, lat));
+    vec3 q = cp * vec3(2.6, 5.2, 2.6);
+    q += 0.6 * vec3(vnoise(q * 0.7 + 3.1), vnoise(q * 0.7 + 7.7), 0.0);
+    float f = 0.0, amp = 0.5;
+    for (int i = 0; i < 5; i++) {
+      if (i >= oct) break;
+      f += amp * vnoise(q);
+      q = q * 2.07 + 1.7;
+      amp *= 0.5;
+    }
+    return smoothstep(0.53 - bias, 0.82 - bias, f / (1.0 - pow(0.5, float(oct))) * 0.98);
+  }
+  // Ocean swell: travelling waves on the sphere (analytic gradient, no texture). Coarse swell plus a fine chop that fades out when it would alias.
+  vec3 swell(vec3 p, float t, float fine) {
     vec3 g = vec3(0.0);
     g += normalize(vec3( 0.83, 0.31, 0.46)) * cos(dot(p, vec3( 0.83, 0.31, 0.46)) * 71.0 + t * 0.34) * 0.80;
     g += normalize(vec3(-0.42, 0.77, 0.48)) * cos(dot(p, vec3(-0.42, 0.77, 0.48)) * 113.0 - t * 0.47) * 0.55;
     g += normalize(vec3( 0.15, -0.58, 0.80)) * cos(dot(p, vec3( 0.15, -0.58, 0.80)) * 167.0 + t * 0.61) * 0.40;
     g += normalize(vec3(-0.71, -0.24, 0.66)) * cos(dot(p, vec3(-0.71, -0.24, 0.66)) * 241.0 - t * 0.83) * 0.26;
     g += normalize(vec3( 0.52, 0.64, -0.56)) * cos(dot(p, vec3( 0.52, 0.64, -0.56)) * 331.0 + t * 1.07) * 0.16;
+    g += fine * normalize(vec3(-0.12, 0.52, 0.85)) * cos(dot(p, vec3(-0.12, 0.52, 0.85)) * 577.0 + t * 1.45) * 0.20;
+    g += fine * normalize(vec3( 0.66, -0.35, 0.67)) * cos(dot(p, vec3( 0.66, -0.35, 0.67)) * 823.0 - t * 1.8) * 0.13;
     return g;
   }
   void main() {
     vec3 n0 = normalize(vNormalV);
     vec3 v = normalize(-vPosV);
-    vec3 day = grade(texture2D(dayMap, vUv).rgb);
-    vec3 night = texture2D(nightMap, vUv).rgb;
-
-    // Water mask: blue clearly dominating (soft, so coasts blend).
-    float water = smoothstep(0.015, 0.11, day.b - max(day.r, day.g));
-
-    // Ocean: perturb the normal with the moving swell (restrained), land stays on the geometric normal.
     vec3 po = normalize(vObj);
-    vec3 gObj = swell(po, time);
+    vec3 sunO = sunV * vNM; // sun direction in object space (transpose of a rotation)
+
+    // Imagery with crisper coastlines (unsharp mask) and a coast-distance estimate from the land/water mask.
+    vec3 raw = texture2D(dayMap, vUv).rgb;
+    vec2 e1 = vec2(0.0004, 0.0008);
+    vec3 blur = 0.25 * (texture2D(dayMap, vUv + vec2(e1.x, 0.0)).rgb + texture2D(dayMap, vUv - vec2(e1.x, 0.0)).rgb + texture2D(dayMap, vUv + vec2(0.0, e1.y)).rgb + texture2D(dayMap, vUv - vec2(0.0, e1.y)).rgb);
+    vec3 day = grade(clamp(raw + (raw - blur) * 0.55, 0.0, 1.0));
+    vec3 night = texture2D(nightMap, vUv).rgb;
+    float water = waterOf(raw);
+    float wNear = 0.0;
+    wNear += waterOf(texture2D(dayMap, vUv + vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.006)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.006)).rgb);
+    wNear += waterOf(texture2D(dayMap, vUv + vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.016)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.016)).rgb);
+    float shallow = water * smoothstep(0.0, 0.7, 1.0 - wNear / 8.0);
+
+    // Ocean: normal perturbed by the moving swell at two scales (fine chop fades before it would alias).
+    float pxFreq = length(fwidth(po)) * 800.0;
+    float fine = 1.0 - smoothstep(0.7, 1.8, pxFreq);
+    vec3 gObj = swell(po, time, fine);
     gObj -= po * dot(gObj, po);
     vec3 n = normalize(n0 + normalize(vNM * gObj + 1e-5) * min(length(gObj), 2.0) * 0.011 * water);
 
     float ndl = dot(n0, sunV);
     float ndlW = dot(n, sunV);
-    // Soft terminator: wide, gentle roll-off from day into night.
     float dayMix = smoothstep(-0.2, 0.34, ndl);
     float diffuse = clamp(ndl * 0.8 + 0.22, 0.0, 1.0);
 
-    // Land relief from the imagery's own shading (screen derivatives of luminance), subtle.
+    // Clouds and their soft shadow on the surface below (the shadow is the same field sampled toward the sun, a little coarser).
+    float cl = cloudAt(po, 4);
+    vec3 sunTan = sunO - po * dot(sunO, po);
+    float cs = cloudAt(normalize(po + sunTan * 0.035), 3);
+
+    // Land: relief from the imagery's own shading and gentle colour variation; ocean: deeper face-on, lighter and bluer at the limb, turquoise on shallows, slow colour drift.
     float lum = dot(day, vec3(0.299, 0.587, 0.114));
     vec2 gl2 = vec2(dFdx(lum), dFdy(lum));
     float relief = clamp(dot(gl2, normalize(sunV.xy + 1e-4)) * 14.0, -0.12, 0.12);
-
-    // Ocean colour: deeper where the view is face-on, a little lighter and more teal toward the limb.
+    float vary = (vnoise(po * 28.0) - 0.5) * 0.10 + (vnoise(po * 70.0 + 5.0) - 0.5) * 0.06;
+    vec3 landC = day * (1.0 + relief + vary) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), step(0.5, vnoise(po * 9.0)));
     vec3 deep = day * vec3(1.0, 1.12, 1.22) + vec3(0.004, 0.012, 0.03);
     float ang = 1.0 - max(dot(n0, v), 0.0);
     vec3 oceanC = mix(deep, day * vec3(1.05, 1.08, 1.06) + vec3(0.0, 0.015, 0.03), pow(ang, 2.0) * 0.6);
-    vec3 base = mix(day * (1.0 + relief), oceanC, water);
+    oceanC = mix(oceanC, oceanC * vec3(0.6, 1.3, 1.28) + vec3(0.0, 0.03, 0.04), shallow * 0.5);
+    oceanC *= 1.0 + (vnoise(po * 6.0 + 2.0) - 0.5) * 0.14;
+    vec3 base = mix(landC, oceanC, water);
+    base *= 1.0 - 0.38 * cs * (0.4 + 0.6 * dayMix);
 
     vec3 lit = base * (0.07 + 1.38 * diffuse);
     vec3 col = mix(night * vec3(1.0, 0.85, 0.6) * 0.9, lit, dayMix);
 
-    // Sun on the sea: a broad soft sheen plus a tighter glint that sparkles as the swell moves.
+    // Sun on the sea: a faint broad sheen and a small glint that sparkles with the swell; clouds mask it.
     vec3 h = normalize(sunV + v);
     float nh = max(dot(n, h), 0.0);
     float sheen = pow(nh, 260.0) * 0.025 + pow(nh, 900.0) * 0.4;
-    col += vec3(0.92, 0.96, 1.0) * sheen * water * smoothstep(0.0, 0.3, ndlW) * dayMix;
+    col += vec3(0.92, 0.96, 1.0) * sheen * water * smoothstep(0.0, 0.3, ndlW) * dayMix * (1.0 - cl);
 
-    // Inner rim: thin atmosphere seen edge-on, strongest on the lit side.
+    // Cloud layer: white, lit like the ground but a little brighter, thinner edges fade; self-shaded on the side away from the sun.
+    float cloudDay = smoothstep(-0.25, 0.22, ndl);
+    float selfShade = 1.0 - 0.28 * clamp(cs - cl * 0.6, 0.0, 1.0);
+    vec3 cloudCol = vec3(0.95, 0.97, 1.0) * (0.05 + 1.12 * clamp(ndl * 0.85 + 0.2, 0.0, 1.0)) * selfShade;
+    col = mix(col, cloudCol, cl * 0.66 * cloudDay);
+
+    // Limb: a thin atmosphere seen edge-on (bluer, strongest on the lit side), plus a faint scatter at the terminator.
     float fres = pow(1.0 - max(dot(n0, v), 0.0), 3.0);
+    float limb = pow(1.0 - max(dot(n0, v), 0.0), 4.5);
+    col += vec3(0.28, 0.5, 0.95) * limb * (0.15 + 0.85 * dayMix) * 0.55;
     col += rimColor * fres * (0.12 + 0.88 * dayMix) * 0.7 * rimOn;
-    // A faint warm-to-blue scatter right at the terminator.
     float term = exp(-pow(ndl / 0.16, 2.0));
     col += vec3(0.05, 0.07, 0.12) * term * (0.4 + 0.6 * fres) * rimOn;
     gl_FragColor = vec4(col, 1.0);
@@ -317,7 +378,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         m.vSpin *= decay;
         m.vTilt *= decay;
       } else if (q.autoRotate && !q.reducedMotion) {
-        m.spin += SPIN_RAD_S * dt;
+        m.spin -= SPIN_RAD_S * dt;
       }
     }
     if (spun.current) spun.current.rotation.y = m.spin;
