@@ -31,6 +31,11 @@ function Photo({ farm }: { farm: FarmInfo }) {
       ) : (
         <div aria-hidden className="h-full w-full bg-gradient-to-br from-white/[0.06] to-white/[0.015]" />
       )}
+      {photo && !failed && photo.credit && (
+        <p className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent px-2.5 pt-5 pb-1.5 text-[10px] leading-tight text-white/[0.72]" title={photo.credit}>
+          {photo.credit}
+        </p>
+      )}
     </div>
   );
 }
