@@ -5,7 +5,7 @@
 //    the contract types (components/globe/types.ts, lib/twin/scenario.ts) or ground/**.
 //  - Read run.inputs by the input ids in lib/twin/scenarios/registry.ts; run.progress is 0..1; run.timeS is wall seconds.
 //  - Only rainRateMmH is data-driven; everything else is mood. The UI captions it "Illustrative weather effect".
-//  - Test on /dev/scenarios (turn on "Fixture run source"); the real twin never calls these until the backend exists.
+//  - Test on /dev/scenarios (turn on "Fixture run source"); the real twin calls these for full-twin farms only, labelled "Synthetic demo data" (see runSource.ts).
 import type { AtmosphereEvaluator, ScenarioId } from "../../scenario";
 import { calm, drought, frost, heatWave, storm, wetSpell } from "./evaluators";
 

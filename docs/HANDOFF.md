@@ -43,7 +43,7 @@ Two owners split the visuals:
 - **Ground (S2-G):** `components/viewer/cesium/ground/**` and `lib/twin/scenarios/ground/**`. One GroundPrimitive with an uber material, baked field and height textures, NASA GIBS WMTS imagery layer (MERRA-2 monthly 2 m air temperature for trends), per-scenario evaluators, a "too wet to work" readout and a trends chart panel (written, not mounted). Notes: `docs/progress/s2-G.md`.
 - **Simulate screen:** `components/farm/ScenarioPanel.tsx`, `useScenarioRun.ts`, clock in `lib/twin/scenarios/clock.ts`. Notes: `docs/progress/s2-step0-scenarios-product.md`.
 
-**Rule that matters:** the real twin never renders scenario effects. The run source (`lib/twin/scenarios/runSource.ts`) is `"none"` there, and Simulate shows "This scenario runs when the backend delivers data for this farm." Effects render only on `/dev/scenarios` with fixture inputs. Mock data must never reach the demo (CLAUDE.md).
+**Rule that matters:** the run source (`lib/twin/scenarios/runSource.ts`, `runSourceFor`) is per farm. Full-twin farms (`tier: "twin"`: Cornell, Beltsville) run scenario effects from fixture inputs, always badged "Synthetic demo data" (approved by the user 2026-11-14). Explore-only farms stay `"none"`: Simulate shows "This scenario runs when the backend delivers data for this farm." and no effect renders. Other mock data must never reach the demo (CLAUDE.md).
 
 ## Performance
 

@@ -5,7 +5,7 @@
 //    the contract types (components/globe/types.ts, lib/twin/scenario.ts) or atmosphere/**.
 //  - Read run.inputs by the input ids in lib/twin/scenarios/registry.ts; run.progress is 0..1; run.rotationId is the chosen rotation.
 //  - No invented results in the real twin: real layers need backend data. Sample values are for /dev/scenarios only
-//    (turn on "Fixture run source"); the real twin never calls these until the backend exists.
+//    (turn on "Fixture run source"); the real twin calls these for full-twin farms only, labelled "Synthetic demo data" (see runSource.ts).
 import type { GroundEvaluator, ScenarioId } from "../../scenario";
 import { storm } from "./storm";
 import { wetSpell } from "./wetSpell";

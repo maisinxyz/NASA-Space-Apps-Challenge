@@ -32,7 +32,7 @@ import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
 import { selectFarm, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
-import type { RunSource } from "@/lib/twin/scenarios/runSource";
+import { runSourceFor, type RunSource } from "@/lib/twin/scenarios/runSource";
 
 import { EXPLORE_NOTE, FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
@@ -110,10 +110,10 @@ type Phase = "dive" | "hold" | "title" | "explore";
 const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
 /**
- * `runSource` is "none" in the product: the backend delivers no scenario runs yet, so Simulate renders no effect.
- * Only the dev page /dev/scenarios passes "fixture".
+ * `runSourceProp` is only the dev page's override. In the product the run source is per farm (runSourceFor): "fixture"
+ * (labelled "Synthetic demo data") for full-twin farms, "none" for explore-only farms.
  */
-export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}) {
+export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource } = {}) {
   const farmId = useAppStore((s) => s.farmId);
   const view = useAppStore((s) => s.globeView);
   const reducedMotion = !!useReducedMotion();
@@ -272,6 +272,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
   };
 
   const farm = farmById(farmId);
+  const runSource = runSourceFor(farm, runSourceProp);
   const showGlobe = wide && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
   // Twin fields are built once the camera has landed (building them mid-dive costs frames).

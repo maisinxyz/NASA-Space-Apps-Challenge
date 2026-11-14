@@ -9,7 +9,7 @@ import { BasisChip } from "@/components/ui/Provenance";
 import { useAppStore } from "@/lib/store";
 import { clampInput, clockLabel, clockSpec, currentStep, resolveInputs, SPEEDS, stepProgress } from "@/lib/twin/scenarios/clock";
 import { FAMILY_LABEL, FAMILY_ORDER, SCENARIO_DEFS, scenarioById } from "@/lib/twin/scenarios/registry";
-import { EMPTY_RUN_MESSAGE, type RunSource } from "@/lib/twin/scenarios/runSource";
+import { EMPTY_RUN_MESSAGE, SYNTHETIC_BADGE, SYNTHETIC_NOTE, type RunSource } from "@/lib/twin/scenarios/runSource";
 import { scenarioLegend } from "@/lib/twin/scenarios/legend";
 import type { OutputKind, ScenarioDef, ScenarioFamily, ScenarioFrame, ScenarioInput, ScenarioRun, TimeKind } from "@/lib/twin/scenario";
 
@@ -66,7 +66,17 @@ const openScenario = (id: ScenarioDef["id"] | null) => useAppStore.setState({ sc
 export function SimulateBody({ runSource, frame }: { runSource: RunSource; frame: ScenarioFrame | null }) {
   const id = useAppStore((s) => s.scenarioId);
   const def = scenarioById(id);
-  return def ? <ScenarioDetail def={def} runSource={runSource} frame={frame} /> : <ScenarioCards />;
+  return (
+    <div className="grid gap-3">
+      {runSource === "fixture" && (
+        <p className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted" title={SYNTHETIC_NOTE}>
+          <span className="rounded-full border border-amber-300/60 bg-amber-300/15 px-2 text-[0.7rem] leading-5 font-semibold text-amber-200">{SYNTHETIC_BADGE}</span>
+          {SYNTHETIC_NOTE}
+        </p>
+      )}
+      {def ? <ScenarioDetail def={def} runSource={runSource} frame={frame} /> : <ScenarioCards />}
+    </div>
+  );
 }
 
 function ScenarioCards() {
