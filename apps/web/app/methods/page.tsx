@@ -10,7 +10,7 @@ import { MetricValue } from "@/components/ui/MetricValue";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { getProvenance, getSites, isMock } from "@/lib/api/client";
-import { FARMS } from "@/lib/farms";
+import { FARMS, pinnedCandidateDatasets } from "@/lib/farms";
 import { TIER_LABEL } from "@/components/globe/FarmList";
 import type { BasisOrRelative, Provenance } from "@/lib/api/types";
 
@@ -300,6 +300,29 @@ export default function MethodsPage() {
         </div>
         <p className="mt-4 text-sm text-ink-muted">Look filters (thermal, vegetation, night) are illustrative styling of the imagery, not sensor data.</p>
       </Section>
+
+      {pinnedCandidateDatasets().length > 0 && (
+        <Section id="candidate-sources" title="Open data for the newer farm pins">
+          <p className="text-ink-muted">Elevation and field-outline datasets identified for the explore-only farms added after scouting. Not used in a simulation yet.</p>
+          <div className="mt-4 grid gap-4">
+            {pinnedCandidateDatasets().map((d) => (
+              <Card key={d.id}>
+                <h3 className="font-semibold text-ink">{d.name}</h3>
+                <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
+                  <dt className="text-ink-muted">Licence</dt>
+                  <dd>{d.licence}</dd>
+                  <dt className="text-ink-muted">Attribution</dt>
+                  <dd>{d.attribution}</dd>
+                  <dt className="text-ink-muted">Source</dt>
+                  <dd>
+                    <SourceLink url={d.url} />
+                  </dd>
+                </dl>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <Section id="farms" title="Farms on the globe">
         <p className="text-ink-muted">Where each pin comes from. Private farmland is described by area only: no owners or addresses.</p>
