@@ -40,13 +40,18 @@ import {
   clampOrbit,
   clampTarget,
   fromOffsetM,
+  groundHit,
   localMorningUtcMs,
   type LonLat,
   MIN_HEIGHT_ABOVE_GROUND_M,
+  type Offset,
   offsetM,
   type Orbit,
   orbitFromCamera,
+  panMarginFor,
+  panTarget,
   startFraming,
+  zoomTarget,
 } from "@/components/viewer/cesium/clamp";
 import { activeLook, createLookLayer, type LookLayer } from "@/components/viewer/cesium/look";
 import { createGroundRenderer, type GroundRenderer } from "@/components/viewer/cesium/ground";
@@ -81,6 +86,8 @@ const CONTINENT_HEIGHT_M = 7.0e6;
 /** Drag sensitivity, radians per pixel; wheel zoom is exponential in deltaY. */
 const ORBIT_RAD_PER_PX = 0.005;
 const WHEEL_ZOOM_PER_DELTA = 0.0015;
+/** Grab-to-pan / zoom-to-cursor ignore ground points farther than this from the target (near the horizon), metres. */
+const MAX_GRAB_M = 3000;
 const FLY_SECONDS = 3;
 /** Fly-in safety nets: give up waiting for the terrain height after this, and force the landing this long after the flight should have ended. */
 const GROUND_TIMEOUT_S = 4;
@@ -310,12 +317,25 @@ function leaveOrbit(r: Runtime) {
   r.viewer.camera.lookAtTransform(Matrix4.IDENTITY);
 }
 
-/** Apply the orbit state: hard clamps (target inside the square, range, pitch, 20 m floor), then lookAtTransform at the target. */
+/**
+ * Ground point under a canvas pixel, as an east/north offset from the orbit target (ray against the flat plane at the
+ * target's ground height). Null when the ray misses the ground or hits it beyond MAX_GRAB_M.
+ */
+function groundOffsetAt(r: Runtime, x: number, y: number): Offset | null {
+  const s = r.orbit;
+  const ray = s && r.viewer.camera.getPickRay(new Cartesian2(x, y));
+  if (!s || !ray) return null;
+  const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(s.target.lon, s.target.lat, s.ground));
+  const inv = Matrix4.inverseTransformation(frame, new Matrix4());
+  return groundHit(Matrix4.multiplyByPoint(inv, ray.origin, new Cartesian3()), Matrix4.multiplyByPointAsVector(inv, ray.direction, new Cartesian3()), MAX_GRAB_M);
+}
+
+/** Apply the orbit state: clamps (target within the square + pan margin, range, pitch, 20 m floor), then lookAtTransform at the target. */
 function applyOrbit(r: Runtime, p: GlobeProps, farm: Farm) {
   const s = r.orbit;
   if (!s) return;
   const box = boxOf(p, farm);
-  s.target = fromOffsetM(box, clampTarget(offsetM(s.target, box), box));
+  s.target = fromOffsetM(box, clampTarget(offsetM(s.target, box), box, panMarginFor(farm.minRangeM)));
   // The camera must stay MIN_HEIGHT_ABOVE_GROUND_M over the ground under it (last frame's value): tilt downward if needed.
   s.o = clampOrbit(s.o, s.camGround + MIN_HEIGHT_ABOVE_GROUND_M - s.ground, farm.minRangeM);
   const frame = Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(s.target.lon, s.target.lat, s.ground));
@@ -707,61 +727,103 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       stylePins(r, live.current.selectedId);
     }, ScreenSpaceEventType.MOUSE_MOVE);
 
-    // Farm-view input: our own turntable controls (Cesium's controller is off in farm view). Hard limits, no easing.
-    // Left drag = orbit (heading) + tilt, right drag / ctrl+left drag = tilt, middle / shift+left drag = pan the
-    // target (hard-stopped at the square), wheel / pinch = zoom. Every change goes through clampOrbit / clampTarget.
-    const pointers = new Map<number, { x: number; y: number }>();
-    let pinch = 0;
+    // Farm-view input: our own turntable controls (Cesium's controller is off in farm view). No inertia, no keys.
+    // Mouse: left / middle drag = pan (the grabbed ground point stays under the cursor), right / shift+left (or
+    // ctrl+left) drag = rotate (heading) + tilt, wheel = zoom toward the point under the cursor.
+    // Touch: one finger = pan, pinch = zoom toward the fingers' midpoint, twist = rotate, two fingers dragged up/down
+    // together = tilt. Panning eases to a soft stop at the square + pan margin (clamp.ts panTarget); every change then
+    // goes through applyOrbit's clamps.
+    const pointers = new Map<number, { x: number; y: number; dy: number }>();
+    /** Pan: the grabbed ground point, as an offset from the box centre (null = grab on the next move). */
+    let anchor: Offset | null = null;
+    /** Two-finger gesture: midpoint, finger distance and angle of the line between them (canvas px). */
+    let pair: { mx: number; my: number; d: number; ang: number } | null = null;
     const farmNow = () => live.current.farms.find((f) => f.id === live.current.selectedId);
+    const at = (e: PointerEvent | WheelEvent) => {
+      const b = canvas.getBoundingClientRect();
+      return { x: e.clientX - b.left, y: e.clientY - b.top };
+    };
+    const pairOf = () => {
+      const [a, b] = [...pointers.values()];
+      return { mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x) };
+    };
+    const regroup = () => {
+      anchor = null;
+      pair = pointers.size === 2 ? pairOf() : null;
+    };
+    /** Zoom by `factor` keeping the ground point under canvas pixel (x, y) fixed; zooming out drifts back to the centre. */
+    const zoomAt = (st: OrbitState, farm: Farm, factor: number, x: number, y: number) => {
+      const box = boxOf(live.current, farm);
+      const range = clampOrbit({ ...st.o, range: st.o.range * factor }, 0, farm.minRangeM).range;
+      const cursor = groundOffsetAt(r, x, y) ?? { x: 0, y: 0 };
+      st.target = fromOffsetM(box, zoomTarget(offsetM(st.target, box), cursor, st.o.range, range, box, panMarginFor(farm.minRangeM)));
+      st.o = { ...st.o, range };
+    };
+    /** Pan so the anchored ground point sits under pixel (x, y). Returns false when nothing moved. */
+    const panTo = (st: OrbitState, farm: Farm, x: number, y: number) => {
+      const q = groundOffsetAt(r, x, y);
+      if (!q) return false;
+      const box = boxOf(live.current, farm);
+      const t = offsetM(st.target, box);
+      if (!anchor) {
+        anchor = { x: t.x + q.x, y: t.y + q.y };
+        return false;
+      }
+      const nt = panTarget(t, { x: anchor.x - t.x - q.x, y: anchor.y - t.y - q.y }, box, panMarginFor(farm.minRangeM));
+      st.target = fromOffsetM(box, nt);
+      // Re-grab where the cursor now is: the soft stop's lost movement is not re-applied on the next move.
+      anchor = { x: nt.x + q.x, y: nt.y + q.y };
+      return true;
+    };
     const onDown = (e: PointerEvent) => {
       if (!r.orbit || r.flying) return;
       canvas.setPointerCapture(e.pointerId);
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pointers.size === 2) {
-        const [a, b] = [...pointers.values()];
-        pinch = Math.hypot(a.x - b.x, a.y - b.y);
-      }
+      pointers.set(e.pointerId, { ...at(e), dy: 0 });
+      regroup();
     };
     const onMove = (e: PointerEvent) => {
       const st = r.orbit;
       const was = pointers.get(e.pointerId);
       const farm = farmNow();
       if (!st || !was || !farm || r.flying) return;
-      const dx = e.clientX - was.x;
-      const dy = e.clientY - was.y;
-      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const p = at(e);
+      const dx = p.x - was.x;
+      const dy = p.y - was.y;
+      pointers.set(e.pointerId, { ...p, dy });
       if (pointers.size === 2) {
-        const [a, b] = [...pointers.values()];
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (pinch > 0 && d > 0) st.o = { ...st.o, range: st.o.range * (pinch / d) };
-        pinch = d;
-      } else if (e.buttons & 4 || (e.buttons & 1 && e.shiftKey)) {
-        // Pan: the ground follows the cursor. In (east, north): forward = (sin h, cos h), right = (cos h, -sin h).
-        const k = st.o.range * 0.0015;
-        const h = st.o.heading;
-        const c = offsetM(st.target, boxOf(live.current, farm));
-        st.target = fromOffsetM(boxOf(live.current, farm), {
-          x: c.x - Math.cos(h) * dx * k + Math.sin(h) * dy * k,
-          y: c.y + Math.sin(h) * dx * k + Math.cos(h) * dy * k,
-        });
-      } else if (e.buttons & 2 || (e.buttons & 1 && e.ctrlKey)) {
-        st.o = { ...st.o, pitch: st.o.pitch - dy * ORBIT_RAD_PER_PX };
-      } else if (e.buttons & 1) {
+        const before = pair;
+        pair = pairOf();
+        if (!before || before.d <= 0 || pair.d <= 0) return;
+        zoomAt(st, farm, before.d / pair.d, pair.mx, pair.my);
+        // Twist: the scene turns with the fingers (screen angles grow clockwise; heading grows the other way on screen).
+        const twist = Math.atan2(Math.sin(pair.ang - before.ang), Math.cos(pair.ang - before.ang));
+        const other = [...pointers].find(([id]) => id !== e.pointerId)?.[1];
+        // Tilt only when both fingers last moved the same way vertically (a vertical pinch moves them apart).
+        const tilt = other && dy * other.dy > 0 ? dy * 0.5 * ORBIT_RAD_PER_PX : 0;
+        st.o = { ...st.o, heading: st.o.heading - twist, pitch: st.o.pitch - tilt };
+      } else if (pointers.size > 2) {
+        return;
+      } else if (e.buttons & 2 || (e.buttons & 1 && (e.shiftKey || e.ctrlKey))) {
+        anchor = null;
         st.o = { ...st.o, heading: st.o.heading - dx * ORBIT_RAD_PER_PX, pitch: st.o.pitch - dy * ORBIT_RAD_PER_PX };
+      } else if (e.buttons & 5) {
+        if (!panTo(st, farm, p.x, p.y)) return;
       } else return;
       r.motion.touch(performance.now());
       applyOrbit(r, live.current, farm);
     };
     const onUp = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
-      pinch = 0;
+      regroup();
     };
     const onWheel = (e: WheelEvent) => {
       const st = r.orbit;
       const farm = farmNow();
       if (!st || !farm || r.flying) return;
       e.preventDefault();
-      st.o = { ...st.o, range: st.o.range * Math.exp(e.deltaY * WHEEL_ZOOM_PER_DELTA) };
+      const p = at(e);
+      zoomAt(st, farm, Math.exp(e.deltaY * WHEEL_ZOOM_PER_DELTA), p.x, p.y);
+      anchor = null; // a drag in progress re-grabs after the zoom
       r.motion.touch(performance.now());
       applyOrbit(r, live.current, farm);
     };

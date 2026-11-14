@@ -1,6 +1,6 @@
 // Pure camera maths for the farm-view turntable orbit (unit-tested, no Cesium import).
 // The Globe keeps an orbit state {target offset, heading, pitch, range} around the simulation square and applies
-// these hard clamps (no easing) before every frame.
+// these clamps before every frame (hard stops; panning eases to a soft stop at the pan margin, see panTarget).
 
 /** Lowest the camera may sit above the ground under it, metres. Product choice ("roughly 20 m"). */
 export const MIN_HEIGHT_ABOVE_GROUND_M = 20;
@@ -50,9 +50,58 @@ export function boxOfRadius(c: LonLat, radiusM: number): Box {
   return { ...c, halfX: h, halfY: h };
 }
 
-/** Hard stop: the target offset cannot leave the box. */
-export function clampTarget(o: Offset, box: Pick<Box, "halfX" | "halfY">): Offset {
-  return { x: Math.min(box.halfX, Math.max(-box.halfX, o.x)), y: Math.min(box.halfY, Math.max(-box.halfY, o.y)) };
+/**
+ * How far the target may leave the simulation square, metres. Product choices: 300 m normally, 50 m for farms with
+ * a minimum range (private farmland), so the view cannot wander over the neighbours.
+ */
+export const PAN_MARGIN_M = 300;
+export const PAN_MARGIN_PRIVATE_M = 50;
+export const panMarginFor = (minRangeM?: number) => (minRangeM ? PAN_MARGIN_PRIVATE_M : PAN_MARGIN_M);
+
+/** Hard stop: the target offset cannot leave the box grown by `margin` metres. */
+export function clampTarget(o: Offset, box: Pick<Box, "halfX" | "halfY">, margin = 0): Offset {
+  const hx = box.halfX + margin;
+  const hy = box.halfY + margin;
+  return { x: Math.min(hx, Math.max(-hx, o.x)), y: Math.min(hy, Math.max(-hy, o.y)) };
+}
+
+/**
+ * Soft stop for panning: move the target by `d`, but outward movement beyond the box edge is scaled by 1 - u^2
+ * (u = how far into the margin, 0..1), so it eases to a stop at box + margin; then the hard stop. Inward is free.
+ */
+export function panTarget(o: Offset, d: Offset, box: Pick<Box, "halfX" | "halfY">, margin: number): Offset {
+  const axis = (p: number, dp: number, half: number) => {
+    const u = margin > 0 ? Math.min(1, Math.max(0, (Math.abs(p) - half) / margin)) : 1;
+    return p * dp > 0 && Math.abs(p) > half ? p + dp * (1 - u * u) : p + dp;
+  };
+  return clampTarget({ x: axis(o.x, d.x, box.halfX), y: axis(o.y, d.y, box.halfY) }, box, margin);
+}
+
+/**
+ * Zoom toward a ground point: `cursor` = the ground point under the cursor relative to the target (ENU metres). With
+ * heading/pitch fixed that offset scales with the range, so moving the target by cursor * (1 - newRange/range) keeps
+ * the point under the cursor. Zooming out also pulls the target back toward the box centre (fully centred at
+ * MAX_RANGE_M) so the view cannot get lost. Hard stop at box + margin.
+ */
+export function zoomTarget(t: Offset, cursor: Offset, range: number, newRange: number, box: Pick<Box, "halfX" | "halfY">, margin: number): Offset {
+  const f = newRange / range;
+  let x = t.x + cursor.x * (1 - f);
+  let y = t.y + cursor.y * (1 - f);
+  if (newRange > range) {
+    const keep = 1 - Math.min(1, (newRange - range) / Math.max(1e-9, MAX_RANGE_M - range));
+    x *= keep;
+    y *= keep;
+  }
+  return clampTarget({ x, y }, box, margin);
+}
+
+type Vec3 = { x: number; y: number; z: number };
+/** Where a ray (in a local ENU frame) hits the z = 0 ground plane, or null if it points up or hits beyond `maxM`. */
+export function groundHit(origin: Vec3, dir: Vec3, maxM: number): Offset | null {
+  if (dir.z >= -1e-9 || origin.z <= 0) return null;
+  const t = -origin.z / dir.z;
+  const hit = { x: origin.x + t * dir.x, y: origin.y + t * dir.y };
+  return Math.hypot(hit.x, hit.y) > maxM ? null : hit;
 }
 
 /**

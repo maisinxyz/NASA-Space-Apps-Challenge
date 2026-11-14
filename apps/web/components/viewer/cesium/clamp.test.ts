@@ -6,6 +6,7 @@ import {
   clampOrbit,
   clampTarget,
   fromOffsetM,
+  groundHit,
   localMorningUtcMs,
   MAX_PITCH_RAD,
   MAX_RANGE_M,
@@ -13,7 +14,12 @@ import {
   MIN_RANGE_M,
   offsetM,
   orbitFromCamera,
+  PAN_MARGIN_M,
+  PAN_MARGIN_PRIVATE_M,
+  panMarginFor,
+  panTarget,
   startFraming,
+  zoomTarget,
 } from "./clamp";
 
 const bbox: [number, number, number, number] = [-121.765, 49.238, -121.755, 49.246];
@@ -69,6 +75,62 @@ describe("clampTarget (hard stop)", () => {
   it("leaves inside points alone and clips outside ones", () => {
     expect(clampTarget({ x: 10, y: -20 }, box)).toEqual({ x: 10, y: -20 });
     expect(clampTarget({ x: 999, y: -999 }, box)).toEqual({ x: 300, y: -200 });
+  });
+  it("grows the box by the margin", () => {
+    expect(clampTarget({ x: 999, y: -999 }, box, 300)).toEqual({ x: 600, y: -500 });
+  });
+});
+
+describe("panTarget (soft stop)", () => {
+  const box = { halfX: 300, halfY: 200 };
+  it("moves freely inside the square and inward from outside", () => {
+    expect(panTarget({ x: 0, y: 0 }, { x: 50, y: -40 }, box, 300)).toEqual({ x: 50, y: -40 });
+    expect(panTarget({ x: 500, y: 0 }, { x: -50, y: 0 }, box, 300)).toEqual({ x: 450, y: 0 });
+  });
+  it("slows outward movement beyond the edge and stops at square + margin", () => {
+    const near = panTarget({ x: 310, y: 0 }, { x: 10, y: 0 }, box, 300).x - 310;
+    const far = panTarget({ x: 550, y: 0 }, { x: 10, y: 0 }, box, 300).x - 550;
+    expect(near).toBeLessThan(10);
+    expect(far).toBeLessThan(near);
+    let p = { x: 0, y: 0 };
+    for (let i = 0; i < 2000; i++) p = panTarget(p, { x: 20, y: 20 }, box, 300);
+    expect(p.x).toBeLessThanOrEqual(600);
+    expect(p.x).toBeGreaterThan(590);
+    expect(p.y).toBeLessThanOrEqual(500);
+    expect(panTarget({ x: 600, y: 0 }, { x: 50, y: 0 }, box, 300).x).toBe(600);
+  });
+  it("uses the small private-farmland margin", () => {
+    expect(panMarginFor(250)).toBe(PAN_MARGIN_PRIVATE_M);
+    expect(panMarginFor(undefined)).toBe(PAN_MARGIN_M);
+    expect(panTarget({ x: 0, y: 0 }, { x: 999, y: 0 }, box, PAN_MARGIN_PRIVATE_M).x).toBe(350);
+  });
+});
+
+describe("zoomTarget", () => {
+  const box = { halfX: 300, halfY: 200 };
+  it("keeps the ground point under the cursor when zooming in", () => {
+    // cursor point at target + 100 east; halving the range: new offset 50 -> target moves 50 east.
+    expect(zoomTarget({ x: 0, y: 0 }, { x: 100, y: 0 }, 800, 400, box, 300)).toEqual({ x: 50, y: 0 });
+    const t = zoomTarget({ x: 10, y: 20 }, { x: -60, y: 80 }, 600, 300, box, 300);
+    expect(t.x + -60 * 0.5).toBeCloseTo(10 - 60, 9);
+    expect(t.y + 80 * 0.5).toBeCloseTo(20 + 80, 9);
+  });
+  it("drifts back to the centre when zooming out, fully at max range", () => {
+    const t = zoomTarget({ x: 200, y: 0 }, { x: 0, y: 0 }, 500, 1000, box, 300);
+    expect(t.x).toBeGreaterThan(0);
+    expect(t.x).toBeLessThan(200);
+    expect(zoomTarget({ x: 200, y: 100 }, { x: 50, y: 50 }, 500, MAX_RANGE_M, box, 300)).toEqual({ x: 0, y: 0 });
+  });
+  it("hard-stops at square + margin", () => {
+    expect(zoomTarget({ x: 0, y: 0 }, { x: 5000, y: 0 }, 1000, 200, box, 300).x).toBe(600);
+  });
+});
+
+describe("groundHit", () => {
+  it("intersects the ground plane, rejects rays that miss or hit too far", () => {
+    expect(groundHit({ x: 0, y: 0, z: 100 }, { x: 0, y: 1, z: -1 }, 3000)).toEqual({ x: 0, y: 100 });
+    expect(groundHit({ x: 0, y: 0, z: 100 }, { x: 0, y: 1, z: 0.1 }, 3000)).toBeNull();
+    expect(groundHit({ x: 0, y: 0, z: 100 }, { x: 0, y: 1, z: -0.01 }, 3000)).toBeNull();
   });
 });
 
