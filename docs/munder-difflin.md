@@ -10,7 +10,7 @@ part of the FieldTwin product, nothing from it ships in `apps/` or `services/`, 
 is required to use it. Plain Claude Code sessions following `CLAUDE.md` remain the default.
 
 Sources: repo README, `HIVE.md` and `TELEMETRY.md` at
-<https://github.com/HarnessMD/munder-difflin> (read 2026-11-14, v0.5.6).
+<https://github.com/HarnessMD/munder-difflin> (read 2026-11-14; README says v0.5.6, latest GitHub release is v0.5.5).
 
 ## How it maps onto our plan
 
