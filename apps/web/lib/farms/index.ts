@@ -8,7 +8,6 @@ import { ROTATION_SETS, type RotationSetId, type TwinRotation } from "@/lib/twin
 
 import { BELTSVILLE, BELTSVILLE_TWIN } from "./beltsville";
 import { CORNELL, CORNELL_TWIN } from "./cornell";
-import { LANCASTER } from "./lancaster";
 import { OAKVILLE } from "./oakville";
 
 export type Bbox = [number, number, number, number];
@@ -40,7 +39,7 @@ export type TwinSpec = {
 
 export type TwinConfig = TwinSpec & { rotations: TwinRotation[] };
 
-export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, LANCASTER, OAKVILLE];
+export const FARMS: FarmInfo[] = [CORNELL, BELTSVILLE, OAKVILLE];
 
 export const farmById = (id: string | null) => FARMS.find((f) => f.id === id) ?? null;
 

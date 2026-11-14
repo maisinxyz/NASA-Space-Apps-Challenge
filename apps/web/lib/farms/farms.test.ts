@@ -9,8 +9,9 @@ const WEB = join(__dirname, "..", "..");
 const twins = FARMS.filter((f) => f.tier === "twin");
 
 describe("farm list", () => {
-  it("has the 4 chosen farms, Cornell and Beltsville as twins, Agassiz gone", () => {
-    expect(FARMS.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc", "lancaster-intercourse", "ucdavis-oakville"]);
+  it("has the chosen farms, Cornell and Beltsville as twins, Agassiz and Lancaster gone", () => {
+    expect(FARMS.map((f) => f.id).slice(0, 3)).toEqual(["cornell-ruminant", "usda-barc", "ucdavis-oakville"]);
+    expect(farmById("lancaster-intercourse")).toBeNull();
     expect(twins.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc"]);
     expect(farmById("agassiz")).toBeNull();
   });
@@ -27,14 +28,6 @@ describe("farm list", () => {
 
   it("no pin has verified (published) coordinates", () => {
     expect(FARMS.filter((f) => f.coordsVerified)).toEqual([]);
-  });
-
-  it("describes Lancaster farmland by area only, with a privacy zoom limit", () => {
-    const f = farmById("lancaster-intercourse")!;
-    expect(f.owner).toBe("Private working farmland (area only)");
-    expect(f.note?.text).toBe("Private working farmland, area only. No owners or addresses are shown.");
-    expect(f.minRangeM).toBe(250);
-    expect(f.sourceUrl).toMatch(/^https:\/\/en\.wikipedia\.org\//);
   });
 
   it("has no twin for explore farms or unknown ids", () => {

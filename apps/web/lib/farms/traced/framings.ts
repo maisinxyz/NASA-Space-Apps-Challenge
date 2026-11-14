@@ -5,13 +5,5 @@ import type { Farm } from "@/components/globe/types";
 
 type Framing = NonNullable<Farm["framing"]>;
 
-/**
- * Farmland near Intercourse PA: strip-cropped fields and farmsteads ~900 m E / 600 m N of the village centre
- * (-76.1075, 40.0383), looking NNW. Private farmland: pair with minRangeM 250 (no closer views). The target is
- * ~1.1 km from the village point, so the farm's radiusM must be at least ~1300 m (box half-side = radius / sqrt 2).
- */
-export const LANCASTER_FRAMING: Framing = { lon: -76.097011, lat: 40.043747, rangeM: 500, pitchDeg: -30, headingDeg: 330 };
-export const LANCASTER_MIN_RANGE_M = 250;
-
 /** Oakville Grade area, Napa: vineyard blocks, oak woodland and ponds, looking WNW toward the hillside vineyards. */
 export const OAKVILLE_FRAMING: Framing = { lon: -122.412502, lat: 38.420301, rangeM: 500, pitchDeg: -30, headingDeg: 300 };

@@ -9,7 +9,6 @@ import { FarmList } from "./FarmList";
 const noop = () => {};
 const hero = FARMS.find((f) => f.tier === "twin")!;
 const oakville = farmById("ucdavis-oakville")!;
-const lancaster = farmById("lancaster-intercourse")!;
 
 describe("FarmCard", () => {
   it("shows the hero farm with an approximate-location note and a safe source link", () => {
@@ -33,8 +32,9 @@ describe("FarmCard", () => {
     expect(html).not.toContain("Open twin");
   });
 
-  it("shows Lancaster as private farmland, area only, approximate", () => {
-    const html = renderToStaticMarkup(<FarmCard farm={lancaster} onClose={noop} onOpen={noop} />);
+  it("shows a farm's privacy note and area-only owner", () => {
+    const priv = { ...oakville, owner: "Private working farmland (area only)", note: { text: "Private working farmland, area only. No owners or addresses are shown." } };
+    const html = renderToStaticMarkup(<FarmCard farm={priv} onClose={noop} onOpen={noop} />);
     expect(html).toContain("Private working farmland, area only. No owners or addresses are shown.");
     expect(html).toContain("Private working farmland (area only)");
     expect(html).toContain("Approximate location");

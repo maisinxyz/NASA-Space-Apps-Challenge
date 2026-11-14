@@ -18,13 +18,12 @@ Without a token the app falls back to a plain offline map with no terrain and no
 
 ## Product state
 
-- **Home:** globe with 4 pins. Click a pin for a card, then "Open twin" or "Fly in".
+- **Home:** globe with 3 pins. Click a pin for a card, then "Open twin" or "Fly in".
 - **Farms** (`apps/web/lib/farms/`, one data file per farm, no component hard-codes a farm):
   - Cornell University Ruminant Center, Harford NY: full twin (hero).
   - Beltsville Agricultural Research Center, MD: full twin.
-  - Farmland near Intercourse, Lancaster County PA: explore only. Private working farmland, area only, no owners or addresses, closest zoom 250 m.
   - Oakville Grade area, Napa CA: explore only.
-  - All coordinates are approximate and flagged `TODO(verify)`. Cornell fields are traced by eye, Beltsville fields come from OpenStreetMap (ODbL). Crops are illustrative. Agassiz and Mead (Nebraska) were removed.
+  - All coordinates are approximate and flagged `TODO(verify)`. Cornell fields are traced by eye, Beltsville fields come from OpenStreetMap (ODbL). Crops are illustrative. Agassiz, Mead (Nebraska) and Lancaster County PA (Intercourse) were removed. Scouted candidate farms waiting for a 3D check: `docs/farm-scouting/FARMS.md`.
 - **Twin modes** (bottom dock, keys 1 to 4): Explore, Simulate, Compare, Evidence. Dark glass panels float over a full-screen map: left "Fields & layers", right inspector, bottom dock and clock.
 - **Fields are invisible on the map.** Hover shows a label with name and crop. Click gives a faint outline. Crop colours show only with "Show crops on map" (Compare).
 - **Compare:** A/B split on one camera with a draggable divider and button alternatives, existing rotation pinned as baseline, priority sliders, "why X is first" sentence, bare-month calendar. The sentence "Priorities change how options are ranked; they do not change scenario results." must stay.
