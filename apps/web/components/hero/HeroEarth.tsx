@@ -18,6 +18,7 @@ import * as THREE from "three";
 
 import type { Farm, PinHover } from "@/components/globe/types";
 
+import { Pin3D } from "./Pin3D";
 import { easeInFlashOut, flyTo, hero, zoom as ZOOM } from "./tokens";
 
 const DAY = "/hero/earth/earth-day-3840.jpg";
@@ -38,10 +39,6 @@ const SUN = new THREE.Vector3(-0.62, 0.38, 0.69).normalize();
 const GLOW_SCALE = 1.06;
 /** Pin facing threshold: hide waypoints on the far side and right at the limb. */
 const PIN_FACING = 0.12;
-
-/** Pin colours: a classic map pin, red with a black dot. */
-const PIN_RED = "#e5322d";
-const PIN_RED_DARK = "#a81f1b";
 
 export type HeroEarthApi = {
   isFacing(id: string): boolean;
@@ -183,7 +180,7 @@ type Motion = {
   zoomTo: number;
 };
 
-function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; hovered: MutableRefObject<string | null> }) {
+function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; pinAlpha: MutableRefObject<Map<string, number>>; hovered: MutableRefObject<string | null> }) {
   const { camera, size, gl } = useThree();
   const [day, night] = useLoader(THREE.TextureLoader, [DAY, NIGHT]);
   const tilted = useRef<THREE.Group>(null);
@@ -294,9 +291,16 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         const y = (-s.y * 0.5 + 0.5) * size.height;
         if (el) {
           el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -100%)`;
-          const show = q.showPins && facing;
-          el.style.opacity = show ? "1" : "0";
-          el.style.pointerEvents = show ? "auto" : "none";
+          // Pins ride on the Earth: fade out smoothly toward the limb (foreshortened) and when switched off.
+          const fdot = tmp.n.dot(tmp.toCam);
+          const target = q.showPins ? THREE.MathUtils.clamp((fdot - PIN_FACING) / 0.22, 0, 1) : 0;
+          const prev = q.pinAlpha.current.get(f.id) ?? 0;
+          const alpha = q.reducedMotion ? target : prev + (target - prev) * (1 - Math.exp(-dt / 0.06));
+          q.pinAlpha.current.set(f.id, alpha);
+          el.style.opacity = alpha.toFixed(3);
+          el.style.setProperty("--f", THREE.MathUtils.clamp(fdot, 0, 1).toFixed(3));
+          const show = alpha > 0.5 && facing;
+          el.style.pointerEvents = show && !q.motion.current.dragging ? "auto" : "none";
           el.tabIndex = show ? 0 : -1;
         }
         // The hovered waypoint's label follows it while the Earth moves.
@@ -354,6 +358,7 @@ function useLoadProgress(onProgress: (f: number) => void) {
 export function HeroEarth(props: Props) {
   const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
+  const pinAlpha = useRef(new Map<string, number>());
   const hovered = useRef<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   useLoadProgress(props.onProgress);
@@ -484,14 +489,14 @@ export function HeroEarth(props: Props) {
     >
       <Canvas linear flat dpr={[1, 2]} frameloop={props.active ? "always" : "never"} gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }} camera={{ position: [0, 0, CAM_DIST], fov: 35 }} onCreated={({ gl }) => gl.setClearColor("#000000", 1)}>
         <Suspense fallback={null}>
-          <Scene {...props} motion={motion} pinEls={pinEls} hovered={hovered} />
+          <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} hovered={hovered} />
         </Suspense>
       </Canvas>
       {/* Waypoints: positioned every frame by the scene. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {props.farms.map((f) => {
           const on = f.id === props.selectedId;
-          const size = f.tier === "twin" ? { w: 26, h: 35 } : { w: 22, h: 29 };
+          const size = f.tier === "twin" ? { w: 22, h: 33 } : { w: 18, h: 27 };
           return (
             <button
               key={f.id}
@@ -513,21 +518,16 @@ export function HeroEarth(props: Props) {
                 hovered.current = null;
                 props.onHover(null);
               }}
-              className="group absolute top-0 left-0 opacity-0 outline-none transition-opacity duration-200 ease-out"
+              className="group absolute top-0 left-0 opacity-0 outline-none"
               style={{ willChange: "transform", width: size.w, height: size.h }}
             >
               {/* The tip of the pin sits on the farm. Hover lifts it, press scales to 0.97, the selected one stands taller. */}
-              <svg
-                viewBox="0 0 24 32"
+              <Pin3D
                 width={size.w}
                 height={size.h}
-                className="block origin-bottom drop-shadow-[0_2px_3px_rgba(0,0,0,0.55)] transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-[0.97]"
+                className="block origin-bottom transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-[0.97]"
                 style={{ transform: on ? "scale(1.18)" : undefined }}
-                aria-hidden
-              >
-                <path d="M12 31 C12 31 2 19.2 2 11.5 A10 10 0 0 1 22 11.5 C22 19.2 12 31 12 31 Z" fill={PIN_RED} stroke={PIN_RED_DARK} strokeWidth="1.2" strokeLinejoin="round" />
-                <circle cx="12" cy="11.5" r="4" fill="#000" />
-              </svg>
+              />
             </button>
           );
         })}

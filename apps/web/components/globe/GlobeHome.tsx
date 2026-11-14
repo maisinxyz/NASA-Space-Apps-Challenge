@@ -484,7 +484,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
               selectedId={farmId}
               offsetX={offsetX}
               autoRotate={heroShown && settings.autoRotate}
-              showPins={settings.showPins && uiShown}
+              showPins={settings.showPins && onGlobe && hs !== "hero"}
               atmosphere={settings.atmosphere}
               zoomEnabled={earthCentre && onGlobe}
               reducedMotion={reducedMotion}
@@ -508,7 +508,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
       </div>
 
       {/* Resting hero: text left, Earth right. */}
-      {onGlobe && <RestingHero shown={heroShown && ready} reduced={reducedMotion} farms={FARMS} selectedId={farmId} imageryReady={ready} onExplore={explore} onPickFarm={pickFromHero} />}
+      {onGlobe && <RestingHero shown={heroShown && ready} reduced={reducedMotion} farms={FARMS} selectedId={farmId} onExplore={explore} onPickFarm={pickFromHero} />}
 
       {/* Map UI: waypoint label, confirm pulse, farm card, controls. Fades in 2 s after a drag; not focusable while hidden. */}
       {onGlobe && (

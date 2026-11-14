@@ -17,10 +17,9 @@ import { color, ease, hero } from "./tokens";
 /** Hero copy (draft for product-owner sign-off). Edit here only. */
 export const HERO_COPY = {
   eyebrow: "FieldTwin",
-  headline: ["Farms —", "from", "orbit"],
+  headline: ["Farms", "from", "orbit"],
   body: "FieldTwin turns NASA Earth observations into a 3D model of a farm, so you can see when and where its soil is most exposed and compare crop rotations on the land itself.",
   action: "Explore the farms",
-  statusLeft: "Challenge: Field Shift",
   statusRight: "NASA Space Apps 2026",
 } as const;
 
@@ -37,7 +36,7 @@ const u = (n: number) => `calc(var(--u) * ${n})`;
  * Fade-out order (0 = first). Right side first, then the left column bottom-up, the headline last. Fade-in plays the
  * reverse, after the Earth has glided back.
  */
-const ORDER = { rings: 0, statusRight: 1, statusLeft: 2, action: 3, stats: 4, body: 5, sidebar: 6, eyebrow: 7, headline: 8 } as const;
+const ORDER = { rings: 0, statusRight: 1, action: 3, stats: 4, body: 5, sidebar: 6, eyebrow: 7, headline: 8 } as const;
 const N = 9;
 /** Time for the whole hero text to fade out (last item's delay + its fade), ms. The Earth starts gliding after it. */
 export const TEXT_OUT_TOTAL_MS = (N - 1) * hero.textStaggerMs + hero.textOutMs;
@@ -68,7 +67,6 @@ export function RestingHero({
   reduced,
   farms,
   selectedId,
-  imageryReady,
   onExplore,
   onPickFarm,
 }: {
@@ -76,7 +74,6 @@ export function RestingHero({
   reduced: boolean;
   farms: Farm[];
   selectedId: string | null;
-  imageryReady: boolean;
   onExplore(): void;
   onPickFarm(id: string): void;
 }) {
@@ -136,7 +133,7 @@ export function RestingHero({
           </p>
         </Fade>
         <Fade order={ORDER.headline} {...props}>
-          <h1 className="font-black uppercase" style={{ fontFamily: HEADING_FONT, fontSize: u(96), lineHeight: 1, letterSpacing: "-0.02em", marginTop: u(20) }}>
+          <h1 className="font-black uppercase" style={{ fontFamily: HEADING_FONT, fontSize: `min(${u(96)}, calc((((100vw - ${u(96)}) * 5 / 12) - ${u(128)}) / 3.4))`, lineHeight: 1, letterSpacing: "-0.02em", marginTop: u(20), overflowWrap: "normal", wordBreak: "keep-all" }}>
             <span className="block text-white">{HERO_COPY.headline[0]}</span>
             <span className="block" style={{ color: color.accent }}>
               {HERO_COPY.headline[1]}
@@ -147,7 +144,7 @@ export function RestingHero({
           </h1>
         </Fade>
         <Fade order={ORDER.body} {...props}>
-          <p className="font-light text-gray-400" style={{ fontSize: u(18), lineHeight: 1.625, marginTop: u(36), maxWidth: u(440) }}>
+          <p className="font-light text-gray-400" style={{ fontSize: u(18), lineHeight: 1.625, marginTop: u(36), maxWidth: u(440), textWrap: "pretty", overflowWrap: "break-word" }}>
             {HERO_COPY.body}
           </p>
         </Fade>
@@ -194,13 +191,6 @@ export function RestingHero({
 
       {/* Status bar: 56 px, after the sidebar. Imagery state and live camera position are real; nothing simulated. */}
       <div className="absolute right-0 bottom-0 flex items-center justify-between border-t border-white/5 bg-black/20 uppercase" style={{ left: u(96), height: u(56), paddingInline: u(64), fontSize: u(10), letterSpacing: "0.2em" }}>
-        <Fade order={ORDER.statusLeft} {...props} className="flex items-center text-white/60" style={{ gap: u(40) }}>
-          <span className="flex items-center" style={{ gap: u(12) }}>
-            <span className={`rounded-full ${imageryReady && !reduced ? "animate-pulse" : ""}`} style={{ width: u(7), height: u(7), background: imageryReady ? color.accent : "rgba(255,255,255,0.3)" }} />
-            {imageryReady ? "Imagery ready" : "Loading imagery"}
-          </span>
-          <span>{HERO_COPY.statusLeft}</span>
-        </Fade>
         <Fade order={ORDER.statusRight} {...props} className="flex items-center text-white/60" style={{ gap: u(24) }}>
           <LiveCoords />
           <span aria-hidden className="h-3 w-px bg-white/20" />

@@ -14,6 +14,7 @@ import type { FarmInfo } from "@/lib/farms";
 import { trackBus } from "./buses";
 import { farmFacts } from "./farmFacts";
 import { heroMonoFont } from "./fonts";
+import { Pin3D } from "./Pin3D";
 import { Pressable } from "./Pressable";
 import { detail, ease, pulse } from "./tokens";
 
@@ -48,10 +49,7 @@ function RegionImage({ lon, lat }: { lon: number; lat: number }) {
     <div className="relative aspect-video w-full overflow-hidden bg-[#05060a]">
       <canvas ref={ref} width={640} height={360} aria-hidden className="h-full w-full transition-opacity duration-200 ease-out" style={{ opacity: ready ? 1 : 0 }} />
       {/* The farm, at the centre of the crop (the pin tip sits on it). */}
-      <svg viewBox="0 0 24 32" width="22" height="29" aria-hidden className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]">
-        <path d="M12 31 C12 31 2 19.2 2 11.5 A10 10 0 0 1 22 11.5 C22 19.2 12 31 12 31 Z" fill="#e5322d" stroke="#a81f1b" strokeWidth="1.2" strokeLinejoin="round" />
-        <circle cx="12" cy="11.5" r="4" fill="#000" />
-      </svg>
+      <Pin3D width={22} height={33} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full" />
       <p className="absolute right-2 bottom-1.5 left-2 text-[10px] text-white/[0.7] [text-shadow:0_1px_4px_#000]">Region view: NASA Blue Marble, coarse (about 10 km per pixel). Not a photo of the farm.</p>
     </div>
   );
