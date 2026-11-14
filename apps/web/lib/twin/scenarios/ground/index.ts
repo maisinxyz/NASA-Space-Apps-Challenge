@@ -7,20 +7,32 @@
 //  - No invented results in the real twin: real layers need backend data. Sample values are for /dev/scenarios only
 //    (turn on "Fixture run source"); the real twin never calls these until the backend exists.
 import type { GroundEvaluator, ScenarioId } from "../../scenario";
+import { storm } from "./storm";
+import { wetSpell } from "./wetSpell";
+import { floodZones } from "./floodZones";
+import { drought } from "./drought";
+import { heatWave } from "./heatWave";
+import { frost } from "./frost";
+import { bareSoil } from "./bareSoil";
+import { vegStress } from "./vegStress";
+import { multiYear } from "./multiYear";
+import { trends } from "./trends";
+import { climateShift } from "./climateShift";
+import { compound } from "./compound";
 
-const none: GroundEvaluator = () => [];
+export { tooWetDays } from "./wetSpell";
 
 export const GROUND: Record<ScenarioId, GroundEvaluator> = {
-  storm: none,
-  "wet-spell": none,
-  "flood-zones": none,
-  drought: none,
-  "heat-wave": none,
-  frost: none,
-  "bare-soil": none,
-  "veg-stress": none,
-  "multi-year": none,
-  trends: none,
-  "climate-shift": none,
-  compound: none,
+  storm: storm,
+  "wet-spell": wetSpell,
+  "flood-zones": floodZones,
+  drought: drought,
+  "heat-wave": heatWave,
+  frost: frost,
+  "bare-soil": bareSoil,
+  "veg-stress": vegStress,
+  "multi-year": multiYear,
+  trends: trends,
+  "climate-shift": climateShift,
+  compound: compound,
 };
