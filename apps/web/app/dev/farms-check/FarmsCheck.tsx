@@ -13,20 +13,32 @@ import { GlobeDev } from "@/components/globe/Globe";
 import type { Farm, GlobeHandle, TileTier } from "@/components/globe/types";
 import type { LoadedTier } from "@/components/viewer/cesium/tiles";
 import { CANDIDATES, FARMS } from "@/lib/farms";
-import { type BuildingPoint, type BuildingSample, buildingsFromOverpass, distanceKm, fmtM, fmtShare, groundRing, offsetM, orbitCamera, overpassQuery, stage1, type Stage1 } from "@/lib/scouting/check";
+import { type BuildingPoint, type BuildingSample, buildingsFromOsmApi, buildingsFromOverpass, distanceKm, fmtM, fmtShare, groundRing, offsetM, orbitCamera, osmApiBbox, overpassQuery, reliefGrid, reliefStats, stage1, type Stage1 } from "@/lib/scouting/check";
 
 type Live = { viewer: Viewer; tier: LoadedTier };
-type Row = Stage1 & { id: string; name: string; status: string; minGeomErrorM: number | null; openShare3d: number | null; openPoints: number; osmError?: string };
+type Row = Stage1 & {
+  id: string;
+  name: string;
+  status: string;
+  surface?: string;
+  minGeomErrorM: number | null;
+  openShare3d: number | null;
+  openPoints: number;
+  reliefShare3: number | null;
+  reliefP90M: number | null;
+  osmError?: string;
+};
 
 declare global {
   interface Window {
     /** Dev only: results of the farm check, for a browser script. */
-    __ftFarmsCheck?: { rows: Row[]; running: boolean };
+    __ftFarmsCheck?: { rows: Row[]; running: boolean; sample?: (pts: [number, number][]) => Promise<(number | undefined)[]> };
   }
 }
 
 const TIER_A: TileTier[] = ["A", "B", "C"];
 const OVERPASS = "https://overpass-api.de/api/interpreter"; // public Overpass instance, https://wiki.openstreetmap.org/wiki/Overpass_API
+const OSM_API = "https://api.openstreetmap.org/api/0.6/map.json"; // https://wiki.openstreetmap.org/wiki/API_v0.6
 const DWELL_MS = 5000;
 const SAMPLE_RADIUS_M = 600;
 const MAX_BUILDINGS = 60;
@@ -54,10 +66,14 @@ async function heights(viewer: Viewer, pts: [number, number][]): Promise<(number
   return out.map((c) => (c && Number.isFinite(c.height) ? c.height : undefined));
 }
 
+// Public Overpass took 30-210 s or returned 504 on 2026-11-14, so the check reads the OSM API bbox call (about 1 s).
+// The API caps a request at 50,000 nodes; a dense city block can hit it, then Overpass is the fallback.
 async function osmBuildings(lon: number, lat: number): Promise<BuildingPoint[]> {
-  const r = await fetch(OVERPASS, { method: "POST", body: new URLSearchParams({ data: overpassQuery(lon, lat, SAMPLE_RADIUS_M) }) });
-  if (!r.ok) throw new Error(`Overpass HTTP ${r.status}`);
-  return buildingsFromOverpass(await r.json());
+  const r = await fetch(`${OSM_API}?bbox=${osmApiBbox(lon, lat, SAMPLE_RADIUS_M)}`);
+  if (r.ok) return buildingsFromOsmApi(await r.json());
+  const o = await fetch(OVERPASS, { method: "POST", body: new URLSearchParams({ data: overpassQuery(lon, lat, SAMPLE_RADIUS_M) }) });
+  if (!o.ok) throw new Error(`OSM API HTTP ${r.status}, Overpass HTTP ${o.status}`);
+  return buildingsFromOverpass(await o.json());
 }
 
 /** Grid points inside the sample radius at least 40 m from every OSM building: the open-ground (flat) control. */
@@ -85,12 +101,12 @@ export default function FarmsCheck() {
   const stop = useRef(false);
 
   useEffect(() => {
-    window.__ftFarmsCheck = { rows, running };
-  }, [rows, running]);
+    window.__ftFarmsCheck = { rows, running, sample: live ? (pts) => heights(live.viewer, pts) : undefined };
+  }, [rows, running, live]);
 
   const checkOne = async (f: Farm): Promise<Row> => {
     if (!live) throw new Error("viewer not ready");
-    const row: Row = { id: f.id, name: f.name, status: "flying", buildingsSampled: 0, share3dLocal: null, share3dTerrain: null, medianLocalM: null, medianTerrainM: null, minGeomErrorM: null, openShare3d: null, openPoints: 0 };
+    const row: Row = { id: f.id, name: f.name, status: "flying", buildingsSampled: 0, share3dLocal: null, share3dTerrain: null, medianLocalM: null, medianTerrainM: null, minGeomErrorM: null, openShare3d: null, openPoints: 0, reliefShare3: null, reliefP90M: null };
     const put = (r: Partial<Row>) => setRows((rs) => [...rs.filter((x) => x.id !== f.id), { ...row, ...r }]);
     put({});
     setSelectedId(f.id);
@@ -119,6 +135,14 @@ export default function FarmsCheck() {
     }
     ts?.tileVisible.removeEventListener(onVisible);
     row.minGeomErrorM = Number.isFinite(minErr) ? minErr : null;
+    row.surface = live.tier.surface;
+
+    // Relief grid (no OSM needed): only meaningful on the Google surface.
+    if (live.tier.surface === "google") {
+      const g = reliefGrid(f.lon, f.lat);
+      const h = await heights(live.viewer, [...g.centres, ...g.rings]);
+      Object.assign(row, reliefStats(h.slice(0, g.centres.length), h.slice(g.centres.length)));
+    }
 
     put({ status: "sampling" });
     let b: BuildingPoint[] = [];
@@ -162,9 +186,12 @@ export default function FarmsCheck() {
 
   const markdown = () =>
     [
-      "| id | buildings sampled | share >= 3 m (local ground) | share >= 3 m (terrain) | median (local) | median (terrain) | min tile geometric error | open-ground share >= 3 m |",
-      "|---|---|---|---|---|---|---|---|",
-      ...rows.map((r) => `| ${r.id} | ${r.buildingsSampled}${r.osmError ? ` (${r.osmError})` : ""} | ${fmtShare(r.share3dLocal)} | ${fmtShare(r.share3dTerrain)} | ${fmtM(r.medianLocalM)} | ${fmtM(r.medianTerrainM)} | ${fmtM(r.minGeomErrorM)} | ${fmtShare(r.openShare3d)} of ${r.openPoints} |`),
+      "| id | buildings sampled | share >= 3 m (local ground) | share >= 3 m (terrain) | median (local) | median (terrain) | min tile geometric error | open-ground share >= 3 m | relief share >= 3 m | relief p90 |",
+      "|---|---|---|---|---|---|---|---|---|---|",
+      ...rows.map(
+        (r) =>
+          `| ${r.id} | ${r.buildingsSampled}${r.osmError ? ` (${r.osmError})` : ""} | ${fmtShare(r.share3dLocal)} | ${fmtShare(r.share3dTerrain)} | ${fmtM(r.medianLocalM)} | ${fmtM(r.medianTerrainM)} | ${fmtM(r.minGeomErrorM)} | ${fmtShare(r.openShare3d)} of ${r.openPoints} | ${fmtShare(r.reliefShare3)} | ${fmtM(r.reliefP90M)} |`,
+      ),
     ].join("\n");
 
   const selected = farms.find((f) => f.id === selectedId)!;
@@ -223,6 +250,7 @@ export default function FarmsCheck() {
               <th>median</th>
               <th>min err</th>
               <th>open 3D</th>
+              <th>relief</th>
               <th>status</th>
             </tr>
           </thead>
@@ -236,6 +264,9 @@ export default function FarmsCheck() {
                 <td>{fmtM(r.medianLocalM)}</td>
                 <td>{fmtM(r.minGeomErrorM)}</td>
                 <td>{fmtShare(r.openShare3d)}</td>
+                <td>
+                  {fmtShare(r.reliefShare3)} / {fmtM(r.reliefP90M)}
+                </td>
                 <td>{r.status}</td>
               </tr>
             ))}
