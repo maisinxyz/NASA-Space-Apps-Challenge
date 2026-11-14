@@ -66,10 +66,10 @@ const SHARE_CAMERA_DELAY_MS = 4500;
  * loaded, then the camera passes through the rest of the cloud into the farm (CloudLoader "out"), input live as it clears.
  */
 const PUSH_IN_MS = 1100;
-/** CloudLoader's fade-in (CloudLoader.tsx IN_MS) and when it starts, so the view is fully clouded by ~80 % of the push-in
- * (the Earth texture goes soft over the last ~20 %). */
+/** CloudLoader's fade-in (CloudLoader.tsx IN_MS). It starts as HeroEarth's own cloud thickens (last ~35 % of the push-in)
+ * and is fully opaque when the push-in ends, so the switch to the Cesium farm under it is never seen. */
 const CLOUD_IN_MS = 700;
-const CLOUD_IN_AT_MS = Math.max(0, PUSH_IN_MS * 0.8 - CLOUD_IN_MS);
+const CLOUD_IN_AT_MS = Math.max(0, PUSH_IN_MS - CLOUD_IN_MS);
 /** Reduced motion: plain fades (CloudLoader's reduced fade-in). */
 const CLOUD_IN_REDUCED_MS = 200;
 /** Never keep the user in the cloud for ever: after this a calm note, then in they go. */
