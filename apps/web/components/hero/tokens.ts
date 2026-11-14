@@ -97,13 +97,30 @@ export const popover = {
 
 export const card = { openMs: 220, closeMs: exit(220), fromScale: 0.95 } as const;
 
+/** Detail screen that opens from a pin: enters (ease out) from the pin, leaves back to it 20% quicker. */
+export const detail = { openMs: 220, closeMs: exit(220), fromScale: 0.95 } as const;
+
+/** Scroll-to-zoom on the centred Earth: camera distance as a multiple of the whole-Earth distance. */
+export const zoom = {
+  min: 0.3,
+  max: 1.25,
+  /** Exponent per wheel pixel (exponential, so each notch feels the same). */
+  perPx: 0.0014,
+  glideMs: 260,
+} as const;
+
 /** Camera fly-to between points on the globe: a great-circle arc, eased in then flashed out. */
 export const flyTo = { seconds: 1.1 } as const;
 /** "Ease in, flash out": accelerate smoothly, then arrive in a short, decisive settle. */
 export const easeInFlashOut = (t: number) => (t < 0.72 ? 0.72 * Math.pow(t / 0.72, 2.4) : 1 - 0.28 * Math.pow(1 - (t - 0.72) / 0.28, 3));
 
 /** Confirmation pulse on the selected marker. */
-export const pulse = { ms: 650, toScale: 2.4 } as const;
+export const pulse = {
+  ms: 650,
+  toScale: 2.4,
+  /** Button confirm ring, and the beat before the action fires. */
+  confirmMs: 220,
+} as const;
 
 /** Press feel for every interactive element. */
 export const press = {

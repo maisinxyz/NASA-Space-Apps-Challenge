@@ -7,7 +7,7 @@
 // Interaction: drag rotates the Earth (about its axis left-right, tilt up-down, clamped) with inertia after release;
 // it auto-rotates slowly when asked; it glides between the hero position (right) and the centre; picking a farm turns
 // the Earth so that farm faces you (eased arc). Waypoints are DOM buttons placed over the sphere every frame (crisp,
-// focusable, hoverable), shown only when `showPins`.
+// focusable, hoverable), shown only when `showPins`: red map pins with a black dot, the tip on the farm.
 //
 // The camera's field of view and distance match the Cesium globe's whole-Earth view (60 degree horizontal fov,
 // 20,000 km above the surface), so the hand-over to Cesium for the dive happens at the same size.
@@ -18,7 +18,7 @@ import * as THREE from "three";
 
 import type { Farm, PinHover } from "@/components/globe/types";
 
-import { color, easeInFlashOut, flyTo, hero } from "./tokens";
+import { easeInFlashOut, flyTo, hero, zoom as ZOOM } from "./tokens";
 
 const DAY = "/hero/earth/earth-day-3840.jpg";
 const NIGHT = "/hero/earth/earth-night-3840.jpg";
@@ -39,10 +39,16 @@ const GLOW_SCALE = 1.06;
 /** Pin facing threshold: hide waypoints on the far side and right at the limb. */
 const PIN_FACING = 0.12;
 
+/** Pin colours: a classic map pin, red with a black dot. */
+const PIN_RED = "#e5322d";
+const PIN_RED_DARK = "#a81f1b";
+
 export type HeroEarthApi = {
   isFacing(id: string): boolean;
   /** Turn the Earth so this farm faces the viewer (eased arc); `onFlyDone` fires when it gets there. */
   face(id: string): void;
+  /** Glide back to the whole-Earth size (before the hand-over to the Cesium dive). */
+  resetZoom(): void;
 };
 
 type Props = {
@@ -53,6 +59,8 @@ type Props = {
   autoRotate: boolean;
   showPins: boolean;
   atmosphere: boolean;
+  /** Scroll-to-zoom is live (the Earth is centred). Off: the view eases back to the whole-Earth size. */
+  zoomEnabled: boolean;
   reducedMotion: boolean;
   /** Render loop on/off (off while the farm view covers the hero). */
   active: boolean;
@@ -170,6 +178,9 @@ type Motion = {
   fly: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; t0: number; id: string } | null;
   off: { cur: number; from: number; to: number; t0: number };
   camAt: number;
+  /** Camera distance as a multiple of the whole-Earth distance: current (eased) and where the wheel wants it. */
+  zoom: number;
+  zoomTo: number;
 };
 
 function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; hovered: MutableRefObject<string | null> }) {
@@ -210,7 +221,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     const cam = camera as THREE.PerspectiveCamera;
     const aspect = size.width / size.height;
     cam.fov = THREE.MathUtils.radToDeg(aspect >= 1 ? 2 * Math.atan(Math.tan(CESIUM_FOV_RAD / 2) / aspect) : CESIUM_FOV_RAD);
-    cam.position.set(0, 0, CAM_DIST);
+    cam.position.set(0, 0, CAM_DIST * live.current.motion.current.zoom);
     cam.near = 0.01;
     cam.far = 100;
     cam.updateProjectionMatrix();
@@ -232,7 +243,13 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       m.off.cur = k >= 1 ? m.off.to : m.off.from + (m.off.to - m.off.from) * easeInOutCubic(k);
     }
     const cam = camera as THREE.PerspectiveCamera;
-    const halfW = CAM_DIST * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect;
+    // Zoom: the wheel sets a target, the camera glides to it (ease-out, frame-rate independent). Off => whole Earth.
+    if (!q.zoomEnabled) m.zoomTo = 1;
+    m.zoom = q.reducedMotion ? m.zoomTo : m.zoom + (m.zoomTo - m.zoom) * (1 - Math.exp(-dt / (ZOOM.glideMs / 1000 / 3)));
+    if (Math.abs(m.zoom - m.zoomTo) < 1e-4) m.zoom = m.zoomTo;
+    cam.position.z = CAM_DIST * m.zoom;
+    cam.updateMatrixWorld();
+    const halfW = CAM_DIST * m.zoom * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect;
     if (tilted.current) tilted.current.position.x = m.off.cur * halfW;
 
     // Rotation: fly-to, else inertia / auto-spin.
@@ -259,7 +276,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     }
     if (spun.current) spun.current.rotation.y = m.spin;
     if (tilted.current) tilted.current.rotation.x = m.tilt;
-    if (earthMat.current) earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0.35;
+    if (earthMat.current) earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
 
     // Waypoints: project to the screen; hide those facing away.
     tilted.current?.updateMatrixWorld();
@@ -276,7 +293,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         const x = (s.x * 0.5 + 0.5) * size.width;
         const y = (-s.y * 0.5 + 0.5) * size.height;
         if (el) {
-          el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -50%)`;
+          el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) translate(-50%, -100%)`;
           const show = q.showPins && facing;
           el.style.opacity = show ? "1" : "0";
           el.style.pointerEvents = show ? "auto" : "none";
@@ -335,7 +352,7 @@ function useLoadProgress(onProgress: (f: number) => void) {
 }
 
 export function HeroEarth(props: Props) {
-  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0 });
+  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
   const hovered = useRef<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
@@ -378,8 +395,29 @@ export function HeroEarth(props: Props) {
       face(id) {
         faceRef.current(farms.find((x) => x.id === id));
       },
+      resetZoom() {
+        motion.current.zoomTo = 1;
+      },
     };
   }, [props.apiRef, farms]);
+
+  // Scroll to zoom (when centred): up zooms in, down zooms out. Native listener, because React's onWheel is passive and
+  // the page must not scroll.
+  const zoomOn = useRef(props.zoomEnabled);
+  zoomOn.current = props.zoomEnabled;
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!zoomOn.current) return;
+      e.preventDefault();
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
+      const m = motion.current;
+      m.zoomTo = THREE.MathUtils.clamp(m.zoomTo * Math.exp(px * ZOOM.perPx), ZOOM.min, ZOOM.max);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
 
   // Drag: rotate under the cursor (1 / radius-in-px radians per px), inertia after release.
   const onPointerDown = (e: React.PointerEvent) => {
@@ -407,7 +445,8 @@ export function HeroEarth(props: Props) {
     // Earth radius on screen: 1 unit at CAM_DIST with the current vertical fov.
     const w = wrap.current?.clientWidth ?? 1200;
     const vfov = w / h >= 1 ? 2 * Math.atan(Math.tan(CESIUM_FOV_RAD / 2) / (w / h)) : CESIUM_FOV_RAD;
-    const radiusPx = (h / 2) / (Math.tan(vfov / 2) * Math.sqrt(CAM_DIST * CAM_DIST - 1));
+    const dist = CAM_DIST * m.zoom;
+    const radiusPx = (h / 2) / (Math.tan(vfov / 2) * Math.sqrt(dist * dist - 1));
     const now = performance.now();
     const dx = e.clientX - m.last.x;
     const dy = e.clientY - m.last.y;
@@ -448,11 +487,11 @@ export function HeroEarth(props: Props) {
           <Scene {...props} motion={motion} pinEls={pinEls} hovered={hovered} />
         </Suspense>
       </Canvas>
-      {/* Waypoints: positioned every frame by the scene; thin rings, the selected one in the accent colour. */}
+      {/* Waypoints: positioned every frame by the scene. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {props.farms.map((f) => {
           const on = f.id === props.selectedId;
-          const twin = f.tier === "twin";
+          const size = f.tier === "twin" ? { w: 26, h: 35 } : { w: 22, h: 29 };
           return (
             <button
               key={f.id}
@@ -474,15 +513,21 @@ export function HeroEarth(props: Props) {
                 hovered.current = null;
                 props.onHover(null);
               }}
-              className="absolute top-0 left-0 grid h-10 w-10 place-items-center rounded-full opacity-0 transition-opacity duration-300 focus-visible:outline-1 focus-visible:outline-white/70"
-              style={{ willChange: "transform" }}
+              className="group absolute top-0 left-0 opacity-0 outline-none transition-opacity duration-200 ease-out"
+              style={{ willChange: "transform", width: size.w, height: size.h }}
             >
-              <span
-                className="grid place-items-center rounded-full bg-black/30"
-                style={{ width: twin ? 22 : 15, height: twin ? 22 : 15, border: `1.5px solid ${on ? color.accent : "rgba(236,238,241,0.95)"}`, boxShadow: twin ? `0 0 0 4px rgba(0,0,0,0.25), 0 0 0 5px ${on ? color.accent : "rgba(236,238,241,0.45)"}` : undefined }}
+              {/* The tip of the pin sits on the farm. Hover lifts it, press scales to 0.97, the selected one stands taller. */}
+              <svg
+                viewBox="0 0 24 32"
+                width={size.w}
+                height={size.h}
+                className="block origin-bottom drop-shadow-[0_2px_3px_rgba(0,0,0,0.55)] transition-transform duration-150 ease-out group-hover:scale-110 group-focus-visible:scale-110 group-active:scale-[0.97]"
+                style={{ transform: on ? "scale(1.18)" : undefined }}
+                aria-hidden
               >
-                <span className="block rounded-full" style={{ width: twin ? 6 : 4, height: twin ? 6 : 4, background: on ? color.accent : "#eceef1" }} />
-              </span>
+                <path d="M12 31 C12 31 2 19.2 2 11.5 A10 10 0 0 1 22 11.5 C22 19.2 12 31 12 31 Z" fill={PIN_RED} stroke={PIN_RED_DARK} strokeWidth="1.2" strokeLinejoin="round" />
+                <circle cx="12" cy="11.5" r="4" fill="#000" />
+              </svg>
             </button>
           );
         })}
