@@ -39,6 +39,31 @@ const css = `
 @media (prefers-reduced-motion:reduce){.cl-ring,.cl-blob,.cl-shafts{animation:none}.cl-fill{transition:none}}
 `;
 
+/** The percentage text: eases toward the real progress by writing the span's text directly (no React re-render per frame) and stops its loop once it has arrived. */
+function Pct({ target, reduced }: { target: number; reduced: boolean }) {
+  const el = useRef<HTMLDivElement>(null);
+  const shown = useRef(0);
+  useEffect(() => {
+    let raf = 0;
+    const write = () => {
+      if (el.current) el.current.textContent = `${Math.round(shown.current * 100)}%`;
+    };
+    const tick = () => {
+      const d = target - shown.current;
+      shown.current = reduced || Math.abs(d) < 0.002 ? target : shown.current + d * 0.18;
+      write();
+      if (shown.current !== target) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, reduced]);
+  return (
+    <div ref={el} className="cl-pct">
+      0%
+    </div>
+  );
+}
+
 export function CloudLoader({ progress, phase, onOutDone }: { progress: number; phase: CloudLoaderPhase; onOutDone?: () => void }) {
   const p = Math.max(0, Math.min(1, progress));
   const [reduced, setReduced] = useState(false);
@@ -57,23 +82,6 @@ export function CloudLoader({ progress, phase, onOutDone }: { progress: number; 
     const t = setTimeout(() => doneRef.current?.(), reduced ? 250 : OUT_MS);
     return () => clearTimeout(t);
   }, [phase, reduced]);
-
-  // Displayed percentage eases toward the real progress (the bar itself uses a CSS transition).
-  const [shown, setShown] = useState(0);
-  const target = useRef(p);
-  target.current = p;
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      setShown((s) => {
-        const d = target.current - s;
-        return Math.abs(d) < 0.002 ? target.current : s + d * 0.18;
-      });
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   const out = phase === "out";
   const visible = entered && !out;
@@ -122,7 +130,7 @@ export function CloudLoader({ progress, phase, onOutDone }: { progress: number; 
         <div className="cl-track">
           <div className="cl-fill" style={{ transform: `scaleX(${p})` }} />
         </div>
-        <div className="cl-pct">{Math.round(shown * 100)}%</div>
+        <Pct target={p} reduced={reduced} />
       </div>
     </div>
   );
