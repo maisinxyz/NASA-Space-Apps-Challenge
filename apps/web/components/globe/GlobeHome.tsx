@@ -21,7 +21,8 @@ import { ControlCluster, type HeroSettings } from "@/components/hero/ControlClus
 import { DIVE_FILMS, DiveFilm } from "@/components/hero/DiveFilm";
 import { EarthLoading } from "@/components/hero/EarthLoading";
 import { HeroEarth, type HeroEarthApi } from "@/components/hero/HeroEarth";
-import { FarmCard as HeroFarmCard, MarkerPulse } from "@/components/hero/FarmCard";
+import { MarkerPulse } from "@/components/hero/FarmCard";
+import { FarmDetail } from "@/components/hero/FarmDetail";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
 import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
@@ -129,7 +130,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
   const heroEarth = useRef<HeroEarthApi | null>(null);
   /** A waypoint was clicked while not facing the viewer: the Earth turns to it first, then the dive starts. */
   const pendingDive = useRef<string | null>(null);
-  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: true, autoRotate: true });
+  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: false, autoRotate: true });
 
   // ---------- resting hero state machine (globe view) ----------
   const [hs, setHs] = useState<HeroState>("hero");
@@ -185,7 +186,10 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
     clear("idle");
   };
   const onWorldUp = () => {
+    const wasPress = press.current;
     press.current = null;
+    // A plain click on the Earth in the resting hero centres it (same as a drag), which also turns scroll-zoom on.
+    if (wasPress && hsRef.current === "hero" && view === "globe") return explore();
     if (hsRef.current !== "dragging") return;
     setHs("centred");
     clear("ui");
@@ -383,6 +387,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
     const f = farmById(id);
     if (!f) return;
     pendingDive.current = null;
+    heroEarth.current?.resetZoom();
     globe.current?.jumpTo(f.lon, f.lat);
     dive(id);
   };
@@ -481,13 +486,14 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
               autoRotate={heroShown && settings.autoRotate}
               showPins={settings.showPins && uiShown}
               atmosphere={settings.atmosphere}
+              zoomEnabled={earthCentre && onGlobe}
               reducedMotion={reducedMotion}
               active={onGlobe}
               onReady={() => setEarthReady(true)}
               onProgress={loadBus.set}
               onDragStart={() => void (pendingDive.current = null)}
               onDragEnd={() => {}}
-              onPinClick={requestDive}
+              onPinClick={pickFarm}
               onHover={onHoverPin}
               onTrack={trackBus.set}
               onFlyDone={(id) => {
@@ -516,7 +522,7 @@ export function GlobeHome({ runSource = "none" }: { runSource?: RunSource } = {}
           {hoverFarm && hoverFarm.id !== cardFor && <PinLabel key={hoverFarm.id} farm={hoverFarm} />}
           {pulseNonce > 0 && !reducedMotion && <MarkerPulse nonce={pulseNonce} />}
           <div className="pointer-events-auto">
-            <HeroFarmCard farm={cardFor ? farmById(cardFor) : null} onDescend={requestDive} />
+            <FarmDetail farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
           </div>
           <div className="pointer-events-auto absolute top-1/2 right-8 -translate-y-1/2">
             <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />

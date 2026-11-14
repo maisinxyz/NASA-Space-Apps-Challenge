@@ -11,7 +11,7 @@ export function PinLabel({ farm }: { farm: Farm }) {
   useEffect(() => {
     const place = () => {
       const h = hoverBus.get();
-      if (el.current && h) el.current.style.transform = `translate3d(${h.x}px, ${h.y}px, 0) translate(-50%, calc(-100% - 14px))`;
+      if (el.current && h) el.current.style.transform = `translate3d(${h.x}px, ${h.y}px, 0) translate(-50%, calc(-100% - 44px))`;
     };
     place();
     return hoverBus.subscribe(place);
