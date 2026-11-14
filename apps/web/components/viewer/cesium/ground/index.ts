@@ -10,6 +10,7 @@ import {
   Cartesian2,
   Cartesian3,
   ClassificationType,
+  Color,
   Credit,
   EllipsoidSurfaceAppearance,
   GeometryInstance,
@@ -82,6 +83,7 @@ type ImageryState = {
   primitive?: GroundPrimitive;
   material?: Material;
   credit?: Credit;
+  opacity: number;
 };
 
 const v4 = (m: Material, name: string) => m.uniforms[name] as Cartesian4;
@@ -146,7 +148,7 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
       .filter((r) => r.length >= 3)
       .map((r) => new PolygonHierarchy(Cartesian3.fromDegreesArray(r.flat())));
     const fields = ctx.fields.slice(0, 8);
-    const material = createGroundMaterial({ cov: bakeCoverage(fields, [w - dw, s - dh, e + dw, n + dh]), height: flatHeightCanvas() });
+    const material = createGroundMaterial({ cov: bakeCoverage(fields, bbox), height: flatHeightCanvas() });
     const [wm, hm] = bboxSizeM(bbox);
     setV4(material.uniforms.uSize as Cartesian4, wm, hm, fields.length ? 1 : 0, 0);
     const primitive = new GroundPrimitive({
@@ -186,7 +188,7 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
   function startImagery(spec: GroundLayerSpec, key: string, surface: FarmSurface, centre: [number, number]) {
     const im = spec.imagery!;
     const token = ++imgToken;
-    const state: ImageryState = { key };
+    const state: ImageryState = { key, opacity: Math.min(1, Math.max(0, spec.opacity)) };
     img = state;
     fetchGibsCapabilities()
       .then(async (layers) => {
@@ -210,20 +212,18 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
         });
         if (surface === "terrain") {
           state.layer = viewer.imageryLayers.addImageryProvider(provider);
-          state.layer.alpha = Math.min(1, Math.max(0, spec.opacity));
+          state.layer.alpha = state.opacity;
           scene.requestRender();
           return;
         }
         // Google surface: globe hidden -> composite covering tiles into a canvas and drape it with a GroundPrimitive.
-        viewer.creditDisplay.addStaticCredit(credit);
-        state.credit = credit;
         const half = IMAGERY_SQUARE_M / 2;
         const dLat = half / 111_320;
         const dLon = half / (111_320 * Math.cos((centre[1] * Math.PI) / 180));
         const rect = Rectangle.fromDegrees(centre[0] - dLon, centre[1] - dLat, centre[0] + dLon, centre[1] + dLat);
         const canvas = await compositeTiles(provider, rect, l.maxLevels[tms]);
         if (token !== imgToken || destroyed || !canvas) return;
-        const material = Material.fromType("Image", { image: canvas, alpha: Math.min(1, Math.max(0, spec.opacity)) });
+        const material = createImageryMaterial(canvas, state.opacity);
         state.material = material;
         state.primitive = imageryCol.add(
           new GroundPrimitive({
@@ -233,9 +233,13 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
             allowPicking: false,
           }),
         );
+        viewer.creditDisplay.addStaticCredit(credit);
+        state.credit = credit;
         scene.requestRender();
       })
-      .catch((err) => warnOnce(key, `[ground] GIBS imagery failed: ${String(err)}`));
+      .catch(() => {
+        if (token === imgToken && !destroyed) warnOnce(key, "[ground] GIBS imagery failed; drawing nothing.");
+      });
   }
 
   function syncImagery(layers: GroundLayerSpec[], ctx: GroundContext, bbox: Bbox | undefined) {
@@ -246,15 +250,16 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
       return;
     }
     const im = spec.imagery!;
-    const key = `${im.layerId}|${im.date}|${ctx.surface}`;
+    const key = JSON.stringify([im.layerId, im.date, ctx.surface, ctx.surface === "google" ? bbox : null]);
     const centre: [number, number] = [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
     if (img?.key !== key) {
       dropImagery();
       startImagery(spec, key, ctx.surface, centre);
     } else {
       const a = Math.min(1, Math.max(0, spec.opacity));
-      if (img.layer && img.layer.alpha !== a) img.layer.alpha = a;
-      if (img.material && img.material.uniforms.alpha !== a) img.material.uniforms.alpha = a;
+      img.opacity = a;
+      if (img.layer && img.layer.alpha !== a) { img.layer.alpha = a; scene.requestRender(); }
+      if (img.material && img.material.uniforms.color.alpha !== a) { setImageryOpacity(img.material, a); scene.requestRender(); }
     }
     // Anchor for the UI panel: a point ~150 m above the square's centre, in canvas CSS pixels.
     const p = SceneTransforms.worldToWindowCoordinates(scene, Cartesian3.fromDegrees(centre[0], centre[1], 150), new Cartesian2());
@@ -285,10 +290,11 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
           dropProcedural();
           buildProcedural(bbox, ctx, key);
         }
-      } else if (proc && !u.anyProcedural) {
+      } else if (proc && (!bbox || !u.anyProcedural) && proc.primitive.show) {
         proc.primitive.show = false;
+        scene.requestRender();
       }
-      if (proc && u.anyProcedural) {
+      if (proc && bbox && u.anyProcedural) {
         const sig = applyUniforms(proc.material, u);
         const t = layers.find((l) => l.timeS !== undefined)?.timeS ?? ctx.nowS;
         const timeChanged = u.active && t !== proc.lastTime;
@@ -321,7 +327,7 @@ export function createGroundRenderer(viewer: Viewer): GroundRenderer {
 }
 
 /** Composite the tiles covering `rect` at the finest level needing at most IMAGERY_MAX_TILES^2 tiles. */
-async function compositeTiles(provider: WebMapTileServiceImageryProvider, rect: Rectangle, maxLevel: number | undefined): Promise<HTMLCanvasElement | null> {
+export async function compositeTiles(provider: WebMapTileServiceImageryProvider, rect: Rectangle, maxLevel: number | undefined): Promise<HTMLCanvasElement | null> {
   const scheme = provider.tilingScheme;
   let level = Math.min(maxLevel ?? 18, 18);
   const range = (L: number) => {
@@ -346,14 +352,22 @@ async function compositeTiles(provider: WebMapTileServiceImageryProvider, rect: 
       jobs.push(
         Promise.resolve(provider.requestImage(x, y, level))
           .then((image) => {
-            if (!image) return;
+            if (!image) throw new Error("GIBS tile unavailable");
             const tr = scheme.tileXYToRectangle(x, y, level);
             const [ax, ay] = px(tr.west, tr.north);
             const [bx, by] = px(tr.east, tr.south);
             g.drawImage(image as CanvasImageSource, ax, ay, bx - ax, by - ay);
-          })
-          .catch(() => undefined),
+          }),
       );
   await Promise.all(jobs);
   return canvas;
+}
+
+/** Cesium Image fabric applies opacity through color alpha. */
+export function createImageryMaterial(image: HTMLCanvasElement | string, opacity: number): Material {
+  return Material.fromType("Image", { image, color: Color.WHITE.withAlpha(opacity) });
+}
+
+export function setImageryOpacity(material: Material, opacity: number): void {
+  material.uniforms.color.alpha = opacity;
 }
