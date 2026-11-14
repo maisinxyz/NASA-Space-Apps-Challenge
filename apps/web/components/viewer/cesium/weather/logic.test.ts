@@ -107,7 +107,7 @@ describe("sun", () => {
     const dawn = sunFor(6.5, 1);
     const night = sunFor(1, 1);
     expect(noon.dir[2]).toBeGreaterThan(0.75);
-    expect(noon.exposure).toBeCloseTo(1.4);
+    expect(noon.exposure).toBeCloseTo(1.16);
     expect(dawn.dir[2]).toBeLessThan(0.3);
     expect(dawn.dir[0]).toBeGreaterThan(0.9); // east
     expect(dawn.color[2]).toBeLessThan(0.9); // warm

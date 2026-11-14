@@ -97,7 +97,7 @@ export type Sun = { dir: [number, number, number]; exposure: number; color: [num
 /**
  * Stylised sun for a local solar hour (mood only, not an ephemeris): rises in the east at 06:00, ~55 deg high at noon
  * (in the south), sets in the west at 18:00. dir is east/north/up (unit). exposure scales scene brightness:
- * night ~0.35, golden dawn/dusk, day = sunIntensity (0..1.5).
+ * night ~0.35, golden dawn/dusk, day = sunIntensity (gentler above 1: 1.5 -> 1.2).
  */
 export function sunFor(hours: number, sunIntensity: number): Sun {
   const h = ((hours % 24) + 24) % 24;
@@ -110,7 +110,9 @@ export function sunFor(hours: number, sunIntensity: number): Sun {
   const e = Math.sin(elev);
   const daylight = Math.min(1, Math.max(0, (e + 0.1) / 0.35)); // 0 at night .. 1 once the sun is ~15 deg up
   const golden = Math.max(0, 1 - Math.abs(e - 0.08) / 0.25) * (e > -0.1 ? 1 : 0); // warm light near the horizon
-  const exposure = 0.35 + (Math.min(1.5, Math.max(0, sunIntensity)) - 0.35) * daylight;
+  const i = Math.min(1.5, Math.max(0, sunIntensity));
+  const dayLevel = i > 1 ? 1 + (i - 1) * 0.4 : i; // above 1, brighten gently: photogrammetry roofs clip fast
+  const exposure = 0.35 + (dayLevel - 0.35) * daylight;
   const color: [number, number, number] = [1, 1 - 0.18 * golden, 1 - 0.38 * golden];
   if (daylight < 1) {
     // Moonlight blue at night.
@@ -119,4 +121,13 @@ export function sunFor(hours: number, sunIntensity: number): Sun {
     color[1] -= 0.12 * n;
   }
   return { dir, exposure, color };
+}
+
+/**
+ * Low cloud slab (metres above the fields). Nominally 150-350 m, but always kept ~50 m below the camera so the
+ * puffs sit between camera and ground (the farm camera can be as low as ~60 m); ~110 m thick, base never below 40 m.
+ */
+export function cloudSlab(cameraHeightM: number): { x: number; y: number } {
+  const top = Math.min(350, Math.max(90, cameraHeightM - 50));
+  return { x: Math.max(40, top - 110), y: top };
 }

@@ -27,8 +27,9 @@ uniform vec4 u_sun;      // dir east/north/up, exposure
 uniform vec3 u_sunColor;
 uniform vec3 u_misc;     // lightning flash 0..1, parallax x, parallax y
 
-const float CLOUD_BASE = 170.0;
-const float CLOUD_TOP = 330.0;
+uniform vec2 u_slab;     // cloud slab base, top (m above the ground), kept below the camera
+#define CLOUD_BASE u_slab.x
+#define CLOUD_TOP u_slab.y
 const float FAR = 4000.0;
 
 float hash12(vec2 p) {
@@ -54,9 +55,9 @@ float fbm(vec2 p) {
   }
   return s / n;
 }
-// Cloud field at a local xy (m): one puff scale ~220 m, drifting with the wind.
-float cloudField(vec2 xy) { return fbm((xy + u_cloud.zw) / 220.0); }
-float cloudThreshold() { return mix(0.86, 0.42, u_cloud.x); }
+// Cloud field at a local xy (m): one puff scale ~130 m, drifting with the wind.
+float cloudField(vec2 xy) { return fbm((xy + u_cloud.zw) / 130.0); }
+float cloudThreshold() { return mix(0.86, 0.5, u_cloud.x); }
 
 // Rain streaks in screen space (aspect-corrected uv). One layer = a grid of columns with sparse falling drops.
 float rainLayer(vec2 uv, float scale, float speed, float len, float density, float seed) {
@@ -159,14 +160,14 @@ void main(void) {
       float jitter = hash12(gl_FragCoord.xy) - 0.5;
       float T = 1.0;
       vec3 acc = vec3(0.0);
-      vec3 lit = mix(vec3(0.97, 0.97, 0.98), vec3(0.34, 0.36, 0.40), dark);
+      vec3 lit = mix(vec3(0.97, 0.97, 0.98), vec3(0.55, 0.57, 0.62), dark);
       for (int i = 0; i < CLOUD_STEPS; i++) {
-        float t = t0 + (float(i) + 0.5 + jitter * 0.8) * dt;
+        float t = t0 + (float(i) + 0.5 + jitter * 0.25) * dt;
         vec3 p = ro + rd * t;
         float h = clamp((p.z - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE), 0.0, 1.0);
         float d = clamp((cloudField(p.xy) - thr - abs(h - 0.45) * 0.22) * 5.0, 0.0, 1.0);
         if (d > 0.0) {
-          float a = (1.0 - exp(-d * dt * 0.03)) * smoothstep(30.0, 180.0, t); // fade puffs right at the lens
+          float a = (1.0 - exp(-d * dt * 0.03)) * smoothstep(15.0, 90.0, t); // fade puffs right at the lens
           vec3 c = lit * mix(0.72, 1.06, h) * mix(vec3(1.0), u_sunColor, 0.6) * max(u_sun.w, 0.45) + u_misc.x * 0.5;
           acc += T * a * c;
           T *= 1.0 - a;

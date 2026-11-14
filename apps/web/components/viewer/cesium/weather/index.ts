@@ -18,7 +18,7 @@ import { Cartesian2, Cartesian3, Cartesian4, DirectionalLight, Matrix4, PostProc
 import type { AtmosphereState, DetailLevel, FarmSurface } from "@/components/globe/types";
 import type { AtmosphereWithBaseline } from "@/lib/twin/scenarios/atmosphere";
 
-import { createAutoTier, createLightning, rainDensity, rainSpeed, sunFor, tierSettings } from "./logic";
+import { cloudSlab, createAutoTier, createLightning, rainDensity, rainSpeed, sunFor, tierSettings } from "./logic";
 import { weatherShader } from "./shader";
 
 export interface WeatherContext {
@@ -86,7 +86,33 @@ const animates = (s: AtmosphereState) => s.rainRateMmH > 0 || s.drizzle > 0 || s
 /** Dev perf line (same switches as Globe's readout: dev build or ?perf=1, backtick toggles). */
 function perfLine(viewer: Viewer) {
   const params = new URLSearchParams(window.location.search);
-  if (process.env.NODE_ENV === "production" && params.get("perf") !== "1") return { set() {}, remove() {} };
+  if (process.env.NODE_ENV === "production" && params.get("perf") !== "1") return { set() {}, remove() {}, bypass: () => false, measuring: () => false };
+  // Measuring hook: window.__ftWeather.bypass = true keeps the engine animating (frames keep rendering) but skips
+  // the effect pass, so effect cost = frame time with it on minus frame time with it off.
+  // __ftWeather.measure(n) forces n renders, each followed by a 1-pixel readPixels (GPU-synchronous, independent
+  // of requestAnimationFrame, which automation browsers throttle) and returns the median ms per frame.
+  const hook = {
+    bypass: false,
+    measuring: false,
+    measure(n = 60) {
+      hook.measuring = true; // forced back-to-back renders must not trip the auto step-down
+      const { scene } = viewer;
+      const gl = (scene as unknown as { context: { _gl: WebGL2RenderingContext } }).context._gl; // not in the typings
+      const px = new Uint8Array(4);
+      const ms: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const t = performance.now();
+        scene.requestRender();
+        scene.render();
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        ms.push(performance.now() - t);
+      }
+      hook.measuring = false;
+      ms.sort((a, b) => a - b);
+      return +ms[Math.floor(n / 2)].toFixed(2);
+    },
+  };
+  (window as unknown as { __ftWeather?: typeof hook }).__ftWeather = hook;
   const el = document.createElement("pre");
   Object.assign(el.style, { position: "absolute", right: "8px", top: "84px", zIndex: "20", margin: "0", padding: "4px 8px", font: "11px/1.4 ui-monospace, monospace", color: "#d7f3ee", background: "rgba(16,32,30,.82)", borderRadius: "6px", pointerEvents: "none", display: params.get("perf") === "1" ? "block" : "none" });
   viewer.container.appendChild(el);
@@ -101,7 +127,10 @@ function perfLine(viewer: Viewer) {
     remove() {
       window.removeEventListener("keydown", onKey);
       el.remove();
+      delete (window as unknown as { __ftWeather?: unknown }).__ftWeather;
     },
+    bypass: () => hook.bypass,
+    measuring: () => hook.measuring,
   };
 }
 
@@ -114,6 +143,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
   const worldToLocal = new Matrix4();
   const localToWorld = new Matrix4();
   const misc = new Cartesian3();
+  const slab = new Cartesian2(170, 330);
   const time = { t: 0 };
   let anchor: Cartesian3 | null = null;
   let anchorCheckS = 0;
@@ -149,6 +179,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
     u_sun: () => p.sun,
     u_sunColor: () => p.sunColor,
     u_misc: () => misc,
+    u_slab: () => slab,
   });
 
   const removeStages = () => {
@@ -211,7 +242,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
 
       const reduced = ctx.reducedMotion;
       const moving = !reduced && animates(state);
-      const tier = moving ? auto.update(ctx.detail, ctx.dtS) : ctx.detail;
+      const tier = moving && !perf.measuring() ? auto.update(ctx.detail, ctx.dtS) : ctx.detail;
       if (builtTier !== tier) build(tier);
       if (!stages) return;
 
@@ -235,6 +266,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       misc.z = scene.camera.pitch * 0.8;
 
       Matrix4.multiply(worldToLocal, scene.camera.inverseViewMatrix, eyeToLocal);
+      Object.assign(slab, cloudSlab(eyeToLocal[14]));
       const sun = fillParams(main, state, drift, reduced);
       const withBase = state as AtmosphereWithBaseline;
       const baseline = withBase.baseline;
@@ -246,8 +278,9 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       main.gate.y = at;
       base.gate.x = -1;
       base.gate.y = at;
-      stages.left.enabled = split;
-      stages.right.enabled = true;
+      const bypass = perf.bypass();
+      stages.left.enabled = split && !bypass;
+      stages.right.enabled = !bypass;
 
       // Sun direction for lit surfaces (terrain, models); Google photogrammetry is unlit, so the grade carries the look.
       const sunWorld = Matrix4.multiplyByPointAsVector(localToWorld, new Cartesian3(...sun.dir), new Cartesian3());
@@ -262,7 +295,7 @@ export function createWeatherEngine(viewer: Viewer): WeatherEngine {
       if (ctx.nowS - perfAt > 0.5) {
         perfAt = ctx.nowS;
         const stepped = auto.steps ? ` (auto-stepped ${auto.steps} from ${ctx.detail})` : "";
-        perf.set(`sky tier ${tier}${stepped}${moving ? `  fx fps ${auto.fps.toFixed(0)}` : "  static"}${split ? "  split" : ""}`);
+        perf.set(`sky tier ${tier}${stepped}${moving ? `  fx fps ${auto.fps.toFixed(0)}` : "  static"}${split ? "  split" : ""}  cam ${eyeToLocal[14].toFixed(0)} m above anchor`);
       }
     },
     destroy() {
