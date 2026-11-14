@@ -46,6 +46,18 @@ export type HeroEarthApi = {
   face(id: string): void;
   /** Glide back to the whole-Earth size (before the hand-over to the Cesium dive). */
   resetZoom(): void;
+  /**
+   * Seamless dive push-in on this globe: in `durationMs` (ease-in-out) the Earth turns so the farm is centred and the
+   * camera flies in to `endDistance` Earth radii from the centre (default 1.12, about 760 km up). Pins hide and the
+   * shader drops to a cheaper look while it runs. `onDone` fires once, when the end framing is reached; the view then
+   * holds there until `cancelDive()` or `resetZoom()`.
+   */
+  startDive(id: string, durationMs: number, onDone?: () => void, endDistance?: number): void;
+  /** Same as startDive with the default end framing (1.12 Earth radii from the centre, 1/8 radius up). */
+  diveTo(farmId: string, durationMs: number, onDone: () => void): void;
+  /** Stop a dive (running or held) and glide back to the whole-Earth view. */
+  cancelDive(): void;
+  isDiving(): boolean;
 };
 
 type Props = {
@@ -114,6 +126,7 @@ const earthFrag = /* glsl */ `
   uniform vec3 rimColor;
   uniform float rimOn;
   uniform float time;
+  uniform float lowDetail;
   varying vec2 vUv;
   varying vec3 vNormalV;
   varying vec3 vPosV;
@@ -186,8 +199,10 @@ const earthFrag = /* glsl */ `
     vec3 night = texture2D(nightMap, vUv).rgb;
     float water = waterOf(raw);
     float wNear = 0.0;
+    if (lowDetail > 0.5) wNear = 8.0 * water; else {
     wNear += waterOf(texture2D(dayMap, vUv + vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.006)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.006)).rgb);
     wNear += waterOf(texture2D(dayMap, vUv + vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.016)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.016)).rgb);
+    }
     float shallow = water * smoothstep(0.0, 0.7, 1.0 - wNear / 8.0);
 
     // Ocean: normal perturbed by the moving swell at two scales (fine chop fades before it would alias).
@@ -203,9 +218,9 @@ const earthFrag = /* glsl */ `
     float diffuse = clamp(ndl * 0.8 + 0.22, 0.0, 1.0);
 
     // Clouds and their soft shadow on the surface below (the shadow is the same field sampled toward the sun, a little coarser).
-    float cl = cloudAt(po, 4);
+    float cl = cloudAt(po, lowDetail > 0.5 ? 2 : 4);
     vec3 sunTan = sunO - po * dot(sunO, po);
-    float cs = cloudAt(normalize(po + sunTan * 0.035), 3);
+    float cs = cloudAt(normalize(po + sunTan * 0.035), lowDetail > 0.5 ? 2 : 3);
 
     // Land: relief from the imagery's own shading and gentle colour variation; ocean: deeper face-on, lighter and bluer at the limb, turquoise on shallows, slow colour drift.
     float lum = dot(day, vec3(0.299, 0.587, 0.114));
@@ -286,6 +301,7 @@ type Motion = {
   vTilt: number;
   dragging: boolean;
   last: { x: number; y: number; t: number } | null;
+  dive: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; fromZoom: number; toZoom: number; t0: number; dur: number; done: boolean; onDone?: () => void } | null;
   fly: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; t0: number; id: string } | null;
   off: { cur: number; from: number; to: number; t0: number };
   camAt: number;
@@ -318,6 +334,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       rimColor: { value: new THREE.Color("#7fb2ff") },
       rimOn: { value: 1 },
       time: { value: 0 },
+      lowDetail: { value: 0 },
     }),
     [day, night],
   );
@@ -359,6 +376,23 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     if (!q.zoomEnabled) m.zoomTo = 1;
     m.zoom = q.reducedMotion ? m.zoomTo : m.zoom + (m.zoomTo - m.zoom) * (1 - Math.exp(-dt / (ZOOM.glideMs / 1000 / 3)));
     if (Math.abs(m.zoom - m.zoomTo) < 1e-4) m.zoom = m.zoomTo;
+    // Dive push-in: one eased move that turns the farm to the centre and flies the camera in (distance interpolated in log space, so the speed feels constant).
+    const dv = m.dive;
+    if (dv) {
+      const k = dv.done || q.reducedMotion ? 1 : Math.min(1, (now - dv.t0) / dv.dur);
+      const e = easeInOutCubic(k);
+      m.spin = dv.fromSpin + (dv.toSpin - dv.fromSpin) * e;
+      m.tilt = dv.fromTilt + (dv.toTilt - dv.fromTilt) * e;
+      m.zoom = Math.exp(Math.log(dv.fromZoom) + (Math.log(dv.toZoom) - Math.log(dv.fromZoom)) * e);
+      m.zoomTo = m.zoom;
+      m.vSpin = 0;
+      m.vTilt = 0;
+      m.fly = null;
+      if (k >= 1 && !dv.done) {
+        dv.done = true;
+        dv.onDone?.();
+      }
+    }
     cam.position.z = CAM_DIST * m.zoom;
     cam.updateMatrixWorld();
     const halfW = CAM_DIST * m.zoom * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect;
@@ -375,7 +409,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         m.fly = null;
         q.onFlyDone(id);
       }
-    } else if (!m.dragging) {
+    } else if (!m.dragging && !m.dive) {
       if (Math.abs(m.vSpin) + Math.abs(m.vTilt) > 1e-4) {
         m.spin += m.vSpin * dt;
         m.tilt = THREE.MathUtils.clamp(m.tilt + m.vTilt * dt, -MAX_TILT, MAX_TILT);
@@ -389,6 +423,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     if (spun.current) spun.current.rotation.y = m.spin;
     if (tilted.current) tilted.current.rotation.x = m.tilt;
     if (earthMat.current) {
+      earthMat.current.uniforms.lowDetail.value = m.dive ? 1 : 0;
       earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
       // Ocean swell clock (frozen under reduced motion).
       if (!q.reducedMotion) earthMat.current.uniforms.time.value += dt;
@@ -407,7 +442,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         tmp.toCam.copy(cam.position).sub(tmp.v).normalize();
         const fdot = tmp.n.dot(tmp.toCam);
         const s = tmp.v.clone().project(cam);
-        const target = q.showPins ? THREE.MathUtils.clamp((fdot - PIN_FACING) / 0.22, 0, 1) : 0;
+        const target = q.showPins && !q.motion.current.dive ? THREE.MathUtils.clamp((fdot - PIN_FACING) / 0.22, 0, 1) : 0;
         const prev = q.pinAlpha.current.get(f.id) ?? 0;
         const alpha = q.reducedMotion ? target : prev + (target - prev) * (1 - Math.exp(-dt / 0.06));
         q.pinAlpha.current.set(f.id, alpha);
@@ -518,7 +553,7 @@ function useLoadProgress(onProgress: (f: number) => void) {
 }
 
 export function HeroEarth(props: Props) {
-  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
+  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, dive: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
   const pinAlpha = useRef(new Map<string, number>());
   const pinOff = useRef(new Map<string, number>());
@@ -564,8 +599,31 @@ export function HeroEarth(props: Props) {
       },
       resetZoom() {
         motion.current.zoomTo = 1;
+        motion.current.dive = null;
+      },
+      startDive(id, durationMs, onDone, endDistance = 1.12) {
+        const f = farms.find((x) => x.id === id);
+        if (!f) return;
+        const m = motion.current;
+        const a = faceAngles(f.lon, f.lat);
+        m.fly = null;
+        m.dragging = false;
+        m.dive = { fromSpin: m.spin, toSpin: shortest(m.spin, a.spin), fromTilt: m.tilt, toTilt: a.tilt, fromZoom: m.zoom, toZoom: endDistance / CAM_DIST, t0: performance.now(), dur: Math.max(1, durationMs), done: false, onDone };
+      },
+      diveTo(farmId, durationMs, onDone) {
+        this.startDive(farmId, durationMs, onDone);
+      },
+      cancelDive() {
+        const m = motion.current;
+        m.dive = null;
+        m.zoomTo = 1;
+      },
+      isDiving() {
+        return !!motion.current.dive;
       },
     };
+    // Dev only: lets headless QA and the keyframe script drive the globe (window.__heroEarth).
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __heroEarth?: HeroEarthApi }).__heroEarth = props.apiRef.current;
   }, [props.apiRef, farms]);
 
   // Scroll to zoom (when centred): up zooms in, down zooms out. Native listener, because React's onWheel is passive and
@@ -590,6 +648,7 @@ export function HeroEarth(props: Props) {
   const onPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest("[data-pin]")) return;
     const m = motion.current;
+    if (m.dive) return;
     m.dragging = true;
     m.fly = null;
     m.vSpin = 0;
