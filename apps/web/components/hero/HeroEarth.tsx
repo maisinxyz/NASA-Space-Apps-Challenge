@@ -127,6 +127,7 @@ const earthFrag = /* glsl */ `
   uniform float rimOn;
   uniform float time;
   uniform float lowDetail;
+  uniform float cloudFill;
   varying vec2 vUv;
   varying vec3 vNormalV;
   varying vec3 vPosV;
@@ -249,7 +250,10 @@ const earthFrag = /* glsl */ `
     float cloudDay = smoothstep(-0.25, 0.22, ndl);
     float selfShade = 1.0 - 0.28 * clamp(cs - cl * 0.6, 0.0, 1.0);
     vec3 cloudCol = vec3(0.95, 0.97, 1.0) * (0.05 + 1.12 * clamp(ndl * 0.85 + 0.2, 0.0, 1.0)) * selfShade;
-    col = mix(col, cloudCol, cl * 0.66 * cloudDay);
+    float clF = mix(cl * 0.66 * cloudDay, 1.0, cloudFill * cloudFill);
+    // Whiteout at the end of the dive: textured cloud (lighter where dense, greyer in the gaps), close to the CloudLoader's sky.
+    vec3 whiteCol = mix(vec3(0.82, 0.86, 0.92), vec3(0.97, 0.98, 1.0), clamp(cl * 0.75 + 0.35 * (1.0 - cs), 0.0, 1.0));
+    col = mix(col, mix(cloudCol, whiteCol, cloudFill), clF);
 
     // Limb: a thin atmosphere seen edge-on (bluer, strongest on the lit side), plus a faint scatter at the terminator.
     float fres = pow(1.0 - max(dot(n0, v), 0.0), 3.0);
@@ -301,6 +305,7 @@ type Motion = {
   vTilt: number;
   dragging: boolean;
   last: { x: number; y: number; t: number } | null;
+  cloudFill: number;
   dive: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; fromZoom: number; toZoom: number; t0: number; dur: number; done: boolean; onDone?: () => void } | null;
   fly: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; t0: number; id: string } | null;
   off: { cur: number; from: number; to: number; t0: number };
@@ -335,6 +340,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       rimOn: { value: 1 },
       time: { value: 0 },
       lowDetail: { value: 0 },
+      cloudFill: { value: 0 },
     }),
     [day, night],
   );
@@ -423,6 +429,12 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
     if (spun.current) spun.current.rotation.y = m.spin;
     if (tilted.current) tilted.current.rotation.x = m.tilt;
     if (earthMat.current) {
+      // Cloud ramp: over the last ~35% of the push-in the cloud thickens to a near-white frame; eases back out after cancelDive().
+      const kDive = m.dive ? (m.dive.done || q.reducedMotion ? 1 : Math.min(1, (now - m.dive.t0) / m.dive.dur)) : 0;
+      const wantFill = m.dive ? THREE.MathUtils.smoothstep(kDive, 0.65, 1) : 0;
+      m.cloudFill = m.dive ? wantFill : m.cloudFill + (0 - m.cloudFill) * (1 - Math.exp(-dt / 0.3));
+      if (m.cloudFill < 1e-3) m.cloudFill = 0;
+      earthMat.current.uniforms.cloudFill.value = m.cloudFill;
       earthMat.current.uniforms.lowDetail.value = m.dive ? 1 : 0;
       earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
       // Ocean swell clock (frozen under reduced motion).
@@ -553,7 +565,7 @@ function useLoadProgress(onProgress: (f: number) => void) {
 }
 
 export function HeroEarth(props: Props) {
-  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, dive: null, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
+  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, dive: null, cloudFill: 0, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
   const pinAlpha = useRef(new Map<string, number>());
   const pinOff = useRef(new Map<string, number>());
