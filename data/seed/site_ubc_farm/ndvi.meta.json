@@ -1,11 +1,11 @@
 {
- "source_name": "HLS Landsat Operational Land Imager Surface Reflectance and TOA Brightness Daily Global 30m v2.0",
- "source_url": "https://doi.org/10.5067/HLS/HLSL30.002",
- "product_version": "2.0",
+ "source_name": "NASA MODIS/Terra Vegetation Indices MOD13Q1 via ORNL DAAC TESViS",
+ "source_url": "https://doi.org/10.5067/MODIS/MOD13Q1.061",
+ "product_version": "061",
  "retrieved_on": "2026-11-15",
- "license": "Public domain (CC0), as stated by LP DAAC for its products: https://forum.earthdata.nasa.gov/viewtopic.php?t=5421 (read 2026-11-15).",
- "attribution": "NASA HLS v2.0 surface reflectance, LP DAAC. HLSL30 https://doi.org/10.5067/HLS/HLSL30.002 and HLSS30 https://doi.org/10.5067/HLS/HLSS30.002.",
- "resolution_spatial": "30 m",
- "resolution_temporal": "Daily scenes aggregated to 7-day blocks from 1 January",
- "processing_notes": "NASA Earthdata rejected the request (HTTP 401) for host cmr.earthdata.nasa.gov. The token was not printed. No granule was stored. weekly is null. This file is a gap record, not a measurement."
+ "license": "NASA Earth science data, freely available under the NASA Earth Science Data and Information Policy.",
+ "attribution": "Didan, K. (2021), MOD13Q1 v061, NASA LP DAAC. Access via ORNL DAAC TESViS. https://doi.org/10.5067/MODIS/MOD13Q1.061",
+ "resolution_spatial": "Nominal 250 m pixel; site-scale context",
+ "resolution_temporal": "16-day composites in matching 7-day bins",
+ "processing_notes": "One nominal 250 m pixel at the site point, retained only at pixel reliability 0. Raw NDVI scaled by 0.0001. Each composite is assigned to its start-date week. Empty weeks stay null. Mixed land cover may contribute to the pixel."
 }

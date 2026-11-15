@@ -1,0 +1,11 @@
+{
+ "source_name": "NASA MODIS/Terra Vegetation Indices MOD13Q1 via ORNL DAAC TESViS",
+ "source_url": "https://doi.org/10.5067/MODIS/MOD13Q1.061",
+ "product_version": "061",
+ "retrieved_on": "2026-11-15",
+ "license": "NASA Earth science data, freely available under the NASA Earth Science Data and Information Policy.",
+ "attribution": "Didan, K. (2021), MOD13Q1 v061, NASA LP DAAC. Access via ORNL DAAC TESViS. https://doi.org/10.5067/MODIS/MOD13Q1.061",
+ "resolution_spatial": "Nominal 250 m pixel; site-scale context",
+ "resolution_temporal": "16-day composites in matching 7-day bins",
+ "processing_notes": "One nominal 250 m pixel at the site point, retained only at pixel reliability 0. Raw NDVI scaled by 0.0001. Each composite is assigned to its start-date week. Empty weeks stay null. Mixed land cover may contribute to the pixel."
+}

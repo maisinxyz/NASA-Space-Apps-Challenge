@@ -75,11 +75,12 @@ def _ndvi_window(doc: dict | None) -> dict | None:
     years, grid = weekly_seed_grid(doc)
     if not years:
         return None
-    with np.errstate(all="ignore"):
-        mean = np.nanmean(grid, axis=0)
+    observed = np.isfinite(grid).sum(axis=0)
+    mean = np.divide(np.nansum(grid, axis=0), observed, out=np.full(52, np.nan), where=observed > 0)
     weeks = [w for w in range(52) if np.isfinite(mean[w]) and float(mean[w]) < NDVI_BARE_MAX]
     scene_count = _scene_count(doc, weeks)
     count_note = "n_obs was not stored, so the cloud-free count is null." if scene_count is None else f"Cloud-free count is the sum of n_obs on those weeks ({scene_count})."
+    spatial_note = doc.get("spatial_method") or ""
     return {
         "weeks": weeks,
         "source": "ndvi",
@@ -88,7 +89,7 @@ def _ndvi_window(doc: dict | None) -> dict | None:
             f"Weeks whose mean NDVI over {years[0]}-{years[-1]} is below {NDVI_BARE_MAX}. "
             "That threshold is assumed. TODO(verify). "
             "https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index "
-            f"{count_note}"
+            f"{count_note} {spatial_note}".strip()
         ),
     }
 
