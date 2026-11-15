@@ -43,6 +43,8 @@ describe("candidate farms", () => {
     for (let i = 0; i < all.length; i++)
       for (let j = i + 1; j < all.length; j++) {
         if (i < 3 && j < 3) continue; // Cornell and Beltsville: the two existing full twins, kept as chosen
+        const bcTwins = ["ubc-farm", "kpu-langley"]; // the two BC twins, kept together at the user's request (2026-11-14)
+        if (bcTwins.includes(all[i].id) && bcTwins.includes(all[j].id)) continue;
         if (distanceKm(all[i], all[j]) < 500) close.push(`${all[i].id}/${all[j].id}`);
       }
     expect(close).toEqual([]);

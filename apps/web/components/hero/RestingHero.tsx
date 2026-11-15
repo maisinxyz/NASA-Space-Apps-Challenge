@@ -128,8 +128,14 @@ export function RestingHero({
       {/* Info column: 5 of 12 columns after the sidebar, 64 px padding, vertically centred. */}
       <div className="absolute inset-y-0 flex flex-col justify-center" style={{ left: u(96), width: `calc((100vw - ${u(96)}) * 5 / 12)`, padding: u(64), paddingBottom: u(64 + 56) }}>
         <Fade order={ORDER.eyebrow} {...props}>
-          <p className="font-bold uppercase" style={{ fontSize: u(12), letterSpacing: "0.4em", color: color.accent }}>
+          <p className="inline-flex items-center rounded-full border border-white/[0.1] bg-white/[0.04] font-bold uppercase backdrop-blur-sm" style={{ fontSize: u(11), letterSpacing: "0.32em", color: color.accent, gap: u(10), paddingInline: u(14), paddingBlock: u(7) }}>
+            <span aria-hidden className="relative flex" style={{ width: u(7), height: u(7) }}>
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#ffc857] opacity-60 motion-reduce:animate-none" />
+              <span className="relative inline-flex h-full w-full rounded-full bg-[#ffc857]" />
+            </span>
             {HERO_COPY.eyebrow}
+            <span aria-hidden className="text-white/30">·</span>
+            <span className="text-white/60">{HERO_COPY.statusRight}</span>
           </p>
         </Fade>
         <Fade order={ORDER.headline} {...props}>
@@ -138,7 +144,7 @@ export function RestingHero({
             <span className="block" style={{ color: color.accent }}>
               {HERO_COPY.headline[1]}
             </span>
-            <span className="block" style={{ color: color.accent }}>
+            <span className="block bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(90deg, ${color.accent} 0%, #d9cfb4 55%, #ffc857 100%)` }}>
               {HERO_COPY.headline[2]}
             </span>
           </h1>
@@ -151,7 +157,8 @@ export function RestingHero({
         <Fade order={ORDER.stats} {...props}>
           <dl className="grid grid-cols-2" style={{ gap: u(16), marginTop: u(48), maxWidth: u(432) }}>
             {stats.map(([k, v]) => (
-              <div key={k} className="border border-white/[0.08] bg-white/[0.03]" style={{ padding: u(24), borderRadius: u(16) }}>
+              <div key={k} className="relative overflow-hidden border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.015] backdrop-blur-sm" style={{ padding: u(22), borderRadius: u(16) }}>
+                <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#a3bfe9]/50 to-transparent" />
                 <dt className="uppercase text-gray-400" style={{ fontSize: u(10), letterSpacing: "0.1em" }}>
                   {k}
                 </dt>
@@ -162,18 +169,21 @@ export function RestingHero({
             ))}
           </dl>
         </Fade>
-        <Fade order={ORDER.action} {...props}>
+        <Fade order={ORDER.action} {...props} className="flex flex-wrap items-center" style={{ marginTop: u(44), gap: u(20) }}>
           <button
             type="button"
             onClick={onExplore}
-            className="pointer-events-auto inline-flex items-center rounded-full border font-bold uppercase transition-colors hover:bg-white/[0.06] focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
-            style={{ marginTop: u(48), paddingInline: u(32), paddingBlock: u(18), gap: u(14), fontSize: u(14), letterSpacing: "0.04em", borderColor: `${color.accent}66`, color: color.accent, minHeight: 40 }}
+            className="pointer-events-auto inline-flex cursor-pointer items-center rounded-full font-bold uppercase text-[#05070c] shadow-[0_0_0_1px_rgba(163,191,233,0.4),0_10px_40px_-6px_rgba(163,191,233,0.55)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-px hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(163,191,233,0.6),0_14px_48px_-6px_rgba(163,191,233,0.75)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/80 active:translate-y-0 motion-reduce:transition-none"
+            style={{ paddingInline: u(30), paddingBlock: u(17), gap: u(14), fontSize: u(14), letterSpacing: "0.06em", background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)`, minHeight: 44 }}
           >
             {HERO_COPY.action}
-            <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: u(16), height: u(16) }}>
+            <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: u(16), height: u(16) }}>
               <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
           </button>
+          <a href="/methods" className="pointer-events-auto inline-flex items-center rounded-sm font-medium text-white/60 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ fontSize: u(14), minHeight: 44 }}>
+            Data &amp; methods
+          </a>
         </Fade>
       </div>
 
@@ -187,14 +197,20 @@ export function RestingHero({
             style={{ width: `${d}vh`, height: `${d}vh`, left: `${50 + hero.restOffsetX * 50}%`, top: "50%", transform: "translate(-50%, -50%)" }}
           />
         ))}
+        {/* How to start, under the Earth. */}
+        <p className="absolute flex -translate-x-1/2 items-center uppercase text-white/55" style={{ left: `${50 + hero.restOffsetX * 50}%`, bottom: u(84), gap: u(10), fontSize: u(11), letterSpacing: "0.24em" }}>
+          <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse motion-reduce:animate-none" style={{ width: u(16), height: u(16) }}>
+            <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4 15.5a1.6 1.6 0 0 1 2.4-2.1L9 15" />
+          </svg>
+          Drag the Earth to explore
+        </p>
       </Fade>
 
       {/* Status bar: 56 px, after the sidebar. Imagery state and live camera position are real; nothing simulated. */}
       <div className="absolute right-0 bottom-0 flex items-center justify-between border-t border-white/5 bg-black/20 uppercase" style={{ left: u(96), height: u(56), paddingInline: u(64), fontSize: u(10), letterSpacing: "0.2em" }}>
-        <Fade order={ORDER.statusRight} {...props} className="flex items-center text-white/60" style={{ gap: u(24) }}>
+        <Fade order={ORDER.statusRight} {...props} className="flex items-center text-white/60" style={{ gap: u(12) }}>
+          <span className="text-white/35">Over</span>
           <LiveCoords />
-          <span aria-hidden className="h-3 w-px bg-white/20" />
-          <span>{HERO_COPY.statusRight}</span>
         </Fade>
       </div>
     </div>

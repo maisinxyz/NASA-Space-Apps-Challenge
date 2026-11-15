@@ -24,6 +24,7 @@ import { IMIDRA_ENCIN } from "./imidra-encin";
 import { INTA_CASTELAR } from "./inta-castelar";
 import { IRRI_LOS_BANOS } from "./irri-los-banos";
 import { KADOORIE_FARM } from "./kadoorie-farm";
+import { KPU_LANGLEY } from "./kpu-langley";
 import { MASSEY_DAIRY1 } from "./massey-dairy1";
 import { NTU_FARM } from "./ntu-farm";
 import { PIRQUE_VINEYARDS } from "./pirque-vineyards";
@@ -43,6 +44,7 @@ export const CANDIDATES: Candidate[] = [
   AGROSCOPE_RECKENHOLZ,
   HELSINKI_VIIKKI,
   UBC_FARM,
+  KPU_LANGLEY,
   UTOKYO_ISAS,
   HOKUDAI_FARM,
   WAITE_ADELAIDE,
