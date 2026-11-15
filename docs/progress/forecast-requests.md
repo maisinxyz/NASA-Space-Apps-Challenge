@@ -54,3 +54,21 @@ Health still reports `API_VERSION` `1.1.0` (`tests/test_routes.py` expects that)
 - `uncertainty.layers[].record_years` is a string (`1991-2024`, `2015+`, or `none`).
 - `station_bias.bias` is a `Number` (unit, basis, confidence live on it) rather than a bare number.
 - `Ramp.years` is 5..10 so a shorter horizon can say when the slider value is reached. The fixture uses 10. Shape is only `linear`. Basis is `assumed`.
+
+## 2026-11-15 — Session C, W3 climate outlook is implemented and not mounted
+
+`app/routers/climate_outlook.py` serves `GET /sites/{site_id}/climate-outlook`. W9 (Session C) will add `climate_outlook` to `ROUTERS` in `app/main.py`. Do not change `packages/contracts/openapi.yaml`.
+
+### Decision D2: leave `climate_source` default as `history_resample`
+
+NEX-GDDP-CMIP6 does publish daily `pr`, `tasmax`, and `tasmin`, and the 0.25 degree grid includes UBC Farm. The license does not clearly allow a seed in this repo: the AWS registry says CC0 as of September 2022, and the June 2025 tech note says each file's `cmip6_license` may restrict use. Details and URLs are in `docs/progress/FT-W3.md`. Please do not switch the schema default to `cmip6_delta` until that is settled. `scripts/extract_nex_gddp_cmip6.py` does not download or write a seed.
+
+### If a satellite seed is stored later
+
+Do not invent values. The outlook will read a file only when it already has these fields:
+
+- SMAP: `anomaly_weekly` (length 52, number or null) and `resolution_note`
+- ECOSTRESS: `value` as a number object with `value`, `unit`, `basis`, `confidence`, plus `resolution_note`
+- GRACE: `trend` as that same number object, plus `resolution_note`
+
+`GET /climate-outlook` has no `crops` parameter in the contract. Heat-stress days use the site's existing-rotation preset. Adding a crops query would be a contract change.
