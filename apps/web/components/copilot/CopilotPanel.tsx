@@ -70,7 +70,7 @@ export function CopilotPanel({ navigation, inline = false }: {
   const location = navigation?.farms.find((farm) => farm.id === screen?.farmId)?.name.split(",")[0];
   return (
     <aside className="fv-glass" aria-label="Farm co-pilot" data-testid={showConversation ? "copilot-panel" : undefined}
-      style={{ position: inline ? "relative" : "absolute", left: inline ? undefined : 16, bottom: inline ? undefined : 26, width: inline ? "100%" : "min(420px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 12, display: "grid", gap: 10, fontSize: 13, background: "rgba(17,26,32,.95)" }}>
+      style={{ position: inline ? "relative" : "absolute", left: inline ? undefined : 16, bottom: inline ? undefined : 26, width: inline ? "100%" : "min(420px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 12, display: "grid", alignContent: "start", gap: 10, fontSize: 13, background: "rgba(17,26,32,.95)" }}>
       {showConversation && <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 className="fv-rtitle" style={{ margin: 0 }}>{location ? `Ask about ${location}` : "Farm co-pilot"}</h2>
