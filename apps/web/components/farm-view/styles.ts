@@ -42,6 +42,7 @@ export const FV_CSS = `
 .fv-table td.s { color: ${color.inkSecondary}; }
 .fv-row { cursor: pointer; transition: background-color 120ms; }
 .fv-row:hover { background: ${color.fillHover}; }
+.fv-row:focus-visible { outline: 2px solid ${color.focusRing}; outline-offset: -2px; }
 .fv-diamond { display: inline-block; width: 7px; height: 7px; background: ${color.stress}; transform: rotate(45deg); margin-right: 8px; vertical-align: 1px; }
 .fv-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color.neutralDot}; margin-right: 8px; vertical-align: 1px; }
 .fv-cap { ${t("caption")} color: ${color.inkSecondary}; }

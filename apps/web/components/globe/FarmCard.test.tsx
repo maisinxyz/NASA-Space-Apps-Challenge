@@ -46,6 +46,13 @@ describe("FarmCard", () => {
     expect(html).not.toContain("/simulate");
     expect(html).not.toContain("data-dev-only");
   });
+
+  it("without a globe: provides clear statement of unavailable 3D twin and non-3D links", () => {
+    const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} />);
+    expect(html).toContain("3D Digital Twin Unavailable");
+    expect(html).toContain("Scientific methods");
+    expect(html).toContain("Documentation");
+  });
 });
 
 describe("FarmList", () => {

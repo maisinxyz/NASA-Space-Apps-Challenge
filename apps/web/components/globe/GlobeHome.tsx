@@ -32,6 +32,7 @@ import { GlobeChrome } from "@/components/hero/GlobeChrome";
 import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
@@ -695,11 +696,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
       )}
-      {inTwin && panels && (
-        <div className="absolute top-14 left-1/2 z-10 -translate-x-1/2">
-          <ZoneToggle />
-        </div>
-      )}
       <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
 
       {/* Dive film: above the globe, below the attribution, the title and the panels. */}
@@ -738,13 +734,16 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           animate={{ opacity: 1 }}
           transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
         >
-          <FarmView
-            farmName={farm.name}
-            place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
-            onBack={() => useAppStore.setState({ globeView: "globe" })}
-            onReset={() => globe.current?.resetView()}
-            sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
-          />
+          <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
+            <FarmView
+              farmName={farm.name}
+              place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
+              onBack={() => useAppStore.setState({ globeView: "globe" })}
+              onReset={() => globe.current?.resetView()}
+              zoneToggle={inTwin ? <ZoneToggle /> : undefined}
+              sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
+            />
+          </ErrorBoundary>
         </motion.div>
       )}
 

@@ -9,7 +9,7 @@ import { CompareTray } from "@/components/farm/CompareTray";
 import { EvidenceBody, FieldCard } from "@/components/farm/Inspector";
 import { ScenarioClock, SimulateBody } from "@/components/farm/ScenarioPanel";
 import { setMode, MapSettings } from "@/components/farm/TwinPanel";
-import { useTwin } from "@/components/farm/shared";
+import { twinConfig } from "@/lib/farms";
 import type { CameraState, CropLook, Farm, FarmField } from "@/components/globe/types";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { encodeShare } from "@/lib/share";
@@ -72,7 +72,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
   const scenarioId = useAppStore((s) => s.scenarioId);
   const playing = useAppStore((s) => s.scenarioPlaying);
   const fieldId = useAppStore((s) => s.twinFieldId);
-  const twin = useTwin();
+  const twin = twinConfig(farm?.id ?? null);
   const def = scenarioById(scenarioId);
   const pill = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(132);
@@ -93,11 +93,43 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
   const label = comparing ? "Comparing A / B" : def ? def.label : "Simulation";
   const canPlay = !!def && runSource !== "none" && !comparing;
 
+  const openSim = (targetSection: SimSection = sim.section) => {
+    sound.pop();
+    const targetMode = MODE_OF[targetSection] ?? "simulate";
+    setMode(targetMode);
+    setSim({ open: true, section: targetSection });
+  };
+  const close = () => {
+    sound.close();
+    setMode("explore");
+    setSim({ ...sim, open: false });
+  };
+
   const choose = (id: SimSection) => {
-    if (id !== "map" && id !== "field") setMode(MODE_OF[id]);
+    const targetMode = MODE_OF[id];
+    if (targetMode) setMode(targetMode);
     setSim({ open: true, section: id });
   };
-  const close = () => { sound.close(); setSim({ ...sim, open: false }); };
+
+  // Keep visible section and active mode in sync
+  useEffect(() => {
+    if (!sim.open) return;
+    if (mode === "simulate" && sim.section !== "scenarios" && sim.section !== "field") {
+      setSim({ open: true, section: "scenarios" });
+    } else if (mode === "compare" && sim.section !== "compare") {
+      setSim({ open: true, section: "compare" });
+    } else if (mode === "evidence" && sim.section !== "evidence") {
+      setSim({ open: true, section: "evidence" });
+    }
+  }, [mode, sim.open, sim.section, setSim]);
+
+  useEffect(() => {
+    if (!sim.open) return;
+    const expectedMode = MODE_OF[sim.section];
+    if (expectedMode && mode !== expectedMode) {
+      setMode(expectedMode);
+    }
+  }, [sim.open, sim.section, mode]);
 
   async function share() {
     const s = useAppStore.getState();
@@ -123,7 +155,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
           aria-label={sim.open ? "Close simulation" : "Open simulation"}
           aria-expanded={sim.open}
           data-testid="sim-tab"
-          onClick={() => (sim.open ? close() : (sound.pop(), setSim({ ...sim, open: true })))}
+          onClick={() => (sim.open ? close() : openSim())}
           style={{ pointerEvents: "auto" }}
         >
           <span className="l" style={{ color: "inherit" }}>{label}</span>
@@ -205,7 +237,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
                   <dt className="text-ink-muted">Fields</dt>
                   <dd>{fields.length} shown</dd>
                   <dt className="text-ink-muted">Model area</dt>
-                  <dd>{twin.simAreaLabel}; the thin outline on the map marks where simulation layers apply.</dd>
+                  <dd>{twin?.simAreaLabel ?? "Model area"}; the thin outline on the map marks where simulation layers apply.</dd>
                 </dl>
               </div>
             )}

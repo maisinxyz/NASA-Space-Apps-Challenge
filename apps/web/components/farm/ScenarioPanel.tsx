@@ -61,7 +61,7 @@ function Glyph({ family }: { family: ScenarioFamily }) {
   }
 }
 
-const openScenario = (id: ScenarioDef["id"] | null) => useAppStore.setState({ scenarioId: id, scenarioProgress: 0, scenarioPlaying: false });
+const openScenario = (id: ScenarioDef["id"] | null) => useAppStore.setState({ scenarioId: id, scenarioProgress: 0, scenarioPlaying: false, twinMode: "simulate" });
 
 export function SimulateBody({ runSource, frame }: { runSource: RunSource; frame: ScenarioFrame | null }) {
   const id = useAppStore((s) => s.scenarioId);
