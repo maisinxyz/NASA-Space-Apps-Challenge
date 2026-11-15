@@ -20,9 +20,10 @@ export const pinBox = (design: string | undefined, fallback: { w: number; h: num
 
 /** `design` is Farm.pin. A known id draws that farm's own artwork; unknown or missing falls back to the satin pin. */
 export function Pin3D({ width, height, className = "", style, tone = "twin", design }: { width: number; height: number; className?: string; style?: React.CSSProperties; tone?: keyof typeof TONES; design?: string }) {
+  const generatedId = useId().replace(/:/g, "");
   if (hasFarmPin(design)) return <FarmPin design={design} className={className} style={style} />;
   const [c0, c1, c2] = TONES[tone];
-  const id = useId().replace(/:/g, "");
+  const id = generatedId;
   const body = "M10 29 C10 29 2 17.2 2 9.8 A8 8 0 0 1 18 9.8 C18 17.2 10 29 10 29 Z";
   return (
     <svg viewBox="0 0 20 30" width={width} height={height} className={className} style={{ overflow: "visible", ...style }} aria-hidden>
