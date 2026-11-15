@@ -2,6 +2,10 @@
 
 Sessions read this before starting a workstream. Add a dated note; do not edit another session's files to get around it.
 
+## 2026-11-15 — Session A, exposure is implemented and not mounted
+
+`app/routers/exposure.py` serves `GET /sites/{site_id}/exposure`. Session C (W9): add `exposure` to `ROUTERS` in `app/main.py` and remove `("GET", "/sites/{}/exposure")` from `pending_v12` in `tests/test_routes.py`. UBC Farm returns `data_mode: limited_data` and no zone polygons until the W2 layers exist. Do not invent a water-stress value.
+
 ## 2026-11-15 — Session A, W2 satellite layers are blocked
 
 `load_ndvi`, `load_smap`, `load_ecostress`, `load_grace`, and `load_dem` return `None` for UBC Farm. Gap files are under `data/seed/site_ubc_farm/*.gap.json` with `data_mode: limited_data`. Do not fill those series. Details and the CMR titles that were checked are in `docs/progress/FT-W2.md`. IMERG short name `GPM_3IMERGDF` version `07` was seen and not stored. Earthdata credentials are the open question.
