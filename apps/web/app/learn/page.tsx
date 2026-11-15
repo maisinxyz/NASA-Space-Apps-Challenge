@@ -33,6 +33,10 @@ export default function LearnPage() {
         Plain-language explanations of the terms and crop types used in <GlossaryTerm id="relative_score">relative scores</GlossaryTerm>.
       </p>
 
+      <div className="mt-6 rounded-lg border border-line bg-surface-2 p-4 text-sm text-ink-muted">
+        <strong className="text-ink">Draft educational fixtures:</strong> The crop explainers and glossary terms below are illustrative samples prepared for interface prototyping. Citations marked as pending review are not authoritative agronomic guidance.
+      </div>
+
       <Section id="satellite" title="Satellite vs ground-based data">
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
@@ -58,7 +62,9 @@ export default function LearnPage() {
               <h3 className="font-semibold text-ink">{c.short}</h3>
               <p className="mt-2 text-sm text-ink">{c.why_it_helps}</p>
               <p className="mt-2 text-sm text-ink-muted">Limits: {c.limits}</p>
-              <p className="mt-2 text-xs text-ink-muted">Source: {c.source}</p>
+              <p className="mt-2 text-xs text-ink-muted">
+                {c.source === "not yet verified" ? "Draft placeholder · Citation pending expert review" : `Source: ${c.source}`}
+              </p>
             </Card>
           ))}
         </div>
@@ -72,7 +78,9 @@ export default function LearnPage() {
               <dd className="text-ink">{e.short}</dd>
               <dd className="text-sm text-ink-muted">{e.long}</dd>
               <dd className="text-sm text-ink-muted">How we use it: {e.how_we_use_it}</dd>
-              <dd className="text-xs text-ink-muted">Source: {e.source}</dd>
+              <dd className="text-xs text-ink-muted">
+                {e.source === "not yet verified" ? "Draft placeholder · Citation pending expert review" : `Source: ${e.source}`}
+              </dd>
             </div>
           ))}
         </dl>

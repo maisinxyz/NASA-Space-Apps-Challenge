@@ -73,6 +73,7 @@ import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/ces
 
 import { type LoadTrack, startLoad, stepLoad } from "./loadProgress";
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
+import { hasModifier, isTextEntry } from "@/lib/keys";
 
 // Camera framing (product choices, tune freely).
 /** Whole-Earth view: camera height above the ellipsoid, metres. */
@@ -812,6 +813,65 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     canvas.addEventListener("contextmenu", noMenu);
     canvas.addEventListener("pointerleave", onLeave);
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (hasModifier(e) || isTextEntry(e.target) || document.querySelector("dialog[open]")) return;
+      const st = r.orbit;
+      const farm = farmNow();
+      if (live.current.view === "farm" && st && farm && !r.flying) {
+        let handled = false;
+        const STEP_PAN = 35; // metres
+        const STEP_RAD = 0.06; // radians
+        const box = boxOf(live.current, farm);
+        const t = offsetM(st.target, box);
+
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+          if (e.shiftKey) st.o = { ...st.o, heading: st.o.heading + STEP_RAD };
+          else st.target = fromOffsetM(box, panTarget(t, { x: -STEP_PAN, y: 0 }, box, panMarginFor(farm.minRangeM)));
+          handled = true;
+        } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+          if (e.shiftKey) st.o = { ...st.o, heading: st.o.heading - STEP_RAD };
+          else st.target = fromOffsetM(box, panTarget(t, { x: STEP_PAN, y: 0 }, box, panMarginFor(farm.minRangeM)));
+          handled = true;
+        } else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+          if (e.shiftKey) st.o = { ...st.o, pitch: st.o.pitch + STEP_RAD };
+          else st.target = fromOffsetM(box, panTarget(t, { x: 0, y: STEP_PAN }, box, panMarginFor(farm.minRangeM)));
+          handled = true;
+        } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+          if (e.shiftKey) st.o = { ...st.o, pitch: st.o.pitch - STEP_RAD };
+          else st.target = fromOffsetM(box, panTarget(t, { x: 0, y: -STEP_PAN }, box, panMarginFor(farm.minRangeM)));
+          handled = true;
+        } else if (e.key === "+" || e.key === "=" || e.key === "PageUp") {
+          const range = clampOrbit({ ...st.o, range: st.o.range * 0.88 }, 0, farm.minRangeM).range;
+          st.o = { ...st.o, range };
+          handled = true;
+        } else if (e.key === "-" || e.key === "_" || e.key === "PageDown") {
+          const range = clampOrbit({ ...st.o, range: st.o.range * 1.14 }, 0, farm.minRangeM).range;
+          st.o = { ...st.o, range };
+          handled = true;
+        }
+
+        if (handled) {
+          e.preventDefault();
+          r.motion.touch(performance.now());
+          applyOrbit(r, live.current, farm);
+        }
+      } else if (live.current.view === "globe" && !r.flying) {
+        let handled = false;
+        const c = r.viewer.camera;
+        if (e.key === "ArrowLeft") { c.rotateRight(0.04); handled = true; }
+        else if (e.key === "ArrowRight") { c.rotateLeft(0.04); handled = true; }
+        else if (e.key === "ArrowUp") { c.rotateUp(0.04); handled = true; }
+        else if (e.key === "ArrowDown") { c.rotateDown(0.04); handled = true; }
+        else if (e.key === "+" || e.key === "=" || e.key === "PageUp") { c.zoomIn(1500000); handled = true; }
+        else if (e.key === "-" || e.key === "_" || e.key === "PageDown") { c.zoomOut(1500000); handled = true; }
+        if (handled) {
+          e.preventDefault();
+          scene.requestRender();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     // Per-frame work. preUpdate fires every animation frame even in requestRenderMode; moving the camera
     // makes Cesium render, so an idle globe costs nothing.
     let last = performance.now();
@@ -966,6 +1026,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("contextmenu", noMenu);
       canvas.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("keydown", onKeyDown);
       for (const ev of inputs) canvas.removeEventListener(ev, stopAuto);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       rt.current = null;

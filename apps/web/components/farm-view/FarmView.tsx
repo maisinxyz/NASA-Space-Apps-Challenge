@@ -17,6 +17,7 @@ import { ConditionCard, LayerLegend } from "./Cards";
 import { FvButton } from "./FvButton";
 import { ChevronLeft, ChevronRight, Droplet, Leaf, PanelLeft, RotateCcw, Thermometer, Volume2, VolumeX } from "./icons";
 import { SimulationTab, useSimKeys, type SimProps, type SimState } from "./SimulationTab";
+import { monthOf } from "@/lib/farm-view/timeline";
 import { FV_CSS } from "./styles";
 import { Timeline } from "./Timeline";
 import { Twin } from "./Twin";
@@ -38,16 +39,19 @@ export type FarmViewProps = {
   zoneToggle?: ReactNode;
   /** Whether the field report is initially expanded (useful for testing or direct links). */
   initialReportOpen?: boolean;
+  initialSim?: SimState;
+  initialPanelsHidden?: boolean;
 };
 
-export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zoneToggle, initialReportOpen = false }: FarmViewProps) {
+export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zoneToggle, initialReportOpen = false, initialSim, initialPanelsHidden }: FarmViewProps) {
   const reduced = !!useReducedMotion();
   const currentLook = useAppStore((s) => s.look);
   const [layer, setLayer] = useState<LayerId>(() => (currentLook === "vegetation" ? "vigor" : currentLook === "thermal" ? "moisture" : "satellite"));
   const [reportOpen, setReportOpen] = useState(initialReportOpen);
-  const [sim, setSimState] = useState<SimState>({ open: false, section: "scenarios" });
+  const [sim, setSimState] = useState<SimState>(() => initialSim ?? { open: false, section: "scenarios" });
   const reportBefore = useRef(false);
-  const panelsHidden = useAppStore((s) => s.panelsHidden);
+  const storePanelsHidden = useAppStore((s) => s.panelsHidden);
+  const panelsHidden = initialPanelsHidden !== undefined ? initialPanelsHidden : storePanelsHidden;
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const farmId = useAppStore((s) => s.farmId);
   const twin = twinConfig(farmId);
@@ -161,7 +165,7 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
         </div>
 
         {/* Right Region: Layer bar + condition pills */}
-        {!panelsHidden && (
+        {!panelsHidden ? (
           <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: 460 }}>
             {/* Layer bar */}
             <div className="fv-glass fv-bar fv-auto" role="radiogroup" aria-label="Map layer" onKeyDown={onBarKey}>
@@ -254,6 +258,20 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
               </LayoutGroup>
             </div>
           </div>
+        ) : (
+          <div className="pointer-events-auto flex items-start justify-end" style={{ maxWidth: 460 }}>
+            <FvButton
+              className="fv-glass fv-pill fv-auto"
+              data-testid="show-panels"
+              aria-label="Show panels (H)"
+              aria-keyshortcuts="H"
+              onClick={() => useAppStore.setState({ panelsHidden: false })}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px" }}
+            >
+              <span>Show panels</span>
+              <kbd style={{ fontSize: 11, opacity: 0.8, padding: "1px 5px", borderRadius: 4, background: "rgba(242,235,221,0.18)" }}>H</kbd>
+            </FvButton>
+          </div>
         )}
       </header>
 
@@ -343,7 +361,15 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
 
       {simProps && comparing && <DividerHandle />}
 
-      <Timeline reduced={reduced} />
+      <Timeline
+        reduced={reduced}
+        onDayChange={(day) => {
+          const m = monthOf(day);
+          if (useAppStore.getState().twinMonth !== m) {
+            useAppStore.setState({ twinMonth: m });
+          }
+        }}
+      />
 
       {/* Twin: round logo button that opens the ask pill and answer card */}
       <Twin />

@@ -109,4 +109,49 @@ describe("FarmView", () => {
     expect(html).toContain('role="button"');
     expect(html).toContain(`aria-label="Select field ${twin.fields[0].name}"`);
   });
+
+  it("renders persistent 'Show panels' button when panelsHidden is true", () => {
+    useAppStore.setState({ farmId: "cornell-ruminant", globeView: "farm", panelsHidden: true });
+    const html = renderToStaticMarkup(
+      <FarmView farmName="Cornell Musgrave Research Farm" onBack={noop} onReset={noop} initialPanelsHidden={true} />
+    );
+
+    expect(html).toContain('data-testid="show-panels"');
+    expect(html).toContain("Show panels");
+    expect(html).toContain('aria-keyshortcuts="H"');
+  });
+
+  it("renders accessible WAI-ARIA tab/panel attributes in simulation tab", () => {
+    useAppStore.setState({ farmId: "cornell-ruminant", globeView: "farm", panelsHidden: false });
+    const farm = farmById("cornell-ruminant")!;
+    const twin = twinConfig("cornell-ruminant")!;
+    const simProps = {
+      farm,
+      fields: twin.fields,
+      cropA: undefined,
+      cropB: undefined,
+      pending: 0,
+      runSource: "fixture" as const,
+      frame: null,
+      getCamera: () => null,
+    };
+
+    const html = renderToStaticMarkup(
+      <FarmView
+        farmName={farm.name}
+        onBack={noop}
+        onReset={noop}
+        sim={simProps}
+        initialSim={{ open: true, section: "scenarios" }}
+      />
+    );
+
+    expect(html).toContain('role="tablist"');
+    expect(html).toContain('id="sim-tab-scenarios"');
+    expect(html).toContain('aria-controls="sim-panel-scenarios"');
+    expect(html).toContain('aria-selected="true"');
+    expect(html).toContain('role="tabpanel"');
+    expect(html).toContain('id="sim-panel-scenarios"');
+    expect(html).toContain('aria-labelledby="sim-tab-scenarios"');
+  });
 });

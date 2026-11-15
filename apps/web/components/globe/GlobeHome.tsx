@@ -433,6 +433,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       ...(d.look && { look: d.look }),
       ...(d.detail && { detail: d.detail }),
       ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
+      ...(d.rotation && { scenarioRotation: d.rotation }),
+      ...(d.time !== undefined && { scenarioProgress: d.time }),
+      ...(d.year !== undefined && { twinYear: d.year }),
+      ...(d.month !== undefined && { twinMonth: d.month }),
+      ...(d.panel && { leftOpen: d.panel !== "none" }),
     });
   }, []);
   useEffect(() => {

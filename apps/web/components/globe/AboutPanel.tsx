@@ -8,11 +8,12 @@ import { Card } from "@/components/ui/Card";
 
 const STEPS = [
   { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Full digital twin\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
-  { title: "Replay a real storm", body: "Choose a storm from the NASA POWER record and watch where water runs and pools on a 3D model of the land." },
-  { title: "Compare rotations", body: "Run the same storm on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
+  { title: "Simulate weather scenarios", body: "Run synthetic storm and drought scenarios calibrated against regional baselines (live NASA POWER replay is in development) to watch where water runs and pools on a 3D model of the land." },
+  { title: "Compare rotations", body: "Run the same scenario on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];
 
 const ROADMAP = [
+  { title: "Live NASA POWER replay", body: "Replaying historical storms directly from the NASA POWER archive (currently disabled in favour of synthetic scenario models)." },
   { title: "Drone capture", body: "Building the model from drone imagery." },
   { title: "Video capture", body: "Building the model from a walk-around video." },
 ];
@@ -40,7 +41,7 @@ export function AboutPanel() {
             </button>
           </div>
           <p className="mt-3 text-ink-muted">
-            FieldTwin builds a 3D model of farmland from open elevation data, replays storms from the NASA POWER record on it, and compares rotations side by side. Results are relative comparisons, not predictions.
+            FieldTwin builds a 3D model of farmland from open elevation data, simulates weather scenarios on it, and compares rotations side by side. Current runs are synthetic scenarios calibrated against regional historical baselines; results are relative comparisons, not predictions.
           </p>
 
           <h3 className="mt-6 font-display text-xl">How it works</h3>

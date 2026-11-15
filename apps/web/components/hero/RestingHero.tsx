@@ -31,6 +31,7 @@ const BODY_FONT = "'Satoshi', var(--font-hero-ui), ui-sans-serif, system-ui, san
 /** Scale unit: 1px at the 1440 x 1022 design size, smaller on smaller viewports (never larger). */
 export const HERO_UNIT = `min(1px, calc(100vh / ${hero.designH}), calc(100vw / ${hero.designW}))`;
 const u = (n: number) => `calc(var(--u) * ${n})`;
+const uClamp = (n: number, minPx: number) => `clamp(${minPx}px, calc(var(--u) * ${n}), ${n}px)`;
 
 /**
  * Fade-out order (0 = first). Right side first, then the left column bottom-up, the headline last. Fade-in plays the
@@ -110,7 +111,7 @@ export function RestingHero({
             const on = f.id === selectedId;
             return (
               <button key={f.id} type="button" onClick={() => onPickFarm(f.id)} aria-label={`${f.name}, ${f.country}`} aria-pressed={on} className="group flex flex-col items-center rounded-sm focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ gap: u(8), minWidth: 40, minHeight: 32, justifyContent: "center" }}>
-                <span className="font-bold tabular-nums transition-colors" style={{ fontSize: u(10), color: on ? color.accent : "rgba(255,255,255,0.45)" }}>
+                <span className="font-bold tabular-nums transition-colors" style={{ fontSize: uClamp(10, 10), color: on ? color.accent : "rgba(255,255,255,0.45)" }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="block transition-all duration-300 group-hover:bg-white/60" style={{ height: 2, width: on ? u(60) : u(8), background: on ? color.accent : "rgba(255,255,255,0.3)" }} />
@@ -128,7 +129,7 @@ export function RestingHero({
       {/* Info column: 5 of 12 columns after the sidebar, 64 px padding, vertically centred. */}
       <div className="absolute inset-y-0 flex flex-col justify-center" style={{ left: u(96), width: `calc((100vw - ${u(96)}) * 5 / 12)`, padding: u(64), paddingBottom: u(64 + 56) }}>
         <Fade order={ORDER.eyebrow} {...props}>
-          <p className="inline-flex items-center rounded-full border border-white/[0.1] bg-white/[0.04] font-bold uppercase backdrop-blur-sm" style={{ fontSize: u(11), letterSpacing: "0.32em", color: color.accent, gap: u(10), paddingInline: u(14), paddingBlock: u(7) }}>
+          <p className="inline-flex items-center rounded-full border border-white/[0.1] bg-white/[0.04] font-bold uppercase backdrop-blur-sm" style={{ fontSize: uClamp(11, 10.5), letterSpacing: "0.32em", color: color.accent, gap: u(10), paddingInline: u(14), paddingBlock: u(7) }}>
             <span aria-hidden className="relative flex" style={{ width: u(7), height: u(7) }}>
               <span className="absolute inset-0 animate-ping rounded-full bg-[#ffc857] opacity-60 motion-reduce:animate-none" />
               <span className="relative inline-flex h-full w-full rounded-full bg-[#ffc857]" />
@@ -150,7 +151,7 @@ export function RestingHero({
           </h1>
         </Fade>
         <Fade order={ORDER.body} {...props}>
-          <p className="font-light text-gray-400" style={{ fontSize: u(18), lineHeight: 1.625, marginTop: u(36), maxWidth: u(440), textWrap: "pretty", overflowWrap: "break-word" }}>
+          <p className="font-light text-gray-400" style={{ fontSize: uClamp(18, 14), lineHeight: 1.625, marginTop: u(36), maxWidth: u(440), textWrap: "pretty", overflowWrap: "break-word" }}>
             {HERO_COPY.body}
           </p>
         </Fade>
@@ -159,10 +160,10 @@ export function RestingHero({
             {stats.map(([k, v]) => (
               <div key={k} className="relative overflow-hidden border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.015] backdrop-blur-sm" style={{ padding: u(22), borderRadius: u(16) }}>
                 <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#a3bfe9]/50 to-transparent" />
-                <dt className="uppercase text-gray-400" style={{ fontSize: u(10), letterSpacing: "0.1em" }}>
+                <dt className="uppercase text-gray-400" style={{ fontSize: uClamp(10, 10), letterSpacing: "0.1em" }}>
                   {k}
                 </dt>
-                <dd className="font-bold text-white tabular-nums" style={{ fontSize: u(24), marginTop: u(8), lineHeight: 1.15 }}>
+                <dd className="font-bold text-white tabular-nums" style={{ fontSize: uClamp(24, 18), marginTop: u(8), lineHeight: 1.15 }}>
                   {v}
                 </dd>
               </div>
@@ -174,14 +175,14 @@ export function RestingHero({
             type="button"
             onClick={onExplore}
             className="pointer-events-auto inline-flex cursor-pointer items-center rounded-full font-bold uppercase text-[#05070c] shadow-[0_0_0_1px_rgba(163,191,233,0.4),0_10px_40px_-6px_rgba(163,191,233,0.55)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-px hover:brightness-110 hover:shadow-[0_0_0_1px_rgba(163,191,233,0.6),0_14px_48px_-6px_rgba(163,191,233,0.75)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/80 active:translate-y-0 motion-reduce:transition-none"
-            style={{ paddingInline: u(30), paddingBlock: u(17), gap: u(14), fontSize: u(14), letterSpacing: "0.06em", background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)`, minHeight: 44 }}
+            style={{ paddingInline: u(30), paddingBlock: u(17), gap: u(14), fontSize: uClamp(14, 13), letterSpacing: "0.06em", background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)`, minHeight: 44 }}
           >
             {HERO_COPY.action}
             <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: u(16), height: u(16) }}>
               <path d="M3 8h10M9 4l4 4-4 4" />
             </svg>
           </button>
-          <a href="/methods" className="pointer-events-auto inline-flex items-center rounded-sm font-medium text-white/60 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ fontSize: u(14), minHeight: 44 }}>
+          <a href="/methods" className="pointer-events-auto inline-flex items-center rounded-sm font-medium text-white/60 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ fontSize: uClamp(14, 13), minHeight: 44 }}>
             Data &amp; methods
           </a>
         </Fade>

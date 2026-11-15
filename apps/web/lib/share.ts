@@ -21,6 +21,12 @@ export type ShareState = {
   scenario?: ScenarioId | null;
   inputs?: Record<string, number>;
   detail?: DetailLevel;
+  /** Additional simulation & compare state */
+  rotation?: string | null;
+  time?: number;
+  year?: number;
+  month?: number;
+  panel?: string | null;
 };
 
 const SURFACES: FarmSurface[] = ["google", "terrain"];
@@ -34,6 +40,11 @@ export function encodeShare(s: ShareState): string {
   const q = new URLSearchParams({ farm: s.farm, m: s.mode, a: s.a, b: s.b, d: String(round(s.divider, 3)), s: s.surface, l: s.look });
   if (s.field) q.set("f", s.field);
   if (s.detail && s.detail !== "medium") q.set("dt", s.detail);
+  if (s.rotation) q.set("rot", s.rotation);
+  if (s.time !== undefined && Number.isFinite(s.time)) q.set("t", String(round(s.time, 3)));
+  if (s.year !== undefined && Number.isFinite(s.year)) q.set("yr", String(s.year));
+  if (s.month !== undefined && Number.isFinite(s.month)) q.set("mo", String(s.month));
+  if (s.panel) q.set("p", s.panel);
   if (s.scenario) {
     q.set("sc", s.scenario);
     const si = Object.entries(s.inputs ?? {}).map(([k, v]) => `${k}:${round(v, 3)}`);
@@ -70,6 +81,16 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
   if (LOOKS.includes(look)) out.look = look;
   const detail = q.get("dt") as DetailLevel;
   if (DETAILS.includes(detail)) out.detail = detail;
+  const rot = q.get("rot");
+  if (rot && (!twin || twin.rotations.some((r) => r.id === rot))) out.rotation = rot;
+  const t = Number(q.get("t"));
+  if (q.has("t") && Number.isFinite(t)) out.time = Math.min(1, Math.max(0, t));
+  const yr = Number(q.get("yr"));
+  if (q.has("yr") && Number.isFinite(yr)) out.year = yr;
+  const mo = Number(q.get("mo"));
+  if (q.has("mo") && Number.isFinite(mo)) out.month = Math.min(11, Math.max(0, Math.round(mo)));
+  const p = q.get("p");
+  if (p) out.panel = p;
   // A scenario only exists for a twin farm and a known id; each input must be one of its inputs, clamped into range.
   const def = twin ? scenarioById(q.get("sc")) : undefined;
   if (def) {
