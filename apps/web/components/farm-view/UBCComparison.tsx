@@ -8,13 +8,14 @@ import { apiBase } from "@/lib/api/client";
 const STYLES = `
 .ubc-wrap { font-family: inherit; color: #f2ebdd; }
 .ubc-toggle-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:14px; color:#c9bfae; cursor:pointer; }
+.ubc-toggle-row { min-height:44px; }
 .ubc-toggle-row input[type=checkbox] { width:16px; height:16px; accent-color:#7ecf7e; cursor:pointer; }
 .ubc-status { color:#c9bfae; font-size:14px; padding:12px 0; }
 .ubc-retry { margin-left:12px; padding:4px 10px; border-radius:6px; border:1px solid rgba(242,235,221,0.3); background:transparent; color:#f2ebdd; cursor:pointer; font-size:13px; }
 .ubc-retry:hover { background:rgba(242,235,221,0.08); }
 .ubc-section-label { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#7ecf7e; margin:0 0 10px 0; }
 .ubc-baseline-wrap { margin-bottom:16px; }
-.ubc-alts-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-bottom:16px; }
+.ubc-alts-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,220px),1fr)); gap:12px; margin-bottom:16px; }
 .ubc-card { background:rgba(16,20,18,0.86); border-radius:12px; padding:16px; border:1px solid rgba(242,235,221,0.12); }
 .ubc-card-title { font-size:15px; font-weight:600; color:#f2ebdd; margin:0 0 12px 0; }
 .ubc-label { color:#c9bfae; font-size:12px; margin:0 0 2px 0; }
@@ -23,7 +24,7 @@ const STYLES = `
 .ubc-details summary { font-size:12px; color:#7ecf7e; cursor:pointer; user-select:none; }
 .ubc-details-body { margin-top:8px; }
 .ubc-details-row { margin-bottom:8px; }
-.ubc-provenance { font-size:11px; color:#7a7069; border-top:1px solid rgba(242,235,221,0.08); padding-top:10px; margin-top:4px; line-height:1.5; }
+.ubc-provenance { font-size:13px; color:#c9bfae; border-top:1px solid rgba(242,235,221,0.08); padding-top:10px; margin-top:4px; line-height:1.5; }
 `;
 
 // ---------------------------------------------------------------- helpers
@@ -61,7 +62,7 @@ function RotationCard({ rotation }: { rotation: AnalyzedRotation }) {
       <p className="ubc-label">Seasonal water shortfall</p>
       <p className="ubc-value">{water.display}</p>
 
-      <p className="ubc-label">Relative erosion score (0–100)</p>
+      <p className="ubc-label">Erosion protection score (0–100, higher is better)</p>
       <p className="ubc-value">{erosion.score}</p>
 
       <details className="ubc-details">
@@ -122,6 +123,7 @@ export function UBCComparisonView({
         />
         Limited irrigation water
       </label>
+      <p className="ubc-status">Compare how long soil stays covered and how much water the crops may need beyond rainfall. These estimates are for exploring options before checking them against local conditions.</p>
 
       {baseline && (
         <div className="ubc-baseline-wrap">
@@ -191,7 +193,7 @@ export function UBCComparison() {
     return (
       <div className="ubc-wrap">
         <style>{STYLES}</style>
-        <p className="ubc-status">Loading rotation comparison…</p>
+        <p className="ubc-status" role="status">Loading rotation comparison…</p>
       </div>
     );
   }
@@ -200,12 +202,10 @@ export function UBCComparison() {
     return (
       <div className="ubc-wrap">
         <style>{STYLES}</style>
-        <p className="ubc-status">
-          {error ?? "No data returned."}
-          <button className="ubc-retry" onClick={() => setRetryKey((k) => k + 1)}>
-            Retry
-          </button>
-        </p>
+        <p className="ubc-status" role="status">Rotation comparison is temporarily unavailable.</p>
+        <button type="button" className="ubc-retry" onClick={() => setRetryKey((k) => k + 1)}>
+          Retry comparison
+        </button>
       </div>
     );
   }

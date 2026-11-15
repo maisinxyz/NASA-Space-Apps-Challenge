@@ -39,7 +39,7 @@ export function Header() {
   if (slim) {
     return (
       <header className="theme-dark h-10 border-b border-white/10 bg-[#0b0d11] text-ink">
-        <div className="flex h-full items-center gap-4 overflow-hidden px-4 text-sm whitespace-nowrap">
+        <div className="flex h-full items-center gap-4 overflow-x-auto px-4 text-sm whitespace-nowrap [&>*]:shrink-0">
           <Link href="/" className="font-display text-base font-semibold tracking-tight">
             FieldTwin
           </Link>
@@ -47,7 +47,7 @@ export function Header() {
             /
           </span>
           <span className="font-medium">{twinFarm}</span>
-          <p role="note" className="min-w-0 flex-1 truncate text-center text-xs text-ink-muted">
+          <p role="note" className="min-w-0 flex-1 shrink! truncate text-center text-xs text-ink-muted">
             {SUPPORT_SENTENCE}
           </p>
           {badges}

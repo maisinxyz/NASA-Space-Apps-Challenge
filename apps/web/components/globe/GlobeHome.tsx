@@ -15,6 +15,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
 import { FarmView } from "@/components/farm-view/FarmView";
+import { UBCComparison } from "@/components/farm-view/UBCComparison";
 import { Non3dFarmWorkspace } from "@/components/farm-view/Non3dFarmWorkspace";
 import { ArrivalTitle } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
@@ -95,7 +96,7 @@ const UI_AFTER_TITLE_MS = 500;
 type PushIn = { diveTo?(farmId: string, durationMs: number, onDone: () => void): void; cancelDive?(): void };
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
 const dev = process.env.NODE_ENV !== "production";
-const PITCH = "See how the same storm moves across real farmland under different crop rotations.";
+const PITCH = "Explore research farms and compare crop rotations using simulated weather.";
 
 // The globe is not mounted below 768 px. Server render counts as small, so the farm list is in the HTML.
 const WIDE = "(min-width: 768px)";
@@ -159,6 +160,19 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const root = useRef<HTMLDivElement>(null);
   const creditSlot = useRef<HTMLDivElement>(null);
   const [load, setLoad] = useState<"loading" | "ready" | "error">("loading");
+  const [listMode, setListMode] = useState(false);
+  const viewButton = useRef<HTMLButtonElement>(null);
+  const moveViewFocus = useRef(false);
+  const switchView = () => {
+    moveViewFocus.current = true;
+    setListMode((current) => !current);
+  };
+  useEffect(() => {
+    if (moveViewFocus.current) {
+      viewButton.current?.focus();
+      moveViewFocus.current = false;
+    }
+  }, [listMode]);
   const [tier, setTier] = useState<TileTier | null>(null);
   const [pending, setPending] = useState(0);
   const sharedCamera = useRef<CameraState | null>(null);
@@ -394,7 +408,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
 
   const farm = farmById(farmId);
   const runSource = runSourceFor(farm, runSourceProp);
-  const showGlobe = wide && load !== "error";
+  const showGlobe = wide && !listMode && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
   // Twin fields are built once the camera has landed (building them mid-dive costs frames).
   // (`lastView` still holds the previous view on the render where the dive starts, before the phase effect runs.)
@@ -483,7 +497,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedOnGlobe]);
 
-  const status = !wide ? "The 3D globe is not shown on small screens. Choose a farm to open its non-3D workspace." : load === "error" ? "The 3D globe could not load. The non-3D workspace still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
+  const status = listMode ? "Farm list view is active." : !wide ? "The 3D globe is not shown on small screens. Choose a farm to open its non-3D workspace." : load === "error" ? "The 3D globe could not load. The non-3D workspace still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
   const live = (
     <p aria-live="polite" className="sr-only">
       {status}
@@ -495,7 +509,9 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       <div className={`theme-dark min-h-[calc(100dvh-5.5rem)] ${SPACE_BG} px-4 py-8 text-ink`}>
         <div className="mx-auto grid max-w-3xl gap-4">
           <h1 className="font-display text-2xl leading-tight md:text-3xl">{PITCH}</h1>
-          {wide ? (
+          {wide && listMode ? (
+            <button ref={viewButton} type="button" className="min-h-11 w-fit rounded border border-line px-3 py-2" onClick={switchView}>Switch to 3D map</button>
+          ) : wide ? (
             <div role="alert" className="rounded-lg border border-line bg-surface p-4">
               <p className="font-semibold">The 3D globe could not load</p>
               <p className="mt-1 text-sm text-ink-muted">You can use scenarios and comparisons without the map. Select a digital twin below.</p>
@@ -503,9 +519,16 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           ) : (
             <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Digital twins still offer scenarios, comparisons, and evidence here.</p>
           )}
-          {wide && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
+          {wide && !listMode && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
+          <p className="text-sm text-ink-muted">Compare what could happen under different rotations. The demo uses illustrative crops and simulated weather, with no live farm measurements.</p>
           {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
             {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => useAppStore.setState({globeView:"farm",twinMode:"simulate"}) : undefined} />}
+            {farm?.id === "ubc-farm" && (
+              <section aria-labelledby="list-rotation-title" className="rounded-lg border border-line bg-[#101412] p-4 text-[#f2ebdd]">
+                <h2 id="list-rotation-title" className="mb-3 text-lg font-semibold">Compare crop rotations</h2>
+                <UBCComparison />
+              </section>
+            )}
             <FarmList farms={FARMS} selectedId={farmId} onSelect={select} />
           </>}
         </div>
@@ -681,6 +704,17 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           </div>
         </GlobeBoundary>
       </div>
+
+      {onGlobe && (
+        <button
+          ref={viewButton}
+          type="button"
+          onClick={switchView}
+          className="absolute bottom-20 left-5 z-40 min-h-11 rounded border border-line bg-surface px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Browse farms without 3D
+        </button>
+      )}
 
       {/* Resting hero: text left, Earth right. */}
       {onGlobe && ready && (

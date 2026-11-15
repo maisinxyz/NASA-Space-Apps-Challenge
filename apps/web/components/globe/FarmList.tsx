@@ -18,7 +18,7 @@ export function FarmList({ farms, selectedId, onSelect, className = "" }: { farm
       <ul className="mt-2 grid gap-1">
         {farms.map((f) => (
           <li key={f.id}>
-            <button type="button" aria-pressed={f.id === selectedId} onClick={() => onSelect(f.id)} className={`w-full rounded-md border px-2 py-1.5 text-left hover:bg-surface-2 ${f.id === selectedId ? "border-accent bg-surface-2" : "border-transparent"}`}>
+            <button type="button" aria-pressed={f.id === selectedId} onClick={() => onSelect(f.id)} className={`min-h-11 w-full rounded-md border px-3 py-2 text-left hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent ${f.id === selectedId ? "border-accent bg-surface-2" : "border-transparent"}`}>
               <span className="block text-sm font-medium">{f.name}</span>
               <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
                 {f.country}

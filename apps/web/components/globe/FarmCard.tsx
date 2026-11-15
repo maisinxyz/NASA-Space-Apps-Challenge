@@ -15,7 +15,7 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
         <h2 id="farm-card-title" className="font-display text-lg leading-snug">
           {farm.name}
         </h2>
-        <button type="button" onClick={onClose} aria-label="Close farm card" className="rounded border border-line px-2 text-sm hover:bg-surface-2">
+        <button type="button" onClick={onClose} aria-label="Close farm card" className="min-h-11 rounded border border-line px-3 text-sm hover:bg-surface-2">
           Close
         </button>
       </div>
@@ -53,11 +53,11 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
           Source (opens in a new tab)
         </a>
       </p>
-      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}.{onOpen ? " You can fly in and look around." : " Farm metadata and source links remain available here."}</p>}
+      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}.{onOpen ? " You can fly in and look around." : farm.id === "ubc-farm" ? " Crop rotation comparison is available below." : " Farm metadata and source links remain available here."}</p>}
       {onOpen ? (
         <div className="mt-3">
           <button type="button" onClick={onOpen} className={PRIMARY_BTN}>
-            {farm.tier === "twin" ? "Open twin" : "Fly in"}
+            {farm.tier === "twin" ? "Open farm workspace" : "Fly in"}
           </button>
         </div>
       ) : farm.tier === "twin" ? (
