@@ -17,8 +17,8 @@ import { MarkerPulse } from "@/components/hero/FarmCard";
 import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
-import { GlobeAssistant, GlobeChrome } from "@/components/hero/GlobeChrome";
-import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
+import { DesktopNavigation, GlobeAssistant, GlobeChrome } from "@/components/hero/GlobeChrome";
+import { TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { useFieldColourOverlays } from "@/components/farm-future/FieldColours";
@@ -412,6 +412,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       onKeyDownCapture={onActivity}
     >
       <style>{CREDITS_CSS}</style>
+      <DesktopNavigation />
 
       {/* World layer: stars + the 3D Earth. Press-and-drag here drives the hero states. */}
       <div
@@ -505,10 +506,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
 
       {onGlobe && (
         <GlobeChrome navigation={navigation} onAsk={askAtFarm} controls={
-          <>
-            <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={openFarm} settings={settings} onSettings={setSettings} />
-            <p className="mt-3 max-w-52 text-xs text-white/75">Drag to rotate. Click the globe to use arrow keys. Scroll or press + / − to zoom.</p>
-          </>
+          <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={openFarm} settings={settings} onSettings={setSettings} />
         } />
       )}
 

@@ -6,7 +6,7 @@ import type { Bounds, Rect } from "./geometry";
 
 const BIG: Bounds = { w: 1440, h: 900 };
 const SMALL: Bounds = { w: 1024, h: 700 };
-const ORDER: WindowId[] = ["copilot", "nav", "time", "inspector", "future", "planner"];
+const ORDER: WindowId[] = ["copilot", "nav", "time", "inspector", "future", "planner", "simulation"];
 
 const inside = (r: Rect, b: Bounds) => {
   const reg = regionFor(b);
@@ -134,5 +134,28 @@ describe("parseLayout maximised windows", () => {
     expect(parsed.wins.time.rect.y).toBeCloseTo(expected.y, 6);
     expect(parsed.wins.time.rect.w).toBeCloseTo(expected.w, 6);
     expect(parsed.wins.time.rect.h).toBeCloseTo(expected.h, 6);
+  });
+});
+
+describe("desktop workspace visibility", () => {
+  it("starts simulation beside navigation and migrates old layouts", () => {
+    const raw = savedJson(BIG, (data) => { delete data.wins.simulation; data.order = ORDER.filter((id) => id !== "simulation"); });
+    const parsed = parseLayout(raw, BIG)!;
+    expect(parsed.wins.simulation.rect).toEqual({ x: 288, y: 64, w: 420, h: 720 });
+    expect(parsed.order).toContain("simulation");
+  });
+
+  it("reserves the bottom strip for dragged and maximized windows", () => {
+    expect(regionFor(BIG).y + regionFor(BIG).h).toBe(860);
+    for (const id of WINDOW_IDS) {
+      const max = maxRect(id, BIG);
+      expect(max.y + max.h).toBeLessThanOrEqual(860);
+      expect(limitsFor(id, BIG).maxH).toBeLessThanOrEqual(812);
+    }
+  });
+
+  it("allows enough timeline height for compact controls", () => {
+    expect(limitsFor("time", BIG).minH).toBeGreaterThanOrEqual(260);
+    expect(defaultWins(BIG).time.rect.h).toBeGreaterThanOrEqual(260);
   });
 });

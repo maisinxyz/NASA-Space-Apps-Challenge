@@ -10,13 +10,14 @@ export function closeWorkspaceTools() {
 }
 
 /** All entry points, including contextual Ask Gus links, share one desktop surface. */
-export function coordinateWorkspace(closeDrawer: () => void) {
+export function coordinateWorkspace(closeDrawer: () => void, closeSimulation: () => void = () => {}) {
   let coordinating = false;
   const select = (surface: 'future' | 'planner' | 'gus') => {
     if (coordinating) return;
     coordinating = true;
     try {
       closeDrawer();
+      closeSimulation();
       if (surface !== 'future') useFutureStore.setState({ panel: null, reviewFor: null });
       else if (useFutureStore.getState().panel !== 'review') useFutureStore.setState({ reviewFor: null });
       if (surface !== 'planner') usePlannerStore.setState({ open: false });

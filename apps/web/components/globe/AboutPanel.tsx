@@ -8,22 +8,22 @@ import { Card } from "@/components/ui/Card";
 
 const STEPS = [
   { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Explorable\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
-  { title: "Simulate weather scenarios", body: "Weather scenarios on a 3D model of the land show No data until real weather data is connected; live NASA POWER replay is in development." },
+  { title: "Simulate weather scenarios", body: "Weather scenarios on a 3D model of the land show No data until real weather data is connected. NASA POWER storm replay is currently disabled and in development." },
   { title: "Compare rotations", body: "Compare two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];
 
 const ROADMAP = [
-  { title: "Live NASA POWER replay", body: "Replaying historical storms directly from the NASA POWER archive (currently disabled)." },
+  { title: "Live NASA POWER replay", body: "NASA POWER storm replay is currently disabled and in development." },
   { title: "Drone capture", body: "Building the model from drone imagery." },
   { title: "Video capture", body: "Building the model from a walk-around video." },
 ];
 
-export function AboutPanel() {
+export function AboutPanel({ className = "rounded-md border border-line px-3 py-1 text-ink hover:bg-surface-2" }: { className?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   const close = () => ref.current?.close();
   return (
     <>
-      <button type="button" aria-haspopup="dialog" onClick={() => ref.current?.showModal()} className="rounded-md border border-line px-3 py-1 text-ink hover:bg-surface-2">
+      <button type="button" aria-haspopup="dialog" onClick={() => ref.current?.showModal()} className={className}>
         About
       </button>
       {/* Click on the backdrop (the dialog element itself) closes; clicks inside land on the inner div. */}
@@ -62,7 +62,7 @@ export function AboutPanel() {
             .
           </p>
 
-          <p className="mt-4 text-sm">Real NASA POWER event replay is upcoming. Until then, scenarios show No data.</p>
+          <p className="mt-4 text-sm">NASA POWER event replay is currently disabled and in development. Scenarios on this page do not use a live storm record.</p>
           <h3 className="mt-6 font-display text-xl">Roadmap</h3>
           <p className="mt-1 text-sm text-ink-muted">Ideas we have not built. They do not work in this version.</p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">

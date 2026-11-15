@@ -10,7 +10,7 @@ import { siteForFarm } from "@/lib/forecast/sites";
 import { FvButton } from "./FvButton";
 
 const SUMMARY: { key: MetricKey; label: string }[] = [
-  { key: "soil_organic_index", label: "Soil organic matter" },
+  { key: "soil_organic_index", label: "Soil organic matter index" },
   { key: "irrigation_need_mm", label: "Irrigation need" },
   { key: "bare_weeks", label: "Bare soil" },
 ];
@@ -31,7 +31,7 @@ export function FarmOverview() {
       const value = series?.points.find((p) => p.year === year);
       return <div key={key}><dt>{label}</dt><dd>{value && series ? fmt(value.p50, key === "soil_organic_index" ? undefined : series.unit) : "Unavailable"}</dd></div>;
     })}</dl>}
-    {forecast && <p>Soil index: starting year = 100.<br />{source ? SOURCE_LABEL[source] : "Scenario forecast"}{status === "loading" ? " · Updating…" : status === "error" ? " · Previous result; update failed" : ""}</p>}
+    {forecast && <p>Soil organic matter index baseline: 100 in the starting year.<br />{source ? SOURCE_LABEL[source] : "Scenario forecast"}{status === "loading" ? " · Updating…" : status === "error" ? " · Previous result; update failed" : ""}</p>}
     <FvButton className="ff-link" data-testid="overview-details" onClick={() => {
       useFutureStore.getState().setMode("future");
       useFutureStore.getState().openPanel("forecast");

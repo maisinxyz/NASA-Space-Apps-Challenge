@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { tid } from "./helpers";
+import { BOTTOM_STRIP } from "../../lib/window/config";
 
 // Window manager on the farm screen (components/window): shift-free readout, drag / resize / recoil, min / max,
 // persistence. UBC Farm has every window (horizon tabs, Gus, planner).
@@ -68,7 +69,8 @@ test.describe("farm windows", () => {
     await dragBy(page, { x: t!.x + 60, y: t!.y + 17 }, 120, 40);
     const moved = await box(page, "nav");
     expect(Math.round(moved.x - start.x)).toBe(120);
-    expect(Math.round(moved.y - start.y)).toBe(40);
+    expect(Math.round(moved.y - start.y)).toBe(Math.round(Math.min(40, vh - BOTTOM_STRIP - start.y - start.height)));
+    expect(moved.y + moved.height).toBeLessThanOrEqual(vh - BOTTOM_STRIP + 0.5);
 
     // Far past the right and bottom edges: settles fully on screen.
     const t2 = await bar(page, "nav").boundingBox();
@@ -144,9 +146,9 @@ test.describe("farm windows", () => {
     const fresh = await box(page, "nav");
     expect([fresh.x, fresh.y].map(Math.round)).toEqual([def.x, def.y].map(Math.round));
 
-    await page.setViewportSize({ width: 700, height: 520 });
+    await page.setViewportSize({ width: 1024, height: 600 });
     await page.waitForTimeout(300);
-    for (const id of ["nav"]) expect(inside(await box(page, id), 700, 520)).toBe(true);
+    for (const id of ["nav"]) expect(inside(await box(page, id), 1024, 600 - BOTTOM_STRIP)).toBe(true);
     expect(errors).toEqual([]);
   });
 });

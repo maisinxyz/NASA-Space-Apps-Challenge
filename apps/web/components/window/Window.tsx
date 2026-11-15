@@ -39,10 +39,12 @@ export type WindowProps = {
   /** Title bar text; defaults to WINDOW_CONFIG[id].title. */
   title?: string;
   className?: string;
+  /** Restore/raise when a different section opens in an existing context window. */
+  activationKey?: string;
   children: ReactNode;
 };
 
-export function Window({ id, present = true, onClose, title, className = "", children }: WindowProps) {
+export function Window({ id, present = true, onClose, title, className = "", activationKey, children }: WindowProps) {
   const spec = WINDOW_CONFIG[id];
   const reduced = !!useReducedMotion();
   const { win, z, ready } = useWindowManager(useShallow((s) => ({ win: s.wins[id], z: zIndexOf(s.order, id), ready: s.ready })));
@@ -53,8 +55,10 @@ export function Window({ id, present = true, onClose, title, className = "", chi
 
   // Tell the dock which windows exist now (and raise a context window when its content is opened elsewhere).
   useEffect(() => {
-    useWindowManager.getState().setActive(id, present);
-  }, [id, present]);
+    const manager = useWindowManager.getState();
+    manager.setActive(id, present);
+    if (present && spec.kind === "context") manager.restore(id);
+  }, [id, present, activationKey, spec.kind]);
   useEffect(() => () => useWindowManager.getState().setActive(id, false), [id]);
 
   const visible = present && !win.minimized && (spec.kind === "context" || win.open);
@@ -64,7 +68,7 @@ export function Window({ id, present = true, onClose, title, className = "", chi
   const wasVisible = useRef(visible);
   useLayoutEffect(() => {
     if (wasVisible.current && !visible && present && frame.current?.contains(document.activeElement)) {
-      requestAnimationFrame(() => document.getElementById(`fw-chip-${id}`)?.focus() ?? document.getElementById("fw-dock-launch")?.focus());
+      requestAnimationFrame(() => (document.getElementById(`fw-chip-${id}`) ?? document.getElementById("fw-dock-launch"))?.focus());
     }
     wasVisible.current = visible;
   }, [visible, present, id]);
@@ -109,6 +113,7 @@ export function Window({ id, present = true, onClose, title, className = "", chi
           className="fw-titlebar"
           tabIndex={0}
           aria-label={`${label} window`}
+          title="Drag to move. Arrow keys move; Shift + arrows resize."
           aria-describedby={hintId}
           onPointerDown={gesture.startDrag}
           onDoubleClick={(e) => {

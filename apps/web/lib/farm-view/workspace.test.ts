@@ -6,6 +6,15 @@ import { coordinateWorkspace, closeWorkspaceTools } from './workspace';
 
 afterEach(() => { closeWorkspaceTools(); resetFutureInvestigation(); });
 describe('one desktop workspace at a time', () => {
+  it('opening any stored tool closes simulation as well as the drawer', () => {
+    const closeSimulation = vi.fn();
+    const stop = coordinateWorkspace(() => {}, closeSimulation);
+    usePlannerStore.setState({ open: true });
+    useCopilot.setState({ open: true });
+    useFutureStore.getState().openPanel('forecast');
+    expect(closeSimulation).toHaveBeenCalledTimes(3);
+    stop();
+  });
   it('replaces planner with Gus and closes the local drawer', () => {
     const closeDrawer = vi.fn();
     const stop = coordinateWorkspace(closeDrawer);
