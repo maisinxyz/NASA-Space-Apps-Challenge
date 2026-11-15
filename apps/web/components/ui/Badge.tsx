@@ -12,7 +12,7 @@ const BADGES: Record<BadgeVariant, { label: string; title: string; className: st
     className: "border-black/40 bg-mock text-black uppercase tracking-wider",
   },
   illustrative: {
-    label: "Illustrative (synthetic)",
+    label: "Illustrative",
     title: "Made up for illustration. Not real field boundaries or crops.",
     className: "border-dashed border-ink-muted bg-transparent text-ink",
   },

@@ -46,7 +46,7 @@ export function Non3dFarmWorkspace({
       </button>
       <h2 className="mb-2 font-display text-2xl">{sim.farm.name}</h2>
       <p className="mb-4 text-sm">
-        Non-3D workspace · Synthetic demo scenarios, illustrative crops, and
+        Non-3D workspace · Scenarios, illustrative crops, and
         relative comparisons. No live farm measurements.
       </p>
       {hidden ? (

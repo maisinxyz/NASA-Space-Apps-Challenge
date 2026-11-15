@@ -192,8 +192,8 @@ export default function MethodsPage() {
         reliable.{" "}
         <strong className="text-ink">
           UBC Farm and KPU Langley run a ten-year scenario forecast from real
-          NASA weather, a NASA climate trend and SoilGrids soil. Other farms use
-          synthetic demo data, labelled as such, and give no farm-specific forecasts.
+          NASA weather, a NASA climate trend and SoilGrids soil. Other farms
+          give no farm-specific forecasts.
         </strong>
       </p>
 

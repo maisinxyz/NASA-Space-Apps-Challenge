@@ -150,7 +150,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
             {playing ? "❚❚" : "▶"}
           </FvButton>
         )}
-        {fixture && def && (
+        {fixture && def && SYNTHETIC_BADGE && (
           <span className="fv-cap" style={{ border: "1px solid #BE8426", borderRadius: 9999, padding: "1px 8px", color: "#F2EBDD", pointerEvents: "auto" }} title={SYNTHETIC_NOTE}>
             {SYNTHETIC_BADGE}
           </span>
@@ -177,7 +177,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
             </div>
           </div>
 
-          {fixture && section !== "scenarios" && (
+          {fixture && section !== "scenarios" && SYNTHETIC_BADGE && (
             <p className="fv-cap" style={{ margin: "0 0 8px" }}>
               <span style={{ border: "1px solid #BE8426", borderRadius: 9999, padding: "1px 8px", marginRight: 6 }}>{SYNTHETIC_BADGE}</span>
               {SYNTHETIC_NOTE}

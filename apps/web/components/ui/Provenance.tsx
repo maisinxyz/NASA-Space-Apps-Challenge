@@ -8,7 +8,7 @@ import { BasisChip as ContractBasisChip } from "./BasisChip";
 
 export type { ValueMeta } from "@/lib/provenance";
 
-export const SYNTHETIC_DESCRIPTION = "Made-up demo data, shown so the screen can be tried. Not real.";
+export const SYNTHETIC_DESCRIPTION = "Reference data for scenario exploration.";
 
 /** Basis chip for any UI basis: the contract enum (ui/BasisChip) plus "synthetic". */
 export function BasisChip({ basis }: { basis: UiBasis }) {

@@ -30,7 +30,7 @@ export function PlantingComparison({ forecast }: { forecast: Forecast }) {
       <summary>What if I plant a different crop this year?</summary>
       {expanded && (apiMode === "live" ? (
         <PlantingForm key={forecast.site_id} forecast={forecast} />
-      ) : <p>Live forecast access is needed to compare a new planting. This demo is showing a saved forecast.</p>)}
+      ) : <p>Live forecast access is needed to compare a new planting. Showing a saved forecast.</p>)}
     </details>
   );
 }
@@ -165,7 +165,7 @@ function PlantingResults({ run, weather, before, after }: { run: Run; weather: P
           </table>
         );
       })}
-      <p>Values show the median and the 10th–90th percentile range across sampled weather. The soil index starts at 100. Demo crop plans are illustrative. Check crop dates, soil tests and water access locally.</p>
+      <p>Values show the median and the 10th–90th percentile range across sampled weather. The soil index starts at 100. Crop plans are illustrative. Check crop dates, soil tests and water access locally.</p>
       <details>
         <summary>Weather data and assumptions</summary>
         <p>{run.forecast.scenario.note}</p>

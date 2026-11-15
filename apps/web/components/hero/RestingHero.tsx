@@ -18,7 +18,7 @@ import { color, ease, hero } from "./tokens";
 export const HERO_COPY = {
   eyebrow: "FieldTwin",
   headline: ["Farms", "from", "orbit"],
-  body: "Explore research farms in 3D, then compare illustrative crop rotations and synthetic weather scenarios on two digital twins.",
+  body: "Explore research farms in 3D, then compare illustrative crop rotations and weather scenarios on two digital twins.",
   action: "Explore the farms",
   statusRight: "NASA Space Apps 2026",
 } as const;
@@ -179,7 +179,7 @@ export function RestingHero({
             </select>
           </label>
           <div className="pointer-events-auto w-full">
-            <p className="mb-1.5 text-xs uppercase tracking-[0.12em]" style={{ color: color.accent, opacity: 0.8 }}>Vancouver-area demos</p>
+            <p className="mb-1.5 text-xs uppercase tracking-[0.12em]" style={{ color: color.accent, opacity: 0.8 }}>Vancouver-area farms</p>
             <div className="flex flex-wrap" style={{ gap: u(10) }}>
               <button
                 type="button"
