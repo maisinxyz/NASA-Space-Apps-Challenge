@@ -77,7 +77,7 @@ export function CopilotPanel({ navigation, inline = false }: {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="/gus/avatar.jpg" alt="Gus" width={64} height={64} style={{ borderRadius: "50%", objectFit: "cover", objectPosition: "62% 30%", border: "2px solid rgba(255,255,255,.7)", flex: "none" }} />
-          <h2 className="fv-rtitle" style={{ margin: 0, textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 700, color: "#FFD84D", WebkitTextStroke: "1px #000", textShadow: "0 2px 4px rgba(0,0,0,.9)" }}>Advice from Gus</h2>
+          <h2 className="fv-rtitle" style={{ margin: 0, textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 800, color: "#FFE680", textShadow: "0 0 10px rgba(255,230,128,.45), 0 1px 2px rgba(0,0,0,.6)" }}>Advice from Gus</h2>
         </div>
         <FvButton className="ff-link" onClick={close} data-testid="copilot-close">Minimize</FvButton>
       </div>
