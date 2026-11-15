@@ -675,21 +675,35 @@
     },
     "season_window": {
      "type": "object",
-     "description": "Day-of-year window; `terminate_doy < plant_doy` means it overwinters.",
+     "description": "Day-of-year window; `terminate_doy < plant_doy` means it overwinters. Null means the day is not verified.",
      "required": [
       "plant_doy",
       "terminate_doy"
      ],
      "properties": {
       "plant_doy": {
-       "type": "integer",
-       "minimum": 1,
-       "maximum": 366
+       "oneOf": [
+        {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 366
+        },
+        {
+         "type": "null"
+        }
+       ]
       },
       "terminate_doy": {
-       "type": "integer",
-       "minimum": 1,
-       "maximum": 366
+       "oneOf": [
+        {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 366
+        },
+        {
+         "type": "null"
+        }
+       ]
       },
       "succession": {
        "type": "boolean",
@@ -699,7 +713,7 @@
     },
     "cover_curve": {
      "type": "array",
-     "description": "`[days_after_planting, cover_fraction]` points, ascending by day; fraction 0–1.",
+     "description": "`[days_after_planting, cover_fraction]` points, ascending by day; fraction 0–1. Empty means no curve has been sourced.",
      "items": {
       "type": "array",
       "prefixItems": [
@@ -716,7 +730,7 @@
       "minItems": 2,
       "maxItems": 2
      },
-     "minItems": 1
+     "minItems": 0
     },
     "notes": {
      "type": "string"
@@ -3300,33 +3314,69 @@
      "description": "Trait fields (v1.1). All are typical crop traits, not measured on a field.",
      "properties": {
       "water_need_class": {
-       "type": "string",
-       "enum": [
-        "low",
-        "medium",
-        "high"
+       "oneOf": [
+        {
+         "type": "string",
+         "enum": [
+          "low",
+          "medium",
+          "high"
+         ]
+        },
+        {
+         "type": "null"
+        }
        ]
       },
       "kc_stages": {
        "type": "object",
+       "description": "Null stage means that Table 12 value was not transcribed.",
        "properties": {
         "ini": {
-         "type": "number"
+         "oneOf": [
+          {
+           "type": "number"
+          },
+          {
+           "type": "null"
+          }
+         ]
         },
         "mid": {
-         "type": "number"
+         "oneOf": [
+          {
+           "type": "number"
+          },
+          {
+           "type": "null"
+          }
+         ]
         },
         "end": {
-         "type": "number"
+         "oneOf": [
+          {
+           "type": "number"
+          },
+          {
+           "type": "null"
+          }
+         ]
         }
        }
       },
       "root_depth_class": {
-       "type": "string",
-       "enum": [
-        "shallow",
-        "medium",
-        "deep"
+       "oneOf": [
+        {
+         "type": "string",
+         "enum": [
+          "shallow",
+          "medium",
+          "deep"
+         ]
+        },
+        {
+         "type": "null"
+        }
        ]
       },
       "cover_crop": {
@@ -3336,25 +3386,53 @@
        "type": "boolean"
       },
       "drought_tolerance": {
-       "type": "string",
-       "enum": [
-        "low",
-        "medium",
-        "high"
+       "oneOf": [
+        {
+         "type": "string",
+         "enum": [
+          "low",
+          "medium",
+          "high"
+         ]
+        },
+        {
+         "type": "null"
+        }
        ]
       },
       "frost_tolerance_c": {
-       "type": "number"
+       "oneOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ]
       },
       "heat_limit_c": {
-       "type": "number"
+       "oneOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ]
       },
       "residue_class": {
-       "type": "string",
-       "enum": [
-        "low",
-        "medium",
-        "high"
+       "oneOf": [
+        {
+         "type": "string",
+         "enum": [
+          "low",
+          "medium",
+          "high"
+         ]
+        },
+        {
+         "type": "null"
+        }
        ]
       },
       "forage_suitable": {

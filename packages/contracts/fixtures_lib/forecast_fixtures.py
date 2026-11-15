@@ -1,7 +1,8 @@
 """Deterministic contract fixtures for v1.2.0 forecast responses.
 
-Values are placeholders so the frontend can build against the shape.
-`data_mode` is `mock`. Null catalog numbers are unverified, not defaults.
+Forecast bodies are placeholders so the frontend can build against the shape.
+Their `data_mode` is `mock`. The crop catalog fixture is the seed catalog.
+Null catalog numbers are unverified, not defaults.
 Regenerate with `python -m fixtures_lib.forecast_fixtures` from `packages/contracts`.
 W9 replaces the forecast bodies with engine output.
 """
@@ -10,39 +11,23 @@ from __future__ import annotations
 
 import hashlib
 import json
-from copy import deepcopy
 from pathlib import Path
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 TRAITS = Path(__file__).resolve().parents[3] / "data" / "seed" / "crops" / "traits.json"
+CATALOG = Path(__file__).resolve().parents[3] / "data" / "seed" / "crops" / "catalog_v2.json"
 SUPPORT = "This tool supports, and does not replace, local agronomic expertise."
 SEASONS = ("winter", "spring", "summer", "fall")
 CRITERIA = (
     "nutrient_cycling", "erosion_risk", "organic_matter", "pest_disruption",
     "water_use", "forage_potential", "market_suitability",
 )
-# Name-based grouping for the shape fixture only. Each crop's trait_sources says TODO(verify).
-CATEGORY = {
-    "crop_maize": "grain",
-    "crop_wheat_winter": "grain",
-    "crop_barley": "grain",
-    "crop_soybean": "grain",
-    "crop_pea_field": "grain",
-    "crop_alfalfa": "forage",
-    "crop_red_clover": "forage",
-    "crop_rye_cover": "cover",
-    "crop_sorghum": "grain",
-    "crop_millet": "grain",
-    "crop_sunflower": "grain",
-    "crop_canola": "grain",
-}
 V2_SOURCE_FIELDS = (
     "category", "host_families", "return_interval_years", "root_depth_m", "carbon_input_class",
     "n_uptake_class", "n_fix_class", "waterlogging_tolerance", "forage_use", "reference_yield",
     "yield_response_factor_ky", "typical_n_rate_kg_ha", "erosion_cover_factor_class",
     "needs_equipment", "labour_peak_weeks", "region_fit",
 )
-UNVERIFIED = "TODO(verify)"
 PLACEHOLDER = "Contract fixture placeholder. Not an engine result and not for the demo."
 
 
@@ -407,33 +392,8 @@ def sensitivity() -> dict:
 
 
 def crop_catalog() -> dict:
-    crops = []
-    for crop in json.loads(TRAITS.read_text(encoding="utf-8")):
-        row = deepcopy(crop)
-        row["category"] = CATEGORY[row["id"]]
-        row["host_families"] = []
-        row["return_interval_years"] = None
-        row["root_depth_m"] = {"ini": None, "mid": None, "end": None}
-        row["carbon_input_class"] = None
-        row["n_uptake_class"] = None
-        row["n_fix_class"] = None if row.get("n_fixing") else "none"
-        row["waterlogging_tolerance"] = None
-        row["forage_use"] = None
-        row["reference_yield"] = None
-        row["yield_response_factor_ky"] = None
-        row["typical_n_rate_kg_ha"] = None
-        row["erosion_cover_factor_class"] = None
-        row["needs_equipment"] = []
-        row["labour_peak_weeks"] = []
-        row["region_fit"] = []
-        sources = dict(row.get("trait_sources") or {})
-        for field in V2_SOURCE_FIELDS:
-            sources[field] = UNVERIFIED
-        if row["n_fix_class"] == "none":
-            sources["n_fix_class"] = "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)"
-        row["trait_sources"] = sources
-        crops.append(row)
-    return {"data_mode": "mock", "crops": crops, "equipment": []}
+    """The seed catalog. Regenerating the fixture copies this file."""
+    return json.loads(CATALOG.read_text(encoding="utf-8"))
 
 
 def documents() -> dict[str, dict]:

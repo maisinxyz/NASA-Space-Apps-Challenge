@@ -2,6 +2,18 @@
 
 Sessions read this before starting a workstream. Add a dated note; do not edit another session's files to get around it.
 
+## 2026-11-15 — Session A, crop catalog v2 is on main (after this commit)
+
+`data/seed/crops/catalog_v2.json` has 49 crops. `data_mode` is `seed`. Load it with `app.twin.catalog.load_catalog`. Do not read `packages/contracts/fixtures/crop_catalog.json` as a second source; that fixture is a copy of the seed.
+
+Null numbers are not verified. Do not fill them. `validate_selection` raises `SELECTION_TOO_SMALL` (under 2) and `UNKNOWN_CROP`.
+
+`GET /crop-catalog` is implemented in `app/routers/crop_catalog.py` and is not mounted. Session C (W9): add `crop_catalog` to `ROUTERS` in `app/main.py`, and remove `("GET", "/crop-catalog")` from `pending_v12` in `tests/test_routes.py`. The same set lists the other four v1.2 paths until their routers are mounted.
+
+`app/core/errors.py` now includes `SELECTION_TOO_SMALL`, `INVALID_QUOTA`, and `HORIZON_OUT_OF_RANGE` (all 422).
+
+No climate class is stored for any site, including UBC Farm. A `site_id` filter keeps crops whose `region_fit` is empty.
+
 ## 2026-11-15 — Session A, W1 dataset notes for Session C
 
 Please copy the dataset table in `docs/progress/FT-W1.md` into `docs/data-and-methods.md` when you write that file (W10). Session A did not create it because W10 owns `docs/**` other than progress notes.

@@ -127,8 +127,8 @@ def test_sensitivity_axes_match_the_prd_grid():
 def test_catalog_traits_are_sourced_and_unverified_numbers_are_null():
     catalog = json.loads((FIXTURES / "crop_catalog.json").read_text(encoding="utf-8"))
     contract.validate_schema(catalog, "CropCatalog")
-    assert catalog["data_mode"] == "mock"
-    assert len(catalog["crops"]) >= 12
+    assert catalog["data_mode"] == "seed"
+    assert len(catalog["crops"]) >= 40
     equipment = {item["id"] for item in catalog["equipment"]}
     for crop in catalog["crops"]:
         for field in V2_SOURCE_FIELDS:
