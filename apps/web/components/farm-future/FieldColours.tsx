@@ -57,7 +57,7 @@ export function useFieldColourOverlays(): GroundOverlay[] {
 }
 
 /** Legend and metric switch, bottom-right above the timeline. */
-export function FieldColourLegend() {
+export function FieldColourLegend({ embedded = false }: { embedded?: boolean }) {
   const fv = useFieldValues();
   const farmId = useAppStore((s) => s.farmId);
   const setMetric = useFutureStore((s) => s.setFieldMetric);
@@ -65,7 +65,7 @@ export function FieldColourLegend() {
   const spec = FIELD_METRICS[fv.metric];
   const names = new Map(twinConfig(farmId)!.fields.map((f) => [f.id, f.name]));
   return (
-    <section className="fv-glass fv-auto ff-card" data-testid="field-colour-legend" aria-label="Field colours" style={{ right: 40, bottom: 200, width: 280, gap: 6, padding: "10px 14px" }}>
+    <section className="fv-glass fv-auto ff-card" data-testid="field-colour-legend" aria-label="Field colours" style={{ ...(embedded ? { position: "relative" as const, width: "100%", boxSizing: "border-box" as const } : { right: 40, bottom: 200, width: 280 }), gap: 6, padding: "10px 14px" }}>
       <div role="radiogroup" aria-label="Colour fields by" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
         {(Object.keys(FIELD_METRICS) as FieldMetric[]).map((m) => (
           <FvButton key={m} role="radio" aria-checked={m === fv.metric} className="fv-pill fv-auto" data-testid={`field-metric-${m}`} onClick={() => setMetric(m)} style={{ height: 24, padding: "0 8px", opacity: m === fv.metric ? 1 : 0.65 }}>

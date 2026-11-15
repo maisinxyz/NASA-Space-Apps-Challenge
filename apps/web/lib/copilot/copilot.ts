@@ -2,11 +2,11 @@
 // The client sends ids and slider values only, never forecast numbers; the server builds the numbers from the snapshot.
 import { create } from "zustand";
 
-import { ApiError, postCopilotChat } from "@/lib/api/client";
+import { ApiError, isMock, postCopilotChat } from "@/lib/api/client";
 import type { CopilotChatRequest, CopilotSnapshot } from "@/lib/api/types";
 
 export type SelectedKind = "field" | "flag" | "strategy";
-export type ChatMessage = { role: "user" | "assistant"; content: string; tips?: string[]; layers?: string[] };
+export type ChatMessage = { role: "user" | "assistant"; content: string; tips?: string[]; layers?: string[]; placeholder?: boolean };
 
 export type ScreenState = {
   farmId: string;
@@ -48,12 +48,12 @@ export function requestOf(message: string, s: ScreenState, history: ChatMessage[
 /** Plain words for the contract errors (A.2). */
 export function errorText(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.code === "RATE_LIMITED") return "The co-pilot is busy. Wait a moment and ask again.";
-    if (e.code === "DATA_SOURCE_UNAVAILABLE") return "The co-pilot cannot be reached right now. The forecast on screen is unaffected.";
-    if (e.code === "INVALID_INPUT") return "That question could not be sent. Shorten it and try again.";
-    return e.message;
+    if (e.code === "RATE_LIMITED") return "Gus is busy. Wait a moment and ask again.";
+    if (e.code === "DATA_SOURCE_UNAVAILABLE") return "Gus is unavailable right now: the server may be missing its provider credentials or could not load the farm context. Try again later. The forecast on screen is unaffected.";
+    if (e.code === "INVALID_INPUT") return `Gus is unavailable for this view. ${e.message.replace(/the co-pilot/gi, "Gus").replace(/co-pilot/gi, "Gus")}`;
+    return e.message.replace(/the co-pilot/gi, "Gus").replace(/co-pilot/gi, "Gus");
   }
-  return "The co-pilot did not answer. Try again.";
+  return "Gus did not answer. Try again.";
 }
 
 /** One-sentence explanations for terms the co-pilot and the panels use. */
@@ -91,16 +91,39 @@ export const useCopilot = create<ChatState>((set, get) => ({
   error: null,
   ask: ({ question, kind, id, strategyId = null, fieldId = null }) => set({ open: true, draft: question, selected: { kind, id }, strategyId, fieldId, error: null }),
   async send(message, screen) {
-    if (!message.trim() || get().status === "sending") return;
+    if (!message.trim()) return;
+    bindCopilotFarm(screen.farmId);
+    if (get().status === "sending") return;
+    const generation = ++requestGeneration;
     const history = get().messages;
     const body = requestOf(message, screen, history);
     set({ messages: [...history, { role: "user", content: body.message }], draft: "", status: "sending", error: null });
     try {
       const r = await postCopilotChat(body);
-      set((s) => ({ messages: [...s.messages, { role: "assistant", content: r.reply, tips: r.local_validation_tips, layers: r.referenced_layers }], status: "idle" }));
+      if (generation !== requestGeneration) return;
+      set((s) => ({ messages: [...s.messages, { role: "assistant", content: r.reply, tips: r.local_validation_tips, layers: r.referenced_layers, ...(isMock && { placeholder: true }) }], status: "idle" }));
     } catch (e) {
-      set({ status: "error", error: errorText(e) });
+      if (generation !== requestGeneration) return;
+      set((s) => ({ messages: history, draft: s.draft || body.message, status: "error", error: errorText(e) }));
     }
   },
   close: () => set({ open: false }),
 }));
+
+
+let boundFarm: string | null = null;
+let requestGeneration = 0;
+
+/** Clear the conversation and invalidate requests when leaving a farm or resetting the workspace. */
+export function resetCopilot() {
+  requestGeneration += 1;
+  boundFarm = null;
+  useCopilot.setState(useCopilot.getInitialState());
+}
+
+/** Called by the farm workspace on navigation; rebinding the current farm preserves its conversation. */
+export function bindCopilotFarm(farmId: string | null) {
+  if (boundFarm === farmId) return;
+  if (boundFarm !== null || farmId === null) resetCopilot();
+  boundFarm = farmId;
+}

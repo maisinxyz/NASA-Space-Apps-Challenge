@@ -9,7 +9,7 @@ import { FvButton } from "@/components/farm-view/FvButton";
 import { tOf } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { color } from "@/lib/farm-view/tokens";
-import { fmt, METRICS, seriesOf, strategiesOf, valueAt, yearOfClock, type MetricKey } from "@/lib/forecast/select";
+import { fmt, METRICS, seriesOf, strategiesOf, valueAt, yearOfClock, scorecardOf, flagsOf, type MetricKey } from "@/lib/forecast/select";
 import type { Forecast } from "@/lib/api/types";
 import { FIELD_SOURCES, siteForFarm } from "@/lib/forecast/sites";
 import { useForecastStore, type ForecastSource } from "@/lib/forecast/store";
@@ -18,11 +18,27 @@ import { useAppStore } from "@/lib/store";
 import { Basis, CardHead, HAIR, Label, MUTED_RED, PopCard, Row } from "../farm-future/ui";
 
 const SWATCH = ["#C9BFAE", "#E2B866", "#9CC28A", "#8DB6D9"];
-const SOURCE_LABEL: Record<ForecastSource, string> = {
+export const SOURCE_LABEL: Record<ForecastSource, string> = {
   live: "Live engine run",
   prebuilt: "Pre-built engine run",
   mock: "Mock fixture (placeholder numbers)",
 };
+
+/** Shared run status: retained results remain explicitly stale until a refresh succeeds. */
+export function ForecastStatus({ status, source, error, hasForecast, dataMode, onRetry }: {
+  status: "idle" | "loading" | "ready" | "error";
+  source: ForecastSource | null;
+  error: string | null;
+  hasForecast: boolean;
+  dataMode?: string;
+  onRetry?(): void;
+}) {
+  return <div style={{ display: "grid", gap: 6 }}>
+    {source && hasForecast && <span className="ff-synth" data-testid="forecast-source" style={{ alignSelf: "flex-start" }}>{SOURCE_LABEL[source]}{dataMode === "limited_data" ? " · limited data" : ""}</span>}
+    {(status === "loading" || status === "idle") && <p className="ff-p" role="status">{hasForecast ? "Updating forecast; stale until the new run finishes, showing previous results." : "Running the forecast…"}</p>}
+    {status === "error" && <><p className="ff-p" role="alert" style={{ color: MUTED_RED }}>{error ?? "The forecast could not be loaded."}{hasForecast ? " Stale results shown; they do not reflect the latest requested inputs." : ""}</p><FvButton className="fv-seg" onClick={onRetry}>Retry forecast</FvButton></>}
+  </div>;
+}
 
 /** Loads the forecast when Future mode opens on a farm that has an engine site; refetches (live only) when the what-if sliders move. */
 export function useFarmForecast() {
@@ -55,6 +71,7 @@ export function ForecastPanel() {
       error={error}
       year={forecast ? yearOfClock(t, forecast.horizon_years) : 1}
       onClose={() => useFutureStore.getState().openPanel(null)}
+      onRetry={() => void useForecastStore.getState().load(siteId, useFutureStore.getState().whatIf)}
       onPickYear={(y) => useFutureStore.getState().setT(tOf(y - 1, 194))}
     />
   );
@@ -70,9 +87,10 @@ export type ForecastCardProps = {
   year: number;
   onClose(): void;
   onPickYear(y: number): void;
+  onRetry?(): void;
 };
 
-export function ForecastCard({ open, status, forecast, source, error, year, onClose, onPickYear }: ForecastCardProps) {
+export function ForecastCard({ open, status, forecast, source, error, year, onClose, onPickYear, onRetry }: ForecastCardProps) {
   const [metric, setMetric] = useState<MetricKey>("soil_organic_index");
   const [strategy, setStrategy] = useState(0);
   const [fieldId, setFieldId] = useState<string | null>(null);
@@ -81,21 +99,13 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
   const shown = strategies[Math.min(strategy, strategies.length - 1)];
   const meta = METRICS.find((m) => m.key === metric)!;
   const lines = forecast ? strategies.map((s) => ({ s, series: seriesOf(forecast, s.id, metric, fieldId) })) : [];
-  const flagField = forecast?.fields.find((f) => f.field_id === (fieldId ?? forecast.fields[0]?.field_id));
-  const flags = forecast && shown ? (flagField?.strategies.find((s) => s.id === shown.id)?.review_flags ?? []) : [];
-  const scorecard = forecast && shown ? (forecast.farm_rollup.strategies.find((s) => s.id === shown.id)?.scorecard ?? []) : [];
+  const flags = forecast && shown ? flagsOf(forecast, shown.id, fieldId) : [];
+  const scorecard = forecast && shown ? scorecardOf(forecast, shown.id, fieldId) : [];
 
   return (
     <PopCard open={open} origin="top left" label="Engine forecast" testId="forecast-panel" style={{ left: 40, top: 236, width: 440, maxHeight: "calc(100vh - 236px - 210px)", overflowY: "auto" }}>
       <CardHead title="Engine forecast · years 1–10" onMinimize={onClose} />
-      {source && (
-        <span className="ff-synth" data-testid="forecast-source" style={{ alignSelf: "flex-start" }}>
-          {SOURCE_LABEL[source]}
-          {forecast?.data_mode === "limited_data" ? " · limited data" : ""}
-        </span>
-      )}
-      {status === "loading" && !forecast && <p className="ff-p" role="status">Running the forecast…</p>}
-      {status === "error" && <p className="ff-p" role="alert" style={{ color: MUTED_RED }}>{error ?? "The forecast could not be loaded."}</p>}
+      <ForecastStatus status={status} source={source} error={error} hasForecast={!!forecast} dataMode={forecast?.data_mode} onRetry={onRetry} />
       {forecast && shown && (
         <>
           <div role="tablist" aria-label="Strategy" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -126,7 +136,7 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             {lines[0]?.series && <Basis b={lines[0].series.basis} />}
           </div>
           {lines.map(({ s, series }, i) => {
-            if (!series) return null;
+            if (!series) return <Row key={s.id} k={s.role === "existing" ? "Current rotation" : s.label} v="Unavailable" />;
             const v = valueAt(series, year);
             const ranged = v.p10 !== null && v.p90 !== null && v.p10 !== v.p90;
             return (
@@ -141,11 +151,12 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
           {meta.higherIsBetter !== null && <span className="ff-p">{meta.higherIsBetter ? "Higher is better." : "Lower is better."} Index series start at 100 in year 0. p10–p90 in brackets.</span>}
           <hr className="ff-hr" />
           <Label>Scorecard · {shown.label} · relative across these strategies</Label>
+          {scorecard.length === 0 && <p className="ff-p">Scorecard unavailable for this area.</p>}
           {scorecard.map((c) => <Row key={c.criterion} k={c.criterion.replace(/_/g, " ")} v={<>{Math.round(c.score)} <Basis b={c.basis} /></>} />)}
           {flags.length > 0 && (
             <>
               <hr className="ff-hr" />
-              <Label>Review flags ({flags.length})</Label>
+              <Label>Review flags ({flags.length}) · {fieldId ? "selected field" : "all fields, repeated messages combined"}</Label>
               {flags.slice(0, 5).map((f) => <span key={f.id} className="ff-p" data-testid="fc-flag"><b style={{ color: color.ink, fontWeight: 500 }}>{f.severity}</b> · {f.text}</span>)}
               {flags.length > 5 && <span className="ff-p">+{flags.length - 5} more in the response.</span>}
             </>

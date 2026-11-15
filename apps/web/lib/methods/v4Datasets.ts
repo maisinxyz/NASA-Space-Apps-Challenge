@@ -79,7 +79,7 @@ export const V4_DATASETS: DatasetRow[] = [
   },
   {
     name: "Groq API, model openai/gpt-oss-120b",
-    usedFor: "Farm co-pilot replies. It reads the forecast numbers of the screen; it never changes them.",
+    usedFor: "Gus replies using the backend’s default forecast context. Edited planner runs are not included; Gus never changes forecast results.",
     source: "Groq (hosted inference) and OpenAI (open-weight model)",
     url: "https://console.groq.com/docs/models",
     licence: "Groq terms of service; gpt-oss weights under Apache 2.0",

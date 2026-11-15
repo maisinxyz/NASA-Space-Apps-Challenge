@@ -21,6 +21,7 @@ const eslintConfig = [
       "lib/api/schema.d.ts",
       "public/mock/**",
       "public/cesium/**",
+      "public/maplibre/**",
     ],
   },
 ];

@@ -135,7 +135,7 @@ test.describe("merged globe and farm controls", () => {
 
   test("Twin preview sends a question, supports a follow-up, and Escape returns focus", async ({ page }) => {
     await openFarm(page);
-    const twin = page.getByRole("button", { name: "Ask Twin preview" });
+    const twin = page.getByRole("button", { name: "Ask Gus preview" });
     await twin.click();
     const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
     await expect(input).toBeFocused();
@@ -143,7 +143,7 @@ test.describe("merged globe and farm controls", () => {
     await page.getByRole("button", { name: "Send" }).click();
 
     const answer = page.getByTestId("twin-answer");
-    await expect(answer).toContainText("Twin · Synthetic preview");
+    await expect(answer).toContainText("Gus · Synthetic preview");
     await expect(answer).toContainText("Trial plots needs water first", { timeout: 30_000 });
     const followUp = page.getByRole("button", { name: "Why not the main block?" });
     await expect(followUp).toBeVisible();

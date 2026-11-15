@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError, assetUrl, debounce, getClimateOutlook, getCropCatalog, getForecast, getOutlook, getSensitivity, getSite, getSites, isMock, parseSse, postCopilotChat, postFieldAnalyze, runSimulation, subscribeScanEvents } from "./client";
 import type { ForecastRequest, ProgressEvent } from "./types";
 
+vi.hoisted(() => { process.env.NEXT_PUBLIC_API_MODE = "mock"; });
+
 const FIXTURES = resolve(__dirname, "../../../../packages/contracts/fixtures");
 
 // Serve /mock/* from the fixtures folder, like public/mock does in the browser.
@@ -25,7 +27,7 @@ afterEach(() => {
 });
 
 describe("mock mode", () => {
-  it("is the default", () => expect(isMock).toBe(true));
+  it("supports explicit mock mode", () => expect(isMock).toBe(true));
 
   it("maps API asset paths to /mock", () => {
     expect(assetUrl("/api/v1/terrain/terr_mock_hills/heightmap.png")).toBe("/mock/terrain/terr_mock_hills/heightmap.png");
@@ -154,5 +156,30 @@ describe("v1.3 mock calls", () => {
     const field = await postFieldAnalyze({ polygon: { type: "Polygon", coordinates: [ring] }, rotation: "preset", scenario: "baseline" });
     expect(field.forecast.fields).toHaveLength(1);
     expect(field.forecast.fields[0].strategies[0].rotation_explanation?.rules.length).toBeGreaterThan(0);
+  });
+});
+
+
+describe("live default", () => {
+  it("posts Gus questions to the API unless mock or offline is explicit", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_API_MODE", "");
+    vi.stubEnv("NEXT_PUBLIC_OFFLINE", "");
+    const calls: { url: string; init?: RequestInit }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      calls.push({ url, init });
+      return Response.json({ reply: "Server reply", referenced_layers: [], local_validation_tips: [] });
+    });
+    try {
+      const c = await import("./client");
+      await c.postCopilotChat({ message: "Why?", snapshot: { farm_id: "ubc-farm", site_id: "site_ubc_farm", field_id: null, horizon: "years", time_index: 1, scenario: { preset: "baseline" }, strategy_id: null, selected: null } });
+      expect(c.apiMode).toBe("live");
+      expect(calls[0].url).toMatch(/\/api\/v1\/copilot\/chat$/);
+      expect(calls[0].init?.method).toBe("POST");
+      expect(JSON.parse(calls[0].init?.body as string).message).toBe("Why?");
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

@@ -19,12 +19,14 @@ describe('honest farm controls', () => {
     expect(markup).not.toContain('0.48');
   });
   it('offers a clearly identified synthetic preview assistant', () => {
-    expect(html()).toContain('aria-label="Ask Twin preview"');
+    expect(html()).toContain('aria-label="Ask Gus preview"');
     expect(html()).toContain('Synthetic preview');
   });
-  it('offers a hide-panels control and keeps farm controls in side-rail tabs', () => {
+  it('offers a hide-panels control and keeps secondary panels in rail tabs and Map tools in the left menu', () => {
     expect(html()).toContain('Hide panels');
-    for (const id of ['rail-conditions', 'rail-view', 'field-report-toggle', 'rail-more'])
+    expect(html()).toMatch(/data-testid="action-map-tools"/);
+    expect(html()).not.toContain('data-testid="rail-view"');
+    for (const id of ['rail-conditions', 'field-report-toggle', 'rail-more'])
       expect(html()).toContain(`data-testid="${id}"`);
     expect(html()).toMatch(/<aside[^>]*id="farm-drawer"[^>]*hidden=""/);
   });
@@ -114,7 +116,12 @@ describe('farm-specific content', () => {
     expect(ubcHtml).toContain('data-testid="action-compare-rotations"');
     expect(ubcHtml).toContain("Compare rotations");
     expect(ubcHtml).toContain('data-testid="action-map-tools"');
-    expect(ubcHtml).toContain('data-testid="rail-rotations"');
+    expect(ubcHtml).toContain('data-testid="action-plan-rotations"');
+    expect(ubcHtml).toContain('data-testid="copilot-open"');
+    expect(ubcHtml).toContain("Ask Gus");
+    expect(ubcHtml).toContain('data-surface="overview"');
+    expect(ubcHtml).not.toContain('data-testid="rail-rotations"');
+    expect(ubcHtml.match(/data-testid="action-compare-rotations"/g)).toHaveLength(1);
 
     useAppStore.setState({ farmId: "kpu-langley", globeView: "farm", panelsHidden: false });
     const kpuHtml = renderToStaticMarkup(
@@ -122,6 +129,6 @@ describe('farm-specific content', () => {
     );
     expect(kpuHtml).toContain('data-testid="action-explore-campus"');
     expect(kpuHtml).toContain("Explore campus");
-    expect(kpuHtml).toContain('data-testid="rail-campus"');
+    expect(kpuHtml).not.toContain('data-testid="rail-campus"');
   });
 });

@@ -5,7 +5,7 @@
 // was never touched, so 3D Explore comes back where it was.
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { Map as MlMapCtor, NavigationControl, ScaleControl, type GeoJSONSource, type Map as MlMap, type MapMouseEvent, type StyleSpecification } from "maplibre-gl";
+import { Map as MlMapCtor, getVersion, setWorkerUrl, NavigationControl, ScaleControl, type GeoJSONSource, type Map as MlMap, type MapMouseEvent, type StyleSpecification } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 
 import { ApiError, postFieldAnalyze } from "@/lib/api/client";
@@ -43,7 +43,7 @@ function styleFor(farmId: string): StyleSpecification {
 type DraftFeature = { type: "Feature"; properties: Record<string, never>; geometry: { type: "Point"; coordinates: LonLat } | { type: "LineString"; coordinates: LonLat[] } | { type: "Polygon"; coordinates: LonLat[][] } };
 type Popover = { fieldId: string; at: LonLat };
 
-export function Map2D() {
+export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onExit?: () => void }) {
   const farmId = useAppStore((s) => s.farmId);
   const farm = farmById(farmId);
   const twin = twinConfig(farmId);
@@ -51,7 +51,10 @@ export function Map2D() {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const [ready, setReady] = useState(false);
+  const [fieldsReady, setFieldsReady] = useState(false);
   const [imageryFailed, setImageryFailed] = useState(false);
+  const [initFailed, setInitFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [projection, setProjection] = useState<"mercator" | "globe">("mercator");
   const [popover, setPopover] = useState<Popover | null>(null);
   const [drawing, setDrawing] = useState(false);
@@ -64,7 +67,12 @@ export function Map2D() {
   useEffect(() => {
     if (!box.current || !farm) return;
     const cam = savedCamera(farm.id);
-    const map = new MlMapCtor({
+    setWorkerUrl(`/maplibre/${getVersion()}/maplibre-gl-worker.mjs`);
+    void attempt; // retry button bumps this to rebuild the map
+    setInitFailed(false);
+    let map: MlMap;
+    try {
+      map = new MlMapCtor({
       container: box.current,
       style: styleFor(farm.id),
       bounds: cam ? undefined : boxAround(farm.lon, farm.lat, VIEW_M),
@@ -75,7 +83,11 @@ export function Map2D() {
       attributionControl: { compact: false },
       keyboard: true,
       maxPitch: 60,
-    });
+      });
+    } catch {
+      setInitFailed(true);
+      return;
+    }
     mapRef.current = map;
     map.addControl(new NavigationControl({ visualizePitch: true }), "bottom-right");
     map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
@@ -83,6 +95,10 @@ export function Map2D() {
     map.on("error", (e) => {
       const src = (e as unknown as { sourceId?: string }).sourceId;
       if (src === "imagery") setImageryFailed(true);
+      else if (!src && !map.loaded()) setInitFailed(true); // worker/style/WebGL failure before the map ever loaded
+    });
+    map.on("sourcedata", (e) => {
+      if (e.sourceId === "fields" && e.isSourceLoaded) setFieldsReady(true);
     });
     map.on("load", () => {
       map.addSource("fields", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -115,8 +131,9 @@ export function Map2D() {
       map.remove();
       mapRef.current = null;
       setReady(false);
+      setFieldsReady(false);
     };
-  }, [farm]);
+  }, [farm, attempt]);
 
   // Field outlines and colours.
   useEffect(() => {
@@ -190,16 +207,23 @@ export function Map2D() {
   const popField = popover ? twin?.fields.find((f) => f.id === popover.fieldId) : null;
 
   return (
-    <div data-testid="map2d" style={{ position: "absolute", inset: 0, pointerEvents: "auto", zIndex: 0 }}>
+    <div data-testid="map2d" data-fields-ready={fieldsReady} style={{ position: "absolute", inset: 0, pointerEvents: "auto", zIndex: 0 }}>
       <div ref={box} style={{ position: "absolute", inset: 0 }} aria-label={`2D map of ${farm.name}`} role="region" />
 
-      {imageryFailed && (
+      {initFailed && (
+        <div role="alert" data-testid="map2d-init-failed" className="fv-glass" style={{ position: "absolute", left: "50%", top: 16, transform: "translateX(-50%)", padding: "10px 14px", borderRadius: 10, fontSize: 12.5, zIndex: 2, display: "flex", gap: 8, alignItems: "center" }}>
+          <span>The 2D map could not start.</span>
+          <FvButton className="fv-seg" data-testid="map2d-retry" onClick={() => setAttempt((n) => n + 1)}>Retry</FvButton>
+          {onExit && <FvButton className="fv-seg" data-testid="map2d-exit" onClick={onExit}>Back to 3D</FvButton>}
+        </div>
+      )}
+      {imageryFailed && !initFailed && (
         <div role="status" data-testid="map2d-imagery-failed" className="fv-glass" style={{ position: "absolute", left: "50%", top: 16, transform: "translateX(-50%)", padding: "8px 14px", borderRadius: 10, fontSize: 12.5, zIndex: 2 }}>
           The aerial imagery did not load. Field outlines still show; 3D Explore is still available.
         </div>
       )}
 
-      <div className="fv-glass" style={{ position: "absolute", right: 56, bottom: 120, display: "grid", gap: 6, padding: 8, borderRadius: 12, zIndex: 2, width: 190 }} data-testid="map2d-tools">
+      <div hidden={!toolsOpen} className="fv-glass map2d-tools" style={{ position: "absolute", right: 56, bottom: 120, display: toolsOpen ? "grid" : "none", gap: 6, padding: 8, borderRadius: 12, zIndex: 2, width: 190 }} data-testid="map2d-tools">
         <FvButton className="fv-seg" data-testid="map2d-reset" onClick={reset}>Reset map</FvButton>
         <FvButton className="fv-seg" data-testid="map2d-projection" aria-pressed={projection === "globe"} onClick={() => setProjection(projection === "globe" ? "mercator" : "globe")}>
           {projection === "globe" ? "Flat map" : "Globe projection"}
@@ -227,7 +251,7 @@ export function Map2D() {
       )}
 
       {pop && popField && fv && (
-        <div className="fv-glass" role="dialog" aria-label={`Field ${popField.name}`} data-testid="map2d-popover" style={{ position: "absolute", left: 16, top: 220, width: 280, padding: 12, borderRadius: 12, zIndex: 2, display: "grid", gap: 6, fontSize: 12.5 }}>
+        <div className="fv-glass map2d-popover" role="dialog" aria-label={`Field ${popField.name}`} data-testid="map2d-popover" style={{ position: "absolute", left: 16, top: 220, width: 280, padding: 12, borderRadius: 12, zIndex: 2, display: "grid", gap: 6, fontSize: 12.5 }}>
           <strong>{popField.name}</strong>
           <span style={{ color: color.inkSecondary }}>{fmt(popField.areaHa, "ha")}</span>
           <span>
@@ -251,7 +275,7 @@ function AnalysisCard({ state, onClose }: { state: { status: string; result?: Fi
   const r = state.result;
   const field = r?.forecast.fields[0];
   return (
-    <aside className="fv-glass" data-testid="map2d-analysis" aria-label="Custom field analysis" style={{ position: "absolute", right: 56, top: 16, width: 320, maxHeight: "calc(100% - 280px)", overflowY: "auto", padding: 14, borderRadius: 14, zIndex: 3, display: "grid", gap: 8, fontSize: 12.5 }}>
+    <aside className="fv-glass map2d-analysis" data-testid="map2d-analysis" aria-label="Custom field analysis" style={{ position: "absolute", right: 56, top: 16, width: 320, maxHeight: "calc(100% - 280px)", overflowY: "auto", padding: 14, borderRadius: 14, zIndex: 3, display: "grid", gap: 8, fontSize: 12.5 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <strong>Custom field</strong>
         <FvButton className="ff-link" onClick={onClose}>Close</FvButton>

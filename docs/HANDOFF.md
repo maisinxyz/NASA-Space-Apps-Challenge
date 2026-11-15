@@ -1,6 +1,6 @@
 # Active desktop website repair — 2026-11-15
 
-**Owner: this Codex chat and its assigned subagents. Status: implementing.**
+**Owner: Claude Code session (took over from Codex 2026-11-15). Status: verified and pushed; reservations released.**
 Other contributors: do not edit the reserved areas below until this notice releases them. This is a coordination reservation, not an enforced lock. Backend model/schema changes remain with their owner. No messages have been sent to other contributors.
 
 ## Approved scope and resources
@@ -40,11 +40,28 @@ Design references: [Felt interface](https://help.felt.com/getting-started/tour-t
 - [x] Read-only subagent audits completed; no product changes before latest GitHub integration.
 - [x] GitHub update incorporated without conflicts.
 - [x] Scope revised: desktop only; bot renamed Gus in task specification.
-- [ ] Worker/fixture repairs and regression tests.
-- [ ] Gus/client reliability and naming.
-- [ ] Backend display correctness and status handling.
-- [ ] Desktop workspace integration and button audit.
-- [ ] Verification evidence/screenshots and release reservations.
+- [x] Worker/fixture repairs and regression tests.
+- [x] Gus/client reliability and naming.
+- [x] Backend display correctness and status handling.
+- [x] Desktop workspace integration and button audit.
+- [x] Verification evidence/screenshots. Reservations released on commit.
+
+### Changes made (2026-11-15)
+
+- **MapLibre worker:** `scripts/sync-maplibre.mjs` copies `maplibre-gl-worker.mjs` to `public/maplibre/<version>/` on predev/prebuild (git-ignored); `Map2D.tsx` calls `setWorkerUrl` before constructing the map. New map-init failure alert (`map2d-init-failed`) with Retry and Back to 3D, separate from the imagery-failure notice.
+- **Fixtures:** `scripts/sync-mocks.mjs` mirrors all canonical fixtures (fixes 404 on `/mock/copilot/chat_reply.json`); `scripts/dev.mjs` runs a Node `fs.watch` fixture watcher that stops with the dev server. Asset tests in `scripts/tests/`.
+- **Gus:** user-facing bot renamed Gus (buttons, aria labels, errors, intro); API paths and internal `copilot` identifiers unchanged. Live API is the default; `NEXT_PUBLIC_API_MODE=mock` and `NEXT_PUBLIC_OFFLINE=1` still override. Mock replies labelled "Placeholder sample, not a reply from Gus". Failed questions restore the draft without duplicating history; Send becomes Retry. Conversation resets per farm and late replies are dropped. 503/context errors show an honest "Gus is unavailable" message. Intro states Gus sees the default forecast context, not edited planner inputs.
+- **Forecast/comparison data:** whole-farm view uses rollup metrics only, labels the representative field plan, groups flags by field (`flagsByField` in `lib/forecast/select.ts`), shows farm rank only for Whole farm. Selected field uses its own scores. Missing rollup shows Unavailable (0 stays 0). Loading/error states label retained results as stale with Retry. Reset invalidates pending requests. Source badge shows live/prebuilt/mock. Soil label: "Soil organic matter (index, starting year = 100)"; bare-soil weeks added.
+- **Desktop layout:** 256px left sidebar with Compare rotations, Plan rotations, Ask Gus, 2D/3D, Map tools (`desktop-workspace.ts`); old `rail-view`/`rail-rotations`/`rail-campus` tabs removed. One workspace open at a time (`lib/farm-view/workspace.ts`). `FarmOverview.tsx` shows soil index, irrigation need, bare-soil weeks, rotation/year and source. Planner remounts per site (`key={siteId}`). Ask Gus now renders for UBC (was gated on stale store farm id).
+- **Tests:** FarmView tests updated for the new menu; e2e specs renamed to Gus; new `lib/forecast/store.lifecycle.test.ts` (out-of-order, failed refresh + retry, reset), field-vs-rollup tests with deliberately different values, copilot stale-reply and error tests.
+
+### Verification (2026-11-15)
+
+- `tsc --noEmit` clean; `eslint` 0 errors; `vitest run` 596/596; `npm run test:assets` 5/5; `npm run build` OK.
+- Production build on :3003 + live API on :8000, Chromium at 1440x900: UBC and KPU load; 2D map initializes with no worker errors and KPU field polygons render; live forecast POSTs return 200; Gus `/copilot/chat` returns 503 without `GROQ_API_KEY` and the panel shows the honest "Gus is unavailable" message with Retry.
+- API CORS allows only `http://localhost:3000` (hard-coded in `services/api/app/core/config.py`); run the web app on :3000 for live mode.
+- Full Playwright suite not re-run (stopped for time). Known stale specs: `audit-regressions.spec.ts` overlap tests use `.fv-toolbar`, which no longer exists (was already missing before this repair); mobile/non-3D specs are out of desktop scope.
+- Open: no keyboard path for `farm-view/Timeline.tsx` handle, `ForecastPanel` chart year click, or Map2D corner drawing; Gus "return to result" action not added.
 
 ---
 

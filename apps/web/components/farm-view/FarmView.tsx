@@ -36,10 +36,15 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer, X } from "./icons";
 import dynamic from "next/dynamic";
 import { imageryFor } from "@/lib/map2d/imagery";
-import { CopilotButton, CopilotPanel } from "@/components/copilot/CopilotPanel";
+import { CopilotPanel } from "@/components/copilot/CopilotPanel";
 import { RotationPlanner } from "@/components/rotation-planner/RotationPlanner";
 import { usePlannerStore } from "@/lib/rotation-planner/store";
 import { siteForFarm } from "@/lib/forecast/sites";
+import { useCopilot, bindCopilotFarm } from "@/lib/copilot/copilot";
+import { closeWorkspaceTools, coordinateWorkspace } from "@/lib/farm-view/workspace";
+import { FarmOverview } from "./FarmOverview";
+import { FieldColourLegend } from "@/components/farm-future/FieldColours";
+import { DESKTOP_WORKSPACE_CSS } from "./desktop-workspace";
 import { HorizonTabs, MonthlyOutlook } from "@/components/farm-future/MonthlyOutlook";
 
 // MapLibre is large and needs the browser: load the 2D map only when it is opened.
@@ -170,6 +175,23 @@ export function FarmView({
   // Preserve upstream explore-only entry fix: absence of a twin is supported here.
   const twin = twinConfig(farmId);
   const map2d = useAppStore((s) => s.map2d) && !!imageryFor(farmId ?? null);
+  const plannerOpen = usePlannerStore((s) => s.open);
+  const gusOpen = useCopilot((s) => s.open);
+  useEffect(() => coordinateWorkspace(() => setDrawer(null)), []);
+  useEffect(() => {
+    bindCopilotFarm(farmId ?? null);
+    usePlannerStore.setState({ open: false });
+    setDrawer(null);
+  }, [farmId]);
+  // Return keyboard focus when a workspace surface closes.
+  const lastTrigger = useRef<HTMLElement | null>(null);
+  const hadSurface = useRef(false);
+  const hasSurface = !!(drawer || futurePanel || plannerOpen || gusOpen);
+  useEffect(() => {
+    if (hasSurface && !hadSurface.current && document.activeElement instanceof HTMLElement) lastTrigger.current = document.activeElement;
+    if (!hasSurface && hadSurface.current) lastTrigger.current?.focus();
+    hadSurface.current = hasSurface;
+  }, [hasSurface]);
   const [card, setCard] = useState<ConditionId | null>(null);
   useEffect(() => {
     if (!card) return;
@@ -195,12 +217,12 @@ export function FarmView({
     setSim({ open: true, section: "field" });
   };
   // Future mode has no map-layer or field-report content, so those drawers stay shut there.
-  const active = futureMode === "now" || drawer === "conditions" || drawer === "more" || drawer === "rotations" || drawer === "campus" ? drawer : null;
+  const active = drawer;
   const toggle = (id: Drawer) => {
     const next = active === id ? null : id;
     if (next) {
       sound.pop();
-      useFutureStore.getState().openPanel(null);
+      closeWorkspaceTools();
     } else sound.close();
     if (next !== "conditions") setCard(null);
     setDrawer(next);
@@ -218,9 +240,9 @@ export function FarmView({
     if (futurePanel) setDrawer(null);
   }, [futurePanel]);
   return (
-    <div className="fv-root fv-workspace" data-testid="farm-view">
-      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS}</style>
-      {map2d && <Map2D />}
+    <div className="fv-root fv-workspace" data-testid="farm-view" data-surface={gusOpen ? "gus" : plannerOpen ? "planner" : active ? "drawer" : futurePanel ? "future" : "overview"} data-horizon={futureMode === "now" ? "none" : horizon} data-wide={active === "rotations" || plannerOpen || futureMode === "compare"}>
+      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS + DESKTOP_WORKSPACE_CSS}</style>
+      {map2d && <Map2D toolsOpen={active === "view" && !panelsHidden} onExit={() => useAppStore.setState({ map2d: false })} />}
       {!map2d && <MapEffects />}
       {panelsHidden && (
         <FvButton
@@ -234,8 +256,7 @@ export function FarmView({
         </FvButton>
       )}
       <div className="fv-panels" hidden={panelsHidden}>
-          {futureMode === "compare" && <FvButton className="fv-glass fv-seg" style={{ position: "absolute", right: 16, top: 16, pointerEvents: "auto" }} onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>}
-          <div className="fv-heading" hidden={futureMode === "compare"}>
+          <div className="fv-heading" data-testid="farm-sidebar">
             <div className="fv-title-block">
               <FvButton
                 className="fv-back"
@@ -251,7 +272,7 @@ export function FarmView({
                 {place ? " · " : ""}
                 {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
               </p>
-              <div className="fv-action-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, pointerEvents: "auto" }}>
+              <nav className="fv-action-row" aria-label="Farm actions">
                 {(isUbc || isKpu) && (
                   <FvButton
                     className="fv-glass fv-seg fv-accent-btn"
@@ -277,7 +298,11 @@ export function FarmView({
                     Plan rotations
                   </FvButton>
                 )}
-                <CopilotButton />
+                {siteForFarm(farmId ?? null) && (
+                  <FvButton className="fv-glass fv-seg" data-testid="copilot-open" aria-expanded={gusOpen} onClick={() => useCopilot.setState({ open: true, selected: null, strategyId: null, fieldId: null })}>
+                    Ask Gus
+                  </FvButton>
+                )}
                 {imageryFor(farmId ?? null) && (
                   <FvButton
                     className="fv-glass fv-seg"
@@ -292,28 +317,18 @@ export function FarmView({
                   className="fv-glass fv-seg"
                   data-testid="action-map-tools"
                   aria-expanded={active === "view"}
+                  aria-controls="farm-drawer"
                   onClick={() => toggle("view")}
                 >
                   {active === "view" ? "Close map tools" : "Map tools"}
                 </FvButton>
-              </div>
+              </nav>
+              <FarmOverview />
               <ModeSwitch />
-              {futureMode === "future" && <StrategyBar />}
+              {futureMode === "future" && <details className="fv-analysis-options"><summary>Rotation and forecast tools</summary><StrategyBar /></details>}
               {simProps && <div hidden={futureMode !== "now"}><SimulationTab props={simProps} sim={sim} setSim={setSim} /></div>}
-              {simProps && twin && (
-                <details className="fv-cap" style={{ marginTop: 8 }}>
-                  <summary>Approximate outlines · illustrative crops</summary>
-                  <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
-                </details>
-              )}
-            </div>
-          </div>
-          {futureMode === "future" && <div className="fv-lens-slot"><LensControl /></div>}
-          <nav className="fv-rail" aria-label="Farm panels" hidden={futureMode === "compare"}>
-            {(isUbc || isKpu) && <RailTab id="rotations" active={active} onToggle={toggle} data-testid="rail-rotations" />}
-            {isKpu && <RailTab id="campus" active={active} onToggle={toggle} data-testid="rail-campus" />}
+          <nav className="fv-rail" aria-label="Farm panels">
             <RailTab id="conditions" active={active} onToggle={toggle} />
-            {futureMode === "now" && <RailTab id="view" active={active} onToggle={toggle} />}
             {futureMode === "now" && (
               <RailTab
                 id="report"
@@ -335,12 +350,22 @@ export function FarmView({
             )}
             <RailTab ref={moreTab} id="more" active={active} onToggle={toggle} aria-label="More options" />
           </nav>
+              {simProps && twin && (
+                <details className="fv-cap" style={{ marginTop: 8 }}>
+                  <summary>Approximate outlines · illustrative crops</summary>
+                  <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
+                </details>
+              )}
+            </div>
+          </div>
+          
+
           <aside
             id="farm-drawer"
             className="fv-glass fv-drawer"
             aria-label={active ? DRAWER_TITLE[active] : "Farm panel"}
             data-future={futureMode === "future"}
-            hidden={!active || futureMode === "compare"}
+            hidden={!active}
           >
             <div className="fv-drawer-head">
               <h2 className="fv-rtitle">{active ? DRAWER_TITLE[active] : ""}</h2>
@@ -351,7 +376,7 @@ export function FarmView({
 
             {active === "rotations" && (
               <div className="fv-drawer-body" data-testid="ubc-comparison-panel">
-                <RotationComparison layout="stack" />
+                <RotationComparison layout="columns" />
               </div>
             )}
 
@@ -376,7 +401,7 @@ export function FarmView({
 
             <div className="fv-drawer-body" hidden={active !== "conditions"}>
               {futureMode === "future" ? (
-                <FuturePills />
+                <><FuturePills /><details><summary>Field colours and values</summary><FieldColourLegend embedded /></details></>
               ) : (
                 <>
                   <div className="fv-observations">
@@ -417,6 +442,8 @@ export function FarmView({
             </div>
 
             <div className="fv-drawer-body" hidden={active !== "view"}>
+              {futureMode === "future" && <LensControl />}
+              {map2d && <p className="fv-cap">2D map controls appear below. Draw a field to analyse a new area.</p>}
               <div>
                 <h3>Map layer</h3>
                 <div
@@ -563,7 +590,7 @@ export function FarmView({
             </div>
           </aside>
           <div className="fv-mode-content" hidden={futureMode !== "now"}>
-          <Twin bottom={comparing ? 110 : undefined} />
+          {!siteForFarm(farmId ?? null) && <Twin bottom={comparing ? 110 : undefined} />}
           {simProps && comparing && (
             <>
               <DividerHandle />
@@ -576,7 +603,7 @@ export function FarmView({
             : <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />)}
           {futureMode === "future" && <HorizonTabs bottom={horizon === "months" ? 228 : 236} />}
           <FutureLayer />
-          {siteForFarm(farmId ?? null) && <RotationPlanner siteId={siteForFarm(farmId ?? null)!} />}
+          {siteForFarm(farmId ?? null) && <RotationPlanner key={siteForFarm(farmId ?? null)!} siteId={siteForFarm(farmId ?? null)!} />}
           <CopilotPanel />
       </div>
       <p className="sr-only">

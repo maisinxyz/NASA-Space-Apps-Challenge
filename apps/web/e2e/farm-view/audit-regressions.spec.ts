@@ -159,7 +159,7 @@ test("farm observations, unavailable layers, field keyboard selection and camera
   await desktopFarm(page);
   await expect(page.getByTestId("layer-vigor")).toBeDisabled();
   await expect(page.getByTestId("layer-moisture")).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Ask Twin preview", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ask Gus preview", exact: true })).toBeVisible();
   await expect(page.getByText("Synthetic preview · not this farm’s measurements", { exact: true })).toBeVisible();
   await page
     .getByText("Farm observations: Not available", { exact: true })
