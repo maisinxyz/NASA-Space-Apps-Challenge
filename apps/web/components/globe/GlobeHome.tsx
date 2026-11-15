@@ -761,6 +761,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
           <FarmView
             key={farm.id}
+            farmId={farm.id}
             farmName={farm.name}
             place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
             onBack={() => useAppStore.setState({ globeView: "globe" })}

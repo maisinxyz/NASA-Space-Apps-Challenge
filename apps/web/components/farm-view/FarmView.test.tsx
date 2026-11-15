@@ -105,4 +105,23 @@ describe('farm-specific content', () => {
     expect(html).toContain('id="sim-panel-scenarios"');
     expect(html).toContain('aria-labelledby="sim-tab-scenarios"');
   });
+
+  it("renders Vancouver demo primary actions for UBC Farm and KPU Langley", () => {
+    useAppStore.setState({ farmId: "ubc-farm", globeView: "farm", panelsHidden: false });
+    const ubcHtml = renderToStaticMarkup(
+      <FarmView farmName="UBC Farm" farmId="ubc-farm" onBack={noop} onReset={noop} />
+    );
+    expect(ubcHtml).toContain('data-testid="action-compare-rotations"');
+    expect(ubcHtml).toContain("Compare rotations");
+    expect(ubcHtml).toContain('data-testid="action-map-tools"');
+    expect(ubcHtml).toContain('data-testid="rail-rotations"');
+
+    useAppStore.setState({ farmId: "kpu-langley", globeView: "farm", panelsHidden: false });
+    const kpuHtml = renderToStaticMarkup(
+      <FarmView farmName="KPU School of Horticulture" farmId="kpu-langley" onBack={noop} onReset={noop} />
+    );
+    expect(kpuHtml).toContain('data-testid="action-explore-campus"');
+    expect(kpuHtml).toContain("Explore campus");
+    expect(kpuHtml).toContain('data-testid="rail-campus"');
+  });
 });

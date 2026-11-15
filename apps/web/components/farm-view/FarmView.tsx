@@ -26,6 +26,7 @@ import { FV_CSS } from "./styles";
 import { ComparisonTimeline } from "./Timeline";
 import { ConditionCard, LayerLegend } from "./Cards";
 import { Twin } from "./Twin";
+import { UBCComparison } from "./UBCComparison";
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
 import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
@@ -38,6 +39,7 @@ const PILL_ICON: Record<ConditionId, typeof Droplet> = { rainfall: Droplet, mois
 
 export type FarmViewProps = {
   farmName: string;
+  farmId?: string;
   place?: string;
   onBack(): void;
   onReset(): void;
@@ -110,11 +112,12 @@ const WORKSPACE_CSS = `
 @media(max-width:700px){.fv-workspace .fv-title{font-size:22px;}.fv-workspace .fv-drawer,.fv-workspace .fv-drawer[data-future="true"]{top:auto;bottom:88px;max-height:55vh;}}
 `;
 
-type Drawer = "conditions" | "view" | "report" | "more";
-const DRAWER_TITLE: Record<Drawer, string> = { conditions: "Conditions", view: "Map", report: "Field report", more: "More" };
+type Drawer = "conditions" | "view" | "report" | "more" | "rotations" | "campus";
+const DRAWER_TITLE: Record<Drawer, string> = { conditions: "Conditions", view: "Map", report: "Field report", more: "More", rotations: "Crop Rotations", campus: "Campus Info" };
 
 export function FarmView({
   farmName,
+  farmId: propFarmId,
   place,
   onBack,
   onReset,
@@ -149,7 +152,10 @@ export function FarmView({
   const futurePanel = useFutureStore((s) => s.panel);
   const reviewFor = useFutureStore((s) => s.reviewFor);
   const comparing = useAppStore((s) => s.twinMode === "compare");
-  const farmId = useAppStore((s) => s.farmId);
+  const storeFarmId = useAppStore((s) => s.farmId);
+  const farmId = propFarmId ?? storeFarmId;
+  const isUbc = farmId === "ubc-farm" || farmName.toLowerCase().includes("ubc");
+  const isKpu = farmId === "kpu-langley" || farmName.toLowerCase().includes("kpu");
   // Preserve upstream explore-only entry fix: absence of a twin is supported here.
   const twin = twinConfig(farmId);
   const [card, setCard] = useState<ConditionId | null>(null);
@@ -177,7 +183,7 @@ export function FarmView({
     setSim({ open: true, section: "field" });
   };
   // Future mode has no map-layer or field-report content, so those drawers stay shut there.
-  const active = futureMode === "now" || drawer === "conditions" || drawer === "more" ? drawer : null;
+  const active = futureMode === "now" || drawer === "conditions" || drawer === "more" || drawer === "rotations" || drawer === "campus" ? drawer : null;
   const toggle = (id: Drawer) => {
     const next = active === id ? null : id;
     if (next) {
@@ -232,6 +238,36 @@ export function FarmView({
                 {place ? " · " : ""}
                 {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
               </p>
+              <div className="fv-action-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, pointerEvents: "auto" }}>
+                {isUbc && (
+                  <FvButton
+                    className="fv-glass fv-seg fv-accent-btn"
+                    data-testid="action-compare-rotations"
+                    style={{ background: "linear-gradient(180deg, #c3d6f4 0%, #a3bfe9 100%)", color: "#05070c", fontWeight: 600, padding: "0 14px" }}
+                    onClick={() => toggle("rotations")}
+                  >
+                    {active === "rotations" ? "Close comparison" : "Compare rotations"}
+                  </FvButton>
+                )}
+                {isKpu && (
+                  <FvButton
+                    className="fv-glass fv-seg fv-accent-btn"
+                    data-testid="action-explore-campus"
+                    style={{ background: "linear-gradient(180deg, #c3d6f4 0%, #a3bfe9 100%)", color: "#05070c", fontWeight: 600, padding: "0 14px" }}
+                    onClick={() => toggle("campus")}
+                  >
+                    {active === "campus" ? "Close campus info" : "Explore campus"}
+                  </FvButton>
+                )}
+                <FvButton
+                  className="fv-glass fv-seg"
+                  data-testid="action-map-tools"
+                  aria-expanded={active === "view"}
+                  onClick={() => toggle("view")}
+                >
+                  {active === "view" ? "Close map tools" : "Map tools"}
+                </FvButton>
+              </div>
               <ModeSwitch />
               {futureMode === "future" && <StrategyBar />}
               {simProps && <div hidden={futureMode !== "now"}><SimulationTab props={simProps} sim={sim} setSim={setSim} /></div>}
@@ -245,6 +281,8 @@ export function FarmView({
           </div>
           {futureMode === "future" && <div className="fv-lens-slot"><LensControl /></div>}
           <nav className="fv-rail" aria-label="Farm panels" hidden={futureMode === "compare"}>
+            {isUbc && <RailTab id="rotations" active={active} onToggle={toggle} data-testid="rail-rotations" />}
+            {isKpu && <RailTab id="campus" active={active} onToggle={toggle} data-testid="rail-campus" />}
             <RailTab id="conditions" active={active} onToggle={toggle} />
             {futureMode === "now" && <RailTab id="view" active={active} onToggle={toggle} />}
             {futureMode === "now" && (
@@ -281,6 +319,31 @@ export function FarmView({
                 <X size={16} />
               </FvButton>
             </div>
+
+            {active === "rotations" && (
+              <div className="fv-drawer-body" data-testid="ubc-comparison-panel">
+                <UBCComparison />
+              </div>
+            )}
+
+            {active === "campus" && (
+              <div className="fv-drawer-body" data-testid="kpu-explore-panel">
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#f2ebdd", margin: "0 0 6px 0" }}>KPU School of Horticulture</h3>
+                  <p style={{ color: "#c9bfae", lineHeight: 1.5, margin: "0 0 10px 0" }}>
+                    Teaching greenhouse, nursery production, turfgrass field laboratory, and display gardens at the Langley campus in the Fraser Valley.
+                  </p>
+                  <div style={{ fontSize: 12, color: "#a3bfe9", display: "flex", flexDirection: "column", gap: 4, margin: "0 0 12px 0" }}>
+                    <span><strong>Location:</strong> 49°07′N 122°38′W (Langley, BC)</span>
+                    <span><strong>Facilities:</strong> High-tech greenhouses, field lab, apiary</span>
+                    <span><strong>Status:</strong> Explore-only research site · No field sensors connected</span>
+                  </div>
+                  <a href="https://www.kpu.ca/langley/campus-highlights" target="_blank" rel="noreferrer" className="fv-glass fv-seg" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", color: "#f2ebdd", padding: "8px 12px", borderRadius: 8, fontSize: 12 }}>
+                    Visit KPU Campus Highlights ↗
+                  </a>
+                </div>
+              </div>
+            )}
 
             <div className="fv-drawer-body" hidden={active !== "conditions"}>
               {futureMode === "future" ? (

@@ -213,7 +213,11 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
             <span className="mt-2.5 line-clamp-2 text-[12px] leading-[1.5] text-white/[0.62]">{line}</span>
             {farm.tier === "explore" && (
               <span className="mt-2 block rounded bg-amber-500/10 px-2 py-1 text-[11px] leading-snug font-medium text-amber-200/90 border border-amber-500/20">
-                Simulation available on Cornell &amp; Beltsville only (2 of 14 farms).
+                {farm.id === "ubc-farm"
+                  ? "Rotation comparison available. Simulation on Cornell & Beltsville only."
+                  : farm.id === "kpu-langley"
+                    ? "Campus exploration available. Simulation on Cornell & Beltsville only."
+                    : "Simulation available on Cornell & Beltsville only (2 of 14 farms)."}
               </span>
             )}
             <span className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.07] pt-2.5 text-[12px] text-white/[0.5]">
@@ -233,7 +237,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
           className="relative mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[#05070c] shadow-[0_10px_30px_-6px_rgba(163,191,233,0.6)] outline-none transition-[filter,box-shadow] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           style={{ height: BTN_H, background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)` }}
         >
-          {farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
+          {farm.id === "ubc-farm" ? "Compare rotations" : farm.id === "kpu-langley" ? "Explore campus" : farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
           <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>

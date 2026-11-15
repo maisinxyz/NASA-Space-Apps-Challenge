@@ -178,6 +178,27 @@ export function RestingHero({
               {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name} — {farm.tier === "twin" ? "Digital twin" : "Explore only"}</option>)}
             </select>
           </label>
+          <div className="pointer-events-auto w-full">
+            <p className="mb-1.5 text-xs uppercase tracking-[0.12em]" style={{ color: color.accent, opacity: 0.8 }}>Vancouver-area demos</p>
+            <div className="flex flex-wrap" style={{ gap: u(10) }}>
+              <button
+                type="button"
+                onClick={() => onPickFarm("ubc-farm")}
+                className="pointer-events-auto inline-flex cursor-pointer items-center rounded-full font-semibold text-white/90 border border-white/[0.14] bg-white/[0.06] backdrop-blur-sm transition-[background,box-shadow] hover:bg-white/[0.12] hover:border-white/[0.25] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80 active:scale-95"
+                style={{ paddingInline: u(18), paddingBlock: u(10), fontSize: `max(12px, ${u(13)})`, minHeight: 44, letterSpacing: "0.02em" }}
+              >
+                Compare rotations → UBC Farm
+              </button>
+              <button
+                type="button"
+                onClick={() => onPickFarm("kpu-langley")}
+                className="pointer-events-auto inline-flex cursor-pointer items-center rounded-full font-semibold text-white/90 border border-white/[0.14] bg-white/[0.06] backdrop-blur-sm transition-[background,box-shadow] hover:bg-white/[0.12] hover:border-white/[0.25] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80 active:scale-95"
+                style={{ paddingInline: u(18), paddingBlock: u(10), fontSize: `max(12px, ${u(13)})`, minHeight: 44, letterSpacing: "0.02em" }}
+              >
+                Explore campus → KPU Langley
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             onClick={onExplore}
