@@ -8,6 +8,7 @@ import { REVIEW_FLAGS, STRATEGIES } from "@/lib/farm-future/fixtures";
 import { leaderboard, scoreAt, waterQuotaAt } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
+import { AskCopilot } from "@/components/copilot/AskCopilot";
 import { color } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
 
@@ -131,6 +132,7 @@ export function ReviewDrawer() {
                       Go to {f.week !== null ? `week ${f.week + 1}` : "field"}
                     </FvButton>
                   )}
+                  {data.source === "engine" && <AskCopilot kind="flag" id={f.id} strategyId={s.engineId} fieldId={f.fieldIds[0] ?? null} question={`Why is this flagged, and what should I check locally? "${f.text}"`} />}
                 </div>
               </li>
             ))}

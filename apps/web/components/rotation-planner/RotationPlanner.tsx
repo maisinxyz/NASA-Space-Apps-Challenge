@@ -1,0 +1,329 @@
+"use client";
+// Crop rotation planner (v4 PRD F7, D10: the core feature). Crop pool by category with search, pin and exclude
+// (GET /crop-catalog, trait sources in a details row); constraints and strategy count; the current rotation and the
+// generated alternatives as a 10-year year-by-season grid with the 12-month calendar of the selected year; a custom
+// rotation editor scored beside the others (custom_strategies); rule explanations, crop-role badges and review flags.
+// No income and no fertilizer figures (D3).
+import { useEffect, useMemo, useState } from "react";
+
+import { apiMode, ApiError, getCropCatalog, getForecast, getPrebuiltForecast } from "@/lib/api/client";
+import type { CropCatalog, Forecast, ForecastStrategy, RotationSlot } from "@/lib/api/types";
+import { CURRENT_ROTATION } from "@/lib/farm-future/data";
+import { color } from "@/lib/farm-view/tokens";
+import { fmt } from "@/lib/forecast/select";
+import { baseRequest } from "@/lib/forecast/sites";
+import {
+  buildRequest, calendarOf, categoryLabel, cropAt, cropColour, cycleOf, inputFrom, MONTHS, namesOf, plainSource, roleLabel,
+  ruleStatus, SEASON_LABEL, SEASONS, setCell, strategiesFor, validate, type PlannerInput, type Season,
+} from "@/lib/rotation-planner/planner";
+import { usePlannerStore } from "@/lib/rotation-planner/store";
+
+import { AskCopilot } from "@/components/copilot/AskCopilot";
+import { FvButton } from "@/components/farm-view/FvButton";
+
+const CSS = `
+.rp{position:absolute;inset:16px;z-index:60;pointer-events:auto;display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:12px;color:#f2ebdd;font-size:13px}
+.rp section{background:rgba(22,19,15,.94);border:1px solid rgba(242,235,221,.12);border-radius:16px;padding:14px;overflow:auto;min-height:0}
+.rp h2{font-size:15px;margin:0 0 8px;font-weight:600}.rp h3{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#c9bfae;margin:12px 0 6px;font-weight:500}
+.rp label{display:flex;gap:6px;align-items:center}.rp input[type=search],.rp input[type=number],.rp select{background:rgba(255,255,255,.06);color:#f2ebdd;border:1px solid rgba(242,235,221,.22);border-radius:6px;padding:4px 6px;font-size:12px}
+.rp .crop{display:grid;grid-template-columns:16px 1fr auto auto;gap:6px;align-items:center;padding:3px 0;border-top:1px solid rgba(242,235,221,.06)}
+.rp .chip{font-size:10.5px;border:1px solid rgba(242,235,221,.25);border-radius:9px;padding:1px 7px;background:transparent;color:#f2ebdd;cursor:pointer;min-height:0}
+.rp .chip[aria-pressed=true]{background:rgba(226,184,102,.25);border-color:#E2B866}
+.rp .chip.x[aria-pressed=true]{background:rgba(196,106,82,.25);border-color:#C46A52}
+.rp table{border-collapse:collapse;font-size:11px}.rp td,.rp th{padding:0;border:1px solid rgba(20,16,12,.9)}
+.rp th{font-weight:400;color:#c9bfae;padding:2px 4px}
+.rp .cell{width:22px;height:18px;display:block}
+.rp .card{border-top:1px solid rgba(242,235,221,.12);padding:12px 0;display:grid;gap:8px}
+.rp .badge{display:inline-flex;font-size:10.5px;border-radius:9px;padding:1px 8px;border:1px solid rgba(242,235,221,.25);margin:0 4px 4px 0}
+.rp .good{color:#9CC28A}.rp .bad{color:#C46A52}.rp .neutral{color:#c9bfae}
+.rp .muted{color:#c9bfae}
+@media(max-width:800px){.rp{grid-template-columns:1fr;overflow:auto}}
+`;
+
+type Run = { status: "idle" | "loading" | "ready" | "error"; forecast: Forecast | null; note: string | null; error: string | null };
+
+export function RotationPlanner({ siteId }: { siteId: string }) {
+  const open = usePlannerStore((s) => s.open);
+  const close = () => usePlannerStore.setState({ open: false });
+  const base = baseRequest(siteId);
+  const [catalog, setCatalog] = useState<CropCatalog | null>(null);
+  const [input, setInput] = useState<PlannerInput | null>(() => (base ? inputFrom(base) : null));
+  const [query, setQuery] = useState("");
+  const [fieldId, setFieldId] = useState<string | null>(null);
+  const [year, setYear] = useState(1);
+  const [customCycle, setCustomCycle] = useState(3);
+  const [editing, setEditing] = useState(false);
+  const [run, setRun] = useState<Run>({ status: "idle", forecast: null, note: null, error: null });
+
+  useEffect(() => {
+    if (!open || catalog) return;
+    getCropCatalog({ siteId }).then(setCatalog, () => getCropCatalog().then(setCatalog, () => setCatalog({ crops: [], equipment: [] })));
+  }, [open, catalog, siteId]);
+
+  const names = useMemo(() => namesOf(catalog?.crops ?? []), [catalog]);
+  const name = (id: string) => (id === "fallow" ? "Fallow" : (names.get(id) ?? id.replace(/^crop_/, "").replace(/_/g, " ")));
+
+  const execute = async (i: PlannerInput) => {
+    if (!base) return;
+    setRun((r) => ({ ...r, status: "loading", error: null }));
+    try {
+      if (apiMode === "live") {
+        const forecast = await getForecast(siteId, buildRequest(base, i));
+        setRun({ status: "ready", forecast, note: null, error: null });
+      } else {
+        const forecast = await getPrebuiltForecast(siteId);
+        setRun({ status: "ready", forecast, note: "Pre-built engine run for the farm's default crop pool. Pool, constraint and custom-rotation changes are scored when the app runs against the live API.", error: null });
+      }
+    } catch (e) {
+      setRun({ status: "error", forecast: null, note: null, error: e instanceof ApiError ? `${e.message}${e.hint ? ` ${e.hint}` : ""}` : "The rotations could not be scored." });
+    }
+  };
+
+  // First open: score the farm's default request.
+  useEffect(() => {
+    if (open && input && run.status === "idle") void execute(input);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  if (!open || !base || !input) return null;
+  const problems = validate(input);
+  const set = (p: Partial<PlannerInput>) => setInput({ ...input, ...p });
+  const toggle = (list: "pool" | "pinned" | "excluded", id: string) => {
+    const cur = input[list];
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    const patch: Partial<PlannerInput> = { [list]: next };
+    if (list === "pinned" && !cur.includes(id)) patch.excluded = input.excluded.filter((x) => x !== id);
+    if (list === "excluded" && !cur.includes(id)) patch.pinned = input.pinned.filter((x) => x !== id);
+    if (list !== "pool" && !input.pool.includes(id)) patch.pool = [...input.pool, id];
+    set(patch);
+  };
+  const crops = (catalog?.crops ?? []).filter((c) => !query || c.name.toLowerCase().includes(query.toLowerCase()) || c.id.includes(query.toLowerCase()));
+  const byCategory = new Map<string, typeof crops>();
+  for (const c of crops) byCategory.set(c.category, [...(byCategory.get(c.category) ?? []), c]);
+  const poolIds = input.pool.filter((c) => !input.excluded.includes(c));
+  const f = run.forecast;
+  const { field, strategies } = f ? strategiesFor(f, fieldId) : { field: undefined, strategies: [] as ForecastStrategy[] };
+  const current = strategies.find((s) => s.role === "existing");
+
+  const startEdit = (from?: ForecastStrategy) => {
+    const cycle = from ? Math.min(10, from.cycle_years) : customCycle;
+    setCustomCycle(cycle);
+    set({ custom: from ? cycleOf(from.plan, cycle) : (input.custom ?? []) });
+    setEditing(true);
+  };
+
+  return (
+    <div className="rp" role="dialog" aria-modal="false" aria-label="Crop rotation planner" data-testid="rotation-planner">
+      <style>{CSS}</style>
+      <section aria-label="Crop pool and constraints">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2>Crop pool</h2>
+          <FvButton className="ff-link" onClick={close} data-testid="planner-close">Close</FvButton>
+        </div>
+        <input type="search" placeholder="Search crops" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search crops" style={{ width: "100%" }} />
+        <p className="muted" style={{ margin: "6px 0 0" }}>{poolIds.length} in the pool · tick to add · Pin keeps a crop in every option · Exclude keeps it out.</p>
+        {[...byCategory.entries()].map(([cat, list]) => (
+          <div key={cat}>
+            <h3>{categoryLabel(cat)}</h3>
+            {list.map((c) => (
+              <div className="crop" key={c.id} data-testid={`pool-${c.id}`}>
+                <input type="checkbox" aria-label={`Add ${c.name} to the pool`} checked={input.pool.includes(c.id)} onChange={() => toggle("pool", c.id)} />
+                <details>
+                  <summary style={{ cursor: "pointer" }}><span aria-hidden style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: cropColour(c.id), marginRight: 6 }} />{c.name}</summary>
+                  <ul style={{ margin: "4px 0", paddingLeft: 14, color: color.inkSecondary, fontSize: 11 }}>
+                    {Object.entries(c.trait_sources ?? {}).slice(0, 8).map(([k, v]) => <li key={k}><b style={{ fontWeight: 500 }}>{k.replace(/_/g, " ")}</b>: {plainSource(v as string)}</li>)}
+                  </ul>
+                </details>
+                <button type="button" className="chip" aria-pressed={input.pinned.includes(c.id)} onClick={() => toggle("pinned", c.id)}>Pin</button>
+                <button type="button" className="chip x" aria-pressed={input.excluded.includes(c.id)} onClick={() => toggle("excluded", c.id)}>Exclude</button>
+              </div>
+            ))}
+          </div>
+        ))}
+        {catalog && catalog.crops.length === 0 && <p className="muted">The crop catalog could not be loaded.</p>}
+
+        <h3>Constraints</h3>
+        <div style={{ display: "grid", gap: 6 }}>
+          {(catalog?.equipment ?? []).map((e) => (
+            <label key={e.id}><input type="checkbox" checked={input.constraints.equipment.includes(e.id)} onChange={() => set({ constraints: { ...input.constraints, equipment: input.constraints.equipment.includes(e.id) ? input.constraints.equipment.filter((x) => x !== e.id) : [...input.constraints.equipment, e.id] } })} />{e.label}</label>
+          ))}
+          {catalog && (catalog.equipment ?? []).length === 0 && <span className="muted">No specialty equipment listed in the catalog.</span>}
+          <label>Labour
+            <select value={input.constraints.labour_level} onChange={(e) => set({ constraints: { ...input.constraints, labour_level: e.target.value as PlannerInput["constraints"]["labour_level"] } })}>
+              <option value="low">low</option><option value="medium">medium</option><option value="high">high</option>
+            </select>
+          </label>
+          <label><input type="checkbox" checked={input.constraints.no_till} onChange={(e) => set({ constraints: { ...input.constraints, no_till: e.target.checked } })} />No-till</label>
+          <label><input type="checkbox" checked={input.constraints.livestock_on_farm} onChange={(e) => set({ constraints: { ...input.constraints, livestock_on_farm: e.target.checked } })} />Livestock on the farm</label>
+          <label>Longest cycle
+            <input type="number" min={1} max={10} value={input.constraints.max_cycle_years} onChange={(e) => set({ constraints: { ...input.constraints, max_cycle_years: Math.min(10, Math.max(1, +e.target.value || 1)) } })} style={{ width: 52 }} /> years
+          </label>
+          <label>Water quota
+            <input type="number" min={0} placeholder="none" value={input.waterQuotaMm ?? ""} onChange={(e) => set({ waterQuotaMm: e.target.value === "" ? null : Math.max(0, +e.target.value) })} style={{ width: 70 }} /> mm/season
+          </label>
+          <label>Options to generate
+            <select value={input.strategyCount} onChange={(e) => set({ strategyCount: +e.target.value })} data-testid="planner-count">
+              {[2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span className="muted">(including the current rotation)</span>
+          </label>
+        </div>
+        {problems.map((p) => <p key={p} role="alert" className="bad" style={{ margin: "6px 0 0" }}>{p}</p>)}
+        <FvButton className="fv-seg fv-accent-btn" style={{ marginTop: 10, width: "100%", background: "linear-gradient(180deg,#c3d6f4,#a3bfe9)", color: "#05070c", fontWeight: 600 }} disabled={problems.length > 0 || run.status === "loading"} onClick={() => execute(input)} data-testid="planner-run">
+          {run.status === "loading" ? "Scoring…" : "Score rotations"}
+        </FvButton>
+      </section>
+
+      <section aria-label="Rotations">
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <h2 style={{ margin: 0 }}>Rotations · 10 years</h2>
+          {f && (
+            <label>Area
+              <select value={fieldId ?? ""} onChange={(e) => setFieldId(e.target.value || null)} data-testid="planner-field">
+                <option value="">Whole farm</option>
+                {f.fields.map((x) => <option key={x.field_id} value={x.field_id}>{x.name}</option>)}
+              </select>
+            </label>
+          )}
+          <label>Calendar year
+            <select value={year} onChange={(e) => setYear(+e.target.value)}>{Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select>
+          </label>
+        </div>
+        {run.note && <p className="muted" data-testid="planner-note">{run.note}</p>}
+        {run.status === "loading" && <p role="status">Scoring the rotations…</p>}
+        {run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
+        {f && !fieldId && f.fields.length > 1 && <p className="muted">Plans shown for {field?.name}; numbers are area-weighted over {f.fields.length} fields.</p>}
+
+        {strategies.map((s) => (
+          <StrategyCard key={s.id} s={s} f={f!} fieldId={fieldId} year={year} name={name} onEdit={s.role === "existing" ? () => startEdit(s) : undefined} />
+        ))}
+
+        <div className="card" data-testid="custom-editor">
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <strong>Custom rotation</strong>
+            {!editing && <FvButton className="fv-seg" onClick={() => startEdit(current)} data-testid="edit-current">Edit the {CURRENT_ROTATION.toLowerCase()}</FvButton>}
+            {!editing && <FvButton className="fv-seg" onClick={() => { setInput({ ...input, custom: [] }); setEditing(true); }}>Start from empty</FvButton>}
+            {editing && (
+              <label>Cycle
+                <select value={customCycle} onChange={(e) => { const n = +e.target.value; setCustomCycle(n); set({ custom: (input.custom ?? []).filter((x) => x.year_index <= n) }); }}>
+                  {Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+                </select> years, repeated over 10
+              </label>
+            )}
+          </div>
+          {editing && (
+            <>
+              <table aria-label="Custom rotation editor">
+                <thead><tr><th />{Array.from({ length: customCycle }, (_, i) => <th key={i}>Year {i + 1}</th>)}</tr></thead>
+                <tbody>
+                  {SEASONS.map((season) => (
+                    <tr key={season}>
+                      <th style={{ textAlign: "left" }}>{SEASON_LABEL[season]}</th>
+                      {Array.from({ length: customCycle }, (_, i) => {
+                        const v = cropAt(input.custom ?? [], i + 1, season);
+                        return (
+                          <td key={i} style={{ background: v ? cropColour(v) : "transparent" }}>
+                            <select aria-label={`Year ${i + 1} ${season}`} value={v ?? ""} data-testid={`custom-${i + 1}-${season}`} onChange={(e) => set({ custom: setCell(input.custom ?? [], i + 1, season as Season, e.target.value || null) })} style={{ width: 92, background: "rgba(10,8,6,.7)", border: 0 }}>
+                              <option value="">—</option>
+                              {poolIds.map((c) => <option key={c} value={c}>{name(c)}</option>)}
+                              <option value="fallow">Fallow</option>
+                            </select>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ display: "flex", gap: 8 }}>
+                <FvButton className="fv-seg" disabled={!input.custom?.length || problems.length > 0 || run.status === "loading"} onClick={() => execute(input)} data-testid="custom-score">Score beside the others</FvButton>
+                <FvButton className="fv-seg" onClick={() => { set({ custom: null }); setEditing(false); }}>Remove custom rotation</FvButton>
+              </div>
+            </>
+          )}
+        </div>
+        {f && <p className="muted">{f.support_sentence} Scenario forecast, not a planting order.</p>}
+      </section>
+    </div>
+  );
+}
+
+const TRAJ: { key: string; label: string; note?: string }[] = [
+  { key: "soil_organic_index", label: "Soil organic matter", note: "index, year 0 = 100" },
+  { key: "bare_weeks", label: "Bare-soil weeks" },
+  { key: "irrigation_need_mm", label: "Irrigation need" },
+  { key: "pest_pressure_index", label: "Pest pressure" },
+];
+
+function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrategy; f: Forecast; fieldId: string | null; year: number; name(id: string): string; onEdit?(): void }) {
+  const traj = (fieldId ? s.trajectories : f.farm_rollup.strategies.find((x) => x.id === s.id)?.trajectories ?? s.trajectories) as Record<string, { unit: string; points: { year: number; p50: number; p10?: number; p90?: number }[] } | undefined>;
+  const label = s.role === "existing" ? CURRENT_ROTATION : s.role === "custom" ? `Custom · ${s.label}` : s.label;
+  const ex = s.rotation_explanation;
+  const cal = calendarOf(s.plan, year);
+  const flags = s.review_flags;
+  return (
+    <div className="card" data-testid={`planner-strategy-${s.id}`}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <strong>{label}</strong>
+        <span className="muted">{s.cycle_years}-year cycle</span>
+        {onEdit && <FvButton className="fv-seg" onClick={onEdit} data-testid="edit-rotation">Edit</FvButton>}
+        <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested for this farm, and what should I check locally?`} />
+      </div>
+      <table aria-label={`${label}, years 1 to 10 by season`}>
+        <thead><tr><th />{Array.from({ length: 10 }, (_, i) => <th key={i} style={{ fontWeight: i + 1 === year ? 600 : 400 }}>{i + 1}</th>)}</tr></thead>
+        <tbody>
+          {SEASONS.map((season) => (
+            <tr key={season}>
+              <th style={{ textAlign: "left" }}>{SEASON_LABEL[season]}</th>
+              {Array.from({ length: 10 }, (_, i) => {
+                const c = cropAt(s.plan, i + 1, season);
+                return <td key={i} title={c ? `Year ${i + 1} ${season}: ${name(c)}` : `Year ${i + 1} ${season}: nothing planned`}><span className="cell" style={{ background: c ? cropColour(c) : "rgba(255,255,255,.04)" }} /></td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div aria-label={`Year ${year} calendar`} style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: 2, fontSize: 10 }}>
+        {cal.map((c, m) => (
+          <div key={m} title={c ? name(c) : "nothing planned"} style={{ textAlign: "center" }}>
+            <div style={{ height: 8, borderRadius: 2, background: c ? cropColour(c) : "rgba(255,255,255,.06)" }} />
+            <span className="muted">{MONTHS[m]}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, fontSize: 11 }}>
+        {[...new Set(cycleOf(s.plan, s.cycle_years).map((x) => x.crop_id))].map((c) => (
+          <span key={c} className="badge"><span aria-hidden style={{ width: 8, height: 8, borderRadius: 2, background: cropColour(c), marginRight: 5, alignSelf: "center" }} />{name(c)}</span>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 12px", fontSize: 12 }}>
+        {TRAJ.map((t) => {
+          const series = traj[t.key];
+          const p = series?.points.find((x) => x.year === 10);
+          if (!series || !p) return null;
+          return <span key={t.key}>{t.label}, year 10: <b style={{ fontWeight: 500 }}>{fmt(p.p50, t.note ? undefined : series.unit)}</b>{p.p10 !== undefined && p.p90 !== undefined && p.p10 !== p.p90 ? <span className="muted"> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}{t.note ? <span className="muted"> {t.note}</span> : null}</span>;
+        })}
+      </div>
+      {ex && ex.crop_roles.length > 0 && (
+        <div>{ex.crop_roles.map((r) => <span key={`${r.crop_id}-${r.role}`} className="badge" title={r.text}>{roleLabel(r.role)} · {name(r.crop_id)}</span>)}</div>
+      )}
+      {ex && ex.rules.length > 0 && (
+        <ul style={{ margin: 0, paddingLeft: 16 }} aria-label="Rotation rules">
+          {ex.rules.map((r) => { const st = ruleStatus(r.status); return <li key={r.rule_id}><span className={st.tone}>{st.label}</span> · {r.text}</li>; })}
+        </ul>
+      )}
+      <details>
+        <summary style={{ cursor: "pointer" }}>Why suggested · {flags.length} review {flags.length === 1 ? "flag" : "flags"}</summary>
+        <p style={{ margin: "6px 0" }}>{s.evidence_card.why_suggested}</p>
+        {s.evidence_card.risks_for_local_review.length > 0 && <p className="muted" style={{ margin: "4px 0" }}>Check locally: {s.evidence_card.risks_for_local_review.join(" ")}</p>}
+        <ul style={{ margin: 0, paddingLeft: 16 }}>
+          {flags.slice(0, 6).map((fl) => <li key={fl.id}><span className={fl.severity === "verify" ? "bad" : "neutral"}>{fl.severity}</span> · {fl.text}</li>)}
+          {flags.length > 6 && <li className="muted">+{flags.length - 6} more</li>}
+        </ul>
+      </details>
+    </div>
+  );
+}
+
+/** Edits to a custom rotation are slots of one cycle; the engine repeats them over the horizon. */
+export type CustomCycle = RotationSlot[];

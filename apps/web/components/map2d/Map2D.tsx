@@ -21,6 +21,7 @@ import { useAppStore } from "@/lib/store";
 
 import { useFieldValues } from "@/components/farm-future/FieldColours";
 import { FvButton } from "@/components/farm-view/FvButton";
+import { AskCopilot } from "@/components/copilot/AskCopilot";
 
 const NEUTRAL = "#E2B866";
 const VIEW_M = 3000;
@@ -234,7 +235,10 @@ export function Map2D() {
             {pop.p10 !== null && pop.p90 !== null && pop.p10 !== pop.p90 ? ` (likely ${fmt(pop.p10)} to ${fmt(pop.p90)})` : ""}.
           </span>
           <span style={{ color: color.inkSecondary }}>{FIELD_METRICS[fv.metric].higherIsBetter ? "Higher is better." : "Lower is better."} Scenario forecast, not a measurement.</span>
-          <FvButton className="ff-link" onClick={() => setPopover(null)}>Close</FvButton>
+          <div style={{ display: "flex", gap: 10 }}>
+            <AskCopilot kind="field" id={popField.id} fieldId={popField.id} strategyId={fv.strategy.engineId} question={`What does the forecast say about ${popField.name}, and what should I check locally?`} />
+            <FvButton className="ff-link" onClick={() => setPopover(null)}>Close</FvButton>
+          </div>
         </div>
       )}
 

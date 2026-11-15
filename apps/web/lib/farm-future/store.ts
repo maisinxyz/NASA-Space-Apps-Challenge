@@ -27,6 +27,10 @@ export type FutureState = {
   focusFieldId: string | null;
   /** Which engine trajectory colours the fields on the map (F2). */
   fieldMetric: FieldMetric;
+  /** Timeline tab: the 10-year clock, or the next 12 months (F5). */
+  horizon: "years" | "months";
+  /** Month of the 12-month outlook in view, 0 = the outlook's first month. */
+  monthIndex: number;
 
   setMode(m: FutureMode): void;
   setT(t: ClockT): void;
@@ -40,6 +44,8 @@ export type FutureState = {
   openReview(id: StrategyId | null): void;
   goTo(yearIndex: number, doy: number, fieldId?: string): void;
   setFieldMetric(m: FieldMetric): void;
+  setHorizon(h: "years" | "months"): void;
+  setMonthIndex(i: number): void;
 };
 
 export const INITIAL_T = tOf(8, 194); // 14 July 2034, year 9 of 10
@@ -56,6 +62,8 @@ export const useFutureStore = create<FutureState>((set) => ({
   panel: null,
   focusFieldId: null,
   fieldMetric: "soil",
+  horizon: "years",
+  monthIndex: 0,
 
   setMode: (mode) => set({ mode, playing: false, panel: null, reviewFor: null, ...(mode === "now" ? { lens: null } : {}) }),
   setT: (t) => set({ t: clampT(t) }),
@@ -69,6 +77,8 @@ export const useFutureStore = create<FutureState>((set) => ({
   openPanel: (panel) => set((s) => ({ panel: s.panel === panel ? null : panel })),
   openReview: (reviewFor) => set({ reviewFor, panel: reviewFor ? "review" : null }),
   setFieldMetric: (fieldMetric) => set({ fieldMetric }),
+  setHorizon: (horizon) => set({ horizon }),
+  setMonthIndex: (i) => set({ monthIndex: Math.min(11, Math.max(0, Math.round(i))) }),
   goTo: (yearIndex, doy, fieldId) => set({ mode: "future", t: tOf(yearIndex, doy), focusFieldId: fieldId ?? null, panel: null, reviewFor: null, playing: false }),
 }));
 

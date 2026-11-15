@@ -36,6 +36,10 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer, X } from "./icons";
 import dynamic from "next/dynamic";
 import { imageryFor } from "@/lib/map2d/imagery";
+import { CopilotButton, CopilotPanel } from "@/components/copilot/CopilotPanel";
+import { RotationPlanner } from "@/components/rotation-planner/RotationPlanner";
+import { usePlannerStore } from "@/lib/rotation-planner/store";
+import { siteForFarm } from "@/lib/forecast/sites";
 
 // MapLibre is large and needs the browser: load the 2D map only when it is opened.
 const Map2D = dynamic(() => import("@/components/map2d/Map2D").then((m) => m.Map2D), { ssr: false });
@@ -266,6 +270,12 @@ export function FarmView({
                     {active === "campus" ? "Close campus info" : "Explore campus"}
                   </FvButton>
                 )}
+                {siteForFarm(farmId ?? null) && (
+                  <FvButton className="fv-glass fv-seg" data-testid="action-plan-rotations" onClick={() => usePlannerStore.setState((s) => ({ open: !s.open }))}>
+                    Plan rotations
+                  </FvButton>
+                )}
+                <CopilotButton />
                 {imageryFor(farmId ?? null) && (
                   <FvButton
                     className="fv-glass fv-seg"
@@ -561,6 +571,8 @@ export function FarmView({
           </div>
           {futureMode !== "now" && <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />}
           <FutureLayer />
+          {siteForFarm(farmId ?? null) && <RotationPlanner siteId={siteForFarm(farmId ?? null)!} />}
+          <CopilotPanel />
       </div>
       <p className="sr-only">
         {reduced ? "Reduced motion enabled." : ""}This tool supports, and does

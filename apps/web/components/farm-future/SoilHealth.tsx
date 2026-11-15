@@ -7,6 +7,7 @@ import { YEARS } from "@/lib/farm-future/fixtures";
 import { engineSeries, forecastYear, pointAt, strategyOf } from "@/lib/farm-future/data";
 import { dateAt, soilHealthAt, strategyById } from "@/lib/farm-future/model";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
+import { useCopilot } from "@/lib/copilot/copilot";
 import { fmt } from "@/lib/forecast/select";
 import type { Forecast, YearSeries } from "@/lib/api/types";
 import { useFutureStore } from "@/lib/farm-future/store";
@@ -50,6 +51,11 @@ export function StrategyBar() {
           </div>
         )}
       </div>
+      {data.source === "engine" && (
+        <FvButton className="fv-glass fv-pill fv-auto" data-testid="ask-copilot-strategy-bar" onClick={() => useCopilot.getState().ask({ question: `Why is "${s.name}" (${s.rotation}) suggested for this farm, and what should I check locally?`, kind: "strategy", id: s.engineId, strategyId: s.engineId })}>
+          <span className="l" style={{ color: color.ink }}>Ask co-pilot</span>
+        </FvButton>
+      )}
       <FvButton className="fv-glass fv-pill fv-auto" data-testid="flags-button" aria-label={`${flags} review flags for ${s.name}`} onClick={() => openReview(strategyId)}>
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={color.stress} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
         <span className="l" style={{ color: color.ink }}>{flags} {flags === 1 ? "flag" : "flags"}</span>
