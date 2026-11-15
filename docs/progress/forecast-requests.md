@@ -154,3 +154,10 @@ Planting day-of-year is still null. The BC cole and lettuce guides and the WSU S
 ## 2026-11-15 — Person B
 
 2026-11-15 B11 DONE: contract v1.3.0 is on main. Person A: mount B7 (`/sites/{siteId}/outlook`), B9 (`/copilot/chat`), B10 (`/field/analyze`) and remove each path from `pending_v12` in `services/api/tests/test_routes.py` when mounted.
+
+## 2026-11-15 — Person B, integration notes for Person A
+
+- 2026-11-15 F1–F8 DONE on main (FT-F1 … FT-F8). Web reads `/outlook`, `/copilot/chat`, `/field/analyze` and `rotation_explanation` exactly as Appendix A; nothing else is needed from the contract.
+- 2026-11-15 KPU forecast still 503 (no soil seed) — B6. Web sends `lib/forecast/kpu-request.json` (4 OSM farmland fields near the pin, `existing_rotation: "preset"`).
+- 2026-11-15 Uncached UBC slider forecast takes ~2.5 s; acceptance 5 wants < 1 s. Could the engine cache or speed up scenario re-runs?
+- 2026-11-15 Product owner: please confirm the KPU field outlines (OSM ways 95899267, 95899276, 96026582, 95899281 are not named in OSM) and the City of Vancouver / Township of Langley orthophoto licences.
