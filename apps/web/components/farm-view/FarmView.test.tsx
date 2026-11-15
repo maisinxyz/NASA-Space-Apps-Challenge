@@ -106,6 +106,8 @@ describe('farm-specific content', () => {
     expect(html).toContain('role="tabpanel"');
     expect(html).toContain('id="sim-panel-scenarios"');
     expect(html).toContain('aria-labelledby="sim-tab-scenarios"');
+    expect(html).toContain('data-window="simulation"');
+    expect(html).not.toMatch(/data-testid="sim-panel"[^>]*position:fixed/);
   });
 
   it("renders Vancouver demo primary actions for UBC Farm and KPU Langley", () => {

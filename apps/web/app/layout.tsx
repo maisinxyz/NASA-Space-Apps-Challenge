@@ -8,7 +8,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Stardew Earth",
-  description: "Explore farmland in 3D and compare crop rotations. NASA POWER event replay is integrated (NASA Space Apps 2026).",
+  description: "Explore farmland in 3D and compare crop rotations using modeled scenarios. NASA POWER storm replay is currently disabled and in development (NASA Space Apps 2026).",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

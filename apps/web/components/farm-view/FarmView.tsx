@@ -2,7 +2,7 @@
 // Shared farm chrome. Twin-only content remains guarded by simProps/twinConfig.
 // Layout: the map stays clear. A bare title (top-left), one rail of pop-out tabs on the right edge, and the
 // Twin button (bottom-centre) are the only things on screen until a tab is opened.
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, useReducedMotion } from "framer-motion";
 import { CONDITIONS, LAYERS, EXPLORE_SUBTITLE, type ConditionId } from "@/lib/farm-view/sample";
 import { twinConfig } from "@/lib/farms";
@@ -18,6 +18,7 @@ import { InvestigationControls } from "./InvestigationControls";
 import { FvButton } from "./FvButton";
 import {
   SimulationTab,
+  SimulationTrigger,
   useSimKeys,
   type SimProps,
   type SimState,
@@ -46,6 +47,7 @@ import { FarmOverview } from "./FarmOverview";
 import { ConditionLegend } from "@/components/conditions/ConditionLegend";
 import { DESKTOP_WORKSPACE_CSS } from "./desktop-workspace";
 import { HorizonTabs, MonthlyOutlook } from "@/components/farm-future/MonthlyOutlook";
+import { useWindowManager } from "@/lib/window/store";
 import { useWindowHost, Window } from "@/components/window/Window";
 import { WINDOW_CSS } from "@/components/window/window-css";
 import { Dock, DOCK_CSS } from "@/components/window/Dock";
@@ -151,13 +153,26 @@ export function FarmView({
   const rootRef = useRef<HTMLDivElement>(null);
   useWindowHost(rootRef);
   const [drawer, setDrawer] = useState<Drawer | null>(initialReportOpen ? "report" : null);
-  const [sim, setSim] = useState<SimState>(() => {
+  const [sim, setSimState] = useState<SimState>(() => {
     if (initialSim) return initialSim;
     const hash = typeof window === "undefined" ? "" : window.location.hash;
     return decodeShare(hash)?.farm === useAppStore.getState().farmId
       ? sharePanelState(hash)
       : { open: false, section: "scenarios" };
   });
+  const closeSimulation = useCallback(() => setSimState((s) => s.open ? { ...s, open: false } : s), []);
+  const setSim = useCallback((next: SimState) => {
+    if (next.open) {
+      closeWorkspaceTools();
+      setDrawer(null);
+      useWindowManager.getState().restore("simulation");
+    }
+    setSimState(next);
+  }, []);
+  // Shared links can open Simulation before any trigger is used.
+  useEffect(() => {
+    if (sim.open) { closeWorkspaceTools(); setDrawer(null); }
+  }, [sim.open]);
   const storePanelsHidden = useAppStore((s) => s.panelsHidden);
   const panelsHidden = initialPanelsHidden ?? storePanelsHidden;
   const restorePanels = useRef<HTMLButtonElement>(null);
@@ -184,7 +199,8 @@ export function FarmView({
   const map2d = useAppStore((s) => s.map2d) && !!imageryFor(farmId ?? null);
   const plannerOpen = usePlannerStore((s) => s.open);
   const gusOpen = useCopilot((s) => s.open);
-  useEffect(() => coordinateWorkspace(() => setDrawer(null)), []);
+  const simMinimized = useWindowManager((s) => s.wins.simulation.minimized);
+  useEffect(() => coordinateWorkspace(() => setDrawer(null), closeSimulation), [closeSimulation]);
   useEffect(() => {
     bindCopilotFarm(farmId ?? null);
     usePlannerStore.setState({ open: false });
@@ -192,13 +208,25 @@ export function FarmView({
   }, [farmId]);
   // Return keyboard focus when a workspace surface closes.
   const lastTrigger = useRef<HTMLElement | null>(null);
-  const hadSurface = useRef(false);
-  const hasSurface = !!(drawer || futurePanel || plannerOpen || gusOpen);
+  const previousSurface = useRef<string | null>(null);
+  const surface = sim.open ? "simulation" : drawer ?? futurePanel ?? (plannerOpen ? "planner" : gusOpen ? "gus" : null);
   useEffect(() => {
-    if (hasSurface && !hadSurface.current && document.activeElement instanceof HTMLElement) lastTrigger.current = document.activeElement;
-    if (!hasSurface && hadSurface.current) lastTrigger.current?.focus();
-    hadSurface.current = hasSurface;
-  }, [hasSurface]);
+    if (surface && surface !== previousSurface.current && document.activeElement instanceof HTMLElement) {
+      const target = document.activeElement;
+      // Remember persistent launchers, not controls inside a surface being replaced.
+      if (target.closest('[data-testid="farm-sidebar"]')) lastTrigger.current = target;
+    }
+    if (!surface && previousSurface.current) {
+      const target = lastTrigger.current;
+      if (target?.isConnected && !target.closest('[hidden]')) target.focus();
+      else {
+        const fallback = document.querySelector<HTMLButtonElement>(previousSurface.current === "simulation" ? '[data-testid="sim-tab"]' : '[data-testid="action-map-tools"]');
+        if (fallback && !fallback.closest('[hidden]')) fallback.focus();
+        else document.getElementById('fw-dock-launch')?.focus();
+      }
+    }
+    previousSurface.current = surface;
+  }, [surface]);
   const [card, setCard] = useState<ConditionId | null>(null);
   useEffect(() => {
     if (!card) return;
@@ -208,6 +236,7 @@ export function FarmView({
   }, [card]);
   const [muted, setMuted] = useState(() => sound.isMuted());
   useSimKeys(sim, setSim, !!simProps && futureMode === "now");
+  useEffect(() => { if (futureMode !== "now") closeSimulation(); }, [futureMode, closeSimulation]);
   useEffect(() => sound.installUnlock(), []);
   useEffect(() => {
     if (simProps && futureMode === "now") return;
@@ -226,12 +255,14 @@ export function FarmView({
   // Future mode has no map-layer or field-report content, so those drawers stay shut there.
   const active = drawer;
   const toggle = (id: Drawer) => {
-    const next = active === id ? null : id;
+    const next = active === id && !useWindowManager.getState().wins.inspector.minimized ? null : id;
     if (next) {
       if (menu.current) menu.current.open = false;
       useCopilot.getState().close();
       sound.pop();
+      closeSimulation();
       closeWorkspaceTools();
+      useWindowManager.getState().restore("inspector");
     } else sound.close();
     if (next !== "conditions") setCard(null);
     setDrawer(next);
@@ -249,7 +280,7 @@ export function FarmView({
     if (futurePanel) setDrawer(null);
   }, [futurePanel]);
   return (
-    <div ref={rootRef} className="fv-root fv-workspace" data-testid="farm-view" data-surface={gusOpen ? "gus" : plannerOpen ? "planner" : active ? "drawer" : futurePanel ? "future" : "overview"} data-horizon={futureMode === "now" ? "none" : horizon} data-wide={active === "rotations" || plannerOpen || futureMode === "compare"}>
+    <div ref={rootRef} className="fv-root fv-workspace" data-testid="farm-view" data-surface={sim.open ? "simulation" : gusOpen ? "gus" : plannerOpen ? "planner" : active ? "drawer" : futurePanel ? "future" : "overview"} data-horizon={futureMode === "now" ? "none" : horizon} data-wide={active === "rotations" || plannerOpen || futureMode === "compare"}>
       <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS + DESKTOP_WORKSPACE_CSS + WINDOW_CSS + DOCK_CSS}</style>
       {map2d && <Map2D toolsOpen={active === "view" && !panelsHidden} onExit={() => useAppStore.setState({ map2d: false })} />}
       {!map2d && <MapEffects />}
@@ -308,13 +339,19 @@ export function FarmView({
                   <FvButton className="fv-glass fv-seg" data-testid="action-plan-rotations" onClick={() => {
                     if (menu.current) menu.current.open = false;
                     useCopilot.getState().close();
-                    usePlannerStore.setState((s) => ({ open: !s.open }));
+                    const manager = useWindowManager.getState();
+                    const open = !usePlannerStore.getState().open || manager.wins.planner.minimized;
+                    if (open) manager.restore("planner");
+                    usePlannerStore.setState({ open });
                   }}>
                     Plan rotations
                   </FvButton>
                 )}
                 {siteForFarm(farmId ?? null) && (
-                  <FvButton className="fv-glass fv-seg" data-testid="copilot-open" aria-expanded={gusOpen} onClick={() => useCopilot.setState({ open: true, selected: null, strategyId: null, fieldId: null })}>
+                  <FvButton className="fv-glass fv-seg" data-testid="copilot-open" aria-expanded={gusOpen} onClick={() => {
+                    useWindowManager.getState().restore("copilot");
+                    useCopilot.setState({ open: true, selected: null, strategyId: null, fieldId: null });
+                  }}>
                     Ask Gus
                   </FvButton>
                 )}
@@ -344,7 +381,7 @@ export function FarmView({
               <FarmOverview />
               <ModeSwitch />
               {futureMode === "future" && <details className="fv-analysis-options"><summary>Rotation and forecast tools</summary><StrategyBar /></details>}
-              {simProps && <div hidden={futureMode !== "now"}><SimulationTab props={simProps} sim={sim} setSim={setSim} /></div>}
+              {simProps && <div hidden={futureMode !== "now"}><SimulationTrigger props={simProps} sim={sim} setSim={setSim} minimized={simMinimized} /></div>}
           <nav className="fv-rail" aria-label="Farm panels">
             <RailTab id="conditions" active={active} onToggle={toggle} />
             {futureMode === "now" && (
@@ -378,7 +415,10 @@ export function FarmView({
           </div>
           </Window>
 
-          <Window id="inspector" present={!!active} title={active ? DRAWER_TITLE[active] : undefined} onClose={() => active && toggle(active)}>
+          {simProps && <Window id="simulation" present={futureMode === "now" && sim.open} onClose={() => setSim({ ...sim, open: false })} activationKey={sim.section}>
+            <SimulationTab props={simProps} sim={sim} setSim={setSim} contentOnly />
+          </Window>}
+          <Window id="inspector" activationKey={active ?? undefined} present={!!active} title={active ? DRAWER_TITLE[active] : undefined} onClose={() => active && toggle(active)}>
           <aside
             id="farm-drawer"
             className="fv-glass fv-drawer"
@@ -622,14 +662,14 @@ export function FarmView({
               ? <MonthlyOutlook />
               : <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />)}
           </Window>
-          <Window id="future" present={futureMode === "future" && !!futurePanel} onClose={closeFuturePanel}>
+          <Window id="future" activationKey={futurePanel ?? undefined} present={futureMode === "future" && !!futurePanel} onClose={closeFuturePanel}>
             <FutureLayer />
           </Window>
           <Window id="planner" present={plannerOpen} onClose={() => usePlannerStore.setState({ open: false })}>
             {siteForFarm(farmId ?? null) && <RotationPlanner key={siteForFarm(farmId ?? null)!} siteId={siteForFarm(farmId ?? null)!} />}
           </Window>
           <Window id="copilot" present={gusOpen} onClose={() => useCopilot.getState().close()}>
-            <CopilotPanel />
+            <CopilotPanel navigation={navigation} />
           </Window>
       </div>
       <p className="sr-only">

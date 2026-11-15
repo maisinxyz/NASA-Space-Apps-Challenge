@@ -17,6 +17,6 @@ describe("AboutPanel", () => {
 
     // Roadmap items
     expect(html).toContain("Live NASA POWER replay");
-    expect(html).toContain("Replaying historical storms directly from the NASA POWER archive (currently disabled)");
+    expect(html).toContain("NASA POWER storm replay is currently disabled and in development");
   });
 });

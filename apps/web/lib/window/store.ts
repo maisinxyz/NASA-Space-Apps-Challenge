@@ -3,7 +3,7 @@
 // plus the per-device layout persistence (localStorage, never synced). z-index is assigned only here.
 import { create } from "zustand";
 
-import { DOCK_H, limitsFor, WINDOW_CONFIG, WINDOW_IDS, workArea, type WindowId } from "./config";
+import { BOTTOM_STRIP, DOCK_H, limitsFor, WINDOW_CONFIG, WINDOW_IDS, workArea, type WindowId } from "./config";
 import { clampRect, fromFrac, toFrac, type Bounds, type Rect } from "./geometry";
 
 export type WinState = {
@@ -42,10 +42,10 @@ export const LAYOUT_KEY = "app.windowLayout.v1";
 /** Base of the window stacking range; above the map and its tags, below the dock (Z_DOCK) and toasts. */
 export const Z_BASE = 30;
 export const Z_DOCK = Z_BASE + WINDOW_IDS.length + 10;
-const DEFAULT_ORDER: WindowId[] = ["nav", "time", "inspector", "future", "planner", "copilot"];
+const DEFAULT_ORDER: WindowId[] = ["nav", "time", "simulation", "inspector", "future", "planner", "copilot"];
 
 /** Where windows may sit: the whole screen below the dock row. */
-export const regionFor = (b: Bounds): Rect => ({ x: 0, y: DOCK_H, w: b.w, h: Math.max(0, b.h - DOCK_H) });
+export const regionFor = (b: Bounds): Rect => ({ x: 0, y: DOCK_H, w: b.w, h: Math.max(0, b.h - DOCK_H - BOTTOM_STRIP) });
 
 /** The maximised rect: the region less each window's margin. */
 export function maxRect(id: WindowId, b: Bounds): Rect {

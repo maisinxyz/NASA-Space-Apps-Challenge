@@ -2,7 +2,7 @@
 // limits and default layout. Sizes are CSS px inside the farm screen (the .fv-root box, normally the viewport).
 import type { Bounds, Rect } from "./geometry";
 
-export type WindowId = "nav" | "time" | "inspector" | "future" | "copilot" | "planner";
+export type WindowId = "nav" | "time" | "inspector" | "future" | "copilot" | "planner" | "simulation";
 
 /**
  * "hide": always available; the close button hides it and the dock reopens it (user-owned visibility).
@@ -35,7 +35,7 @@ const NAV_W = 256;
 /** Inspector width in the default layout (the old fixed drawer was 360px). */
 const INSPECTOR_W = 360;
 /** Timeline window height: title bar + horizon tabs (44) + timeline (150) + padding. */
-const TIME_H = 250;
+const TIME_H = 260;
 
 /** Below this width the default layout stacks full-width windows instead of columns. */
 export const NARROW_W = 760;
@@ -73,15 +73,23 @@ export const WINDOW_CONFIG: Record<WindowId, WindowSpec> = {
     title: "Timeline",
     kind: "hide",
     // 320: compact tier (stacked readout, 40px play/toggle targets) with 10 year ticks thinned to every 2nd.
-    // 220: title bar + tabs + compact stacked readout + 72px slider track.
+    // 260: title bar + tabs + compact stacked readout + 72px slider track.
     minW: 320,
-    minH: 220,
+    minH: 260,
     maxMargin: 8,
     defaultRect: (work) => {
       if (narrow(work)) return stacked(work, "bottom");
       const x = work.x + GAP + NAV_W + GAP;
       return { x, y: work.y + work.h - GAP - TIME_H, w: Math.max(320, work.x + work.w - GAP - x), h: TIME_H };
     },
+  },
+  simulation: {
+    title: "Simulation",
+    kind: "context",
+    minW: 320,
+    minH: 280,
+    maxMargin: 8,
+    defaultRect: (work) => ({ x: work.x + GAP + NAV_W + GAP, y: work.y + GAP, w: 420, h: Math.min(720, work.h - 2 * GAP) }),
   },
   inspector: {
     title: "Panel",
@@ -145,6 +153,6 @@ export function workArea(b: Bounds): Rect {
 export function limitsFor(id: WindowId, b: Bounds) {
   const s = WINDOW_CONFIG[id];
   const maxW = Math.max(0, b.w - 2 * s.maxMargin);
-  const maxH = Math.max(0, b.h - DOCK_H - s.maxMargin);
+  const maxH = Math.max(0, b.h - DOCK_H - BOTTOM_STRIP - s.maxMargin);
   return { minW: Math.min(s.minW, maxW), minH: Math.min(s.minH, maxH), maxW, maxH };
 }

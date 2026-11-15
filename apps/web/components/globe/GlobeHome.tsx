@@ -19,8 +19,8 @@ import { MarkerPulse } from "@/components/hero/FarmCard";
 import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
-import { GlobeChrome } from "@/components/hero/GlobeChrome";
-import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
+import { DesktopNavigation, GlobeChrome } from "@/components/hero/GlobeChrome";
+import { TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { useFieldColourOverlays } from "@/components/farm-future/FieldColours";
@@ -447,7 +447,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     if (view === "globe") requestDive(id);
     else dive(id);
   };
-  const askAtFarm = (question: string, id: string) => openFarm(id, question);
   const navigation = {
     farms: FARMS,
     includePlaces: showGlobe,
@@ -511,6 +510,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       onKeyDownCapture={onActivity}
     >
       <style>{CREDITS_CSS}</style>
+      <DesktopNavigation />
 
       {/* World layer: stars + the 3D Earth. Press-and-drag here drives the hero states. */}
       <div
