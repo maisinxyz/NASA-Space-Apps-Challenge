@@ -15,6 +15,7 @@ import { terrainForSelectedFarm } from "@/lib/content";
 import { FARMS, pinnedCandidateDatasets } from "@/lib/farms";
 import { TIER_LABEL } from "@/components/globe/FarmList";
 import type { BasisOrRelative, Provenance } from "@/lib/api/types";
+import { ROADMAP, V4_ASSUMPTIONS, V4_DATASETS } from "@/lib/methods/v4Datasets";
 
 // Regex, not the literal marker, so this file itself never trips scripts/check-build.mjs.
 const UNVERIFIED = /(TODO\(verify\))/;
@@ -190,9 +191,9 @@ export default function MethodsPage() {
         What FieldTwin is built from, what it assumes, and where it stops being
         reliable.{" "}
         <strong className="text-ink">
-          Now compares illustrative scenarios using synthetic inputs. Future and
-          Compare strategies use synthetic demo data to show how a ten-year
-          investigation could work. These views provide no farm-specific forecasts.
+          UBC Farm and KPU Langley run a ten-year scenario forecast from real
+          NASA weather, a NASA climate trend and SoilGrids soil. Other farms use
+          synthetic demo data, labelled as such, and give no farm-specific forecasts.
         </strong>
       </p>
 
@@ -220,6 +221,8 @@ export default function MethodsPage() {
         aria-label="On this page"
         className="mt-5 flex flex-wrap gap-4 text-sm text-accent underline"
       >
+        <a href="#forecast-data">Forecast data (UBC, KPU)</a>
+        <a href="#roadmap">Roadmap</a>
         <a href="#datasets">Selected farm data</a>
         <a href="#reading">Reading numbers</a>
         <a href="#twin-sources">Shared map sources</a>
@@ -227,6 +230,38 @@ export default function MethodsPage() {
         <a href="#farms">Farm sources</a>
         <a href="#limits">Limits</a>
       </nav>
+      <Section id="forecast-data" title="Forecast data: UBC Farm and KPU Langley">
+        <p className="mb-4 text-ink-muted">
+          Climate source: NASA POWER daily weather 1991–2024 with the NASA NEX-GDDP-CMIP6 trend. Scenario: the baseline
+          preset unless the what-if sliders change rain or temperature. The forecast is a scenario forecast.
+        </p>
+        <div className="grid gap-3" data-testid="v4-datasets">
+          {V4_DATASETS.map((d) => (
+            <Card key={d.name}>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-ink">{d.name}</h3>
+                {d.status === "roadmap" && <span className="rounded border border-line px-2 text-xs uppercase tracking-wide text-ink-muted">Roadmap</span>}
+              </div>
+              <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[8rem_1fr]">
+                <dt className="text-ink-muted">Used for</dt><dd>{d.usedFor}</dd>
+                <dt className="text-ink-muted">Source</dt><dd><a className="text-accent underline" href={d.url} target="_blank" rel="noreferrer">{d.source}</a></dd>
+                <dt className="text-ink-muted">Licence</dt><dd>{d.licence}</dd>
+                <dt className="text-ink-muted">Attribution</dt><dd>{d.attribution}</dd>
+              </dl>
+            </Card>
+          ))}
+        </div>
+        <h3 className="mt-6 font-semibold text-ink">Modelling assumptions</h3>
+        <ul className="mt-2 list-disc pl-5 text-ink-muted">
+          {V4_ASSUMPTIONS.map((a) => <li key={a}>{a}</li>)}
+        </ul>
+      </Section>
+      <Section id="roadmap" title="Roadmap">
+        <p className="text-ink-muted">Not built yet, and not shown as working anywhere in the app:</p>
+        <ul className="mt-2 list-disc pl-5" data-testid="roadmap">
+          {ROADMAP.map((r) => <li key={r}>{r}</li>)}
+        </ul>
+      </Section>
       <Section id="reading" title="How to read the numbers">
         <p className="text-ink-muted">
           Every number shows its unit and one of five labels. The label says

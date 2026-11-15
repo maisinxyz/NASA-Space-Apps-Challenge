@@ -50,7 +50,11 @@ export const LENSES: { group: string; items: { id: LensId; label: string }[] }[]
 export const lensLabel = (id: LensId) => LENSES.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? id;
 const LENS_SHORT: Record<LensId, string> = { heat: "Heat", rain: "Rain", frost: "Frost", water: "Water", stress: "Water stress", erosion: "Erosion", bare: "Bare soil", uncertainty: "Uncertainty", soiltest: "Soil tests" };
 
+/** Lenses that need the 30 m grid or the hotspot layers (NASADEM + satellite data, B2): Roadmap on engine farms. */
+export const ROADMAP_LENSES: LensId[] = ["stress", "erosion", "uncertainty", "soiltest"];
+
 export function LensControl() {
+  const roadmap = !!siteForFarm(useAppStore((s) => s.farmId));
   const lens = useFutureStore((s) => s.lens);
   const setLens = useFutureStore((s) => s.setLens);
   const reduced = useReducedMotion();
@@ -100,9 +104,15 @@ export function LensControl() {
                 <div className="ff-menu-group">{g.group}</div>
                 {g.items.map((it, k) => (
                   <motion.div key={it.id} initial={reduced ? false : { opacity: 0, y: 2 }} animate={{ opacity: 1, y: 0, transition: { delay: (k * m.staggerMs) / 1000 } }}>
-                    <FvButton role="menuitemradio" aria-checked={lens === it.id} className="ff-menu-item" data-testid={`lens-${it.id}`} onClick={() => pick(it.id)}>
-                      {it.label}
-                    </FvButton>
+                    {roadmap && ROADMAP_LENSES.includes(it.id) ? (
+                      <span className="ff-menu-item" aria-disabled="true" data-testid={`lens-${it.id}`} style={{ opacity: 0.55, cursor: "default" }}>
+                        {it.label}<span className="ff-synth" style={{ marginLeft: "auto" }}>Roadmap</span>
+                      </span>
+                    ) : (
+                      <FvButton role="menuitemradio" aria-checked={lens === it.id} className="ff-menu-item" data-testid={`lens-${it.id}`} onClick={() => pick(it.id)}>
+                        {it.label}
+                      </FvButton>
+                    )}
                   </motion.div>
                 ))}
               </div>
