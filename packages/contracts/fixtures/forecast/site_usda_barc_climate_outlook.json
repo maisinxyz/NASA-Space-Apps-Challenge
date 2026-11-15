@@ -1,0 +1,494 @@
+{
+ "site_id": "site_usda_barc",
+ "scenario": {
+  "preset": "baseline",
+  "rain_scale_pct": 0.0,
+  "temp_offset_c": 0.0,
+  "rain_scale_by_season": {},
+  "label": "modeled scenario, not a forecast",
+  "note": "built from observed years",
+  "ramp": {
+   "shape": "linear",
+   "years": 10,
+   "basis": "assumed"
+  }
+ },
+ "data_mode": "mock",
+ "seasonal_temperature": {
+  "significance_alpha": {
+   "value": 0.05,
+   "unit": "1",
+   "basis": "assumed",
+   "confidence": "low"
+  },
+  "winter": {
+   "observed": {
+    "slope": {
+     "value": 0.0,
+     "unit": "degC/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "mk_p_value": {
+     "value": 1.0,
+     "unit": "1",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "significant": false
+   },
+   "scenario_mean": {
+    "value": 0.0,
+    "unit": "degC",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "spring": {
+   "observed": {
+    "slope": {
+     "value": 0.0,
+     "unit": "degC/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "mk_p_value": {
+     "value": 1.0,
+     "unit": "1",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "significant": false
+   },
+   "scenario_mean": {
+    "value": 0.0,
+    "unit": "degC",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "summer": {
+   "observed": {
+    "slope": {
+     "value": 0.0,
+     "unit": "degC/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "mk_p_value": {
+     "value": 1.0,
+     "unit": "1",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "significant": false
+   },
+   "scenario_mean": {
+    "value": 0.0,
+    "unit": "degC",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "fall": {
+   "observed": {
+    "slope": {
+     "value": 0.0,
+     "unit": "degC/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "mk_p_value": {
+     "value": 1.0,
+     "unit": "1",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "significant": false
+   },
+   "scenario_mean": {
+    "value": 0.0,
+    "unit": "degC",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  }
+ },
+ "heat_stress_days": [
+  {
+   "crop_id": "crop_maize",
+   "heat_limit_c": {
+    "value": 35.0,
+    "unit": "degC",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "days": {
+    "metric": "heat_stress_days",
+    "unit": "days",
+    "basis": "assumed",
+    "confidence": "low",
+    "needs_local_review": true,
+    "points": [
+     {
+      "year": 1,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 2,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 3,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 4,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 5,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 6,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 7,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 8,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 9,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     {
+      "year": 10,
+      "p50": 0.0,
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    ]
+   }
+  }
+ ],
+ "frost_windows": {
+  "last_spring_frost": {
+   "baseline_doy": {
+    "value": 0.0,
+    "unit": "doy",
+    "basis": "assumed",
+    "confidence": "low",
+    "p10": 0.0,
+    "p50": 0.0,
+    "p90": 0.0
+   },
+   "scenario_shift_days": {
+    "value": 0.0,
+    "unit": "days",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "first_fall_frost": {
+   "baseline_doy": {
+    "value": 0.0,
+    "unit": "doy",
+    "basis": "assumed",
+    "confidence": "low",
+    "p10": 0.0,
+    "p50": 0.0,
+    "p90": 0.0
+   },
+   "scenario_shift_days": {
+    "value": 0.0,
+    "unit": "days",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "frost_free_season_days": {
+   "baseline": {
+    "value": 0.0,
+    "unit": "days",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "scenario": {
+    "value": 0.0,
+    "unit": "days",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  }
+ },
+ "rainfall": {
+  "seasonal_totals": {
+   "winter": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "spring": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "summer": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "fall": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   }
+  },
+  "extreme_rain_days": {
+   "baseline": {
+    "value": 0.0,
+    "unit": "days/year",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "scenario": {
+    "value": 0.0,
+    "unit": "days/year",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  },
+  "multi_day_events": {
+   "baseline": {
+    "value": 0.0,
+    "unit": "events/year",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "scenario": {
+    "value": 0.0,
+    "unit": "events/year",
+    "basis": "assumed",
+    "confidence": "low"
+   }
+  }
+ },
+ "et_and_soil_moisture": {
+  "et0_trend": {
+   "slope": {
+    "value": 0.0,
+    "unit": "mm/year",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "mk_p_value": {
+    "value": 1.0,
+    "unit": "1",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "significant": false
+  },
+  "smap_root_zone_anomaly": {
+   "available": false,
+   "resolution_note": "No SMAP seed in this fixture. Not filled with a stand-in.",
+   "weekly": null
+  },
+  "ecostress_et": {
+   "available": false,
+   "resolution_note": "No ECOSTRESS seed in this fixture. Not filled with a stand-in.",
+   "value": null
+  }
+ },
+ "water_balance": {
+  "unit": "mm",
+  "basis": "assumed",
+  "confidence": "low",
+  "weekly_mm": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "seasonal": {
+   "winter": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "spring": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "summer": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "fall": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "mm",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   }
+  }
+ },
+ "groundwater": {
+  "available": false,
+  "scored": false,
+  "resolution_note": "No GRACE seed in this fixture. Groundwater is regional context and is never scored.",
+  "trend": null
+ },
+ "sources": [
+  {
+   "name": "FieldTwin contract fixture",
+   "role": "weather",
+   "license": "Mock data generated by FieldTwin fixtures. Not real.",
+   "attribution": "Shape example for contract v1.2.0. Not a dataset.",
+   "basis": "assumed"
+  }
+ ]
+}

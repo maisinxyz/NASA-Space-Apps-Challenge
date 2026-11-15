@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "HORIZON_OUT_OF_RANGE",
+    "message": "horizon_years must be from 5 to 10.",
+    "hint": "Use 10 for a full forecast, or 5 to 9 for a shorter one.",
+    "retryable": false
+  }
+}

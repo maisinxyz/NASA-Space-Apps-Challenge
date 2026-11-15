@@ -40,6 +40,11 @@ for _dir, _path in [("features", "/sites/{siteId}/features"), ("hazard_calendar"
 for _p in (FIXTURES / "rotation_analysis").glob("*.json"):
     RESPONSES[f"rotation_analysis/{_p.name}"] = ("/sites/{siteId}/rotation-analysis", "post", "200")
 RESPONSES["glossary.json"] = ("/glossary", "get", "200")
+RESPONSES["crop_catalog.json"] = ("/crop-catalog", "get", "200")
+RESPONSES["forecast/site_usda_barc_climate_outlook.json"] = ("/sites/{siteId}/climate-outlook", "get", "200")
+RESPONSES["forecast/site_usda_barc_exposure.json"] = ("/sites/{siteId}/exposure", "get", "200")
+RESPONSES["forecast/site_usda_barc_forecast.json"] = ("/sites/{siteId}/forecast", "post", "200")
+RESPONSES["forecast/site_usda_barc_sensitivity.json"] = ("/sites/{siteId}/forecast/sensitivity", "post", "200")
 for _p in (FIXTURES / "simulations" / "sim_mock_001" / "diff").glob("*.json"):
     RESPONSES[_p.relative_to(FIXTURES).as_posix()] = ("/simulations/{simId}/diff", "get", "200")
 

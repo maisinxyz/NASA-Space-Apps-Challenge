@@ -1,11 +1,17 @@
 openapi: 3.1.0
 info:
   title: FieldTwin API
-  version: 1.1.0
+  version: "1.2.0"
   summary: Interface contract between the FieldTwin front-end and back-end (PRD §6).
   description: |
     Encodes `prd.md` §6. Endpoints, schemas, and formats are our own design.
     Decisions made where the PRD was loose are listed in `docs/progress/02.md` ("Decisions").
+
+    v1.2.0 (forecast, docs/backend-forecast-prd.md) adds climate-outlook, exposure,
+    crop-catalog, forecast, and forecast sensitivity. Those responses may include
+    absolute scenario estimates (yield, forage, income, fertilizer, soil loss).
+    Each estimate has a unit, a basis, a confidence, and a p10/p90 range.
+    Storm-replay simulation metrics stay relative comparisons.
 
     Conventions (PRD §6.1):
     - JSON unless stated. UTF-8. Timestamps ISO 8601 UTC.
@@ -21,7 +27,9 @@ info:
       row 0 = north edge, column 0 = west edge, and share the TerrainPackage grid
       (`grid.width` x `grid.height`) unless a simulation was downsampled (frames carry their own width/height).
 
-    Simulation outputs are relative comparisons, never predictions.
+    Storm-replay simulation outputs are relative comparisons. Forecast endpoints (v1.2.0)
+    are scenario estimates with unit, basis, confidence, and range, not yield predictions
+    to act on without local review.
 servers:
   - url: /api/v1
     description: Same-origin base path
@@ -43,6 +51,8 @@ tags:
     description: Storm replays per rotation, evidence, differences.
   - name: notes
     description: Field notes (P2).
+  - name: forecast
+    description: Ten-year scenario forecast (contract v1.2.0). Backend only; the web app is unchanged.
 
 paths:
   /health:
@@ -206,6 +216,122 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/InvalidInput' }
         '503': { $ref: '#/components/responses/Unavailable' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /sites/{siteId}/climate-outlook:
+    get:
+      tags: [forecast]
+      operationId: getClimateOutlook
+      summary: Group 1 climate outlook for one scenario (v1.2.0)
+      description: |
+        Seasonal temperature drift, heat-stress days, frost windows, rainfall extremes,
+        ET and soil-moisture anomalies, water-balance climatology, and regional groundwater
+        context. Does not run rotation strategies. Cached responses are the fast path.
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - $ref: '#/components/parameters/ScenarioQuery'
+      responses:
+        '200':
+          description: Climate outlook.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClimateOutlook' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /sites/{siteId}/exposure:
+    get:
+      tags: [forecast]
+      operationId: getExposure
+      summary: Group 2 field exposure for a crop list (v1.2.0)
+      description: |
+        Vulnerable seasons, bare-field windows, and erosion, water-stress, and frost-pocket
+        zones. `crops` defaults to the site's existing rotation preset. Coarse layers return
+        one farm-level value with `resolution_note` instead of invented sub-field pixels.
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - $ref: '#/components/parameters/CropsQuery'
+      responses:
+        '200':
+          description: Exposure report. The component is `ForecastExposure` because v1.1 already uses the name `Exposure`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ForecastExposure' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /sites/{siteId}/forecast:
+    post:
+      tags: [forecast]
+      operationId: createForecast
+      summary: Year 1–10 forecast for the farmer's strategies (v1.2.0)
+      description: |
+        Groups 3, 4, and most of 5. Per field, then an area-weighted farm rollup.
+        Income is null when the farmer did not enter prices. Same request bytes in, same bytes out.
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ForecastRequest' }
+      responses:
+        '200':
+          description: Forecast. Index 0 of each field's `strategies` is that field's existing rotation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Forecast' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /sites/{siteId}/forecast/sensitivity:
+    post:
+      tags: [forecast]
+      operationId: createForecastSensitivity
+      summary: Rain by temperature sensitivity grid (v1.2.0)
+      description: Same body as `/forecast`. Kept separate so the first forecast paint does not wait for the grid.
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ForecastRequest' }
+      responses:
+        '200':
+          description: Sensitivity grid at Year 10.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SensitivityGrid' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /crop-catalog:
+    get:
+      tags: [crops]
+      operationId: listCropCatalog
+      summary: Selectable crops with trait schema v2 (v1.2.0)
+      description: |
+        Vegetables, grains, forage, covers, and fruit perennials. `/crops` is unchanged.
+        Every trait on a returned crop has a `trait_sources` entry (URL or `TODO(verify)`).
+        Null numeric traits are not verified and must not be replaced with a silent default.
+      parameters:
+        - $ref: '#/components/parameters/CatalogCategory'
+        - $ref: '#/components/parameters/CatalogSiteId'
+      responses:
+        '200':
+          description: Crop catalog.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CropCatalog' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
         default: { $ref: '#/components/responses/Error' }
 
   /scans:
@@ -776,6 +902,23 @@ components:
       in: query
       required: false
       schema: { $ref: '#/components/schemas/Scenario' }
+    CropsQuery:
+      name: crops
+      in: query
+      required: false
+      description: Comma-separated crop ids. When omitted, the site's existing rotation preset is used.
+      schema: { type: string }
+    CatalogCategory:
+      name: category
+      in: query
+      required: false
+      schema: { $ref: '#/components/schemas/CropCategory' }
+    CatalogSiteId:
+      name: site_id
+      in: query
+      required: false
+      description: When set, the list is limited to crops whose `region_fit` includes that site's climate class. Empty `region_fit` is returned until a fit is verified.
+      schema: { $ref: '#/components/schemas/SiteId' }
 
   headers:
     ImmutableCache:
@@ -796,7 +939,7 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     InvalidInput:
-      description: '`INVALID_INPUT`, `TERRAIN_COVERAGE_MISSING`, `UNKNOWN_CROP`, `INVALID_WEIGHTS`, `NO_FEASIBLE_ALTERNATIVES` or `SCENARIO_OUT_OF_RANGE`'
+      description: '`INVALID_INPUT`, `TERRAIN_COVERAGE_MISSING`, `UNKNOWN_CROP`, `INVALID_WEIGHTS`, `NO_FEASIBLE_ALTERNATIVES`, `SCENARIO_OUT_OF_RANGE`, `SELECTION_TOO_SMALL`, `INVALID_QUOTA` or `HORIZON_OUT_OF_RANGE`'
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -1062,6 +1205,7 @@ components:
           properties:
             plant_doy: { type: integer, minimum: 1, maximum: 366 }
             terminate_doy: { type: integer, minimum: 1, maximum: 366 }
+            succession: { type: boolean, description: 'v1.2. Vegetables may be sown in succession inside the window.' }
         cover_curve:
           type: array
           description: '`[days_after_planting, cover_fraction]` points, ascending by day; fraction 0–1.'
@@ -1571,10 +1715,16 @@ components:
         rain_scale_by_season: { $ref: '#/components/schemas/SeasonalRainScale' }
         label: { type: string, const: 'modeled scenario, not a forecast' }
         note: { type: string, const: built from observed years }
+        ramp:
+          $ref: '#/components/schemas/Ramp'
+          description: 'v1.2. Present on forecast responses. Slider values are reached at the end of the ramp.'
     DataMode:
       type: string
-      enum: [live, cached, seed, mock]
-      description: Where the data came from. `mock` must never appear in the demo build.
+      enum: [live, cached, seed, mock, limited_data]
+      description: |
+        Where the data came from. `mock` must never appear in the demo build.
+        `limited_data` means a real run is missing a layer (for example no satellite seed);
+        the missing layer is null or absent, never filled with invented values.
     Confidence:
       type: string
       enum: [high, medium, low]
@@ -1781,6 +1931,7 @@ components:
         crop: { type: [string, 'null'] }
         winter_exposure: { type: [number, 'null'], description: Relative. }
         summer_exposure: { type: [number, 'null'], description: Relative. }
+        resolution_note: { type: string, description: 'Set when the layer is coarser than the field (v1.2). One farm-level zone, not fake sub-pixels.' }
         basis: { $ref: '#/components/schemas/BasisOrRelative' }
     ZoneCollection:
       type: object
@@ -1904,6 +2055,8 @@ components:
         confidence: { $ref: '#/components/schemas/Confidence' }
         needs_local_review: { type: boolean }
         note: { type: string }
+        year10_value: { type: number, description: 'v1.2. Year-10 value of the underlying metric, same unit and basis as this row.' }
+        mean_value: { type: number, description: 'v1.2. Mean of years 1–10 of the underlying metric, same unit and basis as this row.' }
         inputs:
           type: array
           items: { $ref: '#/components/schemas/ScoreInput' }
@@ -2030,6 +2183,724 @@ components:
         related_terms: { type: array, items: { type: string } }
         source: { type: string, description: 'Reference, or `TODO(verify)`.' }
 
+    # ---------- v1.2: forecast (docs/backend-forecast-prd.md §6) ----------
+    # Component name ForecastExposure is used because v1.1 already defines Exposure.
+    Ramp:
+      type: object
+      description: 'Slider and preset values are phased in from year 0. Only linear is specified (PRD §5.7). Basis is assumed.'
+      required: [shape, years, basis]
+      properties:
+        shape: { type: string, const: linear }
+        years: { type: integer, minimum: 5, maximum: 10 }
+        basis: { type: string, const: assumed }
+    Number:
+      type: object
+      description: Every reported quantity. Absolute estimates also set p10, p50 and p90.
+      required: [value, unit, basis, confidence]
+      properties:
+        value: { type: number }
+        unit: { type: string, minLength: 1 }
+        basis: { $ref: '#/components/schemas/BasisOrRelative' }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+        p10: { type: number }
+        p50: { type: number }
+        p90: { type: number }
+    YearPoint:
+      type: object
+      required: [year, p50]
+      properties:
+        year: { type: integer, minimum: 0, maximum: 10, description: '0 is the baseline.' }
+        p50: { type: number }
+        p10: { type: number }
+        p90: { type: number }
+    YearSeries:
+      type: object
+      required: [metric, unit, basis, confidence, needs_local_review, points]
+      properties:
+        metric: { type: string, minLength: 1 }
+        unit: { type: string, minLength: 1 }
+        basis: { $ref: '#/components/schemas/BasisOrRelative' }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+        needs_local_review: { type: boolean }
+        points:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/YearPoint' }
+    AbsoluteYearSeries:
+      description: Year series whose every point has a p10/p90 range (yield, forage, fertilizer, soil loss, and other ranged counts).
+      allOf:
+        - $ref: '#/components/schemas/YearSeries'
+        - type: object
+          properties:
+            points:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [year, p50, p10, p90]
+    Trend:
+      type: object
+      description: 'Observed Theil-Sen slope with a Mann-Kendall p-value. Reported as context, not extrapolated (PRD §5.3).'
+      required: [slope, mk_p_value, significant]
+      properties:
+        slope: { $ref: '#/components/schemas/Number', description: 'Unit is on the number. Temperature trends use degC/year.' }
+        mk_p_value: { $ref: '#/components/schemas/Number', description: 'Dimensionless. Unit is 1.' }
+        significant: { type: boolean, description: 'True when mk_p_value is below the stated significance_alpha.' }
+    BaselineScenario:
+      type: object
+      required: [baseline, scenario]
+      properties:
+        baseline: { $ref: '#/components/schemas/Number' }
+        scenario: { $ref: '#/components/schemas/Number' }
+    SeasonTemperature:
+      type: object
+      required: [observed, scenario_mean]
+      properties:
+        observed: { $ref: '#/components/schemas/Trend' }
+        scenario_mean: { $ref: '#/components/schemas/Number' }
+    SeasonalTemperature:
+      type: object
+      required: [significance_alpha, winter, spring, summer, fall]
+      properties:
+        significance_alpha: { $ref: '#/components/schemas/Number', description: 'Threshold for significant. Basis assumed until a source is cited.' }
+        winter: { $ref: '#/components/schemas/SeasonTemperature' }
+        spring: { $ref: '#/components/schemas/SeasonTemperature' }
+        summer: { $ref: '#/components/schemas/SeasonTemperature' }
+        fall: { $ref: '#/components/schemas/SeasonTemperature' }
+    HeatStressCrop:
+      type: object
+      required: [crop_id, heat_limit_c, days]
+      properties:
+        crop_id: { $ref: '#/components/schemas/CropId' }
+        heat_limit_c: { $ref: '#/components/schemas/Number' }
+        days: { $ref: '#/components/schemas/AbsoluteYearSeries', description: 'Days per year above the crop heat limit, years 1–10, central and p10/p90.' }
+    FrostDate:
+      type: object
+      description: 'Day of year, 1 = 1 January. Median is value and p50; p10 and p90 are the baseline spread.'
+      required: [baseline_doy, scenario_shift_days]
+      properties:
+        baseline_doy: { $ref: '#/components/schemas/Number' }
+        scenario_shift_days: { $ref: '#/components/schemas/Number', description: 'Days. Positive means later than the baseline.' }
+    RainfallOutlook:
+      type: object
+      required: [seasonal_totals, extreme_rain_days, multi_day_events]
+      properties:
+        seasonal_totals:
+          type: object
+          required: [winter, spring, summer, fall]
+          properties:
+            winter: { $ref: '#/components/schemas/BaselineScenario' }
+            spring: { $ref: '#/components/schemas/BaselineScenario' }
+            summer: { $ref: '#/components/schemas/BaselineScenario' }
+            fall: { $ref: '#/components/schemas/BaselineScenario' }
+        extreme_rain_days: { $ref: '#/components/schemas/BaselineScenario', description: 'Count of days at or above the wet-day p95.' }
+        multi_day_events: { $ref: '#/components/schemas/BaselineScenario' }
+    OptionalWeeklyLayer:
+      type: object
+      required: [available, resolution_note]
+      properties:
+        available: { type: boolean }
+        resolution_note: { type: string }
+        weekly:
+          oneOf:
+            - $ref: '#/components/schemas/WeekValues'
+            - type: 'null'
+    OptionalNumberLayer:
+      type: object
+      required: [available, resolution_note]
+      properties:
+        available: { type: boolean }
+        resolution_note: { type: string }
+        value:
+          oneOf:
+            - $ref: '#/components/schemas/Number'
+            - type: 'null'
+    EtAndSoilMoisture:
+      type: object
+      required: [et0_trend, smap_root_zone_anomaly, ecostress_et]
+      properties:
+        et0_trend: { $ref: '#/components/schemas/Trend' }
+        smap_root_zone_anomaly: { $ref: '#/components/schemas/OptionalWeeklyLayer' }
+        ecostress_et: { $ref: '#/components/schemas/OptionalNumberLayer' }
+    WaterBalanceOutlook:
+      type: object
+      description: 'Surplus is positive, deficit is negative, millimetres. weekly_mm is the baseline climatology. Seasonal totals compare baseline and scenario.'
+      required: [unit, basis, confidence, weekly_mm, seasonal]
+      properties:
+        unit: { type: string, const: mm }
+        basis: { $ref: '#/components/schemas/BasisOrRelative' }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+        weekly_mm: { $ref: '#/components/schemas/WeekValues' }
+        seasonal:
+          type: object
+          required: [winter, spring, summer, fall]
+          properties:
+            winter: { $ref: '#/components/schemas/BaselineScenario' }
+            spring: { $ref: '#/components/schemas/BaselineScenario' }
+            summer: { $ref: '#/components/schemas/BaselineScenario' }
+            fall: { $ref: '#/components/schemas/BaselineScenario' }
+    GroundwaterContext:
+      type: object
+      description: Regional context only. Never scored.
+      required: [available, scored, resolution_note, trend]
+      properties:
+        available: { type: boolean }
+        scored: { type: boolean, const: false }
+        resolution_note: { type: string }
+        trend:
+          oneOf:
+            - $ref: '#/components/schemas/Number'
+            - type: 'null'
+    ClimateOutlook:
+      type: object
+      required: [site_id, scenario, data_mode, seasonal_temperature, heat_stress_days, frost_windows, rainfall, et_and_soil_moisture, water_balance, groundwater, sources]
+      properties:
+        site_id: { $ref: '#/components/schemas/SiteId' }
+        scenario:
+          allOf:
+            - $ref: '#/components/schemas/ScenarioApplied'
+            - type: object
+              required: [ramp]
+        data_mode: { $ref: '#/components/schemas/DataMode' }
+        seasonal_temperature: { $ref: '#/components/schemas/SeasonalTemperature' }
+        heat_stress_days:
+          type: array
+          items: { $ref: '#/components/schemas/HeatStressCrop' }
+        frost_windows:
+          type: object
+          required: [last_spring_frost, first_fall_frost, frost_free_season_days]
+          properties:
+            last_spring_frost: { $ref: '#/components/schemas/FrostDate' }
+            first_fall_frost: { $ref: '#/components/schemas/FrostDate' }
+            frost_free_season_days: { $ref: '#/components/schemas/BaselineScenario' }
+        rainfall: { $ref: '#/components/schemas/RainfallOutlook' }
+        et_and_soil_moisture: { $ref: '#/components/schemas/EtAndSoilMoisture' }
+        water_balance: { $ref: '#/components/schemas/WaterBalanceOutlook' }
+        groundwater: { $ref: '#/components/schemas/GroundwaterContext' }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/Source' }
+    ForecastHazard:
+      type: string
+      description: Hazard names in group 2. Distinct from the v1.1 probability ids on VulnerableSeason.
+      enum: [heat, drought, frost, waterlogging]
+    ForecastVulnerableSeason:
+      type: object
+      required: [crop_id, growth_stage, weeks, hazards]
+      properties:
+        crop_id: { $ref: '#/components/schemas/CropId' }
+        growth_stage:
+          type: string
+          description: 'Known stage ids from crop kc_stages are ini, mid, end. Unknown strings are rendered neutrally.'
+        weeks:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 51 }
+        hazards:
+          type: array
+          items: { $ref: '#/components/schemas/ForecastHazard' }
+    BareFieldWindow:
+      type: object
+      required: [weeks, source]
+      properties:
+        weeks:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 51 }
+        source: { type: string, enum: [rotation_plan, ndvi], description: 'Planting records (rotation_plan) are primary. ndvi is a cross-check.' }
+        scene_count: { type: [integer, 'null'], minimum: 0, description: 'Cloud-free scenes used, when source is ndvi.' }
+        note: { type: string }
+    ForecastExposure:
+      type: object
+      required: [site_id, vulnerable_seasons, bare_field_windows, zones, caveats]
+      properties:
+        site_id: { $ref: '#/components/schemas/SiteId' }
+        data_mode: { $ref: '#/components/schemas/DataMode' }
+        crops:
+          type: array
+          items: { $ref: '#/components/schemas/CropId' }
+        vulnerable_seasons:
+          type: array
+          items: { $ref: '#/components/schemas/ForecastVulnerableSeason' }
+        bare_field_windows:
+          type: array
+          items: { $ref: '#/components/schemas/BareFieldWindow' }
+        zones:
+          type: array
+          items: { $ref: '#/components/schemas/Zone' }
+        resolution_notes:
+          type: array
+          items: { type: string }
+        caveats:
+          type: array
+          items: { type: string }
+    YieldCropSeries:
+      type: object
+      required: [crop_id, series]
+      properties:
+        crop_id: { $ref: '#/components/schemas/CropId' }
+        series: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+    StrategyEstimates:
+      type: object
+      description: 'Absolute scenario estimates (decision D1). income_estimate is null when prices were not entered.'
+      required: [yield_t_ha, forage_yield_t_ha, soil_loss_t_ha_yr, n_fertilizer_need_kg_ha, n_fertilizer_saved_kg_ha, income_estimate]
+      properties:
+        yield_t_ha:
+          type: array
+          items: { $ref: '#/components/schemas/YieldCropSeries' }
+        forage_yield_t_ha: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+        soil_loss_t_ha_yr: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+        n_fertilizer_need_kg_ha: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+        n_fertilizer_saved_kg_ha: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+        income_estimate:
+          description: Null, plus a review flag, when the farmer entered no prices. Currency is the unit.
+          oneOf:
+            - $ref: '#/components/schemas/Number'
+            - type: 'null'
+    Trajectories:
+      type: object
+      description: |
+        Group 3. n_balance is the relative index (year 0 = 100). n_balance_kg_ha and n_fixed_share
+        are the companion figures named in group 3 that do not fit in one series.
+      required: [soil_organic_index, n_balance, n_balance_kg_ha, n_fixed_share, infiltration_index, runoff_index, pest_pressure_index, bare_weeks, water_demand_mm, irrigation_need_mm]
+      properties:
+        soil_organic_index: { $ref: '#/components/schemas/YearSeries' }
+        n_balance: { $ref: '#/components/schemas/YearSeries' }
+        n_balance_kg_ha: { $ref: '#/components/schemas/AbsoluteYearSeries' }
+        n_fixed_share: { $ref: '#/components/schemas/YearSeries' }
+        infiltration_index: { $ref: '#/components/schemas/YearSeries' }
+        runoff_index: { $ref: '#/components/schemas/YearSeries' }
+        pest_pressure_index: { $ref: '#/components/schemas/YearSeries' }
+        bare_weeks: { $ref: '#/components/schemas/YearSeries' }
+        water_demand_mm: { $ref: '#/components/schemas/YearSeries' }
+        irrigation_need_mm: { $ref: '#/components/schemas/YearSeries' }
+    QuotaStatus:
+      type: string
+      enum: [within, tight, exceeds, no_quota_given]
+    WaterVsQuota:
+      type: object
+      required: [irrigation_need_p50, irrigation_need_p90, status]
+      properties:
+        irrigation_need_p50: { $ref: '#/components/schemas/Number' }
+        irrigation_need_p90: { $ref: '#/components/schemas/Number' }
+        quota_mm_per_season: { type: [number, 'null'] }
+        status: { $ref: '#/components/schemas/QuotaStatus' }
+    FarmFit:
+      type: object
+      required: [water_vs_quota, forage_suitability, operational_fit, market_fit]
+      properties:
+        water_vs_quota: { $ref: '#/components/schemas/WaterVsQuota' }
+        forage_suitability: { $ref: '#/components/schemas/Number' }
+        operational_fit: { $ref: '#/components/schemas/Number' }
+        market_fit:
+          oneOf:
+            - $ref: '#/components/schemas/Number'
+            - type: 'null'
+          description: Null when no selected crop has a farmer rating. Unrated crops are review flags.
+    StrategyCore:
+      type: object
+      description: Fields shared by a field strategy and the area-weighted farm rollup.
+      required: [id, trajectories, farm_fit, scorecard, estimates]
+      properties:
+        id: { $ref: '#/components/schemas/RotationId' }
+        trajectories: { $ref: '#/components/schemas/Trajectories' }
+        farm_fit: { $ref: '#/components/schemas/FarmFit' }
+        scorecard:
+          type: array
+          items: { $ref: '#/components/schemas/RotationScorecard' }
+        estimates: { $ref: '#/components/schemas/StrategyEstimates' }
+    ForecastStrategy:
+      allOf:
+        - $ref: '#/components/schemas/StrategyCore'
+        - type: object
+          required: [role, label, cycle_years, plan, vulnerable_seasons, evidence_card, review_flags]
+          properties:
+            role: { type: string, enum: [existing, alternative, custom] }
+            label: { type: string }
+            cycle_years: { type: integer, minimum: 1, maximum: 10 }
+            plan:
+              type: array
+              description: Expanded horizon. Index 0 of the parent strategies array is the existing rotation.
+              items: { $ref: '#/components/schemas/RotationSlot' }
+            vulnerable_seasons:
+              type: array
+              items: { $ref: '#/components/schemas/ForecastVulnerableSeason' }
+            evidence_card:
+              allOf:
+                - $ref: '#/components/schemas/EvidenceCard'
+                - type: object
+                  required: [evidence_items]
+            review_flags:
+              type: array
+              items: { $ref: '#/components/schemas/ReviewFlag' }
+    ForecastFieldResult:
+      type: object
+      required: [field_id, name, area_ha, strategies]
+      properties:
+        field_id: { type: string }
+        name: { type: string }
+        area_ha: { type: number, exclusiveMinimum: 0 }
+        strategies:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/ForecastStrategy' }
+    FarmRollup:
+      type: object
+      required: [strategies]
+      properties:
+        strategies:
+          type: array
+          description: 'Area-weighted totals keyed by strategy id (rot_existing, rot_alt_1, ...).'
+          items: { $ref: '#/components/schemas/StrategyCore' }
+    ForecastComparison:
+      type: object
+      required: [rank_by_priority, rank_stability, deltas_vs_existing_year10]
+      properties:
+        rank_by_priority:
+          type: array
+          items: { $ref: '#/components/schemas/RotationId' }
+        rank_stability: { type: string }
+        deltas_vs_existing_year10:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Number' }
+    UncertaintyLayer:
+      type: object
+      required: [layer, native_resolution_m, record_years, confidence, resolution_note, needs_local_validation]
+      properties:
+        layer: { type: string }
+        native_resolution_m: { type: number, exclusiveMinimum: 0 }
+        record_years: { type: string, description: 'Record span as text, for example 1991-2024 or 2015+.' }
+        confidence: { $ref: '#/components/schemas/Confidence' }
+        resolution_note: { type: string }
+        needs_local_validation: { type: boolean }
+    StationBias:
+      type: object
+      required: [variable, bias, n_years]
+      properties:
+        variable: { type: string }
+        bias: { $ref: '#/components/schemas/Number', description: 'POWER minus the local station. Unit is on the number.' }
+        n_years: { type: integer, minimum: 0 }
+    ForecastUncertainty:
+      type: object
+      required: [layers, station_bias]
+      properties:
+        layers:
+          type: array
+          items: { $ref: '#/components/schemas/UncertaintyLayer' }
+        station_bias:
+          oneOf:
+            - $ref: '#/components/schemas/StationBias'
+            - type: 'null'
+    ReviewFlag:
+      type: object
+      required: [id, strategy_id, severity, text, trigger]
+      properties:
+        id: { type: string }
+        strategy_id: { $ref: '#/components/schemas/RotationId' }
+        severity: { type: string, enum: [info, caution, verify] }
+        text: { type: string }
+        trigger:
+          type: object
+          required: [layer, rule]
+          properties:
+            layer: { type: string }
+            rule: { type: string }
+            week: { type: integer, minimum: 0, maximum: 51 }
+    Forecast:
+      type: object
+      required: [site_id, schema_version, pipeline_version, request_hash, horizon_years, scenario, data_mode, disclaimer, support_sentence, climate_outlook, exposure, fields, farm_rollup, comparison, uncertainty, warnings, sources, assumptions]
+      properties:
+        site_id: { $ref: '#/components/schemas/SiteId' }
+        schema_version: { type: string, const: "1.2.0" }
+        pipeline_version: { type: string }
+        request_hash: { type: string, pattern: '^[0-9a-f]{64}$', description: 'Full sha256 hex from app/twin/types.py request_hash.' }
+        horizon_years: { type: integer, minimum: 5, maximum: 10 }
+        scenario:
+          allOf:
+            - $ref: '#/components/schemas/ScenarioApplied'
+            - type: object
+              required: [ramp]
+        data_mode: { $ref: '#/components/schemas/DataMode' }
+        disclaimer: { type: string }
+        support_sentence:
+          type: string
+          const: This tool supports, and does not replace, local agronomic expertise.
+        climate_outlook: { $ref: '#/components/schemas/ClimateOutlook' }
+        exposure: { $ref: '#/components/schemas/ForecastExposure' }
+        fields:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/ForecastFieldResult' }
+        farm_rollup: { $ref: '#/components/schemas/FarmRollup' }
+        comparison: { $ref: '#/components/schemas/ForecastComparison' }
+        uncertainty: { $ref: '#/components/schemas/ForecastUncertainty' }
+        warnings:
+          type: array
+          items: { $ref: '#/components/schemas/AnalysisWarning' }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/Source' }
+        assumptions:
+          type: array
+          description: Unreviewed constants and ramp choices, one plain sentence each.
+          items: { type: string }
+    SensitivityGrid:
+      type: object
+      required: [axes, cells, rank_stability]
+      properties:
+        axes:
+          type: object
+          required: [rain_scale_pct, temp_offset_c]
+          properties:
+            rain_scale_pct:
+              type: array
+              items: { type: number }
+            temp_offset_c:
+              type: array
+              items: { type: number }
+        cells:
+          type: array
+          items:
+            type: object
+            required: [rain_scale_pct, temp_offset_c, per_strategy]
+            properties:
+              rain_scale_pct: { type: number }
+              temp_offset_c: { type: number }
+              per_strategy:
+                type: object
+                description: Strategy id to Year-10 metrics. Each metric is a Number.
+                additionalProperties:
+                  type: object
+                  additionalProperties: { $ref: '#/components/schemas/Number' }
+        rank_stability:
+          type: object
+          required: [share_first_by_strategy]
+          properties:
+            share_first_by_strategy:
+              type: object
+              additionalProperties: { type: number, minimum: 0, maximum: 1 }
+    CropCategory:
+      type: string
+      enum: [vegetable, grain, forage, cover, fruit_perennial]
+    ForageUse:
+      type: string
+      enum: [none, grazing, hay, silage]
+    TraitClass:
+      type: string
+      description: 'low, medium, high. Same words as residue_class. Class boundaries are TODO(verify) with an agronomist.'
+      enum: [low, medium, high]
+    NFixClass:
+      type: string
+      description: none means the crop is not treated as fixing nitrogen. Scale is TODO(verify).
+      enum: [none, low, medium, high]
+    NullableTraitClass:
+      description: Null means the class is not verified. Do not replace null with a default.
+      oneOf:
+        - $ref: '#/components/schemas/TraitClass'
+        - type: 'null'
+    NullableNFixClass:
+      description: Null means the fixation class is not verified.
+      oneOf:
+        - $ref: '#/components/schemas/NFixClass'
+        - type: 'null'
+    NullableForageUse:
+      description: Null means forage use is not verified.
+      oneOf:
+        - $ref: '#/components/schemas/ForageUse'
+        - type: 'null'
+    EquipmentId:
+      type: string
+      description: 'Catalog equipment id. The published set is CropCatalog.equipment. Pattern only, so W5 can add a sourced id without a contract bump.'
+      pattern: '^equip_[a-z0-9_]+$'
+    NullableNumber:
+      description: 'A measured or assumed number, or null when it is not verified. Do not replace null with a default.'
+      oneOf:
+        - type: number
+        - type: 'null'
+    ReferenceYield:
+      description: 'Catalog reference yield. Null when no source has been recorded.'
+      oneOf:
+        - allOf:
+            - $ref: '#/components/schemas/Number'
+            - type: object
+              required: [source]
+              properties:
+                source: { type: string, description: 'URL or TODO(verify).' }
+        - type: 'null'
+    CropTraitV2:
+      description: Trait schema v2. Extends CropTrait. Null numerics are unverified.
+      allOf:
+        - $ref: '#/components/schemas/CropTrait'
+        - type: object
+          required: [category, host_families, return_interval_years, kc_stages, root_depth_m, residue_class, carbon_input_class, n_uptake_class, n_fix_class, frost_tolerance_c, heat_limit_c, drought_tolerance, waterlogging_tolerance, forage_use, reference_yield, yield_response_factor_ky, typical_n_rate_kg_ha, erosion_cover_factor_class, needs_equipment, labour_peak_weeks, region_fit, trait_sources]
+          properties:
+            category: { $ref: '#/components/schemas/CropCategory' }
+            host_families:
+              type: array
+              items: { type: string }
+            return_interval_years: { $ref: '#/components/schemas/NullableNumber' }
+            root_depth_m:
+              type: object
+              description: Metres by stage. Null means not verified.
+              required: [ini, mid, end]
+              properties:
+                ini: { $ref: '#/components/schemas/NullableNumber' }
+                mid: { $ref: '#/components/schemas/NullableNumber' }
+                end: { $ref: '#/components/schemas/NullableNumber' }
+            carbon_input_class: { $ref: '#/components/schemas/NullableTraitClass' }
+            n_uptake_class: { $ref: '#/components/schemas/NullableTraitClass' }
+            n_fix_class: { $ref: '#/components/schemas/NullableNFixClass' }
+            waterlogging_tolerance: { $ref: '#/components/schemas/NullableTraitClass' }
+            forage_use: { $ref: '#/components/schemas/NullableForageUse' }
+            reference_yield: { $ref: '#/components/schemas/ReferenceYield' }
+            yield_response_factor_ky: { $ref: '#/components/schemas/NullableNumber' }
+            typical_n_rate_kg_ha: { $ref: '#/components/schemas/NullableNumber' }
+            erosion_cover_factor_class: { $ref: '#/components/schemas/NullableTraitClass' }
+            needs_equipment:
+              type: array
+              items: { $ref: '#/components/schemas/EquipmentId' }
+            labour_peak_weeks:
+              type: array
+              description: Week index 0–51.
+              items: { type: integer, minimum: 0, maximum: 51 }
+            region_fit:
+              type: array
+              description: 'Climate class strings. Empty means not verified. `oceanic` is the class named for UBC Farm.'
+              items: { type: string }
+    CatalogEquipment:
+      type: object
+      required: [id, label, source]
+      properties:
+        id: { $ref: '#/components/schemas/EquipmentId' }
+        label: { type: string }
+        source: { type: string, description: 'URL or TODO(verify).' }
+    CropCatalog:
+      type: object
+      required: [crops, equipment]
+      properties:
+        data_mode: { $ref: '#/components/schemas/DataMode' }
+        crops:
+          type: array
+          items: { $ref: '#/components/schemas/CropTraitV2' }
+        equipment:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogEquipment' }
+    ForecastSoilOverride:
+      type: object
+      required: [sand_pct, silt_pct, clay_pct, organic_carbon_pct]
+      properties:
+        sand_pct: { type: number }
+        silt_pct: { type: number }
+        clay_pct: { type: number }
+        organic_carbon_pct: { type: number }
+    ForecastIrrigation:
+      type: object
+      required: [available]
+      properties:
+        available: { type: boolean }
+        quota_mm_per_season: { type: number, minimum: 0 }
+    ForecastSelection:
+      type: object
+      required: [crops, pinned, excluded]
+      properties:
+        crops:
+          type: array
+          minItems: 2
+          maxItems: 30
+          items: { $ref: '#/components/schemas/CropId' }
+        pinned:
+          type: array
+          items: { $ref: '#/components/schemas/CropId' }
+        excluded:
+          type: array
+          items: { $ref: '#/components/schemas/CropId' }
+    ForecastFieldInput:
+      type: object
+      required: [field_id, name, area_ha, slope_class, irrigation, existing_rotation]
+      properties:
+        field_id: { type: string, minLength: 1 }
+        name: { type: string }
+        area_ha: { type: number, exclusiveMinimum: 0 }
+        slope_class: { type: string, enum: [flat, gentle, moderate, steep] }
+        soil_override: { $ref: '#/components/schemas/ForecastSoilOverride' }
+        irrigation: { $ref: '#/components/schemas/ForecastIrrigation' }
+        polygon: { $ref: '#/components/schemas/GeoJsonPolygon' }
+        existing_rotation:
+          oneOf:
+            - type: string
+              const: preset
+            - type: array
+              minItems: 1
+              items: { $ref: '#/components/schemas/RotationSlot' }
+        selection_override: { $ref: '#/components/schemas/ForecastSelection' }
+    ForecastConstraints:
+      type: object
+      required: [equipment, max_cycle_years, no_till, labour_level, livestock_on_farm]
+      properties:
+        equipment:
+          type: array
+          items: { $ref: '#/components/schemas/EquipmentId' }
+        max_cycle_years: { type: integer, minimum: 1, maximum: 10 }
+        no_till: { type: boolean }
+        labour_level: { type: string, enum: [low, medium, high] }
+        livestock_on_farm: { type: boolean }
+    CropPrice:
+      type: object
+      required: [value, unit]
+      properties:
+        value: { type: number }
+        unit: { type: string, description: 'Farmer-entered unit, for example per tonne.' }
+    ForecastInputCosts:
+      type: object
+      properties:
+        fertilizer_per_kg_n: { type: number }
+        seed_per_ha:
+          type: object
+          additionalProperties: { type: number }
+        irrigation_per_mm_ha: { type: number }
+        labour_per_hour: { type: number }
+    ForecastEconomics:
+      type: object
+      required: [currency]
+      properties:
+        currency: { type: string, minLength: 1 }
+        crop_prices:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/CropPrice' }
+        input_costs: { $ref: '#/components/schemas/ForecastInputCosts' }
+    ForecastRequest:
+      type: object
+      description: |
+        climate_source defaults to history_resample until a future-climate dataset is verified
+        (decision D2). strategy_count defaults to 3. horizon_years defaults to 10.
+        Prices are never filled in by the server.
+      required: [selection, constraints, scenario]
+      properties:
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { $ref: '#/components/schemas/ForecastFieldInput' }
+        farm_water_quota_mm_per_season: { type: number, minimum: 0 }
+        selection: { $ref: '#/components/schemas/ForecastSelection' }
+        custom_strategies:
+          type: array
+          items:
+            type: array
+            minItems: 1
+            items: { $ref: '#/components/schemas/RotationSlot' }
+        strategy_count: { type: integer, minimum: 2, maximum: 4, default: 3 }
+        priorities: { $ref: '#/components/schemas/FarmerPriorities' }
+        constraints: { $ref: '#/components/schemas/ForecastConstraints' }
+        market_ratings:
+          type: object
+          additionalProperties: { type: integer, minimum: 1, maximum: 5 }
+        economics: { $ref: '#/components/schemas/ForecastEconomics' }
+        scenario:
+          oneOf:
+            - $ref: '#/components/schemas/Scenario'
+            - $ref: '#/components/schemas/ScenarioInput'
+        horizon_years: { type: integer, minimum: 5, maximum: 10, default: 10 }
+        climate_source: { type: string, enum: [cmip6_delta, history_resample], default: history_resample }
+
     # ---------- Errors ----------
     ErrorCode:
       type: string
@@ -2038,7 +2909,8 @@ components:
         TERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,
         SIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,
         SITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,
-        SCENARIO_OUT_OF_RANGE 422 (v1.1).
+        SCENARIO_OUT_OF_RANGE 422 (v1.1),
+        SELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2).
       enum:
         - INVALID_INPUT
         - UNSUPPORTED_FILE
@@ -2054,6 +2926,9 @@ components:
         - INVALID_WEIGHTS
         - NO_FEASIBLE_ALTERNATIVES
         - SCENARIO_OUT_OF_RANGE
+        - SELECTION_TOO_SMALL
+        - INVALID_QUOTA
+        - HORIZON_OUT_OF_RANGE
     ErrorBody:
       type: object
       required: [code, message, retryable]

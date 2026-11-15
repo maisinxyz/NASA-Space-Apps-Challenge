@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "SELECTION_TOO_SMALL",
+    "message": "Select at least 2 crops.",
+    "hint": "The pool needs between 2 and 30 crops from the catalog.",
+    "retryable": false
+  }
+}

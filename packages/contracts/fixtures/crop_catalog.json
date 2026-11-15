@@ -1,0 +1,1230 @@
+{
+ "data_mode": "mock",
+ "crops": [
+  {
+   "id": "crop_maize",
+   "name": "Maize (grain or silage)",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 130,
+    "terminate_doy": 280
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     30,
+     0.3
+    ],
+    [
+     68,
+     0.8
+    ],
+    [
+     150,
+     0.85
+    ]
+   ],
+   "notes": "Warm-season cereal; silage use removes most residue.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "high",
+   "kc_stages": {
+    "ini": 0.3,
+    "mid": 1.2,
+    "end": 0.6
+   },
+   "root_depth_class": "deep",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "low",
+   "frost_tolerance_c": -1,
+   "heat_limit_c": 35,
+   "residue_class": "high",
+   "forage_suitable": true,
+   "market_rating": "high",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_wheat_winter",
+   "name": "Winter wheat",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 280,
+    "terminate_doy": 200
+   },
+   "cover_curve": [
+    [
+     0,
+     0.05
+    ],
+    [
+     71,
+     0.35
+    ],
+    [
+     214,
+     0.45
+    ],
+    [
+     285,
+     0.9
+    ]
+   ],
+   "notes": "Sown in fall, harvested next summer; covers soil over winter.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.4,
+    "mid": 1.15,
+    "end": 0.25
+   },
+   "root_depth_class": "medium",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": -20,
+   "heat_limit_c": 32,
+   "residue_class": "high",
+   "forage_suitable": false,
+   "market_rating": "high",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_barley",
+   "name": "Spring barley",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 100,
+    "terminate_doy": 210
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     22,
+     0.3
+    ],
+    [
+     50,
+     0.8
+    ],
+    [
+     110,
+     0.85
+    ]
+   ],
+   "notes": "Short-season small grain.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.3,
+    "mid": 1.15,
+    "end": 0.25
+   },
+   "root_depth_class": "medium",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": -5,
+   "heat_limit_c": 30,
+   "residue_class": "medium",
+   "forage_suitable": true,
+   "market_rating": "medium",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_soybean",
+   "name": "Soybean",
+   "family": "Fabaceae",
+   "n_fixing": true,
+   "season_window": {
+    "plant_doy": 140,
+    "terminate_doy": 280
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     28,
+     0.3
+    ],
+    [
+     63,
+     0.8
+    ],
+    [
+     140,
+     0.85
+    ]
+   ],
+   "notes": "Legume; leaves little residue.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.4,
+    "mid": 1.15,
+    "end": 0.5
+   },
+   "root_depth_class": "medium",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": 0,
+   "heat_limit_c": 35,
+   "residue_class": "low",
+   "forage_suitable": false,
+   "market_rating": "high",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": null,
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_pea_field",
+   "name": "Field pea",
+   "family": "Fabaceae",
+   "n_fixing": true,
+   "season_window": {
+    "plant_doy": 100,
+    "terminate_doy": 200
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     20,
+     0.3
+    ],
+    [
+     45,
+     0.8
+    ],
+    [
+     100,
+     0.85
+    ]
+   ],
+   "notes": "Cool-season legume; dry pea needs a pulse buyer.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.5,
+    "mid": 1.15,
+    "end": 0.25
+   },
+   "root_depth_class": "shallow",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "low",
+   "frost_tolerance_c": -4,
+   "heat_limit_c": 28,
+   "residue_class": "low",
+   "forage_suitable": true,
+   "market_rating": "medium",
+   "market_dependent": true,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": null,
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_alfalfa",
+   "name": "Alfalfa",
+   "family": "Fabaceae",
+   "n_fixing": true,
+   "season_window": {
+    "plant_doy": 110,
+    "terminate_doy": 290
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     27,
+     0.5
+    ],
+    [
+     54,
+     0.9
+    ],
+    [
+     180,
+     0.9
+    ]
+   ],
+   "notes": "Perennial forage legume; needs hay equipment.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "high",
+   "kc_stages": {
+    "ini": 0.4,
+    "mid": 0.95,
+    "end": 0.9
+   },
+   "root_depth_class": "deep",
+   "cover_crop": false,
+   "perennial": true,
+   "drought_tolerance": "high",
+   "frost_tolerance_c": -25,
+   "heat_limit_c": 38,
+   "residue_class": "medium",
+   "forage_suitable": true,
+   "market_rating": "medium",
+   "market_dependent": false,
+   "needs_specialty_equipment": true,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "forage",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": null,
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_red_clover",
+   "name": "Red clover (cover or forage)",
+   "family": "Fabaceae",
+   "n_fixing": true,
+   "season_window": {
+    "plant_doy": 230,
+    "terminate_doy": 130
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     53,
+     0.5
+    ],
+    [
+     225,
+     0.7
+    ],
+    [
+     265,
+     0.9
+    ]
+   ],
+   "notes": "Legume cover sown after a summer harvest; grazable.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.4,
+    "mid": 0.9,
+    "end": 0.85
+   },
+   "root_depth_class": "medium",
+   "cover_crop": true,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": -15,
+   "heat_limit_c": 30,
+   "residue_class": "medium",
+   "forage_suitable": true,
+   "market_rating": "low",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "forage",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": null,
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_rye_cover",
+   "name": "Cereal rye (cover)",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 270,
+    "terminate_doy": 120
+   },
+   "cover_curve": [
+    [
+     0,
+     0.05
+    ],
+    [
+     54,
+     0.35
+    ],
+    [
+     161,
+     0.45
+    ],
+    [
+     215,
+     0.9
+    ]
+   ],
+   "notes": "Winter cover terminated green in spring.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "low",
+   "kc_stages": {
+    "ini": 0.4,
+    "mid": 1.0,
+    "end": 0.9
+   },
+   "root_depth_class": "medium",
+   "cover_crop": true,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": -30,
+   "heat_limit_c": 30,
+   "residue_class": "high",
+   "forage_suitable": true,
+   "market_rating": "low",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "cover",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_sorghum",
+   "name": "Grain sorghum",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 150,
+    "terminate_doy": 280
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     26,
+     0.3
+    ],
+    [
+     58,
+     0.8
+    ],
+    [
+     130,
+     0.85
+    ]
+   ],
+   "notes": "Warm-season cereal that tolerates dry spells.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "low",
+   "kc_stages": {
+    "ini": 0.3,
+    "mid": 1.05,
+    "end": 0.55
+   },
+   "root_depth_class": "deep",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "high",
+   "frost_tolerance_c": 0,
+   "heat_limit_c": 40,
+   "residue_class": "high",
+   "forage_suitable": true,
+   "market_rating": "medium",
+   "market_dependent": false,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_millet",
+   "name": "Proso millet",
+   "family": "Poaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 160,
+    "terminate_doy": 250
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     18,
+     0.3
+    ],
+    [
+     40,
+     0.8
+    ],
+    [
+     90,
+     0.85
+    ]
+   ],
+   "notes": "Short warm-season cereal; niche market.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "low",
+   "kc_stages": {
+    "ini": 0.3,
+    "mid": 1.0,
+    "end": 0.3
+   },
+   "root_depth_class": "medium",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "high",
+   "frost_tolerance_c": 2,
+   "heat_limit_c": 40,
+   "residue_class": "medium",
+   "forage_suitable": true,
+   "market_rating": "low",
+   "market_dependent": true,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_sunflower",
+   "name": "Sunflower",
+   "family": "Asteraceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 140,
+    "terminate_doy": 270
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     26,
+     0.3
+    ],
+    [
+     58,
+     0.8
+    ],
+    [
+     130,
+     0.85
+    ]
+   ],
+   "notes": "Deep taproot; needs a header attachment to harvest.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.35,
+    "mid": 1.0,
+    "end": 0.35
+   },
+   "root_depth_class": "deep",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "high",
+   "frost_tolerance_c": -2,
+   "heat_limit_c": 38,
+   "residue_class": "medium",
+   "forage_suitable": false,
+   "market_rating": "medium",
+   "market_dependent": false,
+   "needs_specialty_equipment": true,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  },
+  {
+   "id": "crop_canola",
+   "name": "Spring canola",
+   "family": "Brassicaceae",
+   "n_fixing": false,
+   "season_window": {
+    "plant_doy": 110,
+    "terminate_doy": 225
+   },
+   "cover_curve": [
+    [
+     0,
+     0.0
+    ],
+    [
+     23,
+     0.3
+    ],
+    [
+     52,
+     0.8
+    ],
+    [
+     115,
+     0.85
+    ]
+   ],
+   "notes": "Oilseed; needs a crusher or buyer nearby.",
+   "source": "Typical crop traits, hand-curated; not measured on any field. TODO(verify)",
+   "water_need_class": "medium",
+   "kc_stages": {
+    "ini": 0.35,
+    "mid": 1.0,
+    "end": 0.35
+   },
+   "root_depth_class": "deep",
+   "cover_crop": false,
+   "perennial": false,
+   "drought_tolerance": "medium",
+   "frost_tolerance_c": -4,
+   "heat_limit_c": 30,
+   "residue_class": "medium",
+   "forage_suitable": false,
+   "market_rating": "medium",
+   "market_dependent": true,
+   "needs_specialty_equipment": false,
+   "trait_sources": {
+    "family": "Typical value, team assumption TODO(verify) with an agronomist",
+    "n_fixing": "Typical value, team assumption TODO(verify) with an agronomist",
+    "season_window": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_curve": "Typical value, team assumption TODO(verify) with an agronomist",
+    "water_need_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "root_depth_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "cover_crop": "Typical value, team assumption TODO(verify) with an agronomist",
+    "perennial": "Typical value, team assumption TODO(verify) with an agronomist",
+    "drought_tolerance": "Typical value, team assumption TODO(verify) with an agronomist",
+    "frost_tolerance_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "heat_limit_c": "Typical value, team assumption TODO(verify) with an agronomist",
+    "residue_class": "Typical value, team assumption TODO(verify) with an agronomist",
+    "forage_suitable": "Typical value, team assumption TODO(verify) with an agronomist",
+    "needs_specialty_equipment": "Typical value, team assumption TODO(verify) with an agronomist",
+    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) TODO(verify)",
+    "market_rating": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "market_dependent": "Placeholder market rating, assumed TODO(verify) with local buyers",
+    "category": "TODO(verify)",
+    "host_families": "TODO(verify)",
+    "return_interval_years": "TODO(verify)",
+    "root_depth_m": "TODO(verify)",
+    "carbon_input_class": "TODO(verify)",
+    "n_uptake_class": "TODO(verify)",
+    "n_fix_class": "Restates the existing n_fixing false flag. Not a measured fixation rate. TODO(verify)",
+    "waterlogging_tolerance": "TODO(verify)",
+    "forage_use": "TODO(verify)",
+    "reference_yield": "TODO(verify)",
+    "yield_response_factor_ky": "TODO(verify)",
+    "typical_n_rate_kg_ha": "TODO(verify)",
+    "erosion_cover_factor_class": "TODO(verify)",
+    "needs_equipment": "TODO(verify)",
+    "labour_peak_weeks": "TODO(verify)",
+    "region_fit": "TODO(verify)"
+   },
+   "category": "grain",
+   "host_families": [],
+   "return_interval_years": null,
+   "root_depth_m": {
+    "ini": null,
+    "mid": null,
+    "end": null
+   },
+   "carbon_input_class": null,
+   "n_uptake_class": null,
+   "n_fix_class": "none",
+   "waterlogging_tolerance": null,
+   "forage_use": null,
+   "reference_yield": null,
+   "yield_response_factor_ky": null,
+   "typical_n_rate_kg_ha": null,
+   "erosion_cover_factor_class": null,
+   "needs_equipment": [],
+   "labour_peak_weeks": [],
+   "region_fit": []
+  }
+ ],
+ "equipment": []
+}
