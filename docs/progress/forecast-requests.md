@@ -175,3 +175,19 @@ Planting day-of-year is still null. The BC cole and lettuce guides and the WSU S
 - 2026-11-15 B9 NOT STARTED: Kanban todo behind B11; co-pilot backend not implemented.
 - 2026-11-15 B10 NOT STARTED: Kanban todo behind B11; custom field analysis backend not implemented.
 - 2026-11-15 B11 DONE (contract only): v1.3.0 committed on main earlier as `b1dd80c`; 94 contract tests passed at hard stop. Its verification builder was blocked on inaccessible worktree, and B7/B9/B10 routes are not yet mounted. Overall API suite is red: 259 passed, 4 failed, all CMIP6 sidecar completeness checks. No sprint branch or PR merged at hard stop; no new tag was created.
+
+## 2026-11-15 — Backend implementation handoff
+
+- B11 DONE. Verified the existing v1.3.0 contract and its 94 tests.
+- B6 DONE. KPU returns three strategies using a disclosed nearby SoilGrids proxy when no soil override is provided. Original null soil seed is preserved.
+- B1 DONE. Forecast and climate calculations apply seeded seasonal CMIP6 deltas and report provenance. Confirmed preset mapping: baseline has no delta, drier_summers/wetter_winters use ssp245, both uses ssp585.
+- B3 DONE. Offline ECCC station seeds, paired monthly comparisons, headline temperature bias, and station attribution are present. Rain and total precipitation comparisons are explicitly distinguished.
+- B4 DONE. Ten sourced vegetable windows and six UBC field presets are present. Both BC labels are Current rotation. The web UBC request still sends explicit cereal sequences and its old crop pool. Frontend follow-up should select the backend preset for unchanged fields and the expanded catalog. Explicit user rotations keep precedence.
+- B9 DONE. Groq chat is mounted and a real-key smoke passed. Snapshot lacks a forecast request identity, so the API explicitly describes yearly context as reconstructed demo data. Exact custom/edited-screen grounding requires a future contract/client request identity. The API reads the key server-side from process configuration or ignored root .env.
+- B7 step 1 DONE. Monthly climatology and monthly co-pilot context are mounted. Real seasonal forecast remains Roadmap and was not attempted.
+- B8 DONE. Generated and custom strategies carry rule explanations and crop roles at field and farm level. Unknown traits carry verification flags.
+- B10 DONE. Validated custom polygons run the engine with per-request live POWER and SoilGrids data, normalized persistent cache, offline cache mode, and rate limiting. Live UBC acceptance passed.
+- B5 PARTIAL. Fixed interpretation of sourced yield Number objects. Added severe-erosion, pest-saturation, and nitrogen-assumption flags. Post-integration audit confirms severe erosion estimates and saturated pest indices still require local calibration. See FT-B5.md.
+- B2 DEFERRED by the approved build plan. No satellite job was submitted.
+
+Final verification: 309 API tests passed with external socket connections blocked (the local HTTP fixture server was allowed). All 94 contract tests passed. The integrated live Groq smoke returned 200, quoted the exact server irrigation median with its layer/unit/basis, and supplied a local check. The integrated live UBC polygon lookup returned 200. Committed changes contain no apps/web edits and no supplied secret values. The ignored local .env in the isolated backend worktree contains only the Groq key needed by this build.
