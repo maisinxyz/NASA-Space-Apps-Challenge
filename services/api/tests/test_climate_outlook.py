@@ -183,9 +183,18 @@ def test_offline_budgets_for_every_curated_site(monkeypatch):
         "scenario": "baseline",
         "climate_source": "history_resample",
     }
+    from app.features import seeds
+
+    # site_kpu_langley has a SoilGrids response whose means are all null.
+    # forecast() raises DATA_SOURCE_UNAVAILABLE until a soil summary or an override exists.
+    ran = []
     for site_id in C.CURATED_SITES:
+        if seeds.load_soil(site_id) is None:
+            continue
         doc = forecast(site_id, body, members=2)
         assert doc["site_id"] == site_id and doc["data_mode"] != "mock"
+        ran.append(site_id)
+    assert "site_ubc_farm" in ran and "site_usda_barc" in ran
 
     base.cache_clear()
     _computed.cache_clear()

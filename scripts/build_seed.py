@@ -50,13 +50,14 @@ def power_payload(lat: float, lon: float) -> dict:
     return json.loads(cached.read_text(encoding="utf-8"))
 
 
-def seed_power(site: str, lat: float, lon: float) -> None:
+def seed_power(site: str, lat: float, lon: float, coord_note: str = "") -> None:
     payload = power_payload(lat, lon)
     out = seeds.SEED_DIR / site / seeds.POWER_FILE
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as gz:  # mtime=0: byte-stable
         gz.write(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode())
     api = payload["header"].get("api", {})
+    note = f" {coord_note}" if coord_note else ""
     dump(seeds.sidecar_path(out), {
         "source_name": "NASA POWER daily point API, community AG",
         "source_url": C.POWER_SOURCE["url"],
@@ -68,9 +69,7 @@ def seed_power(site: str, lat: float, lon: float) -> None:
         "resolution_temporal": "daily",
         "processing_notes": (
             f"Unmodified API response for {lat:.3f}, {lon:.3f}, {C.PERIOD[0]} to {C.PERIOD[1]}; "
-            f"parameters {', '.join(power.PARAMETERS)}. Fill value -999 becomes missing."
-            + (" Point is the BC address-geocoder access point for 3461 Ross Drive, not a surveyed field centroid (see app/features/config.py)."
-               if site == "site_ubc_farm" else "")
+            f"parameters {', '.join(power.PARAMETERS)}. Fill value -999 becomes missing.{note}"
         ),
     })
 
@@ -86,7 +85,14 @@ def seed_soil(site: str, lat: float, lon: float) -> None:
     raw = json.loads(cached.read_text(encoding="utf-8"))
     raw.pop("query_time_s", None)  # varies per call
     out = seeds.SEED_DIR / site / seeds.SOIL_FILE
-    dump(out, {"query": dict(params[:2]), "summary": seeds.soil_summary(raw), "soilgrids": raw})
+    try:
+        summary = seeds.soil_summary(raw)
+        summary_note = ""
+    except KeyError:
+        # A point query can return null means (no prediction in that cell). Do not invent a texture.
+        summary = None
+        summary_note = " Point query returned null means for the requested properties and depths; summary is null and no texture class was assigned."
+    dump(out, {"query": dict(params[:2]), "summary": summary, "soilgrids": raw})
     dump(seeds.sidecar_path(out), {
         "source_name": "SoilGrids 2.0 REST point query (ISRIC)",
         "source_url": C.SOILGRIDS_QUERY_URL,
@@ -96,7 +102,7 @@ def seed_soil(site: str, lat: float, lon: float) -> None:
         "attribution": C.SOILGRIDS_SOURCE["attribution"],
         "resolution_spatial": "250 m",
         "resolution_temporal": "static",
-        "processing_notes": "Mean of clay, sand, silt, soc, phh2o at 0-5, 5-15, 15-30 cm; depth-weighted to 0-30 cm and divided by the response d_factor. USDA texture class; infiltration class mapping assumed (TODO(verify)).",
+        "processing_notes": "Mean of clay, sand, silt, soc, phh2o at 0-5, 5-15, 15-30 cm; depth-weighted to 0-30 cm and divided by the response d_factor. USDA texture class; infiltration class mapping assumed (TODO(verify))." + summary_note,
     })
 
 
@@ -125,7 +131,7 @@ def main() -> None:
     sites = selected_sites()
     if not offline:
         for site, s in sites.items():
-            seed_power(site, s["lat"], s["lon"])
+            seed_power(site, s["lat"], s["lon"], s.get("coord_note", ""))
             seed_soil(site, s["lat"], s["lon"])
     F.base.cache_clear()
     problems = seeds.sidecar_problems()
@@ -140,8 +146,17 @@ def main() -> None:
         dump(FIX / "hazards" / f"{full}.json", F.hazard_catalog(full))
         dump(FIX / "zones" / "site_kpu_langley.json", F.zones("site_kpu_langley"))
 
-    if "site_ubc_farm" in sites and seeds.load_power("site_ubc_farm"):
-        dump(FIX / "features" / "site_ubc_farm.json", F.feature_table("site_ubc_farm"))
+    # Feature-table fixture for every selected site that already has one, and for
+    # any site named in SEED_SITES. A full rebuild does not invent a new fixture
+    # for a site that never had one. Beltsville is written in the block above.
+    for site in sites:
+        if site == full:
+            continue
+        fixture = FIX / "features" / f"{site}.json"
+        if not filtered and not fixture.is_file():
+            continue
+        if seeds.load_power(site):
+            dump(fixture, F.feature_table(site))
 
     if not filtered:
         sid, lat, lon = LIMITED_EXAMPLE

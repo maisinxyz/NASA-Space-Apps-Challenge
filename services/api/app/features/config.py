@@ -34,6 +34,21 @@ PERIOD = (date(1991, 1, 1), date(2024, 12, 31))  # climatology window; every ful
 # That page says the licence applies to B.C. Data Catalogue records that specify it.
 # Attribution: Contains information licensed under the Open Government Licence – British Columbia.
 # farm_id matches apps/web/lib/farms/candidates/ubc-farm.ts (`ubc-farm`). The web app has not promoted it yet.
+# KPU Langley campus address is published by KPU: 20901 Langley Bypass, Langley, B.C. V3A 8G9
+# (https://www.kpu.ca/langley and https://www.kpu.ca/contact, read 2026-11-15). Those pages do not
+# publish latitude/longitude. The point below is the Province of British Columbia address geocoder
+# parcel point for that civic address, not a surveyed field centroid.
+# Query: https://geocoder.api.gov.bc.ca/addresses.json?addressString=20901%20Langley%20Bypass%20Langley
+# Response searchTimestamp 2026-11-14T22:03:35, baseDataDate 2026-07-07, isOfficial true,
+# matchPrecision CIVIC_NUMBER, locationPositionalAccuracy high, locationDescriptor parcelPoint,
+# fullAddress "20901 Langley Bypass, Langley, BC", geometry [-122.6454338, 49.1093175].
+# Rounded here to 4 decimals. TODO(verify): a KPU-published horticulture-field centroid.
+# An event page lists the plant-sale greenhouses at 20902 Langley Bypass
+# (https://www.kpu.ca/events/kpu-school-horticulture-plant-sale-0); that civic number was not used.
+# The web pin (apps/web/lib/farms/candidates/kpu-langley.ts) is OpenStreetMap way 538627375
+# (49.109162, -122.645172). That point is a fallback only and is not the coordinate stored here.
+# Same geocoder licence and attribution as the UBC Farm comment above.
+# farm_id matches apps/web/lib/farms/candidates/kpu-langley.ts (`kpu-langley`).
 CURATED_SITES: dict[str, dict] = {
     "site_usda_barc": {"name": "USDA Beltsville Agricultural Research Center", "lat": 39.0319, "lon": -76.8844, "farm_id": "usda-barc"},
     "site_cornell_ruminant": {"name": "Cornell Harford ruminant farm", "lat": 42.4409, "lon": -76.2541, "farm_id": "cornell-ruminant"},
@@ -47,6 +62,16 @@ CURATED_SITES: dict[str, dict] = {
         "source_url": "https://ubcfarm.ubc.ca/",
         "coord_source_url": "https://geocoder.api.gov.bc.ca/addresses.json?addressString=3461%20Ross%20Drive%20Vancouver",
         "coord_note": "User-supplied from a map, 49°14'59.23\"N 123°14'12.43\"W (2026-11-15). The seeds were pulled at the earlier geocoder point 49.2517, -123.238, about 300 m away and in the same NASA POWER cell. TODO(verify) centroid.",
+    },
+    "site_kpu_langley": {
+        "name": "KPU Langley, School of Horticulture",
+        "lat": 49.1093,
+        "lon": -122.6454,
+        "farm_id": "kpu-langley",
+        "address": "20901 Langley Bypass, Langley, B.C. V3A 8G9",
+        "source_url": "https://www.kpu.ca/langley",
+        "coord_source_url": "https://geocoder.api.gov.bc.ca/addresses.json?addressString=20901%20Langley%20Bypass%20Langley",
+        "coord_note": "BC address geocoder parcel point (CIVIC_NUMBER, high accuracy), not a field survey. TODO(verify) centroid.",
     },
 }
 

@@ -114,3 +114,13 @@ Correlation and bias for SMAP, ECOSTRESS, and IMERG are sentences inside `Uncert
 Contract scenario names stay `baseline`, `wetter_winters`, `drier_summers`, and `both`. Requested names that the contract does not have: `ssp245` and `ssp585`. Until those exist, `drier_summers` and `wetter_winters` read the file key `ssp245`, and `both` reads `ssp585`. `baseline` applies no stored delta.
 
 No `cmip6_delta.json.gz` was written. The AWS registry says CC0 as of September 2022 and the June 2025 tech note still says a file's `cmip6_license` may restrict use. `scripts/seed_cmip6/build.py` exits 2.
+
+## 2026-11-15 — Session C, EC1 KPU Langley
+
+`site_kpu_langley` is in `CURATED_SITES`. POWER geometry is [-122.645, 49.109, 148.97]. UBC Farm is [-123.238, 49.252, 565.27]. The 1991 `T2M` series differ. There is no `shares_power_cell_with` flag.
+
+SoilGrids 2.0 returned null means at 49.1093, -122.6454 (`data/seed/site_kpu_langley/soil.json`). The feature table has `soil: null` and `quality.limited_data: true`. Session B owns `tests/test_features.py`. One assertion there now accepts that case so a real empty SoilGrids cell is not treated as a failed seed. Please keep that branch if you edit the test.
+
+`GET /api/v1/sites/site_kpu_langley` is 404 because the id is not in the mock `sites.json`. `/features` and `/zones` return `data_mode: seed`. No mock body won.
+
+`forecast()` in `app/services/forecast.py` raises `DATA_SOURCE_UNAVAILABLE` ("No soil seed and no soil override for this site.") when `load_soil` is null. That is the KPU case. Please let a curated site with a stored null SoilGrids summary run, and say the soil is missing, instead of refusing the forecast. `tests/test_climate_outlook.py` skips a site with no soil summary in the budget loop until that exists.

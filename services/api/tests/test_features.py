@@ -98,7 +98,12 @@ def test_feature_table_matches_contract(client, site):
     contract.validate_schema(body, "FeatureTable")
     assert body["data_mode"] == "seed"
     assert body["quality"]["years_available"] >= 30
-    assert body["quality"]["limited_data"] is False and body["soil"]["texture_class"]
+    # A curated point can have a real SoilGrids response whose means are all null
+    # (site_kpu_langley, 2026-11-15). That is limited_data, not a missing seed.
+    if body["soil"] is None:
+        assert body["quality"]["limited_data"] is True
+    else:
+        assert body["quality"]["limited_data"] is False and body["soil"]["texture_class"]
     satellite_ids = {"ndvi", "ndvi_anomaly", "smap_anomaly"}
     for fid, f in body["features"].items():
         assert f["unit"] and f["basis"] in ("measured", "derived", "modeled", "assumed", "relative")
