@@ -741,7 +741,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               frame={frame}
             />
           ) : (
-            <FarmView farmName={farm.name} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
+            <FarmView farmName={farm.name} place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
           )}
         </motion.div>
       )}

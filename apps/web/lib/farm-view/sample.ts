@@ -32,5 +32,5 @@ export const LAYERS: readonly { id: LayerId; label: string }[] = [
   { id: "moisture", label: "Soil moisture" },
 ];
 
-export const SUBTITLE = "Zürich, Switzerland · Explore only: simulation not available for this farm yet.";
+export const EXPLORE_SUBTITLE = "Explore only: simulation not available for this farm yet.";
 export const INITIAL_DAY = 194; // 14 July (0-based day of year)

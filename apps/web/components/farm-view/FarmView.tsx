@@ -6,7 +6,7 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-import { CONDITIONS, LAYERS, SAMPLE_FIELDS, SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
+import { CONDITIONS, LAYERS, SAMPLE_FIELDS, EXPLORE_SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
 import { color, layout, motion as m, zIndex, type LayerId } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
 
@@ -22,11 +22,13 @@ const PILL_ICON: Record<ConditionId, typeof Droplet> = { rainfall: Droplet, mois
 
 export type FarmViewProps = {
   farmName: string;
+  /** "Zürich, Switzerland": from the farm record, never hard-coded. */
+  place?: string;
   onBack(): void;
   onReset(): void;
 };
 
-export function FarmView({ farmName, onBack, onReset }: FarmViewProps) {
+export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
   const reduced = !!useReducedMotion();
   const [layer, setLayer] = useState<LayerId>("satellite");
   const [reportOpen, setReportOpen] = useState(false);
@@ -65,7 +67,7 @@ export function FarmView({ farmName, onBack, onReset }: FarmViewProps) {
           Globe
         </FvButton>
         <h1 className="fv-title">{farmName}</h1>
-        <p className="fv-sub">{SUBTITLE}</p>
+        <p className="fv-sub">{place ? `${place} · ` : ""}{EXPLORE_SUBTITLE}</p>
       </div>
 
       {/* Layer bar */}
