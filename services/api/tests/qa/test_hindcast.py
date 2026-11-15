@@ -1,7 +1,6 @@
-"""Station hindcast skeleton. UBC daily observations are not in the seed, so no bias is produced."""
+"""Station hindcast checks run offline against the committed station sidecars."""
 
 import importlib
-import json
 
 import numpy as np
 import pytest
@@ -15,12 +14,9 @@ def test_mean_bias_is_power_minus_station_and_skips_missing_pairs():
     assert mean_bias(np.array([np.nan]), np.array([1.0])) is None
 
 
-def test_ubc_station_daily_is_absent():
-    gap_path = SEED / "site_ubc_farm" / "station_gap.json"
-    gap = json.loads(gap_path.read_text(encoding="utf-8"))
-    assert gap["status"] == "not_included"
-    assert "TODO(verify)" in gap["reason"]
-    assert station_daily_path("site_ubc_farm") is None
+def test_station_daily_is_present_for_both_bc_sites():
+    for site_id in ("site_ubc_farm", "site_kpu_langley"):
+        assert station_daily_path(site_id) is not None
     assert mean_bias(np.array([]), np.array([])) is None
 
 

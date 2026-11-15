@@ -22,7 +22,7 @@ from app.twin import config as TC
 from app.twin.catalog import load_catalog, validate_selection
 from app.twin.explain.evidence import evidence_card
 from app.twin.explain.flags import strategy_flags
-from app.twin.explain.uncertainty import gap_notes, station_bias, uncertainty_layers
+from app.twin.explain.uncertainty import gap_notes, station_bias, station_context, station_source, uncertainty_layers
 from app.twin.generate import build_strategies
 from app.twin.run import series_to_dict, simulate
 from app.twin.score import (
@@ -173,6 +173,9 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
     outlook = build_climate_outlook(prepared.site_id, prepared.scenario.preset, req.climate_source)
     scenario = _scenario_dict(prepared.scenario)
     forecast_sources = sources(prepared.soil_summary)
+    station_source_row = station_source(_site_id(prepared))
+    if station_source_row:
+        forecast_sources.append(station_source_row)
     if req.climate_source == "cmip6_delta" and prepared.scenario.preset != "baseline":
         scenario["note"] = outlook["scenario"]["note"]
         if len(outlook["sources"]) > 1:
@@ -525,6 +528,17 @@ def _assumptions(prepared: Prepared) -> list[str]:
         "Farm rollup series are area-weighted averages of the field percentiles, not a new ensemble.",
         "Sensitivity cells use the rain and temperature axis alone. Seasonal rain from the request is not added on that grid.",
     ]
+    station = station_context(_site_id(prepared))
+    if station:
+        span = station.get("overlap_years") or []
+        years = f"{span[0]}–{span[1]}" if len(span) == 2 else "no overlapping years"
+        lines.append(
+            f"Station cross-check: {station.get('name')} (ECCC climate identifier "
+            f"{station.get('climate_identifier')}), {station.get('distance_to_site_km')} km from the site; "
+            f"paired POWER overlap {years}. The headline station bias is POWER minus station mean temperature. "
+            "The monthly rainfall comparison pairs POWER corrected total precipitation with ECCC TOTAL_RAIN; "
+            "these differ because POWER precipitation may include frozen precipitation."
+        )
     if prepared.soil_summary and prepared.soil_summary.get("nearby_proxy") and any(
         field.field.soil_override is None for field in prepared.fields
     ):

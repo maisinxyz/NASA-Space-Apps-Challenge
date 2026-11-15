@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.1.0"  # bump when a formula or coefficient below changes
+ENGINE_VERSION = "1.1.1"  # B3 adds sourced station-bias output to the forecast
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

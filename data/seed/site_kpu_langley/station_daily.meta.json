@@ -1,0 +1,26 @@
+{
+  "attribution": "Data Source: Environment and Climate Change Canada",
+  "collection_url": "https://api.weather.gc.ca/collections/climate-daily",
+  "comparison": "Monthly mean of paired daily differences by calendar month, 1991-2024 POWER seed interval; only overlapping valid pairs count.",
+  "license": "Environment and Climate Change Canada Data Services End-use Licence v2.1.1 (August 2026)",
+  "license_url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+  "processing_notes": "Stored MEAN_TEMPERATURE (\u00b0C), TOTAL_RAIN (mm), and TOTAL_PRECIPITATION (mm) as published. POWER overlap comparison uses paired local calendar dates. Rain comparison is explicitly against POWER PRECTOTCORR, which is total precipitation and may include frozen precipitation; use the like-for-like total precipitation comparison for precipitation bias.",
+  "product_version": "MSC GeoMet OGC API; live service at retrieval time",
+  "resolution_spatial": "Point station 49.109153, -122.697597; 3.80 km great-circle from configured site point. The station is a point cross-check, not a field measurement.",
+  "resolution_temporal": "daily; LOCAL_DATE is a local calendar date without UTC offset",
+  "retrieved_on": "2026-11-15",
+  "source_name": "Environment and Climate Change Canada MSC GeoMet climate-daily OGC API",
+  "source_url": "https://api.weather.gc.ca/collections/climate-daily/items?CLIMATE_IDENTIFIER=1101708",
+  "station": {
+    "catalog_daily_first_date": "1964-01-01",
+    "catalog_daily_last_date": "2026-11-13",
+    "climate_identifier": "1101708",
+    "coordinates_geojson_lon_lat": [
+      -122.69759722222223,
+      49.10915277777778
+    ],
+    "distance_to_site_km": 3.8,
+    "name": "CLOVERDALE EAST",
+    "station_type": "Climate-Staffed"
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "attribution": "Data Source: Environment and Climate Change Canada",
+  "basis": "derived",
+  "daily_interval": {
+    "end": "2024-12-31",
+    "start": "1991-01-01"
+  },
+  "licence_url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+  "metric_n_years": {
+    "precipitation": 12,
+    "rain": 12,
+    "temperature": 12
+  },
+  "metric_overlap_years": {
+    "precipitation": [
+      2013,
+      2024
+    ],
+    "rain": [
+      2013,
+      2024
+    ],
+    "temperature": [
+      2013,
+      2024
+    ]
+  },
+  "monthly": [
+    {
+      "month": 1,
+      "power_precipitation_minus_station_rain_mm_day": 4.760411764705882,
+      "precipitation_n_days": 340,
+      "precipitation_power_minus_station_mm_day": 4.516,
+      "rain_n_days": 340,
+      "temperature_n_days": 339,
+      "temperature_power_minus_station_c": -4.771002949852507
+    },
+    {
+      "month": 2,
+      "power_precipitation_minus_station_rain_mm_day": 3.381726384364821,
+      "precipitation_n_days": 309,
+      "precipitation_power_minus_station_mm_day": 2.8258899676375404,
+      "rain_n_days": 307,
+      "temperature_n_days": 309,
+      "temperature_power_minus_station_c": -5.214692556634304
+    },
+    {
+      "month": 3,
+      "power_precipitation_minus_station_rain_mm_day": 3.241088235294118,
+      "precipitation_n_days": 340,
+      "precipitation_power_minus_station_mm_day": 3.210794117647059,
+      "rain_n_days": 340,
+      "temperature_n_days": 335,
+      "temperature_power_minus_station_c": -4.764328358208955
+    },
+    {
+      "month": 4,
+      "power_precipitation_minus_station_rain_mm_day": 2.2758841463414634,
+      "precipitation_n_days": 328,
+      "precipitation_power_minus_station_mm_day": 2.2746646341463417,
+      "rain_n_days": 328,
+      "temperature_n_days": 326,
+      "temperature_power_minus_station_c": -4.171165644171779
+    },
+    {
+      "month": 5,
+      "power_precipitation_minus_station_rain_mm_day": 1.1886390532544377,
+      "precipitation_n_days": 338,
+      "precipitation_power_minus_station_mm_day": 1.1886390532544377,
+      "rain_n_days": 338,
+      "temperature_n_days": 335,
+      "temperature_power_minus_station_c": -2.477074626865672
+    },
+    {
+      "month": 6,
+      "power_precipitation_minus_station_rain_mm_day": 1.3041520467836256,
+      "precipitation_n_days": 342,
+      "precipitation_power_minus_station_mm_day": 1.3041520467836256,
+      "rain_n_days": 342,
+      "temperature_n_days": 340,
+      "temperature_power_minus_station_c": -2.3406470588235297
+    },
+    {
+      "month": 7,
+      "power_precipitation_minus_station_rain_mm_day": 0.7936141304347827,
+      "precipitation_n_days": 368,
+      "precipitation_power_minus_station_mm_day": 0.7936141304347827,
+      "rain_n_days": 368,
+      "temperature_n_days": 368,
+      "temperature_power_minus_station_c": -1.5612771739130433
+    },
+    {
+      "month": 8,
+      "power_precipitation_minus_station_rain_mm_day": 0.9071153846153847,
+      "precipitation_n_days": 364,
+      "precipitation_power_minus_station_mm_day": 0.9071153846153847,
+      "rain_n_days": 364,
+      "temperature_n_days": 364,
+      "temperature_power_minus_station_c": -1.452912087912088
+    },
+    {
+      "month": 9,
+      "power_precipitation_minus_station_rain_mm_day": 2.1789693593314765,
+      "precipitation_n_days": 359,
+      "precipitation_power_minus_station_mm_day": 2.1789693593314765,
+      "rain_n_days": 359,
+      "temperature_n_days": 357,
+      "temperature_power_minus_station_c": -2.220672268907563
+    },
+    {
+      "month": 10,
+      "power_precipitation_minus_station_rain_mm_day": 3.345257452574526,
+      "precipitation_n_days": 369,
+      "precipitation_power_minus_station_mm_day": 3.345257452574526,
+      "rain_n_days": 369,
+      "temperature_n_days": 367,
+      "temperature_power_minus_station_c": -2.5687465940054497
+    },
+    {
+      "month": 11,
+      "power_precipitation_minus_station_rain_mm_day": 4.746554621848739,
+      "precipitation_n_days": 358,
+      "precipitation_power_minus_station_mm_day": 4.677765363128492,
+      "rain_n_days": 357,
+      "temperature_n_days": 353,
+      "temperature_power_minus_station_c": -4.056373937677054
+    },
+    {
+      "month": 12,
+      "power_precipitation_minus_station_rain_mm_day": 4.120416666666666,
+      "precipitation_n_days": 370,
+      "precipitation_power_minus_station_mm_day": 3.852864864864865,
+      "rain_n_days": 360,
+      "temperature_n_days": 371,
+      "temperature_power_minus_station_c": -4.91199460916442
+    }
+  ],
+  "n_years": 12,
+  "notes": [
+    "Temperature is paired-day NASA POWER T2M minus ECCC MEAN_TEMPERATURE, in \u00b0C.",
+    "Precipitation is paired-day POWER PRECTOTCORR minus ECCC TOTAL_PRECIPITATION, in mm/day.",
+    "Rain cross-check is POWER PRECTOTCORR minus ECCC TOTAL_RAIN, in mm/day; POWER includes total precipitation, so this is not a like-for-like rain comparison.",
+    "Each monthly figure is the mean of paired daily differences for that calendar month across overlapping years; null means no paired observations."
+  ],
+  "overlap_years": [
+    2013,
+    2024
+  ],
+  "retrieved_on": "2026-11-15",
+  "source_url": "https://api.weather.gc.ca/collections/climate-daily/items?CLIMATE_IDENTIFIER=1108395",
+  "station": {
+    "catalog_daily_first_date": "2013-06-13",
+    "catalog_daily_last_date": "2026-11-13",
+    "climate_identifier": "1108395",
+    "coordinates_geojson_lon_lat": [
+      -123.18388888888889,
+      49.194722222222225
+    ],
+    "distance_to_site_km": 7.23,
+    "name": "VANCOUVER INTL A",
+    "station_type": "Aviation-Staffed"
+  },
+  "temperature_bias_c": -3.3389457252641694,
+  "temperature_n_days": 4164
+}

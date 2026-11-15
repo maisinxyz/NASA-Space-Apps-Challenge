@@ -104,14 +104,21 @@ def test_correlation_and_bias_use_overlapping_weeks_only():
     assert n == 3 and corr == 1.0 and bias == 0.0
 
 
-def test_uncertainty_uses_sourced_resolutions_and_skips_a_missing_station():
+def test_uncertainty_uses_sourced_resolutions_and_station_bias():
     layers = uncertainty_layers("site_ubc_farm")
     by_name = {row["layer"]: row for row in layers}
     assert by_name["nasa_power"]["native_resolution_m"] == 55000
     assert by_name["soilgrids"]["native_resolution_m"] == 250
     assert by_name["nasa_power"]["record_years"] == "1991-2024"
     assert by_name["nasa_power"]["needs_local_validation"] is True
-    assert station_bias("site_ubc_farm") is None
+    bias = station_bias("site_ubc_farm")
+    assert bias is not None
+    assert bias["variable"].startswith("mean_temperature")
+    assert bias["bias"]["unit"] == "°C"
+    assert bias["bias"]["basis"] == "derived"
+    assert bias["n_years"] == 12
+    from fixtures_lib import contract
+    contract.validate_schema({"layers": list(by_name.values()), "station_bias": bias}, "ForecastUncertainty")
     from app.features import seeds
     if seeds.load_smap("site_ubc_farm") is None:
         assert "smap" not in by_name

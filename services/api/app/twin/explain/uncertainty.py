@@ -392,29 +392,58 @@ def uncertainty_layers(site_id: str) -> list[dict]:
 
 
 def station_bias(site_id: str) -> dict | None:
-    """POWER minus a daily station series. None when the station file was not stored.
-
-    UBC Farm's ``station_gap.json`` says the ECCC product was not copied into the
-    repo. This function does not fill a bias from the climate normals page.
-    """
-
-    gap = SEED / site_id / "station_gap.json"
-    if gap.is_file():
-        doc = json.loads(gap.read_text(encoding="utf-8"))
-        if isinstance(doc, dict) and doc.get("status") == "not_included":
-            return None
-    daily = None
-    for name in ("station_daily.json", "station_daily.json.gz"):
-        path = SEED / site_id / name
-        if path.is_file():
-            daily = path
-            break
-    if daily is None:
+    """Return the paired daily mean temperature bias using stored station comparison."""
+    path = SEED / site_id / "station_bias.json"
+    if not path.is_file():
         return None
-    # A stored daily file would be differenced here. No curated site has one yet,
-    # and this branch does not invent the column layout.
-    _ = daily
-    return None
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    value = doc.get("temperature_bias_c")
+    n_days = doc.get("temperature_n_days")
+    n_years = doc.get("n_years")
+    if not isinstance(value, (int, float)) or not isinstance(n_days, int) or n_days < 1 or not isinstance(n_years, int):
+        return None
+    return {
+        "variable": "mean_temperature (POWER minus Environment Canada station)",
+        "bias": {
+            "value": float(value),
+            "unit": "°C",
+            "basis": "derived",
+            "confidence": "low",
+        },
+        "n_years": n_years,
+    }
+
+
+def station_context(site_id: str) -> dict | None:
+    """Station attribution/location context for the forecast assumptions text."""
+    path = SEED / site_id / "station_bias.json"
+    if not path.is_file():
+        return None
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    station = doc.get("station")
+    if not isinstance(station, dict):
+        return None
+    return {**station, "overlap_years": doc.get("overlap_years"), "notes": doc.get("notes", [])}
+
+
+def station_source(site_id: str) -> dict | None:
+    """Attribution row for the derived POWER/ECCC station comparison."""
+    path = SEED / site_id / "station_bias.meta.json"
+    if not path.is_file():
+        return None
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    if not all(str(meta.get(key) or "").strip() for key in ("source_name", "license", "attribution")):
+        return None
+    row = {
+        "name": meta["source_name"],
+        "role": "weather",
+        "license": meta["license"],
+        "attribution": meta["attribution"],
+        "basis": "derived",
+    }
+    if meta.get("source_url"):
+        row["url"] = meta["source_url"]
+    return row
 
 
 def gap_notes(site_id: str) -> list[str]:
