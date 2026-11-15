@@ -29,3 +29,26 @@ export function useConditionView() {
     return { ...conditionView(cond, feats, { forecast, engineId }, year), now: conditionView(cond, feats, { forecast, engineId }, 1) };
   }, [selected, feats, forecast, engineId, year]);
 }
+
+/** Farm-average headline numbers at the scrubber year, for the four Conditions pills. */
+export function usePillValues() {
+  const farmId = useAppStore((s) => s.farmId);
+  const t = useFutureStore((s) => s.t);
+  const strategyId = useFutureStore((s) => s.strategyId);
+  const { data, forecast } = useFutureData();
+  const twin = twinConfig(farmId);
+  const feats = useMemo(() => plotFeats(twin?.fields ?? []), [twin]);
+  const year = forecastYear(t, forecast?.horizon_years ?? 10);
+  const engineId = strategyOf(data, strategyId).engineId;
+  return useMemo(() => {
+    if (!feats.length) return null;
+    const avg = (id: CondId) => conditionView(condById(id)!, feats, { forecast, engineId }, year).series[year - 1];
+    const days = Math.round(avg("firstFrost") - avg("lastFrost"));
+    return {
+      rain: `${Math.round(avg("rain")).toLocaleString("en-US")} mm/yr`,
+      moisture: `${avg("soilMoist").toFixed(1)}% drier`,
+      heat: `${Math.round(avg("heat"))} days/yr`,
+      frost: `${days} days`,
+    };
+  }, [feats, forecast, engineId, year]);
+}

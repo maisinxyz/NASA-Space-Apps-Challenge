@@ -1,6 +1,7 @@
 "use client";
 // The four new doors. Only these show by default in Future mode: Mode switch, Lenses, What-if, and the richer
 // timeline. Everything else opens from one of them.
+import { useConditionStore, usePillValues } from "@/lib/conditions/useConditionView";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useState } from "react";
 
@@ -130,23 +131,23 @@ const LensIcon = () => (
 
 /* ---------------- Future condition pills (projected, with deltas vs 2026) ---------------- */
 export function FuturePills() {
-  const setLens = useFutureStore((s) => s.setLens);
+  const values = usePillValues();
   const pills = [
-    { id: "rain", icon: Droplet, label: "Rain", lens: "rain" as LensId },
-    { id: "moisture", icon: Droplet, label: "Soil moisture", lens: "water" as LensId },
-    { id: "heat", icon: Thermometer, label: "Heat days", lens: "heat" as LensId },
-    { id: "frost", icon: Leaf, label: "Frost-free", lens: "frost" as LensId },
+    { id: "rain", icon: Droplet, label: "Rain", lens: "rain" as LensId, cond: "rain" as const },
+    { id: "moisture", icon: Droplet, label: "Soil moisture", lens: "water" as LensId, cond: "soilMoist" as const },
+    { id: "heat", icon: Thermometer, label: "Heat days", lens: "heat" as LensId, cond: "heat" as const },
+    { id: "frost", icon: Leaf, label: "Frost-free", lens: "frost" as LensId, cond: "lastFrost" as const },
   ];
   return (
     <div className="fv-auto ff-pills-col" data-testid="future-pills">
       {pills.map((p) => (
-        <FvButton key={p.id} className="fv-glass fv-pill fv-auto ff-future-bar" data-testid={`future-pill-${p.id}`} onClick={() => setLens(p.lens)} aria-label={`${p.label}: open the ${LENS_SHORT[p.lens]} lens`}>
+        <FvButton key={p.id} className="fv-glass fv-pill fv-auto ff-future-bar" data-testid={`future-pill-${p.id}`} onClick={() => useConditionStore.setState({ selected: p.cond, open: true })} aria-label={`${p.label}: show on the map`}>
           <div className="ff-future-bar-left">
             <p.icon size={layout.pillRow.icon} />
             <span className="l">{p.label}</span>
           </div>
           <div className="ff-future-bar-right">
-            <span className="v">No data</span>
+            <span className="v">{values?.[p.id as keyof typeof values] ?? "No data"}</span>
           </div>
         </FvButton>
       ))}
