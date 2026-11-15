@@ -20,7 +20,7 @@ describe("FarmCard", () => {
     expect(html).toContain(`href="${hero.sourceUrl}"`);
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
-    expect(html).toContain("Open twin");
+    expect(html).toContain("Open farm workspace");
     expect(html).not.toContain("Simulation not available");
   });
 
@@ -29,7 +29,7 @@ describe("FarmCard", () => {
     expect(html).toContain("Explore only");
     expect(html).toContain("Simulation not available for this farm yet");
     expect(html).toContain("Approximate location");
-    expect(html).not.toContain("Open twin");
+    expect(html).not.toContain("Open farm workspace");
   });
 
   it("shows a farm's privacy note and area-only owner", () => {
@@ -42,7 +42,7 @@ describe("FarmCard", () => {
 
   it("without a globe: no Open twin and no link to removed pages", () => {
     const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} />);
-    expect(html).not.toContain("Open twin");
+    expect(html).not.toContain("Open farm workspace");
     expect(html).not.toContain("/simulate");
     expect(html).not.toContain("data-dev-only");
   });
