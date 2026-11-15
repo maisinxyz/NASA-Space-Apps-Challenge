@@ -1,0 +1,23 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ubc_farm",
+ "product": "ndvi",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "HLSL30_VI",
+   "version": "2.0",
+   "title": "HLS Operational Land Imager Vegetation Indices Daily Global 30 m V2.0",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSL30_VI"
+  },
+  {
+   "short_name": "HLSS30_VI",
+   "version": "2.0",
+   "title": "HLS Sentinel-2 Multi-spectral Instrument Vegetation Indices Daily Global 30 m V2.0",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSS30_VI"
+  }
+ ],
+ "reason": "NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

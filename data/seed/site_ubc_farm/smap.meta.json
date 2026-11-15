@@ -1,0 +1,11 @@
+{
+ "source_name": "SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data V008",
+ "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=SPL4SMGP",
+ "product_version": "008",
+ "retrieved_on": "2026-11-15",
+ "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
+ "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
+ "resolution_spatial": "not retrieved",
+ "resolution_temporal": "not retrieved",
+ "processing_notes": "Both an L4 9 km root-zone product and an L3 36 km product were listed. Neither was retrieved, and AppEEARS was not called. No choice between L3 and L4 is stored as data. NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

@@ -50,6 +50,54 @@ def load_power(site_id: str, root: Path = SEED_DIR) -> dict | None:
         return json.load(f)
 
 
+def _load_weekly(site_id: str, name: str, root: Path) -> dict | None:
+    """A retrieved weekly series, or None.
+
+    Gap records (`<name>.gap.json`) are not series. None means the layer was
+    not retrieved (`data_mode: limited_data`). Nothing is synthesized.
+    """
+    path = root / site_id / f"{name}.json.gz"
+    if not path.is_file():
+        return None
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        doc = json.load(f)
+    if not isinstance(doc, dict) or not isinstance(doc.get("weekly"), list):
+        return None
+    return doc
+
+
+def load_ndvi(site_id: str, root: Path = SEED_DIR) -> dict | None:
+    """Weekly NDVI, or None. See `ndvi.gap.json` for why it is missing."""
+    return _load_weekly(site_id, "ndvi", root)
+
+
+def load_smap(site_id: str, root: Path = SEED_DIR) -> dict | None:
+    """Weekly SMAP moisture, or None. See `smap.gap.json`."""
+    return _load_weekly(site_id, "smap", root)
+
+
+def load_ecostress(site_id: str, root: Path = SEED_DIR) -> dict | None:
+    """Weekly ECOSTRESS ET, or None. See `ecostress.gap.json`."""
+    return _load_weekly(site_id, "ecostress", root)
+
+
+def load_grace(site_id: str, root: Path = SEED_DIR) -> dict | None:
+    """GRACE-FO series, or None. See `grace.gap.json`."""
+    return _load_weekly(site_id, "grace", root)
+
+
+def load_dem(site_id: str, root: Path = SEED_DIR) -> dict | None:
+    """DEM summary, or None. See `dem.gap.json`. A missing DEM is not a flat field."""
+    path = root / site_id / "dem.json.gz"
+    if not path.is_file():
+        return None
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        doc = json.load(f)
+    if not isinstance(doc, dict) or doc.get("elevation") is None:
+        return None
+    return doc
+
+
 def load_soil(site_id: str, root: Path = SEED_DIR) -> dict | None:
     p = root / site_id / SOIL_FILE
     return json.loads(p.read_text(encoding="utf-8"))["summary"] if p.is_file() else None

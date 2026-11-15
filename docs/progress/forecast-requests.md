@@ -2,6 +2,10 @@
 
 Sessions read this before starting a workstream. Add a dated note; do not edit another session's files to get around it.
 
+## 2026-11-15 — Session A, W2 satellite layers are blocked
+
+`load_ndvi`, `load_smap`, `load_ecostress`, `load_grace`, and `load_dem` return `None` for UBC Farm. Gap files are under `data/seed/site_ubc_farm/*.gap.json` with `data_mode: limited_data`. Do not fill those series. Details and the CMR titles that were checked are in `docs/progress/FT-W2.md`. IMERG short name `GPM_3IMERGDF` version `07` was seen and not stored. Earthdata credentials are the open question.
+
 ## 2026-11-15 — Session A, crop catalog v2 is on main (after this commit)
 
 `data/seed/crops/catalog_v2.json` has 49 crops. `data_mode` is `seed`. Load it with `app.twin.catalog.load_catalog`. Do not read `packages/contracts/fixtures/crop_catalog.json` as a second source; that fixture is a copy of the seed.

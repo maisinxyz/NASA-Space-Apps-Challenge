@@ -1,0 +1,11 @@
+{
+ "source_name": "JPL GRACE and GRACE-FO Mascon Ocean, Ice, and Hydrology Equivalent Water Height Coastal Resolution Improvement (CRI) Filtered Release 06.3 Version 04",
+ "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4",
+ "product_version": "RL06.3Mv04",
+ "retrieved_on": "2026-11-15",
+ "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
+ "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
+ "resolution_spatial": "not retrieved",
+ "resolution_temporal": "not retrieved",
+ "processing_notes": "Two JPL mascon collections were listed. Grid spacing was not in the titles that were read. TODO(verify) the spacing. No regional anomaly was computed. NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

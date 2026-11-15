@@ -1,0 +1,23 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ubc_farm",
+ "product": "grace",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4",
+   "version": "RL06.3Mv04",
+   "title": "JPL GRACE and GRACE-FO Mascon Ocean, Ice, and Hydrology Equivalent Water Height Coastal Resolution Improvement (CRI) Filtered Release 06.3 Version 04",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4"
+  },
+  {
+   "short_name": "TELLUS_GRAC-GRFO_MASCON_GRID_RL06.3_V4",
+   "version": "RL06.3Mv04",
+   "title": "JPL GRACE and GRACE-FO Mascon Ocean, Ice, and Hydrology Equivalent Water Height JPL Release 06.3 Version 04",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=TELLUS_GRAC-GRFO_MASCON_GRID_RL06.3_V4"
+  }
+ ],
+ "reason": "NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

@@ -1,0 +1,17 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ubc_farm",
+ "product": "dem",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "NASADEM_HGT",
+   "version": "001",
+   "title": "NASADEM Merged DEM Global 1 arc second V001",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=NASADEM_HGT"
+  }
+ ],
+ "reason": "NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}
