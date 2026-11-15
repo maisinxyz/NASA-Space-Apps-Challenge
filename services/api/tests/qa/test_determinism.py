@@ -3,7 +3,7 @@
 from app.twin.climate import build_climate_outlook
 from tests.qa.checks import canonical_json
 
-SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm")
+SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm", "site_kpu_langley")
 
 
 def test_climate_outlook_is_byte_identical_across_builds():

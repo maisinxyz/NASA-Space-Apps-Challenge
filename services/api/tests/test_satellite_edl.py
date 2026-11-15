@@ -122,6 +122,18 @@ def test_resolve_stops_at_the_signed_url_and_caps_the_body():
     assert TOKEN not in resolved
 
 
+def test_resolve_confirm_false_does_not_fetch_the_signed_host():
+    scripted = Scripted([
+        (302, {"Location": S3}, b""),
+        (200, {}, b"x" * 5000),
+    ])
+    resolved = _client(scripted).resolve(EARTH, confirm=False)
+    assert resolved == S3
+    assert len(scripted.seen) == 1
+    assert scripted.seen[0][1]["Authorization"] == f"Bearer {TOKEN}"
+    assert TOKEN not in resolved
+
+
 def test_redirect_readds_bearer_only_on_earthdata():
     scripted = Scripted([
         (302, {"Location": NSIDC}, b""),

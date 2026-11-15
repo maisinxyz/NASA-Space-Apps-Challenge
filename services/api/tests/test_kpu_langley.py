@@ -50,6 +50,9 @@ def test_kpu_power_cell_is_not_the_ubc_cell():
     ubc_1991 = {day: value for day, value in ubc["properties"]["parameter"]["T2M"].items() if day.startswith("1991")}
     assert kpu_1991 != ubc_1991
     assert "shares_power_cell_with" not in C.CURATED_SITES["site_kpu_langley"]
+    # Soil is not the same record either: UBC has a texture summary, KPU's means were null.
+    assert seeds.load_soil("site_ubc_farm") is not None
+    assert seeds.load_soil("site_kpu_langley") is None
 
 
 def test_ubc_forecast_assumption_names_the_vegetable_preset():

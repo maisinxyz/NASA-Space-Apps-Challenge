@@ -24,11 +24,24 @@ def test_catalog_has_forty_sourced_crops():
     assert PORTED <= {crop["id"] for crop in doc["crops"]}
     by_id = {crop["id"]: crop for crop in doc["crops"]}
     assert by_id["crop_wheat_spring"]["kc_stages"]["mid"] == 1.15
-    assert by_id["crop_wheat_spring"]["kc_stages"]["ini"] is None
+    assert by_id["crop_wheat_spring"]["kc_stages"]["ini"] == 0.3
+    assert by_id["crop_wheat_spring"]["kc_stages"]["end"] is None
     assert by_id["crop_bean_dry"]["kc_stages"] == {"ini": 0.4, "mid": 1.15, "end": 0.35}
-    assert by_id["crop_cabbage"]["kc_stages"] == {"ini": None, "mid": None, "end": None}
+    assert by_id["crop_cabbage"]["kc_stages"] == {"ini": 0.7, "mid": 1.05, "end": 0.95}
+    assert by_id["crop_lettuce"]["kc_stages"] == {"ini": 0.7, "mid": 1.0, "end": 0.95}
     assert by_id["crop_cabbage"]["season_window"]["plant_doy"] is None
-    assert by_id["crop_cabbage"]["reference_yield"] is None
+    assert by_id["crop_cabbage"]["root_depth_m"] == {"ini": None, "mid": None, "end": None}
+    assert "0.5-0.8" in by_id["crop_cabbage"]["trait_sources"]["root_depth_m"]
+    assert by_id["crop_cabbage"]["region_fit"] == ["oceanic"]
+    assert by_id["crop_cabbage"]["needs_equipment"] == []
+    assert by_id["crop_tomato"]["kc_stages"]["end"] is None
+    assert by_id["crop_cabbage"]["reference_yield"]["value"] == 21.34
+    assert by_id["crop_cabbage"]["reference_yield"]["unit"] == "t/ha"
+    assert by_id["crop_cabbage"]["yield_response_factor_ky"] == 0.95
+    assert by_id["crop_lettuce"]["reference_yield"]["value"] == 31.69
+    assert by_id["crop_lettuce"]["yield_response_factor_ky"] is None
+    assert by_id["crop_cabbage"]["typical_n_rate_kg_ha"] is None
+    assert by_id["crop_cauliflower"]["reference_yield"] is None
     assert "TODO(verify)" in by_id["crop_maize"]["trait_sources"]["kc_stages"]
     assert "1.20" in by_id["crop_maize"]["trait_sources"]["kc_stages"]
 
@@ -63,5 +76,34 @@ def test_get_crop_catalog_filters_category():
     bad = client.get("/api/v1/crop-catalog", params={"category": "oilseed"})
     assert bad.status_code == 422
     assert bad.json()["error"]["code"] == "INVALID_INPUT"
-    # Empty region_fit is returned for a site with no verified climate class.
+    # UBC is oceanic. Crops with that fit, and crops with an empty fit, both stay.
+    # KPU has no stored class, so a filled region_fit does not hide a crop there.
     assert len(list_catalog(site_id="site_ubc_farm")["crops"]) == len(load_catalog()["crops"])
+    assert len(list_catalog(site_id="site_kpu_langley")["crops"]) == len(load_catalog()["crops"])
+
+
+def test_cabbage_yield_is_computed_only_when_a_window_exists():
+    """The catalog window stays null. A window that exists only in this test shows the engine path."""
+    import numpy as np
+
+    from app.twin.types import PlanYear, Slot
+    from app.twin.water import _yields, year_profile
+
+    doc = load_catalog()
+    cabbage = next(crop for crop in doc["crops"] if crop["id"] == "crop_cabbage")
+    assert cabbage["season_window"]["plant_doy"] is None
+    bare = year_profile(PlanYear(1, (Slot(1, "summer", "crop_cabbage"),)), doc, 49.25)
+    assert "crop_cabbage" not in bare.crop_kc
+    assert any("season window" in note for note in bare.missing)
+
+    crops = []
+    for crop in doc["crops"]:
+        row = dict(crop)
+        if row["id"] == "crop_cabbage":
+            row["season_window"] = {"plant_doy": 121, "terminate_doy": 243}
+        crops.append(row)
+    catalog = {"crops": crops}
+    profile = year_profile(PlanYear(1, (Slot(1, "summer", "crop_cabbage"),)), catalog, 49.25)
+    zeros = np.zeros_like(profile.kc)
+    grain, _forage, _notes = _yields(profile, catalog, zeros, zeros, zeros, zeros)
+    assert grain["crop_cabbage"] == cabbage["reference_yield"]["value"]

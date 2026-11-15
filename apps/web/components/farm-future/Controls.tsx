@@ -7,7 +7,7 @@ import { useRef, useState } from "react";
 import { STRATEGIES, WHAT_IF_LIMITS } from "@/lib/farm-future/fixtures";
 import { conditionsAt, scoreWithWhatIf, whatIfActive } from "@/lib/farm-future/model";
 import { useFutureStore, type FutureMode, type LensId } from "@/lib/farm-future/store";
-import { color, motion as m } from "@/lib/farm-view/tokens";
+import { color, layout, motion as m } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "@/components/farm-view/FvButton";
@@ -124,16 +124,19 @@ export function FuturePills() {
     { id: "frost", icon: Leaf, label: "Frost-free", value: <Num value={c.frostFreeDays} unit=" d" />, delta: <Num value={c.frostFreeDelta} signed />, lens: "frost" as LensId },
   ];
   return (
-    <div className="fv-glass fv-stats fv-auto" role="group" aria-label="Projected conditions" data-testid="future-pills">
-      <div className="cells">
-        {pills.map((p) => (
-          <FvButton key={p.id} className="fv-stat" data-testid={`future-pill-${p.id}`} onClick={() => setLens(p.lens)} aria-label={`${p.label}: open the ${LENS_SHORT[p.lens]} lens`}>
-            <span className="l"><p.icon size={12} />{p.label}</span>
-            <span className="v">{p.value}<span className="d">{p.delta}</span></span>
-          </FvButton>
-        ))}
-      </div>
-      <p className="foot">Projected · change since 2026</p>
+    <div className="fv-auto ff-pills-col" data-testid="future-pills">
+      {pills.map((p) => (
+        <FvButton key={p.id} className="fv-glass fv-pill fv-auto ff-future-bar" data-testid={`future-pill-${p.id}`} onClick={() => setLens(p.lens)} aria-label={`${p.label}: open the ${LENS_SHORT[p.lens]} lens`}>
+          <div className="ff-future-bar-left">
+            <p.icon size={layout.pillRow.icon} />
+            <span className="l">{p.label}</span>
+          </div>
+          <div className="ff-future-bar-right">
+            <span className="v">{p.value}</span>
+            <span className="l" style={{ fontSize: 11 }}>{p.delta}</span>
+          </div>
+        </FvButton>
+      ))}
     </div>
   );
 }

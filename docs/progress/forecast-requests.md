@@ -132,3 +132,21 @@ SoilGrids 2.0 returned null means at 49.1093, -122.6454 (`data/seed/site_kpu_lan
 `packages/contracts/fixtures/sites.json` lists both ids as `(mock)` with `terr_mock_hills`. `GET /api/v1/sites/site_kpu_langley` returns that card (HTTP 200). The earlier EC1 sentence that this route was 404 is no longer true. `/features` and `/zones` stay `data_mode: seed` because the site is curated. The fixture was not edited. Please decide whether the site resource should stop returning the mock card for a curated id.
 
 `app/rotation/engine.py` and `app/rotation/evidence.py` now skip a crop that is not in `traits.json` instead of raising `KeyError`. Cabbage and lettuce have no day-of-year window yet, so the v1.1 scorer does not time them. Fall rye still is. `forecast._assumptions` adds one line with the preset name. Please keep that line.
+
+## 2026-11-15 — Session C, EC3 catalog
+
+FAO-56 Table 12 Kc values for the horticulture rows were copied from the column-preserving PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf . A blank Kc ini uses the group row and the source says so. Ranges were not stored as one number. Table 22 root depth stays null because it is a range, not three stages.
+
+Planting day-of-year is still null. The BC cole and lettuce guides and the WSU Snohomish fall-vegetable page state months or deadlines. Those were not turned into `plant_doy` / `terminate_doy`. `water._crop_daily` returns None without a window, so `yield_t_ha` will stay omitted for cabbage and lettuce until a window exists. Please do not invent the day.
+
+`region_fit` `oceanic` is stored for crops on the BC vegetable-guide index. `SITE_CLIMATE_CLASS` has `site_ubc_farm` only (Wikipedia: Vancouver is temperate oceanic, Köppen Cfb). Langley has no stored class. A site with no class is not filtered.
+
+## 2026-11-15 — Session C, EC4 yields
+
+`reference_yield` for ten horticulture rows is Statistics Canada Table 3-10, British Columbia, 2010, production divided by harvested hectares. Seasonal Ky for the crops in FAO Paper 66 Table 1 (Paper 33) is stored. Lettuce is not in that table, so its Ky stays null. BC nitrogen guides give ranges, so `typical_n_rate_kg_ha` stays null.
+
+`yield_t_ha` is still omitted for cabbage because `plant_doy` is null. `water.year_profile` says the season window is not set. That is the intended gate. Please do not invent the day. A test inside `tests/test_crop_catalog.py` shows that the same cabbage row returns 21.34 t/ha once a window is present.
+
+## 2026-11-15 — Session C, EC5 five-site smoke
+
+`scripts/smoke_forecast.py` now calls all five curated sites offline. KPU climate-outlook and exposure return 200. Forecast and sensitivity return 503 `DATA_SOURCE_UNAVAILABLE` because `load_soil` is null. The smoke script treats that one code as a noted gap and exits 0. Please let a curated site with a stored null SoilGrids summary run. No satellite value series is on main yet: Session A has NDVI gap sidecars for the four older sites only.

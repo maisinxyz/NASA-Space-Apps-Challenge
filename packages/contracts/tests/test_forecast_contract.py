@@ -133,9 +133,12 @@ def test_catalog_traits_are_sourced_and_unverified_numbers_are_null():
     for crop in catalog["crops"]:
         for field in V2_SOURCE_FIELDS:
             assert crop["trait_sources"].get(field), field
-        assert crop["reference_yield"] is None
-        assert crop["yield_response_factor_ky"] is None
-        assert crop["typical_n_rate_kg_ha"] is None
+        # A sourced reference yield is an object. An unsourced one stays null.
+        if crop["reference_yield"] is not None:
+            assert crop["reference_yield"]["unit"] == "t/ha"
+            assert crop["reference_yield"]["basis"] == "derived"
+            assert crop["reference_yield"]["source"]
+        assert crop["typical_n_rate_kg_ha"] is None or isinstance(crop["typical_n_rate_kg_ha"], (int, float))
         assert crop["return_interval_years"] is None
         assert set(crop["needs_equipment"]) <= equipment
 

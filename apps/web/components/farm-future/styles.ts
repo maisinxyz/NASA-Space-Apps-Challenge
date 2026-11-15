@@ -45,4 +45,10 @@ export const FF_CSS = `
 .ff-pane-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(242,235,221,0.45); }
 .ff-drawer { position: absolute; right: 0; top: 0; bottom: 0; width: 360px; background: #1E1915; border-left: 1px solid ${color.glassBorder}; padding: 18px 22px; display: flex; flex-direction: column; gap: 6px; color: ${color.ink}; }
 .ff-link { font: 400 12px/16px ${font.sans}; color: ${color.ink}; text-decoration: underline; text-decoration-color: rgba(242,235,221,0.45); text-underline-offset: 3px; align-self: flex-start; }
+.ff-pills-col { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.ff-future-bar { display: flex !important; align-items: center; justify-content: space-between; width: 100%; height: 38px; padding: 0 14px !important; border-radius: 10px; background: rgba(27,22,18,0.75); }
+.ff-future-bar:hover { background: rgba(242,235,221,0.12); border-color: rgba(242,235,221,0.24); }
+.ff-future-bar-left { display: flex; align-items: center; gap: 10px; }
+.ff-future-bar-left .l { font-size: 13px; font-weight: 500; color: #f2ebdd; }
+.ff-future-bar-right { display: flex; align-items: baseline; gap: 6px; }
 `;

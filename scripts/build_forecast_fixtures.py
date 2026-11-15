@@ -1,9 +1,9 @@
-"""Write one engine forecast and one sensitivity grid.
+"""Write an engine forecast and a sensitivity grid for each curated site that has soil.
 
 The contract fixtures under packages/contracts/fixtures/forecast/ stay the shape
-examples. Their generator test requires a yield series and a CAD income, and the
-catalog's reference yields are null, so the engine correctly omits those.
-This script writes the real response beside the cache, which is gitignored.
+examples. This script writes the real response beside the cache, which is gitignored.
+site_kpu_langley is skipped while its SoilGrids summary is null, because forecast()
+raises DATA_SOURCE_UNAVAILABLE.
 
     python scripts/build_forecast_fixtures.py
 """
@@ -17,8 +17,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "services" / "api"))
 
+from app.core.errors import ApiError  # noqa: E402
+from app.features import seeds  # noqa: E402
 from app.services.forecast import forecast  # noqa: E402
 from app.services.sensitivity import sensitivity  # noqa: E402
+
+SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm", "site_kpu_langley")
 
 OUT = ROOT / "data" / "cache" / "forecast" / "engine"
 BODY = {
@@ -39,12 +43,20 @@ BODY = {
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    site = "site_usda_barc"
-    forecast_doc = forecast(site, BODY)
-    grid = sensitivity(site, BODY)
-    (OUT / f"{site}_forecast.json").write_text(json.dumps(forecast_doc, indent=1) + "\n", encoding="utf-8")
-    (OUT / f"{site}_sensitivity.json").write_text(json.dumps(grid, indent=1) + "\n", encoding="utf-8")
-    print(f"wrote {OUT}")
+    for site in SITES:
+        if seeds.load_soil(site) is None:
+            print(f"{site}: skipped, soil summary is null")
+            continue
+        try:
+            forecast_doc = forecast(site, BODY)
+            grid = sensitivity(site, BODY)
+        except ApiError as exc:
+            print(f"{site}: {exc.code} {exc.message}")
+            continue
+        (OUT / f"{site}_forecast.json").write_text(json.dumps(forecast_doc, indent=1) + "\n", encoding="utf-8")
+        (OUT / f"{site}_sensitivity.json").write_text(json.dumps(grid, indent=1) + "\n", encoding="utf-8")
+        print(f"wrote {site}")
+    print(f"output {OUT}")
 
 
 if __name__ == "__main__":

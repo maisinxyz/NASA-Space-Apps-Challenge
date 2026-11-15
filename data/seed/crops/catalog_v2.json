@@ -1235,13 +1235,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Heading brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Heading brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1261,21 +1261,29 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "reference_yield": {
+    "value": 21.34,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Cabbage: total production 5677 metric tonnes / harvested area 266 hectares = 21.3421, stored as 21.34 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 1: includes Chinese cabbage and regular cabbage."
+   },
+   "yield_response_factor_ky": 0.95,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: ballhead cabbage for fall harvest uses the Brussels-sprout culture, direct seed by 1 July or transplant by 1 August, and can be harvested into early winter (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/). BC cole crops: seed 4 to 6 weeks before transplant; the page does not give a calendar day (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). Western Washington is not Langley.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Cabbage row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
-    "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
+    "frost_tolerance_c": "Not stored. The BC cole-crop guide says over-wintered cauliflower in Abbotsford has tolerated -19°C under snow, and that Fraser Valley crops have survived -14°C without snow cover (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops, page updated 2025-06-27). That paragraph is in the overwinter-cauliflower section. It is a survival note, not this row's frost_tolerance_c. TODO(verify).",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
     "drought_tolerance": "Not verified. Null is not a default class. TODO(verify)",
     "cover_crop": "True only when category is cover. TODO(verify)",
@@ -1283,19 +1291,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-0.8 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
-    "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Cabbage: total production 5677 metric tonnes / harvested area 266 hectares = 21.3421, stored as 21.34 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 1: includes Chinese cabbage and regular cabbage.",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
+    "typical_n_rate_kg_ha": "Not stored as one rate. The BC cole-crop guide says broadcast 75 kg/ha N, plus a side-dress of 45 to 110 kg/ha N. The higher side-dress is for broccoli and cauliflower; the lower is for Brussels sprouts and cabbage. (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). A range was not collapsed. TODO(verify).",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1308,13 +1316,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Heading brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Heading brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1334,21 +1342,29 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 4.5,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Broccoli: total production 1139 metric tonnes / harvested area 253 hectares = 4.5020, stored as 4.5 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Planted area is marked F. Harvested area and total production are published numbers."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). BC cole crops: seed and/or transplant every 2 to 3 weeks from early spring until mid-July for a continuous supply of crowns (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops).",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Broccoli row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
-    "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
+    "frost_tolerance_c": "Not stored. The BC cole-crop guide says over-wintered cauliflower in Abbotsford has tolerated -19°C under snow, and that Fraser Valley crops have survived -14°C without snow cover (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops, page updated 2025-06-27). That paragraph is in the overwinter-cauliflower section. It is a survival note, not this row's frost_tolerance_c. TODO(verify).",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
     "drought_tolerance": "Not verified. Null is not a default class. TODO(verify)",
     "cover_crop": "True only when category is cover. TODO(verify)",
@@ -1356,19 +1372,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.4-0.6 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Broccoli: total production 1139 metric tonnes / harvested area 253 hectares = 4.5020, stored as 4.5 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Planted area is marked F. Harvested area and total production are published numbers.",
     "yield_response_factor_ky": "TODO(verify)",
-    "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
+    "typical_n_rate_kg_ha": "Not stored as one rate. The BC cole-crop guide says broadcast 75 kg/ha N, plus a side-dress of 45 to 110 kg/ha N. The higher side-dress is for broccoli and cauliflower; the lower is for Brussels sprouts and cabbage. (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). A range was not collapsed. TODO(verify).",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1381,13 +1397,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Heading brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Heading brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1413,15 +1429,17 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). BC cole crops, overwinter cauliflower: optimum direct-seeding is mid-July; container transplants are seeded in mid-July for transplanting in mid-August; harvest of winter-hardy cole crops is discussed for March to May (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). Mid-July was not stored as a day-of-year.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Cauliflower row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
-    "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
+    "frost_tolerance_c": "Not stored. The BC cole-crop guide says over-wintered cauliflower in Abbotsford has tolerated -19°C under snow, and that Fraser Valley crops have survived -14°C without snow cover (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops, page updated 2025-06-27). That paragraph is in the overwinter-cauliflower section. It is a survival note, not this row's frost_tolerance_c. TODO(verify).",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
     "drought_tolerance": "Not verified. Null is not a default class. TODO(verify)",
     "cover_crop": "True only when category is cover. TODO(verify)",
@@ -1429,7 +1447,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.4-0.7 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -1437,11 +1455,11 @@
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
     "yield_response_factor_ky": "TODO(verify)",
-    "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
+    "typical_n_rate_kg_ha": "Not stored as one rate. The BC cole-crop guide says broadcast 75 kg/ha N, plus a side-dress of 45 to 110 kg/ha N. The higher side-dress is for broccoli and cauliflower; the lower is for Brussels sprouts and cabbage. (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). A range was not collapsed. TODO(verify).",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1454,8 +1472,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Leaf brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Leaf brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
     "ini": null,
@@ -1527,13 +1545,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Heading brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Heading brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1553,21 +1571,29 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 11.84,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "medium",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Brussels sprouts: total production 3018 metric tonnes / harvested area 255 hectares = 11.8353, stored as 11.84 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: direct seed by 1 July or transplant by 1 August (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/). The BC cole page describes harvest of lower sprouts and a once-over late crop, without a day-of-year (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops).",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Brussel Sprouts row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
-    "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
+    "frost_tolerance_c": "Not stored. The BC cole-crop guide says over-wintered cauliflower in Abbotsford has tolerated -19°C under snow, and that Fraser Valley crops have survived -14°C without snow cover (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops, page updated 2025-06-27). That paragraph is in the overwinter-cauliflower section. It is a survival note, not this row's frost_tolerance_c. TODO(verify).",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
     "drought_tolerance": "Not verified. Null is not a default class. TODO(verify)",
     "cover_crop": "True only when category is cover. TODO(verify)",
@@ -1575,19 +1601,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.4-0.6 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Brussels sprouts: total production 3018 metric tonnes / harvested area 255 hectares = 11.8353, stored as 11.84 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm.",
     "yield_response_factor_ky": "TODO(verify)",
-    "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
+    "typical_n_rate_kg_ha": "Not stored as one rate. The BC cole-crop guide says broadcast 75 kg/ha N, plus a side-dress of 45 to 110 kg/ha N. The higher side-dress is for broccoli and cauliflower; the lower is for Brussels sprouts and cabbage. (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). A range was not collapsed. TODO(verify).",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1600,13 +1626,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Allium. Family placement TODO(verify). Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Allium. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.75
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1627,18 +1653,20 @@
    "waterlogging_tolerance": null,
    "forage_use": null,
    "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "yield_response_factor_ky": 1.1,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Onions — dry row prints Kc mid 1.05 and Kc end 0.75. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -1648,19 +1676,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.3-0.6 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1673,13 +1701,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Allium. Family placement TODO(verify). Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Allium. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.0,
+    "end": 0.7
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1699,19 +1727,27 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 1.74,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "medium",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Garlic: total production 66 metric tonnes / harvested area 38 hectares = 1.7368, stored as 1.74 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Garlic row prints Kc mid 1.0 and Kc end 0.7. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -1721,19 +1757,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.3-0.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Garlic: total production 66 metric tonnes / harvested area 38 hectares = 1.7368, stored as 1.74 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm.",
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1746,8 +1782,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Allium. Family placement TODO(verify). Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Allium. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
     "ini": null,
@@ -1778,7 +1814,9 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
@@ -1804,9 +1842,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1819,12 +1857,12 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Fruiting nightshade. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Fruiting nightshade. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
+    "ini": 0.6,
+    "mid": 1.15,
     "end": null
    },
    "residue_class": null,
@@ -1845,19 +1883,27 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "reference_yield": {
+    "value": 20.05,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "medium",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Tomatoes: total production 1604 metric tonnes / harvested area 80 hectares = 20.0500, stored as 20.05 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm."
+   },
+   "yield_response_factor_ky": 1.05,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Tomato row prints Kc mid 1.15 (footnote 2: 1.20 if staked to 1.5-2 m) and Kc end 0.70-0.90. The range was not stored as one number, so Kc end stays null. Height on the row is 0.6 m. Kc ini is blank. The Solanum group row prints Kc ini 0.6. Footnote 1 calls that a general value. Not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -1867,19 +1913,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.7-1.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Tomatoes: total production 1604 metric tonnes / harvested area 80 hectares = 20.0500, stored as 20.05 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm.",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1892,13 +1938,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Fruiting nightshade. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Fruiting nightshade. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.6,
+    "mid": 1.05,
+    "end": 0.9
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1918,19 +1964,27 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "reference_yield": {
+    "value": 22.15,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Peppers: total production 2237 metric tonnes / harvested area 101 hectares = 22.1485, stored as 22.15 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Total production and harvested area are marked E (use with caution)."
+   },
+   "yield_response_factor_ky": 1.1,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Sweet Peppers (bell) row prints Kc mid 1.05 and Kc end 0.9. The row also prints maximum height 0.7 m. Kc ini is blank on that row. The group row prints Kc ini 0.6. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -1940,19 +1994,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Peppers: total production 2237 metric tonnes / harvested area 101 hectares = 22.1485, stored as 22.15 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Total production and harvested area are marked E (use with caution).",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -1965,13 +2019,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Tuber nightshade. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Tuber nightshade. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.15,
+    "end": 0.75
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -1992,18 +2046,20 @@
    "waterlogging_tolerance": null,
    "forage_use": null,
    "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "yield_response_factor_ky": 1.1,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Potato row prints Kc mid 1.15 and Kc end 0.75. The row also prints maximum height 0.6 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement. Footnote 4: Kc end is about 0.40 for long-season potatoes with vine kill. That second value was not stored.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2013,19 +2069,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.4-0.6 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2038,13 +2094,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Fruiting nightshade. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Fruiting nightshade. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.6,
+    "mid": 1.05,
+    "end": 0.9
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2070,13 +2126,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Egg Plant row prints Kc mid 1.05 and Kc end 0.9. The row also prints maximum height 0.8 m. Kc ini is blank on that row. The group row prints Kc ini 0.6. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2086,7 +2144,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.7-1.2 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2096,9 +2154,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2111,8 +2169,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Cucurbit. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Cucurbit. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
     "ini": null,
@@ -2137,13 +2195,21 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 9.27,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "medium",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Cucumbers: total production 593 metric tonnes / harvested area 64 hectares = 9.2656, stored as 9.27 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
@@ -2159,19 +2225,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.7-1.2 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Cucumbers: total production 593 metric tonnes / harvested area 64 hectares = 9.2656, stored as 9.27 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm.",
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2184,13 +2250,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Summer squash. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Summer squash. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 0.95,
+    "end": 0.75
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2216,13 +2282,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Squash, Zucchini row prints Kc mid 0.95 and Kc end 0.75. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2232,7 +2300,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.6-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2242,9 +2310,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2257,13 +2325,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Winter squash and pumpkin are not split here. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Winter squash and pumpkin are not split here. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.0,
+    "end": 0.8
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2289,13 +2357,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Pumpkin, Winter Squash row prints Kc mid 1.0 and Kc end 0.8. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2305,7 +2375,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 1.0-1.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2315,9 +2385,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2330,13 +2400,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Snap bean. Fixation rate not measured. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Snap bean. Fixation rate not measured. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.05,
+    "end": 0.9
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2357,18 +2427,20 @@
    "waterlogging_tolerance": null,
    "forage_use": null,
    "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "yield_response_factor_ky": 1.15,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "n_fixing is true because the crop is a legume. The fixation class is not measured. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12 row 'Beans, green', read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf: Kc ini 0.5, Kc mid 1.05, Kc end 0.90, height 0.4 m. Footnote 2 says a staked crop can use Kc mid 1.15. The unstaked table cell is the one stored. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2378,19 +2450,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-0.7 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "n_fixing is true because the crop is a legume. The fixation class is not measured. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2403,8 +2475,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Pulse. Kc values are the FAO-56 example's unadjusted Table 12 numbers. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Pulse. Kc values are the FAO-56 example's unadjusted Table 12 numbers. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
     "ini": 0.4,
@@ -2430,7 +2502,7 @@
    "waterlogging_tolerance": null,
    "forage_use": null,
    "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "yield_response_factor_ky": 1.15,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
@@ -2458,7 +2530,7 @@
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
     "needs_equipment": "TODO(verify)",
@@ -2476,13 +2548,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Root crop. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Root crop. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2502,19 +2574,27 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 15.29,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Carrots: total production 3210 metric tonnes / harvested area 210 hectares = 15.2857, stored as 15.29 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 2: includes baby carrots and regular carrots. Harvested area is marked E (use with caution)."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: plant a fall carrot crop by mid-July (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/).",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Carrots row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2524,19 +2604,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Carrots: total production 3210 metric tonnes / harvested area 210 hectares = 15.2857, stored as 15.29 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 2: includes baby carrots and regular carrots. Harvested area is marked E (use with caution).",
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2549,13 +2629,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2581,13 +2661,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Beets, table row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2597,7 +2679,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.6-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2607,9 +2689,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2622,13 +2704,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Root crop. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Root crop. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.05,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2654,13 +2736,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12 row 'Parsnip', read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf: Kc ini 0.5, Kc mid 1.05, Kc end 0.95, height 0.4 m. Not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2670,7 +2754,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2680,9 +2764,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2695,13 +2779,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Root brassica. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Root brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.5,
+    "mid": 1.1,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2727,13 +2811,15 @@
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Turnip (and Rutabaga) row prints Kc mid 1.1 and Kc end 0.95. The row also prints maximum height 0.6 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2743,7 +2829,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.5-1.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -2753,9 +2839,9 @@
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2768,13 +2854,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Leafy green. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Leafy green. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.0,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2794,41 +2880,49 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 31.69,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Lettuce: total production 9729 metric tonnes / harvested area 307 hectares = 31.6906, stored as 31.69 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 3: includes leaf lettuce and head lettuce."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). BC lettuce: the earliest seedings are started in greenhouse flats in early February and planted out when the fields can be prepared (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/lettuce). WSU Snohomish: sow head and romaine lettuce in July; leaf lettuce until mid-August (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/).",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Lettuce row prints Kc mid 1.0 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
-    "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
+    "heat_limit_c": "Not stored. The BC lettuce guide says germination may not occur at 21°C and over unless irrigation cools the soil (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/lettuce). That is a germination note, not a heat_limit_c. TODO(verify).",
     "drought_tolerance": "Not verified. Null is not a default class. TODO(verify)",
     "cover_crop": "True only when category is cover. TODO(verify)",
     "perennial": "True only for apple in the new rows. TODO(verify)",
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.3-0.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Lettuce: total production 9729 metric tonnes / harvested area 307 hectares = 31.6906, stored as 31.69 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Footnote 3: includes leaf lettuce and head lettuce.",
     "yield_response_factor_ky": "TODO(verify)",
-    "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
+    "typical_n_rate_kg_ha": "Not stored as one rate. The BC lettuce guide (last updated 22 April 2025) gives western iceberg on muck soils 50 to 80 kg/ha N early and 40 to 60 kg/ha N in the main season; on mineral soils 100 to 125 kg/ha N early and 75 to 100 kg/ha N in the main season; leaf and eastern iceberg types 100 to 150 kg/ha N. (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/lettuce). A range was not collapsed. TODO(verify).",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2841,13 +2935,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 1.0,
+    "end": 0.95
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -2867,19 +2961,27 @@
    "n_fix_class": "none",
    "waterlogging_tolerance": null,
    "forage_use": null,
-   "reference_yield": null,
+   "reference_yield": {
+    "value": 10.86,
+    "unit": "t/ha",
+    "basis": "derived",
+    "confidence": "low",
+    "source": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Spinach: total production 869 metric tonnes / harvested area 80 hectares = 10.8625, stored as 10.86 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Total production and harvested area are marked E (use with caution)."
+   },
    "yield_response_factor_ky": null,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
    "labour_peak_weeks": [],
-   "region_fit": [],
+   "region_fit": [
+    "oceanic"
+   ],
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: plant spinach in mid-August for a fall crop, or in September to winter over (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/).",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Spinach row prints Kc mid 1.0 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -2889,19 +2991,19 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.3-0.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
-    "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
+    "reference_yield": "Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 (https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm). Spinach: total production 869 metric tonnes / harvested area 80 hectares = 10.8625, stored as 10.86 t/ha. Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm. Total production and harvested area are marked E (use with caution).",
     "yield_response_factor_ky": "TODO(verify)",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
-    "needs_equipment": "TODO(verify)",
+    "needs_equipment": "The list stays empty. WSU EM051E is a home-garden bulletin. It says a trellis or fence is an option for peas, pole beans, and cucumbers, and an A-frame for small-fruited pumpkins or winter squash (https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf). It does not name a required equipment id. TODO(verify) a Fraser Valley small-farm equipment list.",
     "labour_peak_weeks": "TODO(verify)",
-    "region_fit": "No climate-class fit was verified, including UBC Farm. TODO(verify)"
+    "region_fit": "region_fit is oceanic, the class name in the contract. Vancouver is temperate oceanic, Köppen Cfb (https://en.wikipedia.org/wiki/Climate_of_Vancouver, intro read 2026-11-15). This crop is on the BC vegetable production guide index (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides). Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
    }
   },
   {
@@ -2914,8 +3016,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "vegetable",
    "kc_stages": {
     "ini": null,
@@ -2987,11 +3089,11 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Spring-sown wheat. Kc mid is the FAO-56 wheat sentence. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Spring-sown wheat. Kc mid is the FAO-56 wheat sentence. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
-    "ini": null,
+    "ini": 0.3,
     "mid": 1.15,
     "end": null
    },
@@ -3014,7 +3116,7 @@
    "waterlogging_tolerance": null,
    "forage_use": null,
    "reference_yield": null,
-   "yield_response_factor_ky": null,
+   "yield_response_factor_ky": 1.15,
    "typical_n_rate_kg_ha": null,
    "erosion_cover_factor_class": null,
    "needs_equipment": [],
@@ -3025,7 +3127,7 @@
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 chapter text states 'From Table 12 for wheat: Kc mid = 1.15 and h = 1.0 m' (https://www.fao.org/4/x0490e/x0490e0b.htm). ini and end are not in that sentence. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Spring Wheat row prints Kc mid 1.15 and Kc end 0.25-0.40 (footnote 10: the higher value is for hand harvest). The range was not stored as one number, so Kc end stays null. Kc ini is blank on that row. The Cereals group row prints Kc ini 0.3. Footnote 1 calls that a general value. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -3035,14 +3137,14 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 1.0-1.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
     "waterlogging_tolerance": "TODO(verify)",
     "forage_use": "TODO(verify)",
     "reference_yield": "No yield was sourced. Null is not zero. TODO(verify)",
-    "yield_response_factor_ky": "TODO(verify)",
+    "yield_response_factor_ky": "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned 'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' (https://www.fao.org/4/i2800e/i2800e02.pdf, read 2026-11-15). Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 (https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf). The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. Crops absent from Table 1 stay null. Not a Fraser Valley measurement.",
     "typical_n_rate_kg_ha": "No nitrogen rate was sourced. Null is not zero. TODO(verify)",
     "erosion_cover_factor_class": "TODO(verify)",
     "needs_equipment": "TODO(verify)",
@@ -3060,13 +3162,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Cereal. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Cereal. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.3,
+    "mid": 1.15,
+    "end": 0.25
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -3098,7 +3200,7 @@
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Oats row prints Kc mid 1.15 and Kc end 0.25. The row also prints maximum height 1 m. Kc ini is blank on that row. The group row prints Kc ini 0.3. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -3108,7 +3210,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 1.0-1.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -3133,8 +3235,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Hulled wheat. Not the same crop as crop_wheat_winter. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Hulled wheat. Not the same crop as crop_wheat_winter. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
     "ini": null,
@@ -3206,8 +3308,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Grain harvest. Distinct from crop_rye_cover. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Grain harvest. Distinct from crop_rye_cover. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
     "ini": null,
@@ -3279,8 +3381,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Not a grass. Family placement TODO(verify). Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Not a grass. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "grain",
    "kc_stages": {
     "ini": null,
@@ -3352,8 +3454,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Two-species mix. Oat does not fix nitrogen. The mix rate is not measured. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Two-species mix. Oat does not fix nitrogen. The mix rate is not measured. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "forage",
    "kc_stages": {
     "ini": null,
@@ -3425,8 +3527,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Grass ley stand. Species choice for a local ley is TODO(verify). Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Grass ley stand. Species choice for a local ley is TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "forage",
    "kc_stages": {
     "ini": null,
@@ -3498,8 +3600,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Winter annual clover. Fixation rate not measured. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Winter annual clover. Fixation rate not measured. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "cover",
    "kc_stages": {
     "ini": null,
@@ -3571,8 +3673,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Also called broad bean. This row is the cover use. Fixation rate not measured. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Also called broad bean. This row is the cover use. Fixation rate not measured. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "cover",
    "kc_stages": {
     "ini": null,
@@ -3644,8 +3746,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Family placement TODO(verify); some keys use Hydrophyllaceae. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Family placement TODO(verify); some keys use Hydrophyllaceae. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "cover",
    "kc_stages": {
     "ini": null,
@@ -3717,13 +3819,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Cover radish, not a table-radish row. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Cover radish, not a table-radish row. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "cover",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.7,
+    "mid": 0.9,
+    "end": 0.85
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -3755,7 +3857,7 @@
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Radish row prints Kc mid 0.9 and Kc end 0.85. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement. Table 12 says Radish. This catalog row is the cover use of radish, and no separate cover coefficient was printed.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -3765,7 +3867,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 0.3-0.5 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
@@ -3790,8 +3892,8 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Brassica cover. Species is not pinned. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Brassica cover. Species is not pinned. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "cover",
    "kc_stages": {
     "ini": null,
@@ -3863,13 +3965,13 @@
     "terminate_doy": null
    },
    "cover_curve": [],
-   "notes": "Perennial fruit. No yield or Kc was transcribed. Window, cover curve, and most coefficients are not verified.",
-   "source": "TODO(verify). See trait_sources.",
+   "notes": "Perennial fruit. No yield or Kc was transcribed. Coefficients are filled only where a table cell or a guide sentence was read.",
+   "source": "See trait_sources.",
    "category": "fruit_perennial",
    "kc_stages": {
-    "ini": null,
-    "mid": null,
-    "end": null
+    "ini": 0.45,
+    "mid": 0.95,
+    "end": 0.7
    },
    "residue_class": null,
    "frost_tolerance_c": null,
@@ -3901,7 +4003,7 @@
     "n_fixing": "Not a legume in this row. TODO(verify)",
     "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
-    "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
+    "kc_stages": "FAO-56 Table 12 row 'Apples, Cherries, Pears — no ground cover, killing frost', read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf: Kc ini 0.45, Kc mid 0.95, Kc end 0.70, height 4 m. Footnote 18: that Kc end is prior to leaf drop; after leaf drop Kc end is about 0.20 for bare, dry soil. The other three apple rows (no frost, or an active ground cover) were not stored. The killing-frost row is the one that matches a site where frost occurs. Not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
     "frost_tolerance_c": "No frost temperature was sourced. Null is not zero. TODO(verify)",
     "heat_limit_c": "No heat limit was sourced. Null is not zero. TODO(verify)",
@@ -3911,7 +4013,7 @@
     "category": "Assigned from the catalog group in the forecast PRD. TODO(verify) with an agronomist",
     "host_families": "TODO(verify)",
     "return_interval_years": "TODO(verify)",
-    "root_depth_m": "Metres by stage were not sourced. Null is not zero. TODO(verify)",
+    "root_depth_m": "FAO-56 Table 22 maximum effective root depth is 1.0-2.0 m, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. Footnote 1: the smaller value is for irrigation scheduling and the larger for rainfed conditions or for modelling stress. The table does not give ini, mid, and end, so those three numbers stay null.",
     "carbon_input_class": "TODO(verify)",
     "n_uptake_class": "TODO(verify)",
     "n_fix_class": "Restates n_fixing false. Not a measured fixation rate. TODO(verify)",
