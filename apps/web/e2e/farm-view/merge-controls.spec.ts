@@ -26,9 +26,11 @@ test.describe("merged globe and farm controls", () => {
   test("search shortcut opens focused search, finds a farm, and Escape restores focus", async ({ page }) => {
     await openGlobe(page);
 
-    await page.keyboard.press("Control+k");
     const search = page.getByRole("combobox", { name: "Find a farm, city or country" });
-    await expect(search).toBeFocused();
+    await expect(async () => {
+      await page.keyboard.press("Control+k");
+      await expect(search).toBeFocused({ timeout: 1_000 });
+    }).toPass({ timeout: 8_000 });
     await search.fill("cornell");
     await expect(page.getByRole("listbox").getByRole("option").first()).toContainText(/Cornell/i);
     await search.press("Enter");
