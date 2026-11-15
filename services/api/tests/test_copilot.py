@@ -15,7 +15,7 @@ def reset(monkeypatch):
 
 
 def request():
-    return {"message": "Explain this field", "snapshot": {"farm_id": "ubc-farm", "site_id": "site_ubc_farm", "field_id": "d3-brassicas", "horizon": "years", "time_index": 1, "scenario": {"preset": "baseline"}, "strategy_id": "rot_existing", "selected": None}, "history": []}
+    return {"message": "Explain this field", "snapshot": {"farm_id": "ubc-farm", "site_id": "site_ubc_farm", "forecast_request": json.loads((copilot.REPO_ROOT / "apps/web/lib/forecast/ubc-request.json").read_text()), "field_id": "d3-brassicas", "horizon": "years", "time_index": 1, "scenario": {"preset": "baseline"}, "strategy_id": "rot_existing", "selected": None}, "history": []}
 
 
 def test_grounded_request_and_response(client, monkeypatch):
@@ -222,3 +222,35 @@ def test_monthly_metrics_summarised(client, monkeypatch):
     def month(b): b["snapshot"]["horizon"] = "months"; b["snapshot"]["time_index"] = 0
     context, _ = _context(client, monkeypatch, "Will it freeze?", month)
     assert set(context["metrics"]["frost_risk"]) == {"unit", "value", "uncertainty"} and "glossary" not in context
+
+
+def test_snapshot_context_uses_accepted_request(monkeypatch):
+    from app.services import copilot
+    import json
+    request = json.loads((copilot.REPO_ROOT / "apps/web/lib/forecast/ubc-request.json").read_text())
+    request["farm_water_quota_mm_per_season"] = 42
+    seen = {}
+    def fake_forecast(site, body):
+        seen.update(body)
+        return {"fields": [], "farm_rollup": {"strategies": []}, "data_mode": "demo"}
+    monkeypatch.setattr(copilot, "forecast", fake_forecast)
+    snapshot = {"farm_id": "ubc-farm", "site_id": "site_ubc_farm", "horizon": "years", "time_index": 1,
+                "scenario": request["scenario"], "forecast_request": request, "strategy_id": "rot_existing"}
+    copilot.snapshot_context(snapshot)
+    assert seen["farm_water_quota_mm_per_season"] == 42
+
+
+def test_missing_accepted_request_is_rejected(client):
+    body = request()
+    del body["snapshot"]["forecast_request"]
+    response = client.post("/api/v1/copilot/chat", json=body)
+    assert response.status_code == 422
+    assert "accepted live forecast" in response.text
+
+
+def test_invalid_accepted_request_is_rejected(client):
+    body = request()
+    body["snapshot"]["forecast_request"]["strategy_count"] = 99
+    response = client.post("/api/v1/copilot/chat", json=body)
+    assert response.status_code == 422
+    assert "forecast inputs are invalid" in response.text

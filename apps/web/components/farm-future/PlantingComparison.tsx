@@ -7,7 +7,7 @@ import type { CropCatalog, Forecast } from "@/lib/api/types";
 import { cropName } from "@/lib/farm-future/data";
 import { firstYearSlots, plantingPair, plantingRequest } from "@/lib/forecast/planting";
 import type { PlantingWeather } from "@/lib/forecast/planting";
-import { baseRequest } from "@/lib/forecast/sites";
+import { useForecastStore } from "@/lib/forecast/store";
 
 const WEATHER = {
   baseline: "Historical weather",
@@ -54,7 +54,7 @@ function PlantingForm({ forecast }: { forecast: Forecast }) {
   const options = (catalog?.crops ?? []).filter((item) =>
     item.season_window?.plant_doy != null && item.season_window.terminate_doy != null && !planted.has(item.id),
   ).sort((a, b) => a.name.localeCompare(b.name));
-  const base = baseRequest(forecast.site_id);
+  const base = useForecastStore((s) => s.siteId === forecast.site_id ? s.request : null);
   const input = base?.fields?.find((item) => item.field_id === fieldId);
   const cropLabel = (id: string) => id === "fallow" ? "Fallow" : catalog?.crops.find((item) => item.id === id)?.name ?? cropName(id);
 

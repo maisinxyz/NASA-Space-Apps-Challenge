@@ -3,12 +3,13 @@
 import { create } from "zustand";
 
 import { ApiError, isMock, postCopilotChat } from "@/lib/api/client";
-import type { CopilotChatRequest, CopilotSnapshot } from "@/lib/api/types";
+import type { CopilotChatRequest, CopilotSnapshot, ForecastRequest } from "@/lib/api/types";
 
 export type SelectedKind = "field" | "flag" | "strategy";
 export type ChatMessage = { role: "user" | "assistant"; content: string; tips?: string[]; layers?: string[]; placeholder?: boolean };
 
 export type ScreenState = {
+  forecastRequest?: ForecastRequest | null;
   farmId: string;
   siteId: string;
   fieldId: string | null;
@@ -25,6 +26,7 @@ export const MAX_HISTORY = 6;
 
 export function snapshotOf(s: ScreenState): CopilotSnapshot {
   return {
+    ...(s.forecastRequest ? { forecast_request: s.forecastRequest } : {}),
     farm_id: s.farmId,
     site_id: s.siteId,
     field_id: s.fieldId,

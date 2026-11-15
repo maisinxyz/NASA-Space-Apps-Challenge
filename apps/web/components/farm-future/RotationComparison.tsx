@@ -3,7 +3,6 @@
 // the "Compare rotations" drawer. Crop sequence, crop-role badges from the API, review flags by severity, why
 // suggested, evidence, information gaps, local review risks. Hero numbers: soil health, irrigation need against the
 // quota, frost-free and heat-stress days. Per-field or whole-farm. No income or fertilizer figures (D3).
-import { useState } from "react";
 
 import type { Forecast, ForecastStrategy } from "@/lib/api/types";
 import { CURRENT_ROTATION, cropName, rotationText, SWATCHES, STRATEGY_IDS } from "@/lib/farm-future/data";
@@ -58,9 +57,9 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
   const { forecast } = useFutureData();
   const t = useFutureStore((s) => s.t);
   const { status, source, error, siteId } = useForecastStore();
-  const whatIf = useFutureStore((s) => s.whatIf);
-  const retry = () => { if (siteId) void useForecastStore.getState().load(siteId, whatIf); };
-  const [fieldId, setFieldId] = useState<string | null>(null);
+  const retry = () => { if (siteId) void useForecastStore.getState().retry(); };
+  const fieldId = useFutureStore((s) => s.focusFieldId);
+  const setFieldId = (id: string | null) => useFutureStore.setState({ focusFieldId: id });
   if (!forecast) return <ForecastStatus status={status} source={null} error={error} hasForecast={false} onRetry={retry} />;
   const field = (fieldId && forecast.fields.find((x) => x.field_id === fieldId)) || forecast.fields[0];
   const strategies = field?.strategies.slice(0, 4) ?? [];

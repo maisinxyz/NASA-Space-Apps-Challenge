@@ -26,6 +26,7 @@ class Scenario(BaseModel):
 
 class Snapshot(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    forecast_request: dict | None = None
     farm_id: str = Field(min_length=1, max_length=200)
     site_id: str = Field(pattern=r"^site_[A-Za-z0-9_-]+$")
     field_id: str | None

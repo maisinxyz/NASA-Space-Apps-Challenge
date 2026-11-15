@@ -43,15 +43,28 @@ export function ForecastStatus({ status, source, error, hasForecast, dataMode, o
 /** Loads the forecast when Future mode opens on a farm that has an engine site; refetches (live only) when the what-if sliders move. */
 export function useFarmForecast() {
   const farmId = useAppStore((s) => s.farmId);
-  const mode = useFutureStore((s) => s.mode);
   const whatIf = useFutureStore((s) => s.whatIf);
   const siteId = siteForFarm(farmId);
   const { rainPct, tempC } = whatIf;
   useEffect(() => {
-    if (!siteId) return; // also in Now mode: the "Compare rotations" drawer reads the same forecast
-    const timer = setTimeout(() => void useForecastStore.getState().load(siteId, { rainPct, tempC }), 350); // debounce slider drags
+    if (!siteId) return;
+    const state = useForecastStore.getState();
+    if (state.siteId !== siteId || (!state.forecast && state.status === "idle")) void state.load(siteId);
+  }, [siteId]);
+  useEffect(() => {
+    if (!siteId) return;
+    const state = useForecastStore.getState();
+    if (state.siteId !== siteId || !state.request) return;
+    const scenario = state.request.scenario;
+    if (typeof scenario !== "string" && scenario.rain_scale_pct === rainPct && scenario.temp_offset_c === tempC) return;
+    const accepted = state.request;
+    const timer = setTimeout(() => {
+      const current = useForecastStore.getState();
+      if (current.request !== accepted || current.status === "loading") return;
+      void current.run(siteId, { ...accepted, scenario: { preset: "baseline", rain_scale_pct: rainPct, temp_offset_c: tempC } });
+    }, 350);
     return () => clearTimeout(timer);
-  }, [siteId, mode, rainPct, tempC]);
+  }, [siteId, rainPct, tempC]);
   return siteId;
 }
 
@@ -71,7 +84,7 @@ export function ForecastPanel() {
       error={error}
       year={forecast ? yearOfClock(t, forecast.horizon_years) : 1}
       onClose={() => useFutureStore.getState().openPanel(null)}
-      onRetry={() => void useForecastStore.getState().load(siteId, useFutureStore.getState().whatIf)}
+      onRetry={() => void useForecastStore.getState().retry()}
       onPickYear={(y) => useFutureStore.getState().setT(tOf(y - 1, 194))}
     />
   );
@@ -93,7 +106,8 @@ export type ForecastCardProps = {
 export function ForecastCard({ open, status, forecast, source, error, year, onClose, onPickYear, onRetry }: ForecastCardProps) {
   const [metric, setMetric] = useState<MetricKey>("soil_organic_index");
   const [strategy, setStrategy] = useState(0);
-  const [fieldId, setFieldId] = useState<string | null>(null);
+  const fieldId = useFutureStore((s) => s.focusFieldId);
+  const setFieldId = (id: string | null) => useFutureStore.setState({ focusFieldId: id });
 
   const strategies = useMemo(() => (forecast ? strategiesOf(forecast) : []), [forecast]);
   const shown = strategies[Math.min(strategy, strategies.length - 1)];
