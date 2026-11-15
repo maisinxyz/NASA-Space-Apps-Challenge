@@ -22,9 +22,11 @@ describe('honest farm controls', () => {
     expect(html()).toContain('aria-label="Ask Twin preview"');
     expect(html()).toContain('Synthetic preview');
   });
-  it('offers explicit panel and farm control toggles', () => {
+  it('offers a hide-panels control and keeps farm controls in side-rail tabs', () => {
     expect(html()).toContain('Hide panels');
-    expect(html()).toContain('Hide farm controls');
+    for (const id of ['rail-conditions', 'rail-view', 'field-report-toggle', 'rail-more'])
+      expect(html()).toContain(`data-testid="${id}"`);
+    expect(html()).toMatch(/<aside[^>]*id="farm-drawer"[^>]*hidden=""/);
   });
   it('marks condition controls as synthetic and includes the reserved zone control', () => {
     const markup = renderToStaticMarkup(<FarmView farmName="Cornell" onBack={() => {}} onReset={() => {}} zoneControl={<span>Vulnerability zones</span>} />);
