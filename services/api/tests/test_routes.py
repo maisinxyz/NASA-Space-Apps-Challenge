@@ -116,7 +116,7 @@ def test_bad_input_uses_error_format(client):
 
 
 def test_health_mode(client):
-    assert client.get(f"{API}/health").json() == {"status": "ok", "mode": "live", "version": "1.1.0"}
+    assert client.get(f"{API}/health").json() == {"status": "ok", "mode": "live", "version": "1.2.0"}
 
 
 def test_cors_for_localhost_3000(client):
@@ -213,15 +213,8 @@ def test_routes_match_openapi_exactly(client):
     def norm(p):
         return re.sub(r"\{[^}]+\}", "{}", p)
 
-    # v1.2 paths are in the contract. W9 registers them in app/main.py.
-    # Remove a path from this set in the same commit that mounts it.
-    pending_v12 = {
-        ("GET", "/crop-catalog"),
-        ("GET", "/sites/{}/climate-outlook"),
-        ("GET", "/sites/{}/exposure"),
-        ("POST", "/sites/{}/forecast"),
-        ("POST", "/sites/{}/forecast/sensitivity"),
-    }
+    # v1.2 paths are mounted. This set stays empty so a future path is explicit.
+    pending_v12: set[tuple[str, str]] = set()
     spec = {(m.upper(), norm(p)) for p, ops in contract.openapi()["paths"].items() for m in ops if m in ("get", "post")}
     app_routes = {
         (m.upper(), norm(path.removeprefix(API)))

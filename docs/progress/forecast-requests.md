@@ -88,3 +88,7 @@ Catalog rows with a null season window or null Kc (most of the new vegetable row
 `farm_fit` is defined in `app/twin/score.py` and re-exported from `app/twin/generate.py`. Ranking, income, fertilizer saved, estimates, deltas, and review flags are in `score.py`. `rank_stability_note()` is a sentence. The share of the climate grid that keeps the rank is W8's, and this session did not invent that percent.
 
 `custom_strategies` are expanded as entered and do not count toward `strategy_count`. Vegetable rows with a null season window produce `NO_FEASIBLE_ALTERNATIVES` and no invented dates.
+
+## 2026-11-15 — Session C work, W9 fixture note
+
+`POST /forecast` and `POST /forecast/sensitivity` are mounted, and health reports `1.2.0`. The shape examples in `packages/contracts/fixtures/forecast/` were left in place. `test_forecast_contract.py` requires those files to match `fixtures_lib` and to include a `yield_t_ha` series and a CAD `income_estimate`. The engine omits yield when `reference_yield` is null and leaves income null when no per-tonne price was entered. Replacing the fixture with engine output fails that test. `scripts/build_forecast_fixtures.py` writes the engine documents under `data/cache/forecast/engine/`.
