@@ -26,7 +26,7 @@ import numpy as np
 if TYPE_CHECKING:
     import rasterio
 
-log = logging.getLogger("fieldtwin.terrain.grid")
+log = logging.getLogger("stardew_earth.terrain.grid")
 
 # ---------------------------------------------------------------------------
 # Constants

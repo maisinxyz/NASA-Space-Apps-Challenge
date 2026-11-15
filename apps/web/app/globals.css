@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * FieldTwin tokens. Components use the semantic names (paper, surface, ink, line, ...), which are
+ * Stardew Earth tokens. Components use the semantic names (paper, surface, ink, line, ...), which are
  * CSS variables so a `.theme-dark` container (viewer panels) swaps them without per-component variants.
  */
 :root {

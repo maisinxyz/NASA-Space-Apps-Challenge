@@ -41,7 +41,7 @@ export function Header() {
       <header className="theme-dark h-10 border-b border-white/10 bg-[#0b0d11] text-ink">
         <div className="flex h-full items-center gap-4 overflow-x-auto px-4 text-sm whitespace-nowrap [&>*]:shrink-0">
           <Link href="/" className="font-display text-base font-semibold tracking-tight">
-            FieldTwin
+            Stardew Earth
           </Link>
           <span className="text-ink-muted" aria-hidden>
             /
@@ -70,7 +70,7 @@ export function Header() {
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <Link href="/" className="font-display text-xl font-semibold tracking-tight text-ink">
-          FieldTwin
+          Stardew Earth
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link href="/methods" aria-current={onMethods ? "page" : undefined} className={`border-b-2 py-0.5 ${onMethods ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>

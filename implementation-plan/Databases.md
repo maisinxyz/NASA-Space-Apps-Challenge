@@ -1,4 +1,4 @@
-# Databases: every dataset FieldTwin uses, what for, and who builds it (v0.2)
+# Databases: every dataset Stardew Earth uses, what for, and who builds it (v0.2)
 
 > Living document. This is the single place that says **which data we use, why, how we get it, and which team owns it**. Both section PRDs and both `Prompts.md` files point here. Change a row only together with a change-log entry (bottom).
 >
@@ -290,7 +290,7 @@ Every section answers the same questions: **why we need it, what exactly we take
 
 #### DB-14 Globe and basemap sources (visual only, Section 1)
 
-- **Why:** the space-to-farm intro (Section 2 PRD D-25, D-26) and the photoreal context around the farm. These sources are **visual only**; no number in FieldTwin is computed from them.
+- **Why:** the space-to-farm intro (Section 2 PRD D-25, D-26) and the photoreal context around the farm. These sources are **visual only**; no number in Stardew Earth is computed from them.
 - **What is used:** these are Section 1's Cesium tiers on branch `fe/S1-cesium-globe`, per `docs/progress/s1-C1.md` there:
 
   | Tier | Source | Needs |

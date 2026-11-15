@@ -197,7 +197,7 @@ for (const size of [
     expect(title!.x + title!.width).toBeLessThanOrEqual(toolbar!.x);
     expect(toolbar!.x + toolbar!.width).toBeLessThanOrEqual(size.width);
     await page.screenshot({
-      path: `/tmp/fieldtwin-fixed-${size.width}x${size.height}.png`,
+      path: `/tmp/stardew-earth-fixed-${size.width}x${size.height}.png`,
     });
   });
 }

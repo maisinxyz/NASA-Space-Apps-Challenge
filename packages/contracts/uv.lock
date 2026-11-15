@@ -21,7 +21,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fieldtwin-contracts"
+name = "stardew-earth-contracts"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [

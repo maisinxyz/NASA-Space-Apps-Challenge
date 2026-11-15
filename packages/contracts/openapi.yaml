@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: FieldTwin API
-  version: "1.4.0"
-  summary: Interface contract between the FieldTwin front-end and back-end (PRD §6).
+  title: Stardew Earth API
+  version: "1.4.1"
+  summary: Interface contract between the Stardew Earth front-end and back-end (PRD §6).
   description: |
     Encodes `prd.md` §6. Endpoints, schemas, and formats are our own design.
     Decisions made where the PRD was loose are listed in `docs/progress/02.md` ("Decisions").
@@ -10,7 +10,7 @@ info:
     v1.4.0 adds an optional first-year planting comparison to each forecast field.
     The response continues to use the existing forecast strategy and evidence schemas.
 
-    v1.3.0 (docs/fieldtwin-v4-prd.md Appendix A, additive) adds the monthly outlook,
+    v1.3.0 (docs/stardew-earth-v4-prd.md Appendix A, additive) adds the monthly outlook,
     the farm co-pilot chat, custom-field analysis (2D view only), an optional
     `rotation_explanation` on each forecast strategy, and the `RATE_LIMITED` error code.
     `Forecast.schema_version` stays `1.2.0`.

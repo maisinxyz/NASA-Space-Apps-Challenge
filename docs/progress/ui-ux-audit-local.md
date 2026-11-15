@@ -1,15 +1,15 @@
-# FieldTwin local UI/UX audit fixes
+# Stardew Earth local UI/UX audit fixes
 
 Date: November 14, 2026 (Vancouver).
 
 ## Local workspace and safety
 
-- Worktree: `/Users/wesleypang/.codex/worktrees/fieldtwin-ui-ux/NASA-Space-Apps-Challenge`
+- Worktree: `/Users/wesleypang/.codex/worktrees/stardew-earth-ui-ux/NASA-Space-Apps-Challenge`
 - Branch: `codex/ui-ux-audit-fixes`
 - Upstream snapshot integrated: `04c208d`, including the friend's UBC fix `f317b43` and backend/contract work. Those upstream changes were preserved rather than reimplemented.
 - Local checkpoint: `2f1c2a5`; merge checkpoint: `a0c7dc7`. Additional UI fixes are local to this branch.
 - No GitHub push, PR, remote merge or deployment was performed.
-- Production preview: [FieldTwin](http://localhost:3003). The original checkout/server on port3000 is separate; use3003 for these fixes.
+- Production preview: [Stardew Earth](http://localhost:3003). The original checkout/server on port3000 is separate; use3003 for these fixes.
 - No new backend service or frozen contract change authored by this task. No persistent package dependencies added; the matching Playwright Chromium browser was installed for verification.
 
 ## Audit coverage
@@ -59,9 +59,9 @@ The original Playwright suite contains71 historical fixme placeholders. They are
 
 Manual Chrome review checked a functioning mobile scenario workspace, separate laptop header/toolbar, selected tabs, imagery attribution, and native200% browser zoom (735CSSpx viewport on the MacBook). Zoom and temporary viewport overrides were restored before completion. Imagery is streamed and its arrival can lag the controls.
 
-Logs: `/tmp/fieldtwin-ui-ux-build.log`, `/tmp/fieldtwin-ui-ux-e2e-production.log`, `/tmp/fieldtwin-ui-ux-unit-final.log`, `/tmp/fieldtwin-ui-ux-types-final.log`, `/tmp/fieldtwin-ui-ux-lint-final.log`.
+Logs: `/tmp/stardew-earth-ui-ux-build.log`, `/tmp/stardew-earth-ui-ux-e2e-production.log`, `/tmp/stardew-earth-ui-ux-unit-final.log`, `/tmp/stardew-earth-ui-ux-types-final.log`, `/tmp/stardew-earth-ui-ux-lint-final.log`.
 
-Screenshots: `/Users/wesleypang/.codex/visualizations/2026/11/15/01a1dd61-8883-7602-b966-aa7243538cd7/fieldtwin-fixed/`.
+Screenshots: `/Users/wesleypang/.codex/visualizations/2026/11/15/01a1dd61-8883-7602-b966-aa7243538cd7/stardew-earth-fixed/`.
 
 ## Deliberate limits
 

@@ -1,6 +1,6 @@
-# FieldTwin
+# Stardew Earth
 
-FieldTwin helps growers compare crop rotations under changing weather and water constraints. The UBC Farm and KPU Langley forecast uses NASA POWER historical weather, mapped soil, and crop traits to simulate how each rotation affects soil organic matter, infiltration, erosion, and irrigation need over five to ten years. Supported climate scenarios can incorporate changes from NASA NEX-GDDP-CMIP6.
+Stardew Earth helps growers compare crop rotations under changing weather and water constraints. The UBC Farm and KPU Langley forecast uses NASA POWER historical weather, mapped soil, and crop traits to simulate how each rotation affects soil organic matter, infiltration, erosion, and irrigation need over five to ten years. Supported climate scenarios can incorporate changes from NASA NEX-GDDP-CMIP6.
 
 Built for NASA Space Apps Challenge 2026 (Vancouver), challenge "Field Shift: Adapting Farms with NASA Data".
 

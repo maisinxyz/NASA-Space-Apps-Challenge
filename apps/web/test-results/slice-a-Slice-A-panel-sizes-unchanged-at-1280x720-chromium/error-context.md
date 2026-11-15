@@ -31,7 +31,7 @@ Call log:
   - generic [ref=e3]:
     - banner [ref=e4]:
       - generic [ref=e5]:
-        - link "FieldTwin" [ref=e6] [cursor=pointer]:
+        - link "Stardew Earth" [ref=e6] [cursor=pointer]:
           - /url: /
         - navigation "Main" [ref=e7]:
           - link "Methods & data" [ref=e8] [cursor=pointer]:

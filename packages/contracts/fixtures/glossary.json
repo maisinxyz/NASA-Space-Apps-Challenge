@@ -80,7 +80,7 @@
   "long": "Each criterion is scored 0 to 100 across the three rotations shown: the best of the three gets 100, the weakest 0. If all three are the same, each gets 50. Scores from different farms or different sets of rotations cannot be compared.",
   "how_we_use_it": "Your priorities change the weights, and so the order. They never change the individual criterion scores.",
   "related_terms": [],
-  "source": "FieldTwin method (backend rotation PRD section 8.4)"
+  "source": "Stardew Earth method (backend rotation PRD section 8.4)"
  },
  {
   "id": "nitrogen_fixing_crops",

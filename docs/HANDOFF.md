@@ -1,8 +1,8 @@
 # Active work — 2026-11-15 afternoon (Claude Code, on `main`)
 
-**Status: implementing (items 6–7).** Items 1–2 are done and pushed (0373889). Reserved until this section says done: `services/api/app/services/copilot.py` and its tests (Gus), and every file containing the old product name (rename).
+**Status: items 6–7 done.** Items 1–2 are done and pushed (0373889). Reserved until this section says done: `services/api/app/services/copilot.py` and its tests (Gus), and every file containing the old product name (rename).
 
-1. **"Digital twin" → "Explorable"** (done, pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "FieldTwin" product name unchanged.
+1. **"Digital twin" → "Explorable"** (done, pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "Stardew Earth" product name unchanged.
 2. **Synthetic data → "No data"** (done, pushed): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. Twin chat preview ("Ask Gus preview") removed entirely. Features now showing "No data":
 
 | Farm(s) | Feature | Before | Now |
@@ -22,8 +22,8 @@
 4. **Playwright** (full run against production build + live API, 19 min): 43 passed, 31 failed, 71 skipped. Failures are mostly specs for the old UI: old `.fv-toolbar` layout (9), synthetic preview features (4), Cornell / old Future lens menu (8), mobile/non-3D (3, out of desktop scope), and controls timing out at 30s (7: mute, sound toggle, keyboard camera, press feedback, hidden-panel restore, missing observations), which may be moved selectors or real bugs. Next: update/delete stale specs, flag real bugs, re-run only the failing specs.
 5. **API:** restarted on merged code with `CORS_ORIGINS=http://localhost:3003,http://localhost:3000`; Gus answers live (Groq, OpenRouter fallback).
 
-6. **Gus answers: scoped, farmer-friendly, summarised** (in progress, `services/api/app/services/copilot.py`). Problem: the system prompt ordered Gus to quote exact p50/p10–p90 values, and the context dumped every metric plus the glossary, so answers repeated data and drifted. Fix: new prompt (answer the question first, 2–4 short plain sentences, at most 2 rounded numbers, no jargon unless asked, stay on this farm, decline off-topic); server computes a compact summary (change since year 0, direction, best/worst strategy) instead of raw p-values; glossary only when a term is asked; the fixed "reconstructed demo data" prefix removed. Response contract unchanged.
-7. **Rename to "Stardew Earth"** (in progress). Replaces every "FieldTwin" / "fieldtwin" / "field twin" in UI text, metadata, package names, API title, logger names, contracts text, docs and scripts. Repo name and internal `twin` ids unchanged. Done when `git grep -i "fieldtwin\|field twin"` returns nothing. Note: "Stardew" is a game trademark; check before using it on a product or domain.
+6. **Gus answers: scoped, farmer-friendly, summarised** (done, `services/api/app/services/copilot.py`). Problem: the system prompt ordered Gus to quote exact p50/p10–p90 values, and the context dumped every metric plus the glossary, so answers repeated data and drifted. Fix: new prompt (answer the question first, 2–4 short plain sentences, at most 2 rounded numbers, no jargon unless asked, stay on this farm, decline off-topic); server computes a compact summary (change since year 0, direction, best/worst strategy) instead of raw p-values; glossary only when a term is asked; the fixed "reconstructed demo data" prefix removed. Response contract unchanged. Rotations are named for farmers ("your current rotation (barley, field pea, winter wheat)") instead of ids. Eval: `cd services/api && uv run python scripts/gus_eval.py` (API on :8000; 10 chats/min rate limit).
+7. **Rename to "Stardew Earth"** (done). Packages `stardew-earth-web`/`-api`/`-contracts`, contract 1.4.1, 4 docs renamed (`docs/stardew-earth-v4-prd*.md`), fixtures regenerated, localStorage keys `stardew-earth:*` (saved settings reset once). Replaces every "Stardew Earth" / "stardew-earth" / "Stardew Earth" in UI text, metadata, package names, API title, logger names, contracts text, docs and scripts. Repo name and internal `twin` ids unchanged. Done when `git grep -i "stardew-earth\|Stardew Earth"` returns nothing. Note: "Stardew" is a game trademark; check before using it on a product or domain.
 
 ---
 
@@ -113,11 +113,11 @@ Design references: [Felt interface](https://help.felt.com/getting-started/tour-t
 
 ## Historical handoff (superseded where current code/active instructions differ)
 
-# FieldTwin frontend handoff
+# Stardew Earth frontend handoff
 
 Written 2026-11-14 from the state of `main` after S2-W (sky and weather) and S2-G (ground layers) landed. Audience: the next developer or Claude Code session picking up the frontend. The backend and data pipeline belong to another owner and are not covered here.
 
-## What FieldTwin is
+## What Stardew Earth is
 
 A website for NASA Space Apps 2026, challenge "Adapting Farms with NASA Data". It helps farmers explore crop-rotation options for soil health and resilience. A 3D digital twin of a real farm (Cesium over Google Photorealistic 3D Tiles) lets a user compare at least three rotations, including the existing one, and replay climate scenarios on the land. The tool supports, and does not replace, local agronomic expertise. Results are relative comparisons. No yield, profit or absolute soil-loss numbers appear anywhere.
 

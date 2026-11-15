@@ -1,4 +1,4 @@
-# FieldTwin combined UI/UX audit
+# Stardew Earth combined UI/UX audit
 
 Audit date: 2026-11-14 America/Vancouver (2026-11-15 UTC).
 Local branch: `codex/ui-ux-audit-fixes`. Preview: http://localhost:3003.

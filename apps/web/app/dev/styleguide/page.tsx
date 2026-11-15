@@ -89,7 +89,7 @@ function Everything() {
           <Skeleton className="h-4 w-1/2" />
         </div>
       </Card>
-      <ErrorCard title="Could not load the sites" error={new ApiError({ code: "DATA_SOURCE_UNAVAILABLE", message: "Cannot reach the FieldTwin API.", hint: "Is the API running?", retryable: true }, 0)} onRetry={() => {}} />
+      <ErrorCard title="Could not load the sites" error={new ApiError({ code: "DATA_SOURCE_UNAVAILABLE", message: "Cannot reach the Stardew Earth API.", hint: "Is the API running?", retryable: true }, 0)} onRetry={() => {}} />
       <Tabs
         label="Example tabs"
         items={[

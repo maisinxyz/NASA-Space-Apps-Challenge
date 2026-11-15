@@ -1,4 +1,4 @@
-# FieldTwin: Backend PRD, Crop-Rotation Decision Support (v2, detailed)
+# Stardew Earth: Backend PRD, Crop-Rotation Decision Support (v2, detailed)
 
 Addendum to `prd.md`. Extends §2.4 (honesty), §6 (contract), BE-07 (crops and rotations) and BE-14 (relative index). Does not replace them. Frontend work is in a separate file, `docs/prd-frontend-rotation.md`.
 

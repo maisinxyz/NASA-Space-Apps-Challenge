@@ -19,4 +19,4 @@ export const usesArrows = (t: EventTarget | null) => !!el(t)?.closest("input, te
 export const hasModifier = (e: KeyboardEvent) => e.metaKey || e.ctrlKey || e.altKey;
 
 /** Fired by the global Reset key; pages holding a viewer call its replay(). */
-export const RESET_EVENT = "fieldtwin:reset";
+export const RESET_EVENT = "stardew-earth:reset";

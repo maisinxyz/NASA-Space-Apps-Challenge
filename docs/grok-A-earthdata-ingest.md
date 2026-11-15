@@ -92,5 +92,5 @@ After **each workstream**: run your tests (`cd services/api && uv run pytest -q`
 
 ## Session A brief (paste into Grok)
 ```text
-You are SESSION A of 3 Grok sessions working in parallel on the FieldTwin backend. Your PRD is docs/grok-A-earthdata-ingest.md; read it fully, then CLAUDE.md, docs/progress/FT-W2.md and services/api/app/features/seeds.py. Do EA1 to EA7 in order. Never wait for another session. Never print, log or commit the Earthdata token. Edit only the files your PRD gives you. After each workstream: tests, progress note docs/progress/FT-<ID>.md, git pull --rebase, git add your files by path, commit "FT-<ID>: ...", push, print "<ID> DONE". Stop only with SESSION A FINISHED or SESSION A BLOCKED: <question>.
+You are SESSION A of 3 Grok sessions working in parallel on the Stardew Earth backend. Your PRD is docs/grok-A-earthdata-ingest.md; read it fully, then CLAUDE.md, docs/progress/FT-W2.md and services/api/app/features/seeds.py. Do EA1 to EA7 in order. Never wait for another session. Never print, log or commit the Earthdata token. Edit only the files your PRD gives you. After each workstream: tests, progress note docs/progress/FT-<ID>.md, git pull --rebase, git add your files by path, commit "FT-<ID>: ...", push, print "<ID> DONE". Stop only with SESSION A FINISHED or SESSION A BLOCKED: <question>.
 ```

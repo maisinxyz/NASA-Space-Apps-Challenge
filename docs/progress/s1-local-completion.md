@@ -7,7 +7,7 @@ Vince's restoration approval was confirmed by the user. Pulled main with rebase 
 - Section 1 routes, 3D terrain, fields, overlays, water playback, A/B, difference, evidence, Methods, guided tour and offline fixture mode are present.
 - Fixed simulation polling after unmount/reset/input changes, pending-job restoration, failures/retries and stale responses. Added 12 polling regression tests.
 - Fixed graphics recovery resource ownership, late loads, partial failure disposal and accessible retry. Added resource and loader regressions.
-- Added repeatable 1080p browser checks (`corepack pnpm qa:browser`), with screenshots/report in `/tmp/fieldtwin-qa` by default.
+- Added repeatable 1080p browser checks (`corepack pnpm qa:browser`), with screenshots/report in `/tmp/stardew-earth-qa` by default.
 - Made dev/build fixture sync work through corepack without a separate pnpm command. Production builds now automatically run the unverified-marker check.
 - Typecheck and lint: pass. Web: 80 tests pass. Contract: 51 tests pass. API: 49 tests pass (one upstream TestClient deprecation warning).
 - Final production build with `OFFLINE=1 NEXT_PUBLIC_API_MODE=live`: passes; 269 build files pass the marker check. The frozen contract has no modifications.

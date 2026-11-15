@@ -1,7 +1,7 @@
 // Web Audio feedback sounds, synthesised (no audio files). Spec: hive/farm-view/SHARED-SPEC.md.
 // One AudioContext, created/resumed on the first pointerdown. Mute persisted in localStorage.
 
-export const MUTE_KEY = "fieldtwin:sound-muted";
+export const MUTE_KEY = "stardew-earth:sound-muted";
 export const TICK_MIN_GAP_MS = 35;
 
 export type SoundName = "tickWeek" | "tickMonth" | "tap" | "pop" | "close" | "success";

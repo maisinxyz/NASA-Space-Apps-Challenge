@@ -16,7 +16,7 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   water: "Water conservation",
   erosion: "Erosion control",
   soilCover: "Soil cover",
-  // Proxy only: FieldTwin gives no profit figures. Wording not validated with farmers (docs/progress/s1-phase1-3-product.md).
+  // Proxy only: Stardew Earth gives no profit figures. Wording not validated with farmers (docs/progress/s1-phase1-3-product.md).
   income: "Economic fit (proxy)",
 };
 

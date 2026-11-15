@@ -1,8 +1,8 @@
-# FieldTwin UI/UX audit implementation plan
+# Stardew Earth UI/UX audit implementation plan
 
 Approved in chat on November 14, 2026. Implement audit findings 2–22 locally. Finding 1 (UBC/explore-only entry crash) belongs to the user's friend; preserve that code path and do not implement its fix. No push, PR, deployment, remote merge, reset or destructive cleanup. Isolated local branch is authorized. Existing synthetic scenarios remain synthetic; unsupported features become honestly unavailable. No backend or frozen contract changes.
 
-Audit: /Users/wesleypang/.codex/visualizations/2026/11/15/01a1dd61-8883-7602-b966-aa7243538cd7/fieldtwin-audit/UI-UX-AUDIT.md
+Audit: /Users/wesleypang/.codex/visualizations/2026/11/15/01a1dd61-8883-7602-b966-aa7243538cd7/stardew-earth-audit/UI-UX-AUDIT.md
 
 ## Task 1: State, simulation tabs, sharing (Terra)
 Own apps/web/lib/store.ts, lib/share.ts, related unit tests, components/farm-view/SimulationTab.tsx, components/farm/ScenarioPanel.tsx. First scenario activation must enter simulate immediately. Selected tabs require persistent styling, roving keyboard navigation and tabpanel associations. Extend ShareState backwards compatibly with scenario rotation/progress, comparison month/year/crop fills, panel open/section state, validate/clamp values against farm/scenario, restore paused. Main owns GlobeHome restoration and FarmView; communicate helper/API needs rather than edit those files. Keep UI section state compatible with existing SimState; supply helper to derive initial panel state from share hash if needed. No changes to friend entry fix. Focused failing behavior tests first. No commits or subagents from workers.

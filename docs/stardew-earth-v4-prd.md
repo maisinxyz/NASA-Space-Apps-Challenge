@@ -1,16 +1,17 @@
-# FieldTwin v4 PRD, Part A (Person A): backend
+# Stardew Earth v4 PRD: UBC Farm and KPU Langley digital twin, with crop rotation planning and a farm co-pilot
 
-Status: 2026-11-15. This is **Part A of two PRDs**. It is for **Person A, who builds the backend** (workstreams B1 to B11, section 6). **Part B** (`docs/fieldtwin-v4-prd-B-frontend.md`) is for Person B, who builds the frontend. Both parts share the same goals, rules, data plan, endpoint shapes (Appendix A) and acceptance list, so each can be read on its own. The full combined PRD is `docs/fieldtwin-v4-prd.md`. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
+Status: 2026-11-15. Replaces the pasted "PRD v3.1" as the working plan. Written after a design interview with the product owner. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
 
-## 0. How to use this part
+**Two people build this in parallel.** Person A takes the backend (section 6, workstreams B1 to B11). Person B takes the frontend (section 7, workstreams F1 to F8). Section 9 says exactly who owns which files, what each person can start right now without waiting, how the two halves meet, and gives a prompt for each person. Appendix A freezes the new API shapes so Person B can code against them from the first minute.
 
-- Read sections 1 to 5 for the goal, rules, current state, scope and data sources. Section 6 is your work. Section 8 and Appendix A are the contract you freeze first (B11). Section 9 says how you and Person B work in parallel without waiting for each other, and ends with your kickoff prompt. Section 10 is acceptance, section 11 risks.
-- You own `services/api/**`, `packages/contracts/**`, `data/seed/**`, `data/cache/**`, `scripts/**` and `.env`. You never edit `apps/web/`.
+## 0. How to use this document
+
+- Sections 1 to 4 say what we are building and what is true today. Section 5 lists every data source and how we get it. Sections 6 and 7 are the work, split into backend workstreams (B1 to B11) and frontend workstreams (F1 to F8). Section 8 is the contract change. Section 9 splits the work between two people and gives each a kickoff prompt. Section 10 is acceptance. Section 11 lists risks and open items.
 - Every value marked `TODO(verify)` must be checked against its source before the demo. Do not invent endpoints, fields, enum values, constants, dataset names, URLs or licences.
 
 ## 1. Goal and decisions
 
-FieldTwin is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
+Stardew Earth is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
 
 Decisions made in the interview (the product owner's answers, in order):
 
@@ -152,6 +153,33 @@ All backend work stays in `services/api/`, `packages/contracts/`, `data/seed/`, 
 
 **B11. Contract v1.3.0. Person A does this first.** Bump `packages/contracts/openapi.yaml` to 1.3.0, additive only, implementing the shapes in Appendix A: `GET /sites/{id}/outlook`, `POST /copilot/chat`, `POST /field/analyze`, the `rotation_explanation` block on each forecast strategy, and the `kind` field. Add example response files (fixtures) for each under `packages/contracts/fixtures/`, contract tests, and the new error codes. Update `API_VERSION`. Commit and push, then add one dated line `B11 DONE: contract v1.3.0 is on main` to `docs/progress/forecast-requests.md`. If a shape in Appendix A must change, write the change in that file first so Person B sees it. Acceptance: contract tests pass; every new endpoint has a fixture that validates against the contract.
 
+## 7. Frontend workstreams (apps/web)
+
+Owner: Person B. Reads the engine only through `lib/api` and `lib/forecast`. Every number shows a unit and keeps its range; the basis detail lives in a tooltip or details view (section 2). No income or fertilizer anywhere.
+
+**F1. Engine-fed Future mode.** Put a data layer behind `lib/farm-future/model.ts`: a `FutureData` object built from the `Forecast` response (strategies, trajectories, review flags, climate outlook, exposure) with the current fixtures as the fallback. Replace synthetic numbers section by section; anything the engine does not provide keeps the "Synthetic demo data" label. Make the Strategy picker use the engine strategy labels. Acceptance: for UBC the strategies, soil, water, pest and flag panels show engine values with no synthetic label; tests cover the adapter.
+
+**F2. UBC and KPU twin.** Promote both farms to the twin tier with their field lists (UBC: the six OSM plots, credited under ODbL; KPU: fields to be defined with the owner), simulation box and rotation sets. Colour each field from the year scrubber using the per-field trajectories (soil, water stress, bare weeks), with a legend. Acceptance: dragging the year changes field colours from engine data; the 3D map and the field list show the same fields.
+
+**F3. 2D bird's-eye view (MapLibre).**
+- A "2D Map" button in the farm controls. Opening it pauses the Cesium render loop and mounts MapLibre; "3D Explore" destroys MapLibre and restores Cesium at the saved camera. `maplibre-gl` is already installed.
+- First open: north-up, pitch 0, fit to about 3 km by 3 km around the farm point. Save and restore each farm's 2D camera. Reset map, flat/globe projection toggle, scale bar (metric and imperial), zoom buttons, keyboard pan and zoom.
+- Imagery: UBC raster tiles; KPU through the export endpoint with a `{bbox-epsg-3857}` URL. Show the source and the year 2022 as attribution, separate from the NASA forecast period.
+- Layers on the map: field outlines with per-field colour (D4), field popovers with plain-language readouts.
+- **Custom field drawing** (D7): a draw-polygon tool that sends the polygon to `POST /field/analyze` and shows the result in a side card. Only in this view.
+- Failure: if imagery fails, show a non-blocking banner and keep the 3D Explore button available.
+- Acceptance: open 2D, pan, return to 3D, and repeat ten times with no WebGL context loss and no steadily rising memory.
+
+**F4. Dashboard: extend the farm view.** Merge the Forecast panel, `UBCComparison.tsx` (another track's work, confirm with its owner) and Compare mode into one comparison for strategies A, B and C: crop sequence, mechanism badges (nitrogen-fixing, cover, deep-rooting, drought-tolerant, from the API), review flags with severity, "Why suggested", evidence, information gaps and local review risks. Hero numbers: soil health, net water against quota, frost-free and heat-stress days. Per-field and whole-farm toggle.
+
+**F5. Timeline and what-if.** Keep the bottom timeline and the 10-year clock as they are (D5). Add a "Next 12 months" tab fed by B7 (monthly, labelled "typical year" until the seasonal forecast lands). Keep the rainfall and temperature sliders; they refetch the forecast (debounced) and show the scenario and climate source.
+
+**F6. Farm co-pilot.** Slide-over chat connected to the screen state (farm, field, year or month, scenario, strategy, selected field). "Ask co-pilot" buttons on strategy cards, flagged fields and review flags with prefilled questions. Inline one-sentence tooltips for terms (evapotranspiration, NDVI, soil-moisture anomaly). Show that answers come from the supplied numbers and that local checks are needed. Handle errors and slow replies plainly.
+
+**F7. Crop rotation planner.** (1) Crop pool picker by category (vegetable, grain, forage, cover, fruit) with search, pin and exclude, from `GET /crop-catalog`, with each trait's source shown. (2) Constraints form (equipment, labour, no-till, livestock, water quota) and strategy count. (3) A year-by-season plan grid for the existing rotation and the alternatives, with crop colours and the 12-month calendar for the selected year. (4) A custom-rotation editor (drag or pick crops into the grid) that sends `custom_strategies` and shows the scored result beside the others. (5) Per rotation, the rule explanations, crop-role badges and review flags from B8. Per-field and whole-farm toggle. No income or fertilizer.
+
+**F8. Labels and Roadmap.** Roadmap tags on the 30 m grid, hotspot layers (until B2), real seasonal forecast (until B7 step 2) and drone or video capture. Data and methods page lists every dataset with source, licence and attribution (including NEX-GDDP-CMIP6, OSM, the two municipal orthophoto services, HLS and the other satellite products as they land).
+
 ## 8. Contract and endpoints
 
 An endpoint is a URL the web app calls on the backend. The shared contract file `packages/contracts/openapi.yaml` lists them all. v1.3.0 is additive:
@@ -211,17 +239,28 @@ Each person may run more than one AI session. Keep the lanes on separate folders
 
 Read `CLAUDE.md` and this PRD first. Stop only after the last workstream or a real block. After each workstream run the tests, write `docs/progress/FT-<ID>.md`, `git pull --rebase`, add files by path, commit `FT-<ID>: <summary>`, and push. Never print or commit secrets. Do not edit the other person's files.
 
-### 9.7 Kickoff prompt
+### 9.7 Kickoff prompts
 
 **Person A (backend):**
 
 ```
-You are Person A (backend) on FieldTwin. Read CLAUDE.md, then docs/fieldtwin-v4-prd.md fully, including Appendix A.
+You are Person A (backend) on Stardew Earth. Read CLAUDE.md, then docs/stardew-earth-v4-prd.md fully, including Appendix A.
 Your workstreams: B11 first (contract v1.3.0, within the first hour, then post "B11 DONE" in docs/progress/forecast-requests.md), then B1, B6, B4, B8, B5, B3, B9, B10, B7, and B2 last.
 You own services/api, packages/contracts, data/seed, scripts and .env. Do not edit apps/web.
 Rules: never invent endpoints, fields, dataset names, URLs or licences; never disable TLS verification; never print, log or commit anything from .env; git pull --rebase before each commit; add files by explicit path.
 After each workstream: run the tests, write docs/progress/FT-<ID>.md, commit "FT-<ID>: <summary>", push.
 Stop only after your last workstream, or with "SESSION A BLOCKED: <question>" for a decision, a credential or a fact you cannot verify.
+```
+
+**Person B (frontend):**
+
+```
+You are Person B (frontend) on Stardew Earth. Read CLAUDE.md, then docs/stardew-earth-v4-prd.md fully, including Appendix A.
+Your workstreams: F1, F2, F3, F7 first (they need no new endpoints), then F8, then F5 and F6 against Appendix A until Person A's contract v1.3.0 lands on main (look for "B11 DONE" in docs/progress/forecast-requests.md), then run `pnpm types` and switch to the contract fixtures.
+You own apps/web. Do not edit services, packages/contracts, data, scripts or .env. If you need a backend change, add a dated line to docs/progress/forecast-requests.md.
+Rules: every number shows a unit; no income or fertilizer anywhere; no "assumed" or TODO tags on the main screens; never print, log or commit secrets; git pull --rebase before each commit; add files by explicit path.
+After each workstream: run pnpm test, pnpm typecheck and pnpm lint, write docs/progress/FT-<ID>.md, commit "FT-<ID>: <summary>", push.
+Stop only after F8 and the integration pass, or with "SESSION B BLOCKED: <question>".
 ```
 
 ## 10. Acceptance criteria

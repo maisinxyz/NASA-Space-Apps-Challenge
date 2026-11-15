@@ -1,4 +1,4 @@
-# FieldTwin Backend PRD: Second twin, KPU Langley (School of Horticulture)
+# Stardew Earth Backend PRD: Second twin, KPU Langley (School of Horticulture)
 
 > **Superseded for task assignment (2026-11-15):** the three parallel Grok PRDs `docs/grok-A-earthdata-ingest.md`, `docs/grok-B-exposure-climate-engine.md` and `docs/grok-C-kpu-horticulture-twin.md` replace sections 4 and 5 below. Decisions since: the name stays "Horticulture"; yield inputs (K4) are approved; an Earthdata token is available. Keep this file as background.
 
@@ -85,7 +85,7 @@ Stop rules are those of `docs/backend-forecast-prd.md` section 10.2 (FINISHED, W
 
 ### Session A brief
 ```text
-You are SESSION A of 3 Grok sessions adding the second twin, KPU Langley, to the FieldTwin backend. Your workstreams, in order: K1, K2, K6.
+You are SESSION A of 3 Grok sessions adding the second twin, KPU Langley, to the Stardew Earth backend. Your workstreams, in order: K1, K2, K6.
 Read first: CLAUDE.md, docs/kpu-langley-twin-prd.md (sections 1 to 5 and your workstreams), docs/backend-forecast-prd.md sections 0 and 10.2, docs/progress/FT-W1.md, FT-W4.md and FT-W5.md.
 You own: services/api/app/features/config.py (site list and sources only), data/seed/site_kpu_langley/**, data/seed/<site>/dem.*, scripts/build_seed.py, packages/contracts/fixtures/features/site_kpu_langley.json, services/api/tests/test_kpu_langley.py, services/api/app/rotation/config.py (SITE_PRESETS only), services/api/app/features/zones.py, services/api/app/twin/exposure.py.
 You must NOT edit: apps/web/**, data/seed/crops/**, packages/contracts/openapi.yaml, the engine files app/twin/{water,soil,nitrogen,pest,run,generate,score,weather_ensemble}.py, services/forecast.py.
@@ -95,7 +95,7 @@ STOP only for FINISHED (after K6), WAITING, or BLOCKED. Never invent coordinates
 
 ### Session B brief
 ```text
-You are SESSION B of 3 Grok sessions adding the second twin, KPU Langley, to the FieldTwin backend. Your workstreams, in order: K3, K4.
+You are SESSION B of 3 Grok sessions adding the second twin, KPU Langley, to the Stardew Earth backend. Your workstreams, in order: K3, K4.
 Read first: CLAUDE.md, docs/kpu-langley-twin-prd.md (sections 1 to 5, K3, K4), docs/backend-forecast-prd.md sections 0 and 10.2, docs/progress/FT-W5.md and FT-W7.md.
 You own: data/seed/crops/catalog_v2.json and its sidecar, scripts/build_catalog_v2.py, services/api/tests/test_crop_catalog.py.
 You must NOT edit: apps/web/**, packages/contracts/**, services/api/app/features/**, services/api/app/rotation/**, the engine files in app/twin/, seeds of any site.
@@ -105,7 +105,7 @@ STOP only for FINISHED (after K4), WAITING, or BLOCKED. Print "K3 DONE" and "K4 
 
 ### Session C brief
 ```text
-You are SESSION C of 3 Grok sessions adding the second twin, KPU Langley, to the FieldTwin backend. Your workstreams, in order: K7, K5.
+You are SESSION C of 3 Grok sessions adding the second twin, KPU Langley, to the Stardew Earth backend. Your workstreams, in order: K7, K5.
 Read first: CLAUDE.md, docs/kpu-langley-twin-prd.md (sections 1 to 5, K5, K7), docs/backend-forecast-prd.md sections 0 and 10.2, docs/progress/FT-W2.md, FT-W9.md and FT-W10.md.
 You own: services/api/tests/qa/**, the site lists in services/api/tests/test_climate_outlook.py, docs/data-and-methods.md, docs/todo-verify.md, scripts/smoke_forecast.py, scripts/build_forecast_fixtures.py, scripts/seed_satellite/**, data/seed/<site>/{ndvi,smap,ecostress,grace}.*.
 You must NOT edit: apps/web/**, packages/contracts/openapi.yaml, services/api/app/** (engine, features, rotation, twin) except files listed above.

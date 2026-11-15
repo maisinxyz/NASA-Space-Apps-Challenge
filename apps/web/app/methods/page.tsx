@@ -131,12 +131,12 @@ const TWIN_SOURCES: {
     note: "Volunteer-mapped. Beltsville field outlines: landuse ways 224922167, 224819517 and 224922168, downloaded 2026-11-13; community data, not USDA plot boundaries. Cornell pin: relation 6483196, not a farm boundary.",
   },
   {
-    name: "FieldTwin traced field outlines",
+    name: "Stardew Earth traced field outlines",
     resolution: "Vector data (no pixel resolution)",
     role: "field outlines (Cornell)",
     basis: "assumed",
-    licence: "Made by the FieldTwin team",
-    attribution: "FieldTwin",
+    licence: "Made by the Stardew Earth team",
+    attribution: "Stardew Earth",
     note: "Traced by eye on Google Photorealistic 3D imagery, 2026-11-13 (OpenStreetMap has no farmland outlines there). Approximate: they may not match the farm's managed fields.",
   },
   {
@@ -188,7 +188,7 @@ export default function MethodsPage() {
         {isMock && <Badge variant="mock" />}
       </div>
       <p className="mt-3 max-w-2xl text-lg text-ink-muted">
-        What FieldTwin is built from, what it assumes, and where it stops being
+        What Stardew Earth is built from, what it assumes, and where it stops being
         reliable.{" "}
         <strong className="text-ink">
           UBC Farm and KPU Langley run a ten-year scenario forecast from real

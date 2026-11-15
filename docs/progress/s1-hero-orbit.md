@@ -16,9 +16,9 @@ replaces the homepage hero.
 - Link 2, Clear Street globe (Awwwards element, video only): used for interaction feel only.
 
 ## Decisions (asked 2026-11-13)
-- Copy: link 1's structure and type, FieldTwin's own copy (the Mars copy and invented figures would break the honesty
-  rules). **Draft copy for sign-off** lives in `HERO_COPY` (`components/hero/RestingHero.tsx`): eyebrow "FieldTwin";
-  headline "Farms — / from / orbit"; body "FieldTwin turns NASA Earth observations into a 3D model of a farm, so you
+- Copy: link 1's structure and type, Stardew Earth's own copy (the Mars copy and invented figures would break the honesty
+  rules). **Draft copy for sign-off** lives in `HERO_COPY` (`components/hero/RestingHero.tsx`): eyebrow "Stardew Earth";
+  headline "Farms — / from / orbit"; body "Stardew Earth turns NASA Earth observations into a 3D model of a farm, so you
   can see when and where its soil is most exposed and compare crop rotations on the land itself."; action "Explore
   the farms"; status "Challenge: Field Shift" / "NASA Space Apps 2026". Stat values are computed (8 farms, 8 countries,
   twin "Agassiz", "1.4 × 1.4 km" from `SIM_AREA_LABEL`); the status bar shows real imagery state and live camera

@@ -1,4 +1,4 @@
-# FieldTwin web
+# Stardew Earth web
 
 Section 1: 3D terrain, storm replay, A/B comparison, Rotation Lab, evidence, Methods, and guided tour. All bundled fixtures are mock data. Offline mode also uses mocks, not verified curated seed data.
 
@@ -27,7 +27,7 @@ corepack pnpm start
 corepack pnpm qa:browser
 ```
 
-Browser QA uses a 1920×1080 headless window and writes screenshots/report to `/tmp/fieldtwin-qa`. It checks A/B replay, evidence, actual context loss/retry and external requests. `QA_BASE_URL`, `QA_OUTPUT`, and `QA_BROWSER` can override defaults. It is not a screen-reader or demo-laptop certification.
+Browser QA uses a 1920×1080 headless window and writes screenshots/report to `/tmp/stardew-earth-qa`. It checks A/B replay, evidence, actual context loss/retry and external requests. `QA_BASE_URL`, `QA_OUTPUT`, and `QA_BROWSER` can override defaults. It is not a screen-reader or demo-laptop certification.
 
 `OFFLINE=1 NEXT_PUBLIC_API_MODE=live corepack pnpm build` forces local fixtures even when live mode is requested. Stop the dev server before building: both use `.next`. The production build automatically checks for unverified markers in built code; runtime provenance still requires review.
 

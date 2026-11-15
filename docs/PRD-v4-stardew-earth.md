@@ -1,4 +1,4 @@
-# FieldTwin v4 PRD: UBC Farm and KPU Langley digital twin, with crop rotation planning and a farm co-pilot
+# Stardew Earth v4 PRD: UBC Farm and KPU Langley digital twin, with crop rotation planning and a farm co-pilot
 
 Status: 2026-11-15. Replaces the pasted "PRD v3.1" as the working plan. Written after a design interview with the product owner. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
 
@@ -13,7 +13,7 @@ Status: 2026-11-15. Replaces the pasted "PRD v3.1" as the working plan. Written 
 
 ## 1. Goal and decisions
 
-FieldTwin is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
+Stardew Earth is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
 
 Decisions made in the interview (the product owner's answers, in order):
 

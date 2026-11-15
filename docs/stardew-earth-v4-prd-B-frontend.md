@@ -1,17 +1,17 @@
-# FieldTwin v4 PRD: UBC Farm and KPU Langley digital twin, with crop rotation planning and a farm co-pilot
+# Stardew Earth v4 PRD, Part B (Person B): frontend
 
-Status: 2026-11-15. Replaces the pasted "PRD v3.1" as the working plan. Written after a design interview with the product owner. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
+Status: 2026-11-15. This is **Part B of two PRDs**. It is for **Person B, who builds the frontend** (workstreams F1 to F8, section 7). **Part A** (`docs/stardew-earth-v4-prd-A-backend.md`) is for Person A, who builds the backend. Both parts share the same goals, rules, data plan, endpoint shapes (Appendix A) and acceptance list, so each can be read on its own. The full combined PRD is `docs/stardew-earth-v4-prd.md`. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
 
-**Two people build this in parallel.** Person A takes the backend (section 6, workstreams B1 to B11). Person B takes the frontend (section 7, workstreams F1 to F8). Section 9 says exactly who owns which files, what each person can start right now without waiting, how the two halves meet, and gives a prompt for each person. Appendix A freezes the new API shapes so Person B can code against them from the first minute.
+## 0. How to use this part
 
-## 0. How to use this document
-
-- Sections 1 to 4 say what we are building and what is true today. Section 5 lists every data source and how we get it. Sections 6 and 7 are the work, split into backend workstreams (B1 to B11) and frontend workstreams (F1 to F8). Section 8 is the contract change. Section 9 splits the work between two people and gives each a kickoff prompt. Section 10 is acceptance. Section 11 lists risks and open items.
-- Every value marked `TODO(verify)` must be checked against its source before the demo. Do not invent endpoints, fields, enum values, constants, dataset names, URLs or licences.
+- Read sections 1 to 4 for the goal, rules, current state and scope. Section 5 shows where the data comes from (you only need the imagery rows and the state column). Section 7 is your work. Section 8 and Appendix A are the API shapes you code against from the first minute. Section 9 says how you and Person A work in parallel without waiting for each other, and ends with your kickoff prompt. Section 10 is acceptance, section 11 risks.
+- You own `apps/web/**`. You never edit `services/`, `packages/contracts/`, `data/`, `scripts/` or `.env`. If you need a backend change, add a dated line to `docs/progress/forecast-requests.md`.
+- You do not need any secret. The Cesium token is already in `apps/web/.env.local`.
+- Do not invent endpoints, fields, enum values or dataset names. Render unknown enum values neutrally.
 
 ## 1. Goal and decisions
 
-FieldTwin is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
+Stardew Earth is a website that turns a real farm into a digital twin, forecasts how climate change will affect it over 10 years, and compares three crop rotations. NASA Space Apps 2026, challenge "Field Shift". The demo covers **two farms only: UBC Farm (Vancouver) and KPU Langley (Langley, BC)**.
 
 Decisions made in the interview (the product owner's answers, in order):
 
@@ -107,52 +107,6 @@ Notes on AppEEARS: the Earthdata token returns HTTP 403 on the task list, so App
 
 Licence note for NEX-GDDP-CMIP6: the AWS registry says CC0 and one published file says `cmip6_license: CC-BY-SA 4.0`. The seed follows the stricter terms (credit NASA and the CMIP6 groups, mark derived numbers CC-BY-SA 4.0). `TODO(verify)` with NCCS before the demo.
 
-## 6. Backend workstreams
-
-All backend work stays in `services/api/`, `packages/contracts/`, `data/seed/`, `scripts/` and `docs/`. It never edits `apps/web/`. Each workstream ends with tests, a note in `docs/progress/FT-<ID>.md`, a commit to `main` with the ID, and `git pull --rebase` first.
-
-**B1. Climate trend into the engine.**
-- The seeds already exist for `site_ubc_farm` and `site_kpu_langley` (built by `scripts/seed_cmip6/build_ncss.py`, which writes `data/seed/<site>/cmip6_delta.json.gz` and its sidecar). Commit them if they are not on main yet. Rerun the script only to change models or years.
-- Pass `climate_source` and `site_id` from `forecast.py` into the weather ensemble and the climate outlook (the request in `docs/progress/forecast-requests.md`, from FT-EB4).
-- Map contract presets to the file keys. Today `drier_summers` and `wetter_winters` read `ssp245` and `both` reads `ssp585`; confirm this mapping with the owner or add it to the contract.
-- Replace the assumption "No verified CMIP6 delta table is attached" in the response when the file exists.
-- Acceptance: with the file, a baseline run and an `ssp245` run give different year-10 weather; the response says which models and years produced the delta; tests cover the file loader and the seasonal delta maths (`services/api/tests/test_cmip6_ncss.py`).
-
-**B2. Satellite seeds for UBC and KPU through AppEEARS.** Unblocked: the Earthdata username and password are in `.env`. Read them from the environment only; never print them.
-- New script folder `scripts/seed_appeears/`. Log in, submit point (or small area) tasks, poll, download the CSV, write the existing seed shapes (`ndvi.json.gz`, `smap.json.gz`, `ecostress.json.gz`, `dem.json.gz`, optional `imerg`, `grace`) with sidecars, and delete the matching `.gap.json`. The seed contract is in `docs/grok-A-earthdata-ingest.md`.
-- Do not use direct GDAL reads of LP DAAC files on the Windows machine and never disable TLS verification.
-- Acceptance: for each site, `load_ndvi`, `load_smap`, `load_dem` return data; the climate outlook, exposure and uncertainty rows show the new layers; `data_mode` follows the data that exists; tests run offline against small committed fixtures.
-
-**B3. Station check.** Pick the nearest active Environment Canada station with daily temperature and rain, record its climate identifier and coordinates, pull the daily record through the OGC API, and compare with the POWER seed (bias by month for temperature and rain). Write `data/seed/<site>/station.json.gz` and fill `station_bias` in the uncertainty block. Acceptance: the response shows the bias with unit, basis `derived`, years compared; the station and its distance to the farm are named.
-
-**B4. Crops: planting windows and traits for UBC and KPU.** Fill `season_window` (planting and termination day of year) for the vegetables, covers and field crops used at the two farms, only from a cited source; keep null where no source exists. Keep the FAO-56 and Statistics Canada values already in. Define each farm's "Current rotation" ourselves, since no farm contact is available (D11). UBC: one family block per field, named by the OpenStreetMap plot names (D3-1 Brassicas, D4-1 Goosefoots, D6-1 Alliums and Legumes, D6-2 Nightshades and Garlic, D7-2 Early Cucurbits, D5-3 Maya Garden), with the families cycling through the fields in a standard market-garden order (brassicas, then alliums and legumes, then nightshades, then cucurbits, then chard and beet, with a cover crop between). KPU Langley: the typical vegetable preset already stored (FT-EC2). Store both as presets named "Current rotation" and editable in the UI. Acceptance: a UBC request with vegetables returns at least two alternatives; every filled value has `trait_sources` with a URL in the data file; the pool shown in the UI is no longer limited to field crops; the preset label reads "Current rotation".
-
-**B5. Calibrate and sanity-check engine outputs.** Review UBC and KPU runs against known ranges (soil loss, nitrogen, pest index, yields) with cited sources. Fix saturation (pest pressure at 100), unit slips and unrealistic soil loss, or relabel as `assumed` or `relative` and widen the range. Acceptance: no output outside a documented plausible range without a review flag; a short note lists each check, source and result.
-
-**B6. Fix the KPU soil seed.** `forecast("site_kpu_langley", ...)` fails although `data/seed/site_kpu_langley/soil.json` exists. Find the loader mismatch and fix it; add a test that runs a forecast for every demo site. Acceptance: a KPU forecast with the KPU request returns three strategies.
-
-**B7. Monthly outlook (up to 12 months).**
-- New endpoint `GET /sites/{id}/outlook` (contract v1.3.0). Response: 12 monthly entries with temperature, rain, water balance and heat or frost risk, each as p10, p50, p90 with unit, basis and confidence; plus a `kind` field saying `climatology` or `seasonal_forecast`.
-- Step 1 (required): typical-year outlook from POWER 1991 to 2024 and the engine's weekly water balance, `basis: derived`, labelled "typical year, not a forecast".
-- Step 2 (after step 1 ships): add anomalies from the Open-Meteo Seasonal API for the first months; verify the horizon, members, units and licence first and record them; bias-correct against the POWER climatology; mark `kind: seasonal_forecast` only for months that use it.
-- Acceptance: deterministic for a given request; cached; under 300 ms cached; every month shows its basis and a widening range.
-
-**B8. Rotation planning support.** The generator, the rotation rules and the scorecards already exist (`app/twin/generate.py`, `score.py`, request fields `selection`, `pinned`, `excluded`, `custom_strategies`, `strategy_count`, `constraints`). This workstream makes them work for UBC and KPU crops and explains them.
-- With B4's windows in place, generate rotations from a pool that includes vegetables, grains, forage and cover crops; respect return intervals, host-family breaks, legume and cover-crop rules, equipment and labour constraints; keep the existing rotation as index 0.
-- Make a farmer-entered custom rotation a first-class strategy (`custom_strategies`), scored the same way as the generated ones.
-- Return plain-language rotation explanations from the API (templates): which rule a rotation satisfies or breaks (for example "two cereal years in a row, no break crop"), the mechanism of each crop role (nitrogen-fixing, cover, deep-rooting, drought-tolerant), and a review flag where a trait is unsourced.
-- Acceptance: a UBC request with vegetables returns the existing rotation plus at least two alternatives; a custom rotation is scored and ranked next to them; every rotation carries its rule explanations and flags; results are deterministic.
-
-**B9. Chatbot endpoint.** New endpoint `POST /copilot/chat` (v1.3.0). Server-side call to Groq (`openai/gpt-oss-120b`) with `GROQ_API_KEY`. The request carries the message and a snapshot of the screen (farm, field, year or month, scenario, strategy, selected cell or field). The server adds the forecast numbers for that snapshot and the glossary.
-- System rules: plain farming language (explain NDVI, evapotranspiration and soil-moisture terms); quote the numbers on screen with their units and basis; state trade-offs and uncertainty and the resolution limit of coarse data (for example "one 9 km pixel"); never give a planting order; always say what to check locally; answer only from the supplied data, and say "not in the data" otherwise; refuse income and fertilizer figures.
-- Guard: limit message size and rate per client; never return the key; time out gracefully with a plain error; log no secrets.
-- Response: `reply`, `referenced_layers`, `local_validation_tips`.
-- Acceptance: tests with a stubbed Groq client check the prompt contents and guardrails; an integration check with the real key answers a sample question using only supplied numbers.
-
-**B10. Custom field analysis (2D view only).** New endpoint `POST /field/analyze` (v1.3.0). Takes a GeoJSON polygon and a rotation, finds the nearest POWER and SoilGrids data (live, cached by request hash), runs the engine, returns the same strategy shapes. This is for the 2D view only (D7). Acceptance: a polygon near UBC returns a result with `data_mode: limited_data` and the resolution notes; invalid or huge polygons return a 422 error; the call is rate-limited.
-
-**B11. Contract v1.3.0. Person A does this first.** Bump `packages/contracts/openapi.yaml` to 1.3.0, additive only, implementing the shapes in Appendix A: `GET /sites/{id}/outlook`, `POST /copilot/chat`, `POST /field/analyze`, the `rotation_explanation` block on each forecast strategy, and the `kind` field. Add example response files (fixtures) for each under `packages/contracts/fixtures/`, contract tests, and the new error codes. Update `API_VERSION`. Commit and push, then add one dated line `B11 DONE: contract v1.3.0 is on main` to `docs/progress/forecast-requests.md`. If a shape in Appendix A must change, write the change in that file first so Person B sees it. Acceptance: contract tests pass; every new endpoint has a fixture that validates against the contract.
-
 ## 7. Frontend workstreams (apps/web)
 
 Owner: Person B. Reads the engine only through `lib/api` and `lib/forecast`. Every number shows a unit and keeps its range; the basis detail lives in a tooltip or details view (section 2). No income or fertilizer anywhere.
@@ -239,23 +193,12 @@ Each person may run more than one AI session. Keep the lanes on separate folders
 
 Read `CLAUDE.md` and this PRD first. Stop only after the last workstream or a real block. After each workstream run the tests, write `docs/progress/FT-<ID>.md`, `git pull --rebase`, add files by path, commit `FT-<ID>: <summary>`, and push. Never print or commit secrets. Do not edit the other person's files.
 
-### 9.7 Kickoff prompts
-
-**Person A (backend):**
-
-```
-You are Person A (backend) on FieldTwin. Read CLAUDE.md, then docs/fieldtwin-v4-prd.md fully, including Appendix A.
-Your workstreams: B11 first (contract v1.3.0, within the first hour, then post "B11 DONE" in docs/progress/forecast-requests.md), then B1, B6, B4, B8, B5, B3, B9, B10, B7, and B2 last.
-You own services/api, packages/contracts, data/seed, scripts and .env. Do not edit apps/web.
-Rules: never invent endpoints, fields, dataset names, URLs or licences; never disable TLS verification; never print, log or commit anything from .env; git pull --rebase before each commit; add files by explicit path.
-After each workstream: run the tests, write docs/progress/FT-<ID>.md, commit "FT-<ID>: <summary>", push.
-Stop only after your last workstream, or with "SESSION A BLOCKED: <question>" for a decision, a credential or a fact you cannot verify.
-```
+### 9.7 Kickoff prompt
 
 **Person B (frontend):**
 
 ```
-You are Person B (frontend) on FieldTwin. Read CLAUDE.md, then docs/fieldtwin-v4-prd.md fully, including Appendix A.
+You are Person B (frontend) on Stardew Earth. Read CLAUDE.md, then docs/stardew-earth-v4-prd.md fully, including Appendix A.
 Your workstreams: F1, F2, F3, F7 first (they need no new endpoints), then F8, then F5 and F6 against Appendix A until Person A's contract v1.3.0 lands on main (look for "B11 DONE" in docs/progress/forecast-requests.md), then run `pnpm types` and switch to the contract fixtures.
 You own apps/web. Do not edit services, packages/contracts, data, scripts or .env. If you need a backend change, add a dated line to docs/progress/forecast-requests.md.
 Rules: every number shows a unit; no income or fertilizer anywhere; no "assumed" or TODO tags on the main screens; never print, log or commit secrets; git pull --rebase before each commit; add files by explicit path.

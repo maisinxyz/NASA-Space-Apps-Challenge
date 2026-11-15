@@ -17,7 +17,7 @@ from app.core.config import REPO_ROOT
 from app.core.errors import not_found
 from app.providers.fixtures import store
 
-log = logging.getLogger("fieldtwin.services.terrain")
+log = logging.getLogger("stardew_earth.services.terrain")
 
 # Real packages built by the packaging module land here.
 _PACKAGES_DIR = REPO_ROOT / "data" / "packages"

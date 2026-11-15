@@ -35,7 +35,7 @@ def test_grounded_request_and_response(client, monkeypatch):
     context = json.loads(payload["messages"][1]["content"].removeprefix("Server-supplied context: "))
     assert context["metrics"]["water_demand_mm"]["unit"] == "mm/yr"
     assert "reconstructed" in context["description"].lower()
-    assert context["glossary"] and "50 km" in context["weather_resolution"]
+    assert "glossary" not in context and "50 km" in context["weather_resolution"]
     assert "test-key" not in result.text
 
 
@@ -123,7 +123,7 @@ def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
     response = client.post("/api/v1/copilot/chat", json=data)
     assert response.status_code == 200
     context = json.loads(calls[0]["messages"][1]["content"].removeprefix("Server-supplied context: "))
-    assert context["metrics"]["soil_organic_index"]["p50"] == 100
+    assert context["metrics"]["soil_organic_index"]["now"] == 100
 
 
 def test_openrouter_fallback_when_groq_fails_or_missing(client, monkeypatch):
@@ -142,3 +142,43 @@ def test_openrouter_fallback_when_groq_fails_or_missing(client, monkeypatch):
     monkeypatch.setattr(copilot, "dotenv_values", lambda *a, **kw: {})
     assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
     assert calls == [("or-key", copilot.OPENROUTER_URL)]
+
+
+def _context(client, monkeypatch, message, mutate=None):
+    calls = []
+    monkeypatch.setattr(copilot, "_provider", lambda payload, key: calls.append(payload) or {"reply": "ok", "referenced_layers": [], "local_validation_tips": []})
+    body = request(); body["message"] = message
+    if mutate: mutate(body)
+    result = client.post('/api/v1/copilot/chat', json=body)
+    assert result.status_code == 200
+    return json.loads(calls[0]["messages"][1]["content"].removeprefix("Server-supplied context: ")), result.json()
+
+
+def test_system_prompt_is_short_and_farmer_friendly():
+    assert "p50" not in copilot.SYSTEM.replace("p10, p50, p90", "") and "p10-p90" not in copilot.SYSTEM
+    assert "2-4 short sentences" in copilot.SYSTEM and "at most 2 numbers" in copilot.SYSTEM.lower()
+
+
+def test_context_is_summarised_not_raw(client, monkeypatch):
+    context, result = _context(client, monkeypatch, "Is my soil getting better?")
+    m = context["metrics"]["soil_organic_index"]
+    assert {"unit", "now", "selected_year", "change", "direction", "uncertainty"} <= set(m)
+    assert m["direction"] in ("up", "down", "flat") and m["uncertainty"] in ("low", "moderate", "high")
+    assert not {"p10", "p50", "p90"} & set(json.dumps(context["metrics"]).replace('"', " ").split())
+    assert "p10" not in json.dumps(context) and "p90" not in json.dumps(context)
+    assert "highest" in next(iter(context["strategy_comparison"].values()))
+    assert not result["reply"].startswith("This answer uses")
+
+
+def test_glossary_only_when_term_asked(client, monkeypatch):
+    context, _ = _context(client, monkeypatch, "Is my soil getting better?")
+    assert "glossary" not in context
+    copilot._requests.clear()
+    context, _ = _context(client, monkeypatch, "What is evapotranspiration?")
+    assert any(g["id"] == "evapotranspiration" for g in context["glossary"])
+
+
+def test_monthly_metrics_summarised(client, monkeypatch):
+    def month(b): b["snapshot"]["horizon"] = "months"; b["snapshot"]["time_index"] = 0
+    context, _ = _context(client, monkeypatch, "Will it freeze?", month)
+    assert set(context["metrics"]["frost_risk"]) == {"unit", "value", "uncertainty"} and "glossary" not in context

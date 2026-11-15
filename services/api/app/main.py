@@ -1,4 +1,4 @@
-"""FieldTwin API. Run: make dev"""
+"""Stardew Earth API. Run: make dev"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     configure_logging(settings.log_level)
     app = FastAPI(
-        title="FieldTwin API",
+        title="Stardew Earth API",
         version=API_VERSION,
         description="Serves mock fixtures until real services land. Contract: packages/contracts/openapi.yaml.",
         openapi_url=f"{API_PREFIX}/openapi.json",

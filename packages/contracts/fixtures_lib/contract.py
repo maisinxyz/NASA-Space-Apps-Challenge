@@ -11,7 +11,7 @@ from referencing import Registry, Resource
 from referencing.jsonschema import DRAFT202012
 
 OPENAPI_PATH = Path(__file__).resolve().parents[1] / "openapi.yaml"
-_URI = "urn:fieldtwin:openapi"
+_URI = "urn:stardew-earth:openapi"
 
 
 @lru_cache(maxsize=1)

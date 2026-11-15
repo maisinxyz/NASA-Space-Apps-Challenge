@@ -8,7 +8,7 @@ Rules that always apply: `CLAUDE.md` (honesty labels, no invented endpoints, "su
 ## 0. Context capsule
 
 
-- **Product:** FieldTwin. A real or scanned landscape becomes a 3D digital twin. Real NASA POWER storms replay on it. Three crop rotations are compared side by side. Evidence cards explain why. Challenge: "Field Shift: Adapting Farms with NASA Data" (NASA Space Apps 2026).
+- **Product:** Stardew Earth. A real or scanned landscape becomes a 3D digital twin. Real NASA POWER storms replay on it. Three crop rotations are compared side by side. Evidence cards explain why. Challenge: "Field Shift: Adapting Farms with NASA Data" (NASA Space Apps 2026).
 - **Event:** starts Sat Nov 14 09:00, submit by Sun Nov 15 23:59 (aim 2 h early). Written Thu Nov 12.
 - **Team for this section:** 2 owners, about 36 working hours each, both P0 paths must fit.
 - **Corrected repo state (checked Nov 12):** `apps/web` is empty (only `.gitkeep`): no Next.js app, no client, no decoders. `packages/contracts/fixtures/` does not exist yet. `openapi.yaml` v1.0.0 exists and is frozen. The v0.1 draft claimed these were scaffolded; they are not, so scaffolding is the first task. **(Superseded 2026-11-12, see change log: the scaffold, client, two decoders and fixtures from commit `e83a93c` were restored and are the base.)**
@@ -314,7 +314,7 @@ How to use: one prompt = one fresh Claude Code session (`/clear` first). Run you
 
 
 ```text
-You are working on FieldTwin, Section 1 (3D digital twin + web). Read, in this order: CLAUDE.md, docs/prd/section1-web-3d.md (all of it), packages/contracts/README.md, and the progress notes named in the prompt.
+You are working on Stardew Earth, Section 1 (3D digital twin + web). Read, in this order: CLAUDE.md, docs/prd/section1-web-3d.md (all of it), packages/contracts/README.md, and the progress notes named in the prompt.
 Rules: do only this task, do not start the next one. Never invent endpoints, fields, enum values, dataset names or URLs; if the contract lacks something, STOP and ask me. Anything in PRD section 4.4 (R1 to R5) is a contract REQUEST: use the documented mock behind NEXT_PUBLIC_MOCK_EXTRAS=1, never as if real. Every number on screen has units and a basis chip (measured/derived/modeled/assumed/relative). No yield, profit or absolute soil-loss claims. Same inputs give same outputs. OFFLINE=1 must work.
 STEP 0 (before any work): read the "Track owners" table in Prompts.md (A = Rendering, B = Product UI/UX; names may be blank). Print a short block: PULL FIRST (git checkout main && git pull, and which prompts must be merged), COORDINATE WITH (who, about what), WHEN DONE, TELL (who). Check the needed docs/progress/s1-*.md files exist; if not, say who to ask and STOP.
 End of task: run the relevant tests/lint/build and show results; tick this prompt's acceptance bullets (which pass, which do not); write docs/progress/s1-<id>.md; remind me to merge my branch and message the people under WHEN DONE, TELL; then stop and wait.

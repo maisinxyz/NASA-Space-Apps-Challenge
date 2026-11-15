@@ -1,4 +1,4 @@
-# FieldTwin local UI integration handoff
+# Stardew Earth local UI integration handoff
 
 Updated November 14, 2026, Vancouver time.
 
@@ -18,8 +18,8 @@ Continue locally on `codex/ui-ux-audit-fixes` in this worktree. Keep the origina
 Preview uses `http://localhost:3003`. Locate its process with `lsof -nP -iTCP:3003 -sTCP:LISTEN`. Rebuild from `apps/web` with `pnpm build` and restart on port 3003. Keep one software-WebGL browser suite active at a time.
 
 - Current unit results are 508 web tests, 217 API tests, and 85 contract tests passed. ESLint reports 0 errors and 33 warnings.
-- The preview was rebuilt successfully after the lens fix and Methods update. The broad browser run was interrupted after 56 passes and 6 failures. The targeted rerun on the rebuilt preview passed six checks. Search-to-farm entry is the one targeted failure still open. The rerun opened search and selected Cornell but timed out waiting for the workspace after Enter. See R14 in the audit. See `/tmp/fieldtwin-resume-e2e.log`, `/tmp/fieldtwin-final-rerun.log`, and `/tmp/fieldtwin-final-search.log`.
-- axe scanned the non-3D workspace, Methods and Learn. It reported no violations in those samples and left contrast checks for manual review. See `/tmp/fieldtwin-final-content-axe.json`. The 3D scans and screen-reader walkthroughs remain follow-up work.
+- The preview was rebuilt successfully after the lens fix and Methods update. The broad browser run was interrupted after 56 passes and 6 failures. The targeted rerun on the rebuilt preview passed six checks. Search-to-farm entry is the one targeted failure still open. The rerun opened search and selected Cornell but timed out waiting for the workspace after Enter. See R14 in the audit. See `/tmp/stardew-earth-resume-e2e.log`, `/tmp/stardew-earth-final-rerun.log`, and `/tmp/stardew-earth-final-search.log`.
+- axe scanned the non-3D workspace, Methods and Learn. It reported no violations in those samples and left contrast checks for manual review. See `/tmp/stardew-earth-final-content-axe.json`. The 3D scans and screen-reader walkthroughs remain follow-up work.
 
 ## Behavior to preserve
 

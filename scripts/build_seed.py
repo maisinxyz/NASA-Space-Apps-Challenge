@@ -109,7 +109,7 @@ def seed_soil(site: str, lat: float, lon: float) -> None:
 def bundled_schema(name: str) -> dict:
     spec = yaml.safe_load((ROOT / "packages" / "contracts" / "openapi.yaml").read_text(encoding="utf-8"))
     text = json.dumps(spec["components"]["schemas"]).replace("#/components/schemas/", "#/$defs/")
-    return {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": f"urn:fieldtwin:{name}",
+    return {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": f"urn:stardew-earth:{name}",
             "title": name, "description": "Generated from packages/contracts/openapi.yaml by scripts/build_seed.py. Do not edit.",
             "$ref": f"#/$defs/{name}", "$defs": json.loads(text)}
 

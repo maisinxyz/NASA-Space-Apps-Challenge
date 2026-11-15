@@ -1,4 +1,4 @@
-# Section 2 PRD: NASA data and the FieldTwin algorithm (v0.3)
+# Section 2 PRD: NASA data and the Stardew Earth algorithm (v0.3)
 
 > Living document. v0.2 recorded the 2026-11-12 design interview. v0.3 records the 2026-11-13 feature interview (decisions D-23…D-36, feature catalog §4.1). Every decision has an ID (`D-xx`) so prompts, code comments and commits can point to it. Change a decision only by editing its row and adding a change-log entry.
 
@@ -6,7 +6,7 @@
 
 ## 0. Context capsule (Claude: read this first; it replaces reading anything else)
 
-- **Product:** FieldTwin. A farm becomes a 3D landscape that the user walks around. A NASA-data engine finds *when* and *where* the farm is exposed to harm (wet winters on bare soil, dry spells on sensitive crops) and places a few minimalist, realistic pins and muted zone highlights on the land (D-24). Tapping a pin shows a one-line headline, one action, and "why?" with the numbers and NASA sources. The experience opens on a spinning Earth and flies down to the farm (D-25). Features are listed in §4.1.
+- **Product:** Stardew Earth. A farm becomes a 3D landscape that the user walks around. A NASA-data engine finds *when* and *where* the farm is exposed to harm (wet winters on bare soil, dry spells on sensitive crops) and places a few minimalist, realistic pins and muted zone highlights on the land (D-24). Tapping a pin shows a one-line headline, one action, and "why?" with the numbers and NASA sources. The experience opens on a spinning Earth and flies down to the farm (D-25). Features are listed in §4.1.
 - **Challenge:** "Field Shift: Adapting Farms with NASA Data", NASA Space Apps 2026. Statement (as quoted by other teams; re-check on the official page): *"Create a decision-support tool that uses NASA Earth observations along with local soil information, crop characteristics, and farmer priorities to help farmers explore rotation strategies that could strengthen soil health and adapt their farms to changing conditions."* Page: https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/
 - **Event:** Sat Nov 14 09:00 to Sun Nov 15 23:59, 2026. **Pre-building data before the event is allowed** (D-03).
 - **Section 2 scope:** backend only: data ingestion, the algorithm, and the outputs the UI consumes. Visual design is Section 1's job; this PRD only states what the backend must *give* the UI (§9).
@@ -26,11 +26,11 @@ Turn decades of NASA Earth observations into **the timing and place of risk on o
 
 The idea in one sentence, for judges:
 
-> **A crop rotation can't change the weather, but it changes *when the soil is exposed*. FieldTwin measures, from 45 years of NASA data, *when* this farm's weather is dangerous and *where* on the land water goes, then overlaps that with *when* each rotation leaves the soil bare or the crop vulnerable.**
+> **A crop rotation can't change the weather, but it changes *when the soil is exposed*. Stardew Earth measures, from 45 years of NASA data, *when* this farm's weather is dangerous and *where* on the land water goes, then overlaps that with *when* each rotation leaves the soil bare or the crop vulnerable.**
 
 ### Why this wins (and what we deliberately avoid)
 
-Other public repos for this same challenge (§13) almost all build a **weighted score per rotation** (soil / water / resilience / income), stress-tested on a "normal, dry, hot year" preset, mostly from NASA POWER alone. None uses **field terrain**, and none reasons about **the timing overlap of bare soil and hazard**. FieldTwin's originality is that overlap, computed per terrain zone, with each NASA dataset doing a job only it can do.
+Other public repos for this same challenge (§13) almost all build a **weighted score per rotation** (soil / water / resilience / income), stress-tested on a "normal, dry, hot year" preset, mostly from NASA POWER alone. None uses **field terrain**, and none reasons about **the timing overlap of bare soil and hazard**. Stardew Earth's originality is that overlap, computed per terrain zone, with each NASA dataset doing a job only it can do.
 
 ---
 
@@ -209,7 +209,7 @@ Other public repos for this same challenge (§13) almost all build a **weighted 
 
 **Everything in this table is `TODO(verify)` until S2-01 confirms the product name, version, variables, resolution, coverage, access method, license, and a working sample request (recorded URL).** Values in brackets are what we believe and must check. Rows 1 to 4 and 11 have names and URLs from an unofficial catalog (see `Databases.md`); the official Resources list has not been read yet.
 
-| # | Dataset | Owner | Role in FieldTwin | Variables we need | Believed resolution / coverage | Access (verify) | Basis label |
+| # | Dataset | Owner | Role in Stardew Earth | Variables we need | Believed resolution / coverage | Access (verify) | Basis label |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | **NASA POWER** daily | NASA | The 45-year backbone record | Precipitation, min/max temperature, root-zone soil wetness [parameter names e.g. `PRECTOTCORR`, `GWETROOT`: verify] | [~0.5° grid; 1981–present] | Public REST API, no login [verify] | measured (reanalysis/satellite-derived) |
 | 2 | **GPM IMERG** (Final Run) | NASA | Corrects POWER rain intensity (D-07); real sub-daily storm shape | Precipitation rate | [0.1°, half-hourly; from 2000; latitude band limits: verify Fraser Valley ~49°N is covered] | Earthdata login (GES DISC) [verify] | measured |

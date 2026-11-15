@@ -49,7 +49,7 @@ import { FarmList } from "./FarmList";
 import type { CameraState, GlobeHandle, PinHover, TileTier } from "./types";
 
 /** Project name (screen-reader heading). */
-const PROJECT_NAME = "FieldTwin";
+const PROJECT_NAME = "Stardew Earth";
 
 /** Resting hero states in globe view (tokens.hero). */
 type HeroState = "hero" | "dragging" | "centred" | "ui";

@@ -30,7 +30,7 @@ from app.terrain.grid_utils import (
 )
 from app.terrain.types import ElevationGrid, SourceInfo
 
-log = logging.getLogger("fieldtwin.terrain.precomputed")
+log = logging.getLogger("stardew_earth.terrain.precomputed")
 
 # Version tag baked into provenance / content hashes; bump when seed data changes.
 SOURCE_VERSION = "precomputed-v1"

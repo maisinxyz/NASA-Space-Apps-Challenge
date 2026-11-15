@@ -1,13 +1,13 @@
-# FieldTwin Vancouver-area UI redesign
+# Stardew Earth Vancouver-area UI redesign
 
 **Implementation handoff · November 14, 2026**  
-**Review baseline:** [FieldTwin at 9fdea4f](https://github.com/maisinxyz/NASA-Space-Apps-Challenge/tree/9fdea4f6a14782226ed5351be7372684755d9d4a)
+**Review baseline:** [Stardew Earth at 9fdea4f](https://github.com/maisinxyz/NASA-Space-Apps-Challenge/tree/9fdea4f6a14782226ed5351be7372684755d9d4a)
 
 ## Outcome
 
 A judge or grower can open UBC Farm, identify the growing plots, and compare a baseline with two crop rotations. KPU Langley demonstrates a second local map with a clear horticulture point of interest. In the default view, the imagery is the dominant surface and the tools fit into a compact header and one shared inspector.
 
-The [NASA challenge brief](https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/?tab=details) calls for rotation decision support informed by NASA data, soil information, crop traits, and farmer priorities. For FieldTwin, the UBC workflow should make all four inputs traceable.
+The [NASA challenge brief](https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/?tab=details) calls for rotation decision support informed by NASA data, soil information, crop traits, and farmer priorities. For Stardew Earth, the UBC workflow should make all four inputs traceable.
 
 ## Design references
 

@@ -1,18 +1,18 @@
-# FieldTwin — Product Requirements Document (v2: Website, Modular Task Plan)
+# Stardew Earth — Product Requirements Document (v2: Website, Modular Task Plan)
 
 |                  |                                                                                                                                                  |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Document**     | Product Requirements Document                                                                                                                    |
 | **Status**       | Draft v2.0 (supersedes v1, the drone-based single-app PRD)                                                                                       |
 | **Created**      | 2026-11-11                                                                                                                                       |
-| **Project name** | FieldTwin (working name, provisional)                                                                                                            |
+| **Project name** | Stardew Earth (working name, provisional)                                                                                                            |
 | **Hackathon**    | NASA Space Apps Challenge 2026, Vancouver local event (in person)                                                                                |
 | **Challenge**    | Field Shift: Adapting Farms with NASA Data                                                                                                       |
 | **Timeframe**    | 48 hours: Sat Nov 14 – Sun Nov 15, 2026. Submission closes Sun 11:59 PM local time ([2026 event page](https://www.spaceappschallenge.org/2026/)) |
 | **Product form** | A multi-page website with an interactive 3D land sim`ulator                                                                                      |
 | **Constraints**  | Software only, no drone or hardware, live pitch expected, short video demo likely                                                                |
 
-**One-line pitch:** Give FieldTwin a photo and a location of a farm, and it terraforms the land into an interactive 3D model, then replays real historical storms on it so farmers can see where water pools and soil erodes under different crop rotations.
+**One-line pitch:** Give Stardew Earth a photo and a location of a farm, and it terraforms the land into an interactive 3D model, then replays real historical storms on it so farmers can see where water pools and soil erodes under different crop rotations.
 
 ---
 
@@ -35,7 +35,7 @@ Placeholders like `Owner: ______` are for assigning tasks. Nothing in this docum
 
 ### Project at a glance
 
-FieldTwin is a website where a farmer, advisor, or judge picks a piece of farmland, sees it rebuilt as an explorable 3D landscape, and runs a **storm simulator** on it. The simulator replays the heaviest storms from NASA's historical weather record at that location and shows where water runs, where it pools, and where soil is at risk, comparing at least three crop rotations including the existing one. Pop-up insights and plain-language tips explain what the farmer is looking at and what to ask a local expert.
+Stardew Earth is a website where a farmer, advisor, or judge picks a piece of farmland, sees it rebuilt as an explorable 3D landscape, and runs a **storm simulator** on it. The simulator replays the heaviest storms from NASA's historical weather record at that location and shows where water runs, where it pools, and where soil is at risk, comparing at least three crop rotations including the existing one. Pop-up insights and plain-language tips explain what the farmer is looking at and what to ask a local expert.
 
 ### The problem
 
@@ -43,7 +43,7 @@ Rotation decisions are usually made from rules of thumb and generic suitability 
 
 ### The solution
 
-1. **Land Scan:** The user sends one or more photos of a farm and places it on a map. FieldTwin fetches real elevation (open, LiDAR-derived Canadian data where available, NASA elevation data otherwise), drapes imagery over it, and "terraforms" a 3D model.
+1. **Land Scan:** The user sends one or more photos of a farm and places it on a map. Stardew Earth fetches real elevation (open, LiDAR-derived Canadian data where available, NASA elevation data otherwise), drapes imagery over it, and "terraforms" a 3D model.
 2. **Simulator:** Real historical storms from NASA POWER weather data are replayed on that terrain under different rotations, side by side.
 3. **Rotation Lab and insights:** Evidence cards, cover calendars, and farmer-facing tips explain why a rotation was suggested, the supporting evidence, benefits, information gaps, and risks needing local review.
 
@@ -57,7 +57,7 @@ Rotation decisions are usually made from rules of thumb and generic suitability 
 
 ### What makes it interesting
 
-Most farm tools are dashboards or crop recommenders. FieldTwin puts the user _on the land_: the same real storm hits the same real terrain twice under two rotations and the water behaves differently. The first 15 seconds show a photo turning into a landscape; the next 15 show weather history playing out on it. Results are relative and explained, never black-box.
+Most farm tools are dashboards or crop recommenders. Stardew Earth puts the user _on the land_: the same real storm hits the same real terrain twice under two rotations and the water behaves differently. The first 15 seconds show a photo turning into a landscape; the next 15 show weather history playing out on it. Results are relative and explained, never black-box.
 
 ### Hackathon MVP
 
@@ -667,7 +667,7 @@ BE-00 delivers a `packages/contracts/fixtures/` folder with: sample JSON for eve
   5. **Built on open data:** a text-only credibility strip listing NASA POWER, NASA elevation data, Natural Resources Canada elevation data (no logos; follow brand guidelines).
   6. **Roadmap teaser:** "Drone and video capture coming" with a link to About.
   7. **Final call to action** and footer.
-- **Copy draft (adjust freely):** Headline "See how your land handles the next storm." Subhead "Send a photo of a field. FieldTwin rebuilds it in 3D and replays real weather history on it." Avoid claims of accuracy or yield.
+- **Copy draft (adjust freely):** Headline "See how your land handles the next storm." Subhead "Send a photo of a field. Stardew Earth rebuilds it in 3D and replays real weather history on it." Avoid claims of accuracy or yield.
 - **Interactions:** scroll-triggered reveals; buttons deep-link to `/sites` and `/scan`; the mini comparison has play/pause and a swipe handle.
 - **Data/API:** `GET /sites`, one frames file for the teaser (or a video fallback).
 - **States:** if WebGL is unavailable, use a still image and a pre-rendered video.
@@ -832,7 +832,7 @@ BE-00 delivers a `packages/contracts/fixtures/` folder with: sample JSON for eve
 **Priority:** P1 · **Est.:** 3 h · **Owner:** **\_\_** · **Depends on:** FE-00
 
 - **Purpose:** Explain the scientific terms the challenge says may help farmers: evapotranspiration, soil moisture, vegetation index (NDVI), frost risk, runoff, erosion, ponding, antecedent moisture, cover crops, nitrogen-fixing crops.
-- **Format:** card-based glossary with one-sentence definitions, a simple illustration per term, and "where you see this in FieldTwin" links. Tooltips elsewhere deep-link here.
+- **Format:** card-based glossary with one-sentence definitions, a simple illustration per term, and "where you see this in Stardew Earth" links. Tooltips elsewhere deep-link here.
 - **Acceptance criteria:** at least eight terms covered; every tooltip in the simulator links to its entry; text is readable without technical background.
 
 ---
@@ -1242,7 +1242,7 @@ Cut from the top of this list first:
 | Time      | Visual                                                                                                                                                      | Narration idea                                                |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 0:00–0:04 | Landing hero, then photos dropped into the Scan page                                                                                                        | "Send us a photo of a farm."                                  |
-| 0:04–0:12 | Pin on the map; the flat plane **rises into 3D**; ground cover and drainage lines appear                                                                    | "FieldTwin rebuilds it from real elevation data."             |
+| 0:04–0:12 | Pin on the map; the flat plane **rises into 3D**; ground cover and drainage lines appear                                                                    | "Stardew Earth rebuilds it from real elevation data."             |
 | 0:12–0:22 | **Signature moment:** the wettest recorded storm plays in split screen; water pools in a low corner on the left, not on the right; difference overlay glows | "Same storm. Two rotations. See the difference."              |
 | 0:22–0:28 | Insight pop-up with a farmer tip, then Rotation Lab evidence cards                                                                                          | "Plain-language advice, with the gaps and risks spelled out." |
 | 0:28–0:30 | Logo and tagline                                                                                                                                            | "See how your land handles the next storm."                   |
@@ -1349,7 +1349,7 @@ Cut from the top of this list first:
 
 **Similarities:** NASA data, map-style presentation, agricultural focus.
 
-**Differences:** FieldTwin lets the user walk onto a specific piece of land in 3D and replay real historical storms on it under alternative rotations, using open high-resolution elevation data instead of drone capture, with an explicit measured-vs-modeled provenance.
+**Differences:** Stardew Earth lets the user walk onto a specific piece of land in 3D and replay real historical storms on it under alternative rotations, using open high-resolution elevation data instead of drone capture, with an explicit measured-vs-modeled provenance.
 
 **Evidence limits:** the check was targeted and not exhaustive; the claim is "no equivalent found," not "never done."
 

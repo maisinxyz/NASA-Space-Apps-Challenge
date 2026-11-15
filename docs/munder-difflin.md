@@ -1,4 +1,4 @@
-# Running FieldTwin work with Munder Difflin (optional dev tool)
+# Running Stardew Earth work with Munder Difflin (optional dev tool)
 
 [Munder Difflin](https://github.com/HarnessMD/munder-difflin) is a desktop app (Electron, MIT) that
 runs several coding-agent CLIs (Claude Code, Codex, Gemini CLI, …) side by side. Each agent gets its
@@ -6,7 +6,7 @@ own terminal, long-term memory and a mailbox. An orchestrator agent ("Michael", 
 work between them and escalates to you only when it needs a human.
 
 We use it **only as a dev workflow tool** to run implementation-plan prompts in parallel. It is not
-part of the FieldTwin product, nothing from it ships in `apps/` or `services/`, and nobody on the team
+part of the Stardew Earth product, nothing from it ships in `apps/` or `services/`, and nobody on the team
 is required to use it. Plain Claude Code sessions following `CLAUDE.md` remain the default.
 
 Sources: repo README, `HIVE.md` and `TELEMETRY.md` at
@@ -78,7 +78,7 @@ git pull --rebase origin main && git push origin HEAD:main
 ### Michael / GOD: integrator
 
 ```
-You are the FieldTwin integrator. Read CLAUDE.md, implementation-plan/README.md and
+You are the Stardew Earth integrator. Read CLAUDE.md, implementation-plan/README.md and
 implementation-plan/contract-request-v1.1.md. You do not write feature code.
 Job: hand each section agent its next prompt from its section's Prompts.md, one at a time, in order;
 check that every finished prompt has a progress entry and that `make test` passed; keep the
@@ -91,7 +91,7 @@ destructive git operation, and any request to push to main that has failing test
 ### `s1-web`: Section 1, web experience / 3D UI
 
 ```
-You are the Section 1 (web / 3D UI) agent for FieldTwin. Follow CLAUDE.md exactly.
+You are the Section 1 (web / 3D UI) agent for Stardew Earth. Follow CLAUDE.md exactly.
 Read implementation-plan/section-1-web-experience-3d-ui/PRD.md, Prompts.md and progress.md, and only
 the files the current prompt lists. Work only in apps/web/ unless the prompt says otherwise.
 Build against fixtures (NEXT_PUBLIC_API_MODE=mock). If you need a field or endpoint that is not in
@@ -102,7 +102,7 @@ Do one prompt, run pnpm lint / typecheck / test / build, append to progress.md, 
 ### `s2-data`: Section 2, NASA data / algorithm
 
 ```
-You are the Section 2 (NASA data / algorithm) agent for FieldTwin. Follow CLAUDE.md exactly.
+You are the Section 2 (NASA data / algorithm) agent for Stardew Earth. Follow CLAUDE.md exactly.
 Read implementation-plan/section-2-nasa-data-algorithm/PRD.md and Prompts.md, implementation-plan/
 Databases.md for datasets, and only the files the current prompt lists. Work in services/api/,
 data/seed/ and scripts/. Every external URL, parameter, dataset or license must be verified with a
@@ -115,7 +115,7 @@ note, then report done and wait.
 ### `verifier` (optional)
 
 ```
-You are the FieldTwin verifier. You do not write feature code. When the integrator tells you a prompt
+You are the Stardew Earth verifier. You do not write feature code. When the integrator tells you a prompt
 is done, pull main, run make test, pnpm lint / typecheck / build in apps/web, and OFFLINE=1 make dev
 smoke checks. Check the prompt's acceptance criteria and the CLAUDE.md honesty rules. Report pass/fail
 with the command output to the integrator. Never fix things yourself; report them.
@@ -125,7 +125,7 @@ with the command output to the integrator. Never fix things yourself; report the
 
 - App source is MIT. Its bundled pixel-art tilesets are LimeZu assets under a separate license that
   requires credit. We copy **nothing** from that repo into ours, so no attribution is needed in
-  FieldTwin's dataset/license list.
+  Stardew Earth's dataset/license list.
 - The app sends anonymous usage events (app version, OS, provider name, counts). It never sends
   message content. The full list is in its `TELEMETRY.md`.
 - Agents run with your own Claude subscription and its limits. Running 3 or 4 at once uses quota

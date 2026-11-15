@@ -41,7 +41,7 @@ SEED = ROOT / "data" / "seed"
 CACHE = ROOT / "data" / "cache" / "cmip6_ncss"  # git-ignored
 THREDDS = "https://ds.nccs.nasa.gov/thredds"
 GDDP = "AMES/NEX/GDDP-CMIP6"
-UA = "FieldTwin-NASA-SpaceApps/1.0 (student project)"
+UA = "StardewEarth-NASA-SpaceApps/1.0 (student project)"
 
 # Assumed choices, not published recommendations. TODO(verify) with a climate scientist.
 BASELINE_YEARS = range(1995, 2015)  # last 20 years of the historical run (it ends 2014)

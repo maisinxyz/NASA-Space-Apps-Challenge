@@ -56,7 +56,7 @@ Branch `fe/S1-cesium-globe`. Not committed (orchestrator commits). I did not edi
   - FarmList heading is "Research farms and farmland".
   - About step 1 explains twin vs explore farms.
   - The farm-view bar for explore farms shows the farm note.
-  - Methods has a new "Farms on the globe" section: per pin, the operator, approximate/published location with a basis chip, the source, and a twin note. The OSM row now covers the Cornell pin. There is a new "FieldTwin traced field outlines" row (basis assumed). The Agassiz mention was removed from NASA POWER. The Limits section mentions approximate pins.
+  - Methods has a new "Farms on the globe" section: per pin, the operator, approximate/published location with a basis chip, the source, and a twin note. The OSM row now covers the Cornell pin. There is a new "Stardew Earth traced field outlines" row (basis assumed). The Agassiz mention was removed from NASA POWER. The Limits section mentions approximate pins.
 - **Provenance**: a new `tracedOutlines` source. The field-area popover uses the twin's `outlineSource` / `outlineDate`.
 
 ## Files
@@ -72,7 +72,7 @@ Branch `fe/S1-cesium-globe`. Not committed (orchestrator commits). I did not edi
 ## Traced data wiring (RENDER output in `lib/farms/traced/`, read-only for me)
 - **Cornell**: `CORNELL_TRACED` supplies 3 fields traced by eye on Google 3D (11.6 / 5.3 / 20.6 ha), a 1300 m square and the framing.
   - Names and crops: f1 "North hay field" (alfalfa–grass hay, phase 2), f2 "Barn field" (corn silage, phase 0), f3 "South field" (corn silage, phase 1).
-  - Credit: "Field outlines traced by FieldTwin on Google 3D imagery (approximate)"; source `tracedOutlines`.
+  - Credit: "Field outlines traced by Stardew Earth on Google 3D imagery (approximate)"; source `tracedOutlines`.
 - **Beltsville**: `BELTSVILLE_TRACED` supplies 3 OSM ways (12.8 / 14.0 / 16.6 ha), a 1300 m square and the framing.
   - Names and crops: f1 "Barn field" (grain corn, phase 0), f2 "East field" (soybean, phase 1), f3 "South field" (winter wheat, phase 1).
   - Credit: "Field outlines: © OpenStreetMap contributors, ODbL"; source `osm`.

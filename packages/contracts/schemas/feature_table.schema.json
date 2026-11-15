@@ -1,6 +1,6 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "urn:fieldtwin:FeatureTable",
+ "$id": "urn:stardew-earth:FeatureTable",
  "title": "FeatureTable",
  "description": "Generated from packages/contracts/openapi.yaml by scripts/build_seed.py. Do not edit.",
  "$ref": "#/$defs/FeatureTable",

@@ -52,7 +52,7 @@ export const CORNELL_TWIN: TwinSpec = {
     bare: "Bare soil",
   },
   labels: ["Approximate field boundaries"],
-  attribution: ["Field outlines traced by FieldTwin on Google 3D imagery (approximate)"],
+  attribution: ["Field outlines traced by Stardew Earth on Google 3D imagery (approximate)"],
   outlineSource: "tracedOutlines",
   outlineDate: "2026-11-13",
 };

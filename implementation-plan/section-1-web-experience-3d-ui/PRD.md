@@ -4,7 +4,7 @@
 
 ## 0. Context capsule (Claude: read this first, it replaces reading the root PRD)
 
-- **Product:** FieldTwin. A farm photo + location becomes a 3D landscape; real NASA POWER storms replay on it; 3 crop rotations compare side by side; evidence cards explain why. Challenge: "Field Shift: Adapting Farms with NASA Data" (NASA Space Apps 2026, Vancouver). Event: starts Sat Nov 14 9:00, submit by Sun Nov 15 11:59 PM (aim 2 h early).
+- **Product:** Stardew Earth. A farm photo + location becomes a 3D landscape; real NASA POWER storms replay on it; 3 crop rotations compare side by side; evidence cards explain why. Challenge: "Field Shift: Adapting Farms with NASA Data" (NASA Space Apps 2026, Vancouver). Event: starts Sat Nov 14 9:00, submit by Sun Nov 15 11:59 PM (aim 2 h early).
 - **Stack (already scaffolded in `apps/web`):** Next.js 15 App Router, React 19, TypeScript strict, Tailwind 4, react-three-fiber 9 + drei 10, maplibre-gl, framer-motion, zustand, recharts, pnpm. Vitest for tests.
 - **Data in:** the API contract `packages/contracts/openapi.yaml` (v1.0.0, frozen). Mock fixtures in `packages/contracts/fixtures/` are synced to `apps/web/public/mock`. Client: `apps/web/lib/api/client.ts` (mock/live via `NEXT_PUBLIC_API_MODE`). Decoders: `apps/web/lib/decode/` (16-bit heightmap, FTW1 water frames). Heightmap: row-major, row 0 = north.
 - **Status:** shell and API client exist; no real pages or viewer yet. Mock terrains: `terr_mock_hills|tilted|bowl` (256x256, 2 m cells). Mock simulation: `sim_mock_001` (3 rotations x 60 frames).
@@ -12,7 +12,7 @@
 
 ## 1. Mission
 
-Make FieldTwin the most beautiful, instantly understandable entry in the track. A judge should grasp it in 15 seconds and remember the split-screen storm. Winning-project lessons we apply: one clear decision, real-world story, polish and storytelling (Zumorroda-X), a "digital twin" feel (Crop Connect), visible honesty about data (Validity criterion), and a clear presentation (Presentation criterion).
+Make Stardew Earth the most beautiful, instantly understandable entry in the track. A judge should grasp it in 15 seconds and remember the split-screen storm. Winning-project lessons we apply: one clear decision, real-world story, polish and storytelling (Zumorroda-X), a "digital twin" feel (Crop Connect), visible honesty about data (Validity criterion), and a clear presentation (Presentation criterion).
 
 ## 2. Owners (proposal, edit freely)
 

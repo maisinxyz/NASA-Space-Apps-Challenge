@@ -33,7 +33,7 @@ STATIONS = {
 
 
 def get_json(url: str) -> dict:
-    request = urllib.request.Request(url, headers={"User-Agent": "FieldTwin station verification/1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "Stardew Earth station verification/1.0"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
 

@@ -1,6 +1,6 @@
-# FieldTwin — Claude Code Prompt Playbook
+# Stardew Earth — Claude Code Prompt Playbook
 
-Paste-ready prompts for building FieldTwin from `prd.md`. One prompt is one short Claude Code session.
+Paste-ready prompts for building Stardew Earth from `prd.md`. One prompt is one short Claude Code session.
 
 ## How to use
 
@@ -148,7 +148,7 @@ Read the "Track owners" table near the top of Prompts.md to get real names. Then
 If a needed prompt is not merged, tell me exactly who to ask, then STOP. Otherwise continue with the task below.
 
 TASK:
-You are setting up the FieldTwin repo for a 48-hour NASA Space Apps hackathon. The full spec is in prd.md at the repo root. Read ONLY these PRD sections now: §0, §2.7, §6.1, §8 (the "Recommended stack" paragraph and BE-00 card), §9.
+You are setting up the Stardew Earth repo for a 48-hour NASA Space Apps hackathon. The full spec is in prd.md at the repo root. Read ONLY these PRD sections now: §0, §2.7, §6.1, §8 (the "Recommended stack" paragraph and BE-00 card), §9.
 
 Do this, and nothing else:
 1. Create a branch `be/BE-00-scaffold`.
@@ -494,7 +494,7 @@ Check that docs/progress/08.md exists on main. If a needed prompt is not merged,
 TASK:
 Read CLAUDE.md, docs/progress/08.md, and prd.md the FE-09 card. Branch: fe/FE-09-learn.
 
-Build /learn: a card glossary for the 10 terms in FE-09. Content in apps/web/content/glossary.ts: id, term, one-sentence plain definition, a simple inline SVG illustration, and "where you see this in FieldTwin" links. Each card has an anchor (/learn#runoff). Export a <Term id="runoff">runoff</Term> component that shows a tooltip with the definition and links to the entry, for other pages to use. Keep definitions cautious and correct; if unsure about a definition, write it conservatively and flag it in the progress file for review.
+Build /learn: a card glossary for the 10 terms in FE-09. Content in apps/web/content/glossary.ts: id, term, one-sentence plain definition, a simple inline SVG illustration, and "where you see this in Stardew Earth" links. Each card has an anchor (/learn#runoff). Export a <Term id="runoff">runoff</Term> component that shows a tooltip with the definition and links to the entry, for other pages to use. Keep definitions cautious and correct; if unsure about a definition, write it conservatively and flag it in the progress file for review.
 
 Follow the end-of-task checklist (progress file: docs/progress/12.md).
 ```

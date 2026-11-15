@@ -1,4 +1,4 @@
-# FieldTwin Backend PRD v3: 10-Year Scenario Forecast ("Forecast Twin")
+# Stardew Earth Backend PRD v3: 10-Year Scenario Forecast ("Forecast Twin")
 
 Status: draft for team review, 2026-11-14. **Backend only: no session builds or edits anything under `apps/web/`. Everything the frontend and UI need is listed in section 12 for the frontend team.** First twin: **UBC Farm** (Vancouver, BC). Supersedes the scoring-only rotation analysis (`docs/progress/rotation-B.md`) for new work. Read `CLAUDE.md` first; its rules apply to every workstream below.
 
@@ -409,7 +409,7 @@ Cross-session requests (a change needed in a file another session owns) go in `d
 ### 10.3 Session A brief (Foundation)
 
 ```text
-You are SESSION A of 3 Grok sessions building the FieldTwin backend. Your workstreams, in order: W0, W1, W5, W2, W4.
+You are SESSION A of 3 Grok sessions building the Stardew Earth backend. Your workstreams, in order: W0, W1, W5, W2, W4.
 Read first: CLAUDE.md, then docs/backend-forecast-prd.md sections 0, 1, 3, 4, 6, 7 (W0, W1, W5, W2, W4), 8, 9, 10.2.
 You own: packages/contracts/**, app/twin/types.py, app/twin/__init__.py, data/seed/site_ubc_farm/**, data/seed/crops/catalog_v2.*, app/twin/catalog.py, app/routers/crop_catalog.py, scripts/seed_satellite/**, the new loaders in app/features/seeds.py, the site list in app/features/config.py, app/twin/exposure.py, app/features/zones.py, app/services/exposure.py, app/routers/exposure.py.
 You must NOT edit: apps/web/** (frontend is out of scope), app/twin/{water,weather_ensemble,soil,nitrogen,pest,run,generate,score,climate}.py, app/twin/explain/**, app/services/forecast.py, app/routers/forecast.py (Sessions B and C own those).
@@ -427,7 +427,7 @@ Never invent endpoints, fields, enum values, dataset names, URLs, constants or l
 ### 10.4 Session B brief (Engine)
 
 ```text
-You are SESSION B of 3 Grok sessions building the FieldTwin backend. Your workstreams, in order: W6a, W6b, W6c, W7.
+You are SESSION B of 3 Grok sessions building the Stardew Earth backend. Your workstreams, in order: W6a, W6b, W6c, W7.
 Read first: CLAUDE.md, then docs/backend-forecast-prd.md sections 0, 1, 3 (groups 3 and 4), 5, 6, 7 (W6a, W6b, W6c, W7), 8, 9, 10.2; also docs/progress/rotation-A.md and rotation-B.md and the code in services/api/app/features/pipeline.py (reuse its weekly tables and scenario resolver).
 You own: app/twin/{weather_ensemble,water,soil,nitrogen,pest,run,generate,score}.py, app/twin/config.py, tests for these.
 You must NOT edit: apps/web/** (frontend is out of scope), app/twin/types.py (Session A), packages/contracts/** (Session A), app/twin/{climate,exposure}.py, app/twin/explain/**, services and routers (Sessions A and C).
@@ -445,7 +445,7 @@ Never invent endpoints, fields, enum values, dataset names, URLs, constants or l
 ### 10.5 Session C brief (Outputs and integration)
 
 ```text
-You are SESSION C of 3 Grok sessions building the FieldTwin backend. Your workstreams, in order: W3, W10 (test harness), W8, W9, W10 (final).
+You are SESSION C of 3 Grok sessions building the Stardew Earth backend. Your workstreams, in order: W3, W10 (test harness), W8, W9, W10 (final).
 Read first: CLAUDE.md, then docs/backend-forecast-prd.md sections 0, 1, 3 (all groups), 5.3, 6, 7 (W3, W8, W9, W10), 8, 9, 10.2; also docs/progress/rotation-A.md and rotation-B.md and services/api/app/features/pipeline.py and services/api/app/rotation/evidence.py.
 You own: app/twin/climate.py, app/services/climate_outlook.py, app/routers/climate_outlook.py, app/twin/explain/**, app/services/sensitivity.py, app/services/forecast.py, app/routers/forecast.py, app/main.py (router registration only), scripts/build_forecast_fixtures.py, scripts/smoke_forecast.py, services/api/tests/qa/**, docs/** (except other sessions' progress notes).
 You must NOT edit: apps/web/** (frontend is out of scope), app/twin/types.py, packages/contracts/** (Session A), app/twin/{water,weather_ensemble,soil,nitrogen,pest,run,generate,score}.py (Session B), seeds and catalog (Session A).

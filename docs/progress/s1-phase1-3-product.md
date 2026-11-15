@@ -4,7 +4,7 @@ Plan: `~/.claude/plans/pasted-content-id-c071-section-1-linear-wand.md` (UPDATE,
 Branch `fe/S1-cesium-globe`. Not committed (orchestrator commits). The RENDER agent owns `Globe.tsx`, `components/viewer/cesium/**` and `types.ts`; none of those were edited here.
 
 ## What was built
-- **Workspace HUD** (`components/farm/TwinPanel.tsx`). In the Agassiz twin the header collapses to a 40 px slim bar with: FieldTwin / farm name, the support-not-replace sentence, badges, Methods & data, About, Presenter. The globe then fills `100dvh - 2.5rem`. Dark glass panels (`.glass` in globals.css) float over the map:
+- **Workspace HUD** (`components/farm/TwinPanel.tsx`). In the Agassiz twin the header collapses to a 40 px slim bar with: Stardew Earth / farm name, the support-not-replace sentence, badges, Methods & data, About, Presenter. The globe then fills `100dvh - 2.5rem`. Dark glass panels (`.glass` in globals.css) float over the map:
   - Top centre, always visible (also with panels hidden): "Approximate field boundaries", "Illustrative field layout and crops (not farm records)", the OSM credit, and a "Loading 3D detail…" pill while `onLoadProgress.pending > 0`.
   - Left, 300 px, "Fields & layers": the field list (swatch, crop, area), area/crop basis chips, a Photoreal 3D / Terrain only toggle, height exaggeration (1× = true scale), a Look select captioned "Illustrative styling, not sensor data.", and a disabled "NASA layers: NASA regional context — coming soon" group.
   - Right, 360 px inspector: the click-to-inspect field card when a field is selected (with "← Back to <mode> Esc"), otherwise the mode body (Explore overview, Simulate empty state, Compare, Evidence).

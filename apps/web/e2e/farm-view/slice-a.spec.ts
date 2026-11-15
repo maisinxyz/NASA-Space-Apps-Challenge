@@ -19,7 +19,7 @@ test.describe("Farm view controls", () => {
     await expect(page.getByText(/Harford, New York.*Simulation available/)).toBeVisible();
     await tid(page, "back-to-globe").click();
     await expect(tid(page, "farm-view")).toBeHidden();
-    await expect(page.getByRole("heading", { name: "fieldtwin/2026" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "stardew-earth/2026" })).toBeVisible();
   });
 
   test("reports missing observations and disables unavailable map layers", async ({ page }) => {
@@ -73,12 +73,12 @@ test.describe("Farm view controls", () => {
     await expect(toggle).toHaveText("Mute sounds");
     await toggle.click();
     await expect(toggle).toHaveText("Unmute sounds");
-    expect(await page.evaluate(() => localStorage.getItem("fieldtwin:sound-muted"))).toBe("1");
+    expect(await page.evaluate(() => localStorage.getItem("stardew-earth:sound-muted"))).toBe("1");
     await page.reload();
     await expect(tid(page, "farm-view")).toBeVisible({ timeout: 30_000 });
     await expect(toggle).toHaveText("Unmute sounds");
     await toggle.click();
-    expect(await page.evaluate(() => localStorage.getItem("fieldtwin:sound-muted"))).toBe("0");
+    expect(await page.evaluate(() => localStorage.getItem("stardew-earth:sound-muted"))).toBe("0");
   });
 
   test("keyboard camera controls work without blocking the farm controls", async ({ page }) => {
@@ -137,8 +137,8 @@ for (const [width, height] of [[1440, 900], [1280, 720]]) {
     const toolbar = (await page.locator(".fv-toolbar").boundingBox())!;
     expect(title.x + title.width).toBeLessThanOrEqual(toolbar.x);
     expect(toolbar.x + toolbar.width).toBeLessThanOrEqual(width);
-    await mkdir("/tmp/fieldtwin-merge-shots", { recursive: true });
-    await page.screenshot({ path: `/tmp/fieldtwin-merge-shots/farm-${width}x${height}.png` });
+    await mkdir("/tmp/stardew-earth-merge-shots", { recursive: true });
+    await page.screenshot({ path: `/tmp/stardew-earth-merge-shots/farm-${width}x${height}.png` });
   });
 }
 
@@ -158,8 +158,8 @@ test(`expanded preview stays above bottom tools in compare mode: ${compare}`, as
   expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(toolsBox.y);
   await page.getByText("Vulnerability zones", { exact: true }).scrollIntoViewIfNeeded();
   await expect(page.getByText("Vulnerability zones", { exact: true })).toBeVisible();
-  await mkdir("/tmp/fieldtwin-merge-shots", { recursive: true });
-  await page.screenshot({ path: `/tmp/fieldtwin-merge-shots/farm-expanded-1280x720-${compare}.png` });
+  await mkdir("/tmp/stardew-earth-merge-shots", { recursive: true });
+  await page.screenshot({ path: `/tmp/stardew-earth-merge-shots/farm-expanded-1280x720-${compare}.png` });
 });
 }
 

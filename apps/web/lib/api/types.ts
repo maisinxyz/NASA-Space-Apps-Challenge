@@ -48,7 +48,7 @@ export type ForecastFieldResult = S["ForecastFieldResult"];
 export type SensitivityGrid = S["SensitivityGrid"];
 export type YearSeries = S["YearSeries"];
 
-// v1.3 (docs/fieldtwin-v4-prd.md Appendix A)
+// v1.3 (docs/stardew-earth-v4-prd.md Appendix A)
 export type Outlook = S["Outlook"];
 export type OutlookMonth = S["OutlookMonth"];
 export type OutlookKind = S["OutlookKind"];

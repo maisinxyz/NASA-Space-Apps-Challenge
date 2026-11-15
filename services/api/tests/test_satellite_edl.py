@@ -345,7 +345,7 @@ def test_env_file_does_not_override_or_print(tmp_path, capsys):
 
 def test_cli_skips_unknown_sites_and_reports_a_missing_token(monkeypatch, capsys):
     monkeypatch.delenv("EARTHDATA_TOKEN", raising=False)
-    monkeypatch.setattr(edl, "ENV_FILE", Path("/no/such/fieldtwin.env"))
+    monkeypatch.setattr(edl, "ENV_FILE", Path("/no/such/stardew-earth.env"))
     code = edl.main(["--sites", "site_ubc_farm", "site_not_registered_yet", "--check-token"])
     captured = capsys.readouterr()
     assert code == 2

@@ -22,7 +22,7 @@ export const X = (p: P) => <I {...p}><path d="M18 6 6 18" /><path d="m6 6 12 12"
 export const ArrowUp = (p: P) => <I {...p}><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></I>;
 export const VolumeX =(p: P) => <I {...p}><path d="M11 5 6 9H2v6h4l5 4z" /><path d="m22 9-6 6" /><path d="m16 9 6 6" /></I>;
 
-/** The FieldTwin logo. The gold sparkle belongs to the AI button only (spec). */
+/** The Stardew Earth logo. The gold sparkle belongs to the AI button only (spec). */
 export function Logo({ size = 26, spin = false }: { size?: number; spin?: boolean }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} fill="none" aria-hidden>

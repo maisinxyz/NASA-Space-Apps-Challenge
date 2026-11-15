@@ -3,7 +3,7 @@
 // a 96 px numbered sidebar, a 5/12 info column on the left (eyebrow, three-line headline, body, 2x2 stat cards, one
 // action), the planet on the right inside two thin orbit rings, and a 56 px status bar. Sizes are the reference's
 // (designed at 1440 x 1022) scaled by --u, so the whole composition shrinks with the viewport and never overflows.
-// Copy is FieldTwin's own (the reference's Mars copy and invented figures are not used); every figure is computed
+// Copy is Stardew Earth's own (the reference's Mars copy and invented figures are not used); every figure is computed
 // from lib/farms (pins and twin configs). The reference's avatar ("astronaut") stack is left out.
 import { motion } from "framer-motion";
 import { useEffect, useSyncExternalStore } from "react";
@@ -16,7 +16,7 @@ import { color, ease, hero } from "./tokens";
 
 /** Hero copy (draft for product-owner sign-off). Edit here only. */
 export const HERO_COPY = {
-  eyebrow: "FieldTwin",
+  eyebrow: "Stardew Earth",
   headline: ["Farms", "from", "orbit"],
   body: "Explore research farms in 3D, then compare crop rotations and weather scenarios on two explorable farms.",
   action: "Explore the farms",

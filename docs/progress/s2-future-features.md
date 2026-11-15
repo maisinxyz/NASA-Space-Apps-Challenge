@@ -2,7 +2,7 @@
 
 Adds the "future features" (10-year climate, water balance, field vulnerability, soil health per strategy,
 strategy comparison, uncertainty and what-if) to the farm view without crowding it. Design reference: the
-Round 4 screens on the FieldTwin design canvas (F1–F6) and their minimal-style pass.
+Round 4 screens on the Stardew Earth design canvas (F1–F6) and their minimal-style pass.
 
 ## What was built
 - **Rule: add without crowding.** "Now" mode renders exactly the farm view as before. Future mode adds only

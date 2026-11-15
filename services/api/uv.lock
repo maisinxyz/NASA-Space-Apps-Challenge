@@ -100,7 +100,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fieldtwin-api"
+name = "stardew-earth-api"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [

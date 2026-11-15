@@ -9,7 +9,7 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 NODATA = 255
-MOCK_COMMENT = "FieldTwin MOCK fixture - not real data"
+MOCK_COMMENT = "Stardew Earth MOCK fixture - not real data"
 
 # Physical value ranges used to encode continuous layers (bytes 0-254 linear, 255 nodata).
 # Prompt 04's layers.json legends must use the same numbers.

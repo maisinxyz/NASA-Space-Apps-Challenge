@@ -37,7 +37,7 @@ from app.analysis import (
 )
 from app.terrain.types import ElevationGrid
 
-log = logging.getLogger("fieldtwin.packaging")
+log = logging.getLogger("stardew_earth.packaging")
 
 # ---------------------------------------------------------------------------
 # Size budgets (PRD BE-10)

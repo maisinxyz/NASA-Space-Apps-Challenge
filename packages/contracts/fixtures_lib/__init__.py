@@ -1,1 +1,1 @@
-"""Helpers for generating and checking FieldTwin contract fixtures (MOCK data only)."""
+"""Helpers for generating and checking Stardew Earth contract fixtures (MOCK data only)."""

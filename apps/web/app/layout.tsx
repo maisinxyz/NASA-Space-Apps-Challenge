@@ -7,7 +7,7 @@ import { SupportBanner } from "@/components/ui/SupportBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FieldTwin",
+  title: "Stardew Earth",
   description: "Explore farmland in 3D and compare crop rotations. NASA POWER event replay is integrated (NASA Space Apps 2026).",
 };
 

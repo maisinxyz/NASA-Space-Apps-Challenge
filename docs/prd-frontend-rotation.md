@@ -1,6 +1,6 @@
 # Frontend 1: Farmer inputs and rotation results
 
-Project: FieldTwin crop-rotation decision support (Next.js, TypeScript, Tailwind, Zustand, Framer Motion, Recharts). Backend spec: `docs/prd-backend-rotation.md` (sections 8.5, 9, 10, 14). Rules: `CLAUDE.md`. Frontend PRD file will be `docs/prd-frontend-rotation.md`.
+Project: Stardew Earth crop-rotation decision support (Next.js, TypeScript, Tailwind, Zustand, Framer Motion, Recharts). Backend spec: `docs/prd-backend-rotation.md` (sections 8.5, 9, 10, 14). Rules: `CLAUDE.md`. Frontend PRD file will be `docs/prd-frontend-rotation.md`.
 
 ## You start at
 F1-1: farmer priorities form, built against the section 9 request shape and the fixture response in `packages/contracts/fixtures/` (available after Backend A's A2).
@@ -28,7 +28,7 @@ F1-1 priorities form (select which of the 7 criteria matter, weights or weight p
 
 # Frontend 2: Map, timeline, scenarios and explanations
 
-Project: FieldTwin crop-rotation decision support (Next.js, TypeScript, Tailwind, MapLibre GL, Zustand, Framer Motion, Recharts). Backend spec: `docs/prd-backend-rotation.md` (sections 7.4, 11, 12, 14). Rules: `CLAUDE.md`. Frontend PRD file will be `docs/prd-frontend-rotation.md`.
+Project: Stardew Earth crop-rotation decision support (Next.js, TypeScript, Tailwind, MapLibre GL, Zustand, Framer Motion, Recharts). Backend spec: `docs/prd-backend-rotation.md` (sections 7.4, 11, 12, 14). Rules: `CLAUDE.md`. Frontend PRD file will be `docs/prd-frontend-rotation.md`.
 
 ## You start at
 F2-1: scenario sliders (rain change in %, temperature change in °C, plus the four presets: baseline, wetter_winters, drier_summers, both), built against fixtures. You own the shared scenario state that Frontend 1's results also read.

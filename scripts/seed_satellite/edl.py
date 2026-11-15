@@ -47,7 +47,7 @@ ENV_FILE = ROOT / ".env"
 CMR_GRANULE_SEARCH = "https://cmr.earthdata.nasa.gov/search/granules.json"
 # https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html
 # "Client-Id - Indicates a name for the client using the CMR API."
-CLIENT_ID = "fieldtwin-seed"
+CLIENT_ID = "stardew-earth-seed"
 # Assumed politeness cap. Not a published per-product quota.
 # CMR does document HTTP 429 plus a retry-after header on that same page.
 DEFAULT_MAX_CONCURRENT = 2

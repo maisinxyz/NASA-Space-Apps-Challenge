@@ -172,7 +172,7 @@ function ShareButton() {
     }
     const url = window.location.href;
     try {
-      if (navigator.share) await navigator.share({ title: "FieldTwin", url });
+      if (navigator.share) await navigator.share({ title: "Stardew Earth", url });
       else {
         await navigator.clipboard.writeText(url);
         setDone("Link copied");

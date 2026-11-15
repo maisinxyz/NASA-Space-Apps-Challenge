@@ -33,7 +33,7 @@ export function AboutPanel() {
             <div>
               <p className="text-xs font-medium tracking-wide text-accent uppercase">NASA Space Apps 2026 · Field Shift</p>
               <h2 id="about-title" className="mt-1 font-display text-2xl">
-                About FieldTwin
+                About Stardew Earth
               </h2>
             </div>
             <button type="button" onClick={close} className="rounded-md border border-line px-3 py-1 text-sm hover:bg-surface-2">
@@ -41,7 +41,7 @@ export function AboutPanel() {
             </button>
           </div>
           <p className="mt-3 text-ink-muted">
-            FieldTwin builds a 3D model of farmland from open elevation data, shows weather scenarios on it once real data is connected, and compares rotations side by side. Results are relative comparisons, not predictions.
+            Stardew Earth builds a 3D model of farmland from open elevation data, shows weather scenarios on it once real data is connected, and compares rotations side by side. Results are relative comparisons, not predictions.
           </p>
 
           <h3 className="mt-6 font-display text-xl">How it works</h3>

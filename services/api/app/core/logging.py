@@ -7,7 +7,7 @@ import time
 
 from fastapi import FastAPI, Request
 
-log = logging.getLogger("fieldtwin.request")
+log = logging.getLogger("stardew_earth.request")
 
 
 def configure_logging(level: str) -> None:

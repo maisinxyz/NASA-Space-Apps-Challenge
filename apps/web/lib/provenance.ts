@@ -24,10 +24,10 @@ export type Source = { name: string; attribution?: string; licence?: string };
 /** Sources the twin UI cites. Methods & data lists the full dataset rows. */
 export const SOURCES = {
   osm: { name: "OpenStreetMap field outlines", attribution: "© OpenStreetMap contributors", licence: "ODbL 1.0" },
-  tracedOutlines: { name: "FieldTwin field outlines traced on public imagery (approximate)" },
-  illustrativeCrops: { name: "FieldTwin illustrative crops (not farm records)" },
-  rotationCalendar: { name: "FieldTwin rotation calendar (typical season windows, not observed)" },
-  teamScores: { name: "FieldTwin team scores (assumption, these three rotations only)" },
+  tracedOutlines: { name: "Stardew Earth field outlines traced on public imagery (approximate)" },
+  illustrativeCrops: { name: "Stardew Earth illustrative crops (not farm records)" },
+  rotationCalendar: { name: "Stardew Earth rotation calendar (typical season windows, not observed)" },
+  teamScores: { name: "Stardew Earth team scores (assumption, these three rotations only)" },
 } satisfies Record<string, Source>;
 
 export type SourceId = keyof typeof SOURCES;

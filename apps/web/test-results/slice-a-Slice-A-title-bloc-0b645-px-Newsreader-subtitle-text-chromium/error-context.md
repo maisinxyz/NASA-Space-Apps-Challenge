@@ -29,7 +29,7 @@ Call log:
 - link "Skip to content":
   - /url: "#main"
 - banner:
-  - link "FieldTwin":
+  - link "Stardew Earth":
     - /url: /
   - navigation "Main":
     - link "Methods & data":
@@ -65,7 +65,7 @@ Call log:
   - slider "Date"
   - button "Ask Twin"
   - paragraph: This tool supports, and does not replace, local agronomic expertise.
-  - 'heading "FieldTwin: See how the same storm moves across real farmland under different crop rotations." [level=1]'
+  - 'heading "Stardew Earth: See how the same storm moves across real farmland under different crop rotations." [level=1]'
   - paragraph: 3D globe ready.
 - alert
 ```

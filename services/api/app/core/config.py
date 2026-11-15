@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIXTURES_DIR = REPO_ROOT / "packages" / "contracts" / "fixtures"
-API_VERSION = "1.4.0"  # contract version, packages/contracts/openapi.yaml info.version
+API_VERSION = "1.4.1"  # contract version, packages/contracts/openapi.yaml info.version
 API_PREFIX = "/api/v1"
 
 
@@ -23,7 +23,7 @@ class Settings:
     log_level: str = field(default_factory=lambda: (os.getenv("LOG_LEVEL") or "INFO").upper())
     fixtures_dir: Path = FIXTURES_DIR
     sse_delay_s: float = 0.4  # gap between replayed fixture SSE events
-    # Comma-separated exact origins, e.g. "https://fieldtwin.example.com,http://localhost:3000".
+    # Comma-separated exact origins, e.g. "https://stardew-earth.example.com,http://localhost:3000".
     cors_origins: tuple[str, ...] = field(
         default_factory=lambda: tuple(o.strip().rstrip("/") for o in (os.getenv("CORS_ORIGINS") or "http://localhost:3000").split(",") if o.strip())
     )

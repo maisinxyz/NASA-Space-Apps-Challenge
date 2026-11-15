@@ -1,6 +1,6 @@
 # FT-B11 — Contract v1.3.0 (Person B)
 
-Date: 2026-11-15. Spec: `docs/fieldtwin-v4-prd.md` Appendix A.
+Date: 2026-11-15. Spec: `docs/stardew-earth-v4-prd.md` Appendix A.
 
 ## What was built
 - `packages/contracts/openapi.yaml` `info.version` 1.2.0 → 1.3.0. Additive only.

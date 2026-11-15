@@ -19,7 +19,7 @@ Not committed (orchestrator commits).
 - `components/ui/*` all still used (Methods, styleguide, TwinPanel).
 
 ## Updated
-- `components/Header.tsx`: product header — FieldTwin wordmark, "Methods & data" (/methods), mock/offline badges, About, Presenter mode. No legacy links.
+- `components/Header.tsx`: product header — Stardew Earth wordmark, "Methods & data" (/methods), mock/offline badges, About, Presenter mode. No legacy links.
 - `components/TourController.tsx`: Reset key (R) only; guided-demo runner and `BackupVideo` removed. (`NEXT_PUBLIC_BACKUP_VIDEO_URL` in root `.env.example` is now unused; not touched.)
 - `components/globe/GlobeHome.tsx`: failure fallback is the farm list only (no "Open the offline view"); `SimLink` gone; passes `surface` and `overlayMask`.
 - `components/globe/FarmCard.tsx(+test)`: `SimLink` (/simulate) removed; card without a globe shows no action.
@@ -40,7 +40,7 @@ Not committed (orchestrator commits).
 - `corepack pnpm typecheck`: pass. `lint`: pass (0 problems).
 - `corepack pnpm test`: 15/16 files, 101/102 tests pass; the one failure is the known `lib/api/client.test.ts` SSE/CRLF one.
 - `corepack pnpm build`: pass; routes `/`, `/methods`, `/dev/{api,cesium,styleguide}`; check-build OK.
-- Dev server (before the build): `/` and `/methods` 200 (Methods loads its content, header shows FieldTwin / Methods & data / About / Presenter, no console errors on `/`); `/explore`, `/scan`, `/viewer`, `/simulate`, `/lab`, `/dev/viewer` 404.
+- Dev server (before the build): `/` and `/methods` 200 (Methods loads its content, header shows Stardew Earth / Methods & data / About / Presenter, no console errors on `/`); `/explore`, `/scan`, `/viewer`, `/simulate`, `/lab`, `/dev/viewer` 404.
 - Note: running `pnpm build` while `pnpm dev` is up overwrote `.next`; the running dev server then answered 500 on every route. Restart `pnpm dev` (it is not a code fault: the production build of the same code passes).
 
 ## For the next prompt

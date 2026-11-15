@@ -44,8 +44,8 @@ describe("ForecastCard", () => {
   });
 
   it("shows the error and no chart when the load failed", () => {
-    const html = render({ status: "error", forecast: null, source: null, error: "Cannot reach the FieldTwin API." });
-    expect(html).toContain("Cannot reach the FieldTwin API.");
+    const html = render({ status: "error", forecast: null, source: null, error: "Cannot reach the Stardew Earth API." });
+    expect(html).toContain("Cannot reach the Stardew Earth API.");
     expect(html).not.toContain('role="img"'); // no chart
   });
 });

@@ -1,6 +1,6 @@
 # Implementation plan: how the 5 of us work
 
-Project: FieldTwin (NASA Space Apps 2026, "Field Shift: Adapting Farms with NASA Data"). Root docs: `../prd.md` (full spec), `../CLAUDE.md` (rules for every Claude session), `../packages/contracts/openapi.yaml` (frozen API contract).
+Project: Stardew Earth (NASA Space Apps 2026, "Field Shift: Adapting Farms with NASA Data"). Root docs: `../prd.md` (full spec), `../CLAUDE.md` (rules for every Claude session), `../packages/contracts/openapi.yaml` (frozen API contract).
 
 ## Teams
 

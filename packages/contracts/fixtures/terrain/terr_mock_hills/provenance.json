@@ -8,14 +8,14 @@
       "license": "mock (generated, no license restrictions)",
       "url": "packages/contracts/fixtures_lib/terrain.py",
       "basis": "assumed",
-      "attribution": "FieldTwin mock fixtures"
+      "attribution": "Stardew Earth mock fixtures"
     },
     {
       "name": "Mock weather (placeholder for NASA POWER)",
       "role": "weather",
       "license": "mock (generated, no license restrictions)",
       "basis": "assumed",
-      "attribution": "FieldTwin mock fixtures",
+      "attribution": "Stardew Earth mock fixtures",
       "date_range": {
         "start": "1981-01-01",
         "end": "2025-12-31"

@@ -87,7 +87,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     res = await fetch(url, init);
   } catch {
     throw new ApiError(
-      { code: "DATA_SOURCE_UNAVAILABLE", message: "Cannot reach the FieldTwin API.", hint: "Is the API running?", retryable: true },
+      { code: "DATA_SOURCE_UNAVAILABLE", message: "Cannot reach the Stardew Earth API.", hint: "Is the API running?", retryable: true },
       0,
     );
   }

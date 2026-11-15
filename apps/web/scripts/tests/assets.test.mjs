@@ -17,7 +17,7 @@ async function eventually(check) {
   assert.ok(check(), 'fixture watcher did not converge');
 }
 test('publishes the installed, versioned worker and preserves its exact bytes', () => {
-  const root = mkdtempSync(join(tmpdir(), 'fieldtwin-worker-'));
+  const root = mkdtempSync(join(tmpdir(), 'stardew-earth-worker-'));
   try {
     const { version } = require('maplibre-gl/package.json');
     const result = syncMapLibre({ publicRoot: root });
@@ -26,7 +26,7 @@ test('publishes the installed, versioned worker and preserves its exact bytes', 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 test('fixture watcher copies added nested fixtures, edits and removals, then closes', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'fieldtwin-fixtures-'));
+  const root = mkdtempSync(join(tmpdir(), 'stardew-earth-fixtures-'));
   const source = join(root, 'source'), destination = join(root, 'mock');
   mkdirSync(source); writeFileSync(join(source, 'existing.json'), 'old');
   const watcher = watchFixtures({ source, destination, debounceMs: 10 });
@@ -45,7 +45,7 @@ test('fixture watcher copies added nested fixtures, edits and removals, then clo
   } finally { watcher.close(); rmSync(root, { recursive: true, force: true }); }
 });
 test('a missing fixture source fails without deleting the existing published fixtures', () => {
-  const root = mkdtempSync(join(tmpdir(), 'fieldtwin-missing-'));
+  const root = mkdtempSync(join(tmpdir(), 'stardew-earth-missing-'));
   try {
     const destination = join(root, 'mock'); mkdirSync(destination); writeFileSync(join(destination, 'keep.json'), 'keep');
     assert.throws(() => syncFixtures({ source: resolve(root, 'missing'), destination }));
@@ -54,7 +54,7 @@ test('a missing fixture source fails without deleting the existing published fix
 });
 test('development runner closes its watcher and terminates its child on shutdown', async () => {
   const { startDevelopment } = await import('../dev.mjs');
-  const root = mkdtempSync(join(tmpdir(), 'fieldtwin-dev-'));
+  const root = mkdtempSync(join(tmpdir(), 'stardew-earth-dev-'));
   const source = join(root, 'source'), destination = join(root, 'mock');
   mkdirSync(source); writeFileSync(join(source, 'fixture.json'), 'original');
   const runner = startDevelopment({

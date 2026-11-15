@@ -1,4 +1,4 @@
-# FieldTwin 2D Farm Map PRD
+# Stardew Earth 2D Farm Map PRD
 
 ## Goal
 

@@ -1,7 +1,7 @@
 [project]
-name = "fieldtwin-api"
+name = "stardew-earth-api"
 version = "1.0.0"
-description = "FieldTwin back-end API"
+description = "Stardew Earth back-end API"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi==0.162.5",

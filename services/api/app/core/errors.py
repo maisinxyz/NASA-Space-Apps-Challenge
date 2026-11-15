@@ -52,7 +52,7 @@ STATUS: dict[str, int] = {
     "RATE_LIMITED": 429,
 }
 
-log = logging.getLogger("fieldtwin.errors")
+log = logging.getLogger("stardew_earth.errors")
 
 
 class ApiError(Exception):
