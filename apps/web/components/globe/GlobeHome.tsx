@@ -29,7 +29,8 @@ import { MarkerPulse } from "@/components/hero/FarmCard";
 import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
-import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
+import { GlobeChrome } from "@/components/hero/GlobeChrome";
+import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
@@ -86,6 +87,8 @@ const CLOUD_SLOW_MS = 12000;
 const CLOUD_SLOW_NOTE_MS = 1800;
 /** Release the prewarmed farm scene this long after nothing points at a farm any more. */
 const PREWARM_RELEASE_MS = 6000;
+/** After the arrival title has gone: this long with only the farm on screen before any control shows. */
+const UI_AFTER_TITLE_MS = 500;
 /** The hero Earth's push-in, when it has one (components/hero/HeroEarth.tsx). */
 type PushIn = { diveTo?(farmId: string, durationMs: number, onDone: () => void): void; cancelDive?(): void };
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
@@ -161,14 +164,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const heroEarth = useRef<HeroEarthApi | null>(null);
   /** A waypoint was clicked while not facing the viewer: the Earth turns to it first, then the dive starts. */
   const pendingDive = useRef<string | null>(null);
-  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: false, autoRotate: true });
+  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: true, autoRotate: true });
 
   // ---------- resting hero state machine (globe view) ----------
-  const [hs, setHs] = useState<HeroState>("hero");
-  const hsRef = useRef<HeroState>("hero");
+  const [hs, setHs] = useState<HeroState>("ui");
+  const hsRef = useRef<HeroState>("ui");
   hsRef.current = hs;
   // The Earth glides to the centre only after the hero text has faded (no text visible while it moves).
-  const [earthCentre, setEarthCentre] = useState(false);
+  const [earthCentre, setEarthCentre] = useState(true);
   const timers = useRef<{ glide?: ReturnType<typeof setTimeout>; ui?: ReturnType<typeof setTimeout>; idle?: ReturnType<typeof setTimeout> }>({});
   const clear = (k: "glide" | "ui" | "idle") => {
     clearTimeout(timers.current[k]);
@@ -179,8 +182,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   /** Back to the resting hero: map UI out, Earth back to the right, then the text returns (reverse order). */
   const goHero = () => {
     (["glide", "ui", "idle"] as const).forEach(clear);
-    setHs("hero");
-    setEarthCentre(false);
+    // The globe view now always shows the map UI, centred (fromearth-style chrome); idle no longer returns to a text hero.
+    setHs("ui");
   };
   /** Restart the idle countdown (any pointer activity while centred or in the map UI). */
   const armIdle = () => {
@@ -318,6 +321,13 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     setTitleLeaving(false);
     setTitleOn(false);
   }, []);
+  // The beat after the title: false while the title is up, true UI_AFTER_TITLE_MS after it has gone.
+  const [uiBeatDone, setUiBeatDone] = useState(false);
+  useEffect(() => {
+    if (titleOn) return setUiBeatDone(false);
+    const t = setTimeout(() => setUiBeatDone(true), UI_AFTER_TITLE_MS);
+    return () => clearTimeout(t);
+  }, [titleOn]);
   /** Dive over: camera input and panels live, the arrival title plays over the farm. */
   const toExplore = () => {
     setPhase("explore");
@@ -558,17 +568,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     heroEarth.current?.face(id);
   };
   const onGlobe = view === "globe";
-  // Farm controls appear only after the arrival title has completely left (Part 5 ordering).
-  const panels = phase === "explore";
+  // Farm controls appear only after the arrival title has completely left, plus a beat with just the farm on screen.
+  const panels = phase === "explore" && !titleOn && uiBeatDone;
   // Hero visuals wait for the hero Earth only; Cesium is needed from the dive on.
   const ready = earthReady;
-  const heroShown = onGlobe && hs === "hero";
   const uiShown = onGlobe && hs === "ui";
-  // Sidebar number: same as a pick in the map UI, entering it from the hero.
-  const pickFromHero = (id: string) => {
-    explore();
-    pickFarm(id);
-  };
   const offsetX = !earthCentre ? HERO.restOffsetX : 0;
 
   return (
@@ -646,8 +650,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               farms={FARMS}
               selectedId={farmId}
               offsetX={offsetX}
-              autoRotate={heroShown && settings.autoRotate}
-              showPins={settings.showPins && onGlobe && hs !== "hero"}
+              autoRotate={onGlobe && settings.autoRotate && !cardFor}
+              showPins={settings.showPins && onGlobe}
               atmosphere={settings.atmosphere}
               zoomEnabled={earthCentre && onGlobe}
               reducedMotion={reducedMotion}
@@ -671,7 +675,15 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       </div>
 
       {/* Resting hero: text left, Earth right. */}
-      {onGlobe && <RestingHero shown={heroShown && ready} reduced={reducedMotion} farms={FARMS} selectedId={farmId} onExplore={explore} onPickFarm={pickFromHero} />}
+      {onGlobe && ready && (
+        <GlobeChrome
+          farms={FARMS}
+          selectedId={farmId}
+          onPickFarm={pickFarm}
+          onFlyTo={(lon, lat) => heroEarth.current?.faceLonLat(lon, lat)}
+          controls={<ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />}
+        />
+      )}
 
       {/* Map UI: waypoint label, confirm pulse, farm card, controls. Fades in 2 s after a drag; not focusable while hidden. */}
       {onGlobe && (
@@ -686,9 +698,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           {pulseNonce > 0 && !reducedMotion && <MarkerPulse nonce={pulseNonce} />}
           <div className="pointer-events-auto">
             <FarmPopup farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
-          </div>
-          <div className="pointer-events-auto absolute top-1/2 right-8 -translate-y-1/2">
-            <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />
           </div>
         </motion.div>
       )}

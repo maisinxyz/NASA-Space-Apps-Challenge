@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIXTURES_DIR = REPO_ROOT / "packages" / "contracts" / "fixtures"
-API_VERSION = "1.1.0"  # contract version, packages/contracts/openapi.yaml info.version
+API_VERSION = "1.2.0"  # contract version, packages/contracts/openapi.yaml info.version
 API_PREFIX = "/api/v1"
 
 

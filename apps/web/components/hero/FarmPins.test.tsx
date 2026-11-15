@@ -15,7 +15,7 @@ describe("per-farm pins", () => {
     const explore = renderToStaticMarkup(<Pin3D width={22} height={33} tone="explore" design="grape-cluster" />);
     for (const html of [twin, explore]) {
       expect(html).toContain(`width="${FARM_PIN_BOX.w}"`);
-      expect(html).toContain("[--col:#ffc857]");
+      expect(html).toContain("[--col:#d9443c]");
       expect(html).not.toContain("#c4685a");
       expect(html).not.toContain("#7690b3");
     }

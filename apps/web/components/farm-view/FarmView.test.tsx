@@ -15,8 +15,9 @@ describe('honest farm controls', () => {
     expect(markup).not.toContain('41%');
     expect(markup).not.toContain('0.48');
   });
-  it('does not offer an inactive Ask Twin button', () => {
-    expect(html()).not.toContain('aria-label="Ask Twin"');
+  it('offers a clearly identified synthetic preview assistant', () => {
+    expect(html()).toContain('aria-label="Ask Twin preview"');
+    expect(html()).toContain('Synthetic preview');
   });
   it('does not offer an unrelated calendar outside comparison', () => {
     expect(html()).not.toContain('data-testid="timeline"');

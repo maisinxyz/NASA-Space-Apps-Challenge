@@ -1,7 +1,7 @@
 "use client";
-// The hero's Earth: a Three.js sphere (react-three-fiber) with NASA Blue Marble day imagery, NASA "Earth at night"
-// lights on the far side of a soft terminator, a gentle ocean glint, an inner rim and an outer atmosphere glow, on a
-// pure black background. The sun is fixed to the viewer (left, toward the headline), so the face you see is always lit while the
+// The hero's Earth: a Three.js sphere (react-three-fiber) styled as a dark data map: slate continents with a hint of
+// NASA Blue Marble imagery, a flat navy sea, soft light, a blue fresnel rim, a faint graticule and a wide blue halo,
+// on a procedural starfield and Milky Way (see Starfield). Palette constants live at the top of earthFrag. The sun is fixed to the viewer (left, toward the headline), so the face you see is always lit while the
 // Earth turns under it. Rotation is a pure mesh rotation (no camera moves), so it is perfectly smooth.
 //
 // Interaction: drag rotates the Earth (about its axis left-right, tilt up-down, clamped) with inertia after release;
@@ -25,6 +25,11 @@ import { easeInFlashOut, flyTo, hero, zoom as ZOOM } from "./tokens";
 
 const DAY = "/hero/earth/earth-day-3840.jpg";
 const NIGHT = "/hero/earth/earth-night-3840.jpg";
+/** Land (255) / sea (0) mask from Natural Earth (scripts/build_globe_assets.py). */
+const MASK = "/hero/earth/land-mask-4096.png";
+/** Intro: the Earth wakes (brightens) and the camera pulls in from this multiple of the whole-Earth distance. */
+const INTRO_MS = 2800;
+const INTRO_FROM = 1.55;
 
 /** Cesium whole-Earth view: camera 20,000 km above a 6,371 km Earth = 4.139 radii from the centre. */
 const CAM_DIST = (6371 + 20000) / 6371;
@@ -38,7 +43,7 @@ const MAX_TILT = THREE.MathUtils.degToRad(70);
 /** Sun direction in view space: from the left, where the headline sits (slightly above and in front), so the face toward the text is lit and the far limb falls into shade. */
 const SUN = new THREE.Vector3(-0.86, 0.2, 0.46).normalize();
 /** Atmosphere shell radius, Earth radii. */
-const GLOW_SCALE = 1.06;
+const GLOW_SCALE = 1.16;
 /** Pin facing threshold: hide waypoints on the far side and right at the limb. */
 const PIN_FACING = 0.12;
 
@@ -46,6 +51,8 @@ export type HeroEarthApi = {
   isFacing(id: string): boolean;
   /** Turn the Earth so this farm faces the viewer (eased arc); `onFlyDone` fires when it gets there. */
   face(id: string): void;
+  /** Turn the Earth so any lon/lat faces the viewer (search results that are not farms). */
+  faceLonLat(lon: number, lat: number): void;
   /** Glide back to the whole-Earth size (before the hand-over to the Cesium dive). */
   resetZoom(): void;
   /**
@@ -130,11 +137,25 @@ const earthFrag = /* glsl */ `
   uniform float time;
   uniform float lowDetail;
   uniform float cloudFill;
+  uniform sampler2D landMap;
+  uniform float awake;
   varying vec2 vUv;
   varying vec3 vNormalV;
   varying vec3 vPosV;
   varying vec3 vObj;
   varying mat3 vNM;
+  // Look: a dark, data-map globe. Slate continents with a hint of the imagery, flat navy sea, soft light, blue rim,
+  // faint graticule, cool S-curve grade. No clouds or city lights. Tune the look here.
+  const vec3 OCEAN = vec3(0.026, 0.058, 0.132);
+  const float OCEAN_IMAGERY = 0.12;
+  const vec3 SLATE_DARK = vec3(0.130, 0.168, 0.205);
+  const vec3 SLATE_LIGHT = vec3(0.300, 0.325, 0.330);
+  const float IMAGERY_MIX = 0.5;
+  const float LIGHT_BASE = 1.15;
+  const float LIGHT_SUN = 0.28;
+  const vec3 GRID = vec3(0.090, 0.251, 0.663);
+  const float GRID_ALPHA = 0.09;
+  const float GRADE_MIX = 0.5;
   vec3 grade(vec3 c) {
     // A little more contrast and colour, kept natural.
     c = (c - 0.5) * 1.12 + 0.5;
@@ -188,82 +209,52 @@ const earthFrag = /* glsl */ `
     g += fine * normalize(vec3( 0.66, -0.35, 0.67)) * cos(dot(p, vec3( 0.66, -0.35, 0.67)) * 823.0 - t * 1.8) * 0.13;
     return g;
   }
+  // Anti-aliased line every stepDeg degrees along x (degrees).
+  float gridLine(float x, float stepDeg) {
+    float d = abs(fract(x / stepDeg + 0.5) - 0.5) * stepDeg;
+    return 1.0 - smoothstep(0.0, fwidth(x) * 1.2, d);
+  }
+  vec3 sCurve(vec3 c) {
+    vec3 s = c * c * (3.0 - 2.0 * c);
+    s = clamp(s * 1.08 + 0.02, 0.0, 1.0);
+    s.b = min(1.0, s.b * 1.05 + 0.012);
+    s.r = min(1.0, s.r * 0.98 + s.r * s.r * s.r * 0.06);
+    return s;
+  }
   void main() {
     vec3 n0 = normalize(vNormalV);
     vec3 v = normalize(-vPosV);
     vec3 po = normalize(vObj);
-    vec3 sunO = sunV * vNM; // sun direction in object space (transpose of a rotation)
 
-    // Imagery with crisper coastlines (unsharp mask) and a coast-distance estimate from the land/water mask.
     vec3 raw = texture2D(dayMap, vUv).rgb;
-    vec2 e1 = vec2(0.0004, 0.0008);
-    vec3 blur = 0.25 * (texture2D(dayMap, vUv + vec2(e1.x, 0.0)).rgb + texture2D(dayMap, vUv - vec2(e1.x, 0.0)).rgb + texture2D(dayMap, vUv + vec2(0.0, e1.y)).rgb + texture2D(dayMap, vUv - vec2(0.0, e1.y)).rgb);
-    vec3 day = grade(clamp(raw + (raw - blur) * 0.55, 0.0, 1.0));
-    vec3 night = texture2D(nightMap, vUv).rgb;
-    float water = waterOf(raw);
-    float wNear = 0.0;
-    if (lowDetail > 0.5) wNear = 8.0 * water; else {
-    wNear += waterOf(texture2D(dayMap, vUv + vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.003, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.006)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.006)).rgb);
-    wNear += waterOf(texture2D(dayMap, vUv + vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.008, 0.0)).rgb) + waterOf(texture2D(dayMap, vUv + vec2(0.0, 0.016)).rgb) + waterOf(texture2D(dayMap, vUv - vec2(0.0, 0.016)).rgb);
-    }
-    float shallow = water * smoothstep(0.0, 0.7, 1.0 - wNear / 8.0);
+    float land = texture2D(landMap, vUv).r;
+    float g = dot(raw, vec3(0.299, 0.587, 0.114));
+    vec3 cont = mix(SLATE_DARK, SLATE_LIGHT, g);
+    cont = mix(cont, raw * 0.8, IMAGERY_MIX);
+    vec3 sea = mix(OCEAN, raw * vec3(0.8, 1.0, 1.15), OCEAN_IMAGERY);
+    vec3 base = mix(sea, cont, land);
 
-    // Ocean: normal perturbed by the moving swell at two scales (fine chop fades before it would alias).
-    float pxFreq = length(fwidth(po)) * 800.0;
-    float fine = 1.0 - smoothstep(0.7, 1.8, pxFreq);
-    vec3 gObj = swell(po, time, fine);
-    gObj -= po * dot(gObj, po);
-    vec3 n = normalize(n0 + normalize(vNM * gObj + 1e-5) * min(length(gObj), 2.0) * 0.011 * water);
-
-    float ndl = dot(n0, sunV);
-    float ndlW = dot(n, sunV);
-    float dayMix = smoothstep(-0.2, 0.34, ndl);
-    float diffuse = clamp(ndl * 0.8 + 0.22, 0.0, 1.0);
-
-    // Clouds and their soft shadow on the surface below (the shadow is the same field sampled toward the sun, a little coarser).
-    float cl = cloudAt(po, lowDetail > 0.5 ? 2 : 4);
-    vec3 sunTan = sunO - po * dot(sunO, po);
-    float cs = cloudAt(normalize(po + sunTan * 0.035), lowDetail > 0.5 ? 2 : 3);
-
-    // Land: relief from the imagery's own shading and gentle colour variation; ocean: deeper face-on, lighter and bluer at the limb, turquoise on shallows, slow colour drift.
-    float lum = dot(day, vec3(0.299, 0.587, 0.114));
-    vec2 gl2 = vec2(dFdx(lum), dFdy(lum));
-    float relief = clamp(dot(gl2, normalize(sunV.xy + 1e-4)) * 14.0, -0.12, 0.12);
-    float vary = (vnoise(po * 28.0) - 0.5) * 0.10 + (vnoise(po * 70.0 + 5.0) - 0.5) * 0.06;
-    vec3 landC = day * (1.0 + relief + vary) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), step(0.5, vnoise(po * 9.0)));
-    vec3 deep = day * vec3(1.0, 1.12, 1.22) + vec3(0.004, 0.012, 0.03);
-    float ang = 1.0 - max(dot(n0, v), 0.0);
-    vec3 oceanC = mix(deep, day * vec3(1.05, 1.08, 1.06) + vec3(0.0, 0.015, 0.03), pow(ang, 2.0) * 0.6);
-    oceanC = mix(oceanC, oceanC * vec3(0.6, 1.3, 1.28) + vec3(0.0, 0.03, 0.04), shallow * 0.5);
-    oceanC *= 1.0 + (vnoise(po * 6.0 + 2.0) - 0.5) * 0.14;
-    vec3 base = mix(landC, oceanC, water);
-    base *= 1.0 - 0.38 * cs * (0.4 + 0.6 * dayMix);
-
-    vec3 lit = base * (0.07 + 1.38 * diffuse);
-    vec3 col = mix(night * vec3(1.0, 0.85, 0.6) * 0.9, lit, dayMix);
-
-    // Sun on the sea: a faint broad sheen and a small glint that sparkles with the swell; clouds mask it.
-    vec3 h = normalize(sunV + v);
-    float nh = max(dot(n, h), 0.0);
-    float sheen = pow(nh, 260.0) * 0.025 + pow(nh, 900.0) * 0.4;
-    col += vec3(0.92, 0.96, 1.0) * sheen * water * smoothstep(0.0, 0.3, ndlW) * dayMix * (1.0 - cl);
-
-    // Cloud layer: white, lit like the ground but a little brighter, thinner edges fade; self-shaded on the side away from the sun.
-    float cloudDay = smoothstep(-0.25, 0.22, ndl);
-    float selfShade = 1.0 - 0.28 * clamp(cs - cl * 0.6, 0.0, 1.0);
-    vec3 cloudCol = vec3(0.95, 0.97, 1.0) * (0.05 + 1.12 * clamp(ndl * 0.85 + 0.2, 0.0, 1.0)) * selfShade;
-    float clF = mix(cl * 0.66 * cloudDay, 1.0, cloudFill * cloudFill);
-    // Whiteout at the end of the dive: textured cloud (lighter where dense, greyer in the gaps), close to the CloudLoader's sky.
-    vec3 whiteCol = mix(vec3(0.82, 0.86, 0.92), vec3(0.97, 0.98, 1.0), clamp(cl * 0.75 + 0.35 * (1.0 - cs), 0.0, 1.0));
-    col = mix(col, mix(cloudCol, whiteCol, cloudFill), clF);
-
-    // Limb: a thin atmosphere seen edge-on (bluer, strongest on the lit side), plus a faint scatter at the terminator.
+    float lambert = max(dot(n0, sunV), 0.0);
     float fres = pow(1.0 - max(dot(n0, v), 0.0), 3.0);
-    float limb = pow(1.0 - max(dot(n0, v), 0.0), 4.5);
-    col += vec3(0.28, 0.5, 0.95) * limb * (0.15 + 0.85 * dayMix) * 0.55;
-    col += rimColor * fres * (0.12 + 0.88 * dayMix) * 0.7 * rimOn;
-    float term = exp(-pow(ndl / 0.16, 2.0));
-    col += vec3(0.05, 0.07, 0.12) * term * (0.4 + 0.6 * fres) * rimOn;
+    vec3 col = base * (LIGHT_BASE + LIGHT_SUN * lambert) + rimColor * fres * 0.5 * rimOn;
+
+    // Graticule: parallels every 30 degrees to +-60, meridians every 30 degrees.
+    float latD = degrees(asin(clamp(po.y, -1.0, 1.0)));
+    float lonD = degrees(atan(po.z, -po.x));
+    float par = gridLine(latD, 30.0) * step(abs(latD), 61.0);
+    float mer = gridLine(lonD, 30.0) * step(abs(latD), 84.0);
+    col = mix(col, GRID, max(par, mer) * GRID_ALPHA * (1.0 - lowDetail));
+
+    col = mix(col, sCurve(clamp(col, 0.0, 1.0)), GRADE_MIX);
+    // Intro: the surface wakes from dark while the camera pulls in.
+    col *= mix(0.24, 1.0, awake);
+
+    // Whiteout at the end of the dive (hand-over to the Cesium view under the CloudLoader).
+    if (cloudFill > 0.0) {
+      float cl = cloudAt(po, 2);
+      vec3 whiteCol = mix(vec3(0.82, 0.86, 0.92), vec3(0.97, 0.98, 1.0), clamp(cl * 0.75 + 0.35, 0.0, 1.0));
+      col = mix(col, whiteCol, cloudFill * cloudFill);
+    }
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -286,18 +277,26 @@ const glowFrag = /* glsl */ `
   void main() {
     vec3 n = normalize(vNormalV);
     vec3 v = normalize(-vPosV);
-    // Back faces of the shell: -dot(n, v) is shellCos where the shell meets the Earth's limb and 0 at the shell's own
-    // edge, so the glow starts at the limb (no dark gap) and fades out into space.
-    float k = clamp(-dot(n, v) / shellCos, 0.0, 1.0);
-    float a = pow(k, 2.2) * 0.9;
-    float sunSide = 0.18 + 0.82 * smoothstep(-0.45, 0.6, dot(n, sunV));
-    gl_FragColor = vec4(glowColor * a * sunSide, a * sunSide);
+    // Back faces of the shell: brightest behind the Earth, fading to 0 at the shell edge (not normalised at the limb).
+    float k = clamp(-dot(n, v), 0.0, 1.0);
+    float halo = pow(k, 1.8) * 1.7;
+    vec3 e = vec3(1.0) - exp(-glowColor * halo);
+    gl_FragColor = vec4(e, 1.0);
   }
 `;
 
-/** Pins closer than this on screen (px) are fanned apart: glyph width (36) plus a visible gap, and glyph height. */
-const PIN_SEP_W = 48;
-const PIN_SEP_H = 38;
+/** Pins closer than this on screen (px) are fanned apart: glyph width (40) plus a visible gap, and glyph height. */
+const PIN_SEP_W = 50;
+const PIN_SEP_H = 50;
+/** Name label beside each pin head (screen px from the pin's ground point): starts right of the head, centred on it. */
+const LABEL_DX = 16;
+const LABEL_DY = -31;
+const LABEL_H = 24;
+/** Short name for the label: the farm name up to its first comma or bracket (the full name is in the popup). */
+export const shortName = (name: string) => name.split(/[,(]/)[0].trim();
+type Rect = { x0: number; x1: number; y0: number; y1: number };
+const overlaps = (a: Rect, b: Rect) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+type Labels = { els: Map<string, HTMLElement>; alpha: Map<string, number>; w: Map<string, number> };
 type PinItem = { f: Farm; x: number; y: number; fdot: number; facing: boolean; alpha: number; tx: number };
 
 type Motion = {
@@ -312,14 +311,16 @@ type Motion = {
   fly: { fromSpin: number; toSpin: number; fromTilt: number; toTilt: number; t0: number; id: string } | null;
   off: { cur: number; from: number; to: number; t0: number };
   camAt: number;
+  /** First frame time (ms), for the intro. */
+  introT0: number;
   /** Camera distance as a multiple of the whole-Earth distance: current (eased) and where the wheel wants it. */
   zoom: number;
   zoomTo: number;
 };
 
-function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; pinAlpha: MutableRefObject<Map<string, number>>; pinOff: MutableRefObject<Map<string, number>>; leaderEls: MutableRefObject<Map<string, SVGGElement>>; hovered: MutableRefObject<string | null> }) {
+function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRefObject<Map<string, HTMLElement>>; pinAlpha: MutableRefObject<Map<string, number>>; pinOff: MutableRefObject<Map<string, number>>; leaderEls: MutableRefObject<Map<string, SVGGElement>>; labels: MutableRefObject<Labels>; hovered: MutableRefObject<string | null>; places: MutableRefObject<PlaceLabels> }) {
   const { camera, size, gl } = useThree();
-  const [day, night] = useLoader(THREE.TextureLoader, [DAY, NIGHT]);
+  const [day, night, mask] = useLoader(THREE.TextureLoader, [DAY, NIGHT, MASK]);
   const tilted = useRef<THREE.Group>(null);
   const spun = useRef<THREE.Group>(null);
   const earthMat = useRef<THREE.ShaderMaterial>(null);
@@ -327,26 +328,28 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
   live.current = p;
 
   useMemo(() => {
-    for (const t of [day, night]) {
+    for (const t of [day, night, mask]) {
       t.anisotropy = gl.capabilities.getMaxAnisotropy();
       t.colorSpace = THREE.NoColorSpace;
     }
-  }, [day, night, gl]);
+  }, [day, night, mask, gl]);
 
   const uniforms = useMemo(
     () => ({
       dayMap: { value: day },
       nightMap: { value: night },
       sunV: { value: SUN.clone() },
-      rimColor: { value: new THREE.Color("#7fb2ff") },
+      rimColor: { value: new THREE.Color(0.09, 0.25, 0.66) },
       rimOn: { value: 1 },
       time: { value: 0 },
       lowDetail: { value: 0 },
       cloudFill: { value: 0 },
+      landMap: { value: mask },
+      awake: { value: 0 },
     }),
-    [day, night],
+    [day, night, mask],
   );
-  const glowUniforms = useMemo(() => ({ glowColor: { value: new THREE.Color("#5f9dff") }, sunV: { value: SUN.clone() }, shellCos: { value: Math.sqrt(1 - 1 / (GLOW_SCALE * GLOW_SCALE)) } }), []);
+  const glowUniforms = useMemo(() => ({ glowColor: { value: new THREE.Color(0.09, 0.251, 0.663) }, sunV: { value: SUN.clone() }, shellCos: { value: Math.sqrt(1 - 1 / (GLOW_SCALE * GLOW_SCALE)) } }), []);
 
   useEffect(() => {
     p.onReady();
@@ -401,9 +404,12 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
         dv.onDone?.();
       }
     }
-    cam.position.z = CAM_DIST * m.zoom;
+    if (!m.introT0) m.introT0 = now;
+    const awake = q.reducedMotion ? 1 : Math.min(1, (now - m.introT0) / INTRO_MS);
+    const introK = 1 + (INTRO_FROM - 1) * Math.pow(1 - awake, 3);
+    cam.position.z = CAM_DIST * m.zoom * introK;
     cam.updateMatrixWorld();
-    const halfW = CAM_DIST * m.zoom * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect;
+    const halfW = CAM_DIST * m.zoom * introK * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * cam.aspect;
     if (tilted.current) tilted.current.position.x = m.off.cur * halfW;
 
     // Rotation: fly-to, else inertia / auto-spin.
@@ -437,6 +443,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       m.cloudFill = m.dive ? wantFill : m.cloudFill + (0 - m.cloudFill) * (1 - Math.exp(-dt / 0.3));
       if (m.cloudFill < 1e-3) m.cloudFill = 0;
       earthMat.current.uniforms.cloudFill.value = m.cloudFill;
+      earthMat.current.uniforms.awake.value = awake;
       earthMat.current.uniforms.lowDetail.value = m.dive ? 1 : 0;
       earthMat.current.uniforms.rimOn.value = q.atmosphere ? 1 : 0;
       // Ocean swell clock (frozen under reduced motion).
@@ -479,6 +486,27 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
           A.tx -= dir * push;
           B.tx += dir * push;
         }
+      }
+      // Labels: shown when their box clears every pin head and every label already placed. The selected and hovered
+      // farms go first, then nearer pins. O(n^2) over a dozen pins, cheap.
+      const L = q.labels.current;
+      const placed: Rect[] = [];
+      const heads: (Rect & { id: string })[] = items.filter((it) => it.facing && it.alpha > 0.05).map((it) => ({ id: it.f.id, x0: it.x + it.tx - 17, x1: it.x + it.tx + 17, y0: it.y - 48, y1: it.y - 4 }));
+      const rank = (it: PinItem) => (it.f.id === q.selectedId ? 3 : it.f.id === q.hovered.current ? 2 : 0) + it.fdot;
+      for (const it of [...items].sort((a, b) => rank(b) - rank(a))) {
+        const el = L.els.get(it.f.id);
+        if (!el) continue;
+        let w = L.w.get(it.f.id) ?? 0;
+        if (!w) L.w.set(it.f.id, (w = el.offsetWidth));
+        const lx = it.x + it.tx + LABEL_DX;
+        const ly = it.y + LABEL_DY;
+        const r = { x0: lx, x1: lx + w, y0: ly - LABEL_H / 2, y1: ly + LABEL_H / 2 };
+        const ok = it.facing && it.alpha > 0.6 && !placed.some((o) => overlaps(o, r)) && !heads.some((h) => h.id !== it.f.id && overlaps(h, r));
+        if (ok) placed.push(r);
+        const prev = L.alpha.get(it.f.id) ?? 0;
+        const a = q.reducedMotion ? +ok : prev + (+ok - prev) * (1 - Math.exp(-dt / 0.09));
+        L.alpha.set(it.f.id, a);
+        el.style.opacity = a.toFixed(3);
       }
       // Pass 3: apply. The glyph sits at its displaced spot (lifted a little when displaced, on a hairline stem to the true spot); click and hover follow it.
       for (const it of items) {
@@ -523,6 +551,7 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
       }
     }
     if (!trackSent) q.onTrack(null);
+    if (world) placeCityLabels(q.places.current, world, tilted.current!.position, cam, size, m, q.reducedMotion, dt, tmp);
 
     // Camera telemetry: the point under the view centre.
     if (now - m.camAt > 120) {
@@ -537,6 +566,8 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
   });
 
   return (
+    <>
+    <Starfield reducedMotion={p.reducedMotion} />
     <group ref={tilted}>
       <group ref={spun}>
         <mesh>
@@ -550,6 +581,203 @@ function Scene(p: Props & { motion: MutableRefObject<Motion>; pinEls: MutableRef
           <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} uniforms={glowUniforms} transparent depthWrite={false} side={THREE.BackSide} blending={THREE.AdditiveBlending} />
         </mesh>
       )}
+    </group>
+    </>
+  );
+}
+
+// ---------- city labels ----------
+const PLACES = "/hero/places.json";
+const CITY_LABELS_MAX = 28;
+export type Place = { kind: "city" | "country"; name: string; country: string; lat: number; lon: number; pop: number };
+type PlaceLabels = { cities: Place[]; els: HTMLElement[]; alpha: number[]; pointer: { x: number; y: number } | null };
+/** Smallest population labelled at a camera distance (Earth radii): more names as you zoom in. */
+const popFloor = (d: number) => (d > 3.6 ? 8e6 : d > 2.9 ? 4e6 : d > 2.3 ? 1.5e6 : 5e5);
+
+function placeCityLabels(
+  P: PlaceLabels,
+  world: THREE.Matrix4,
+  centre: THREE.Vector3,
+  cam: THREE.PerspectiveCamera,
+  size: { width: number; height: number },
+  m: Motion,
+  reduced: boolean,
+  dt: number,
+  tmp: { v: THREE.Vector3; n: THREE.Vector3; toCam: THREE.Vector3 },
+) {
+  if (!P.els.length) return;
+  const floor = popFloor(cam.position.length());
+  const focus = P.pointer ?? { x: size.width / 2, y: size.height / 2 };
+  const reach = Math.min(220, size.width * 0.3);
+  const placed: Rect[] = [];
+  let k = 0;
+  for (const c of P.cities) {
+    if (k >= P.els.length) break;
+    if (c.pop < floor) break; // sorted by population, largest first
+    lonLatToVec(c.lon, c.lat, tmp.v).applyMatrix4(world);
+    tmp.n.copy(tmp.v).sub(centre).normalize();
+    tmp.toCam.copy(cam.position).sub(tmp.v).normalize();
+    const facing = tmp.n.dot(tmp.toCam);
+    if (facing < 0.2) continue;
+    const s = tmp.v.project(cam);
+    const x = (s.x * 0.5 + 0.5) * size.width;
+    const y = (-s.y * 0.5 + 0.5) * size.height;
+    const w = c.name.length * 8 + 14;
+    if (x - w / 2 < 0 || x + w / 2 > size.width || y < 20 || y > size.height) continue;
+    const r = { x0: x - w / 2, x1: x + w / 2, y0: y - 18, y1: y };
+    if (placed.some((o) => overlaps(o, r))) continue;
+    placed.push(r);
+    const near = THREE.MathUtils.clamp((reach - Math.hypot(x - focus.x, y - focus.y)) / 80, 0, 1);
+    const want = m.dive ? 0 : Math.min(1, (facing - 0.2) / 0.25) * (0.35 + 0.65 * near);
+    const el = P.els[k];
+    if (el.textContent !== c.name) {
+      el.textContent = c.name;
+      P.alpha[k] = 0;
+    }
+    const prev = P.alpha[k] ?? 0;
+    const a = reduced ? want : prev + (want - prev) * (1 - Math.exp(-dt / 0.15));
+    P.alpha[k] = a;
+    el.style.transform = `translate3d(${x.toFixed(1)}px, ${(y + 2).toFixed(1)}px, 0) translate(-50%, -100%)`;
+    el.style.opacity = a.toFixed(3);
+    k++;
+  }
+  for (; k < P.els.length; k++) {
+    P.alpha[k] = 0;
+    P.els[k].style.opacity = "0";
+  }
+}
+
+// ---------- space backdrop ----------
+// Procedural and deterministic (seeded): no image to load or license. Stars sit on a far sphere, so they stay put while
+// the Earth turns (the camera never rotates). About a third crowd a tilted band, over a faint milky glow, so the sky
+// reads as a galaxy seen edge-on rather than uniform noise. Gentle twinkle, frozen under reduced motion.
+const STAR_COUNT = 28000;
+const SKY_R = 60;
+/** Unit normal of the Milky Way band's plane (tilted across the view). */
+const BAND_N = new THREE.Vector3(0.35, 0.86, -0.37).normalize();
+
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const starVert = /* glsl */ `
+  attribute float size;
+  attribute float phase;
+  attribute vec3 tint;
+  uniform float time;
+  uniform float dpr;
+  varying vec3 vTint;
+  varying float vAlpha;
+  varying float vSize;
+  void main() {
+    vTint = tint;
+    vSize = size;
+    float tw = 0.78 + 0.22 * sin(time * (0.6 + fract(phase * 7.13) * 1.6) + phase * 6.2831);
+    vAlpha = tw;
+    gl_PointSize = size * dpr;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const starFrag = /* glsl */ `
+  varying vec3 vTint;
+  varying float vAlpha;
+  varying float vSize;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float d = length(c) * 2.0;
+    float core = smoothstep(1.0, 0.0, d);
+    // Big stars get a soft halo and a four-point flare; small ones stay pinpricks.
+    float big = smoothstep(6.0, 14.0, vSize);
+    float flare = (exp(-abs(c.x) * 60.0) * exp(-abs(c.y) * 5.0) + exp(-abs(c.y) * 60.0) * exp(-abs(c.x) * 5.0)) * big;
+    float a = (pow(core, mix(1.8, 6.0, big)) + flare * 0.9 + pow(core, 2.0) * 0.25 * big) * vAlpha;
+    if (a < 0.01) discard;
+    gl_FragColor = vec4(vTint * a, a);
+  }
+`;
+const skyVert = /* glsl */ `
+  varying vec3 vDir;
+  void main() {
+    vDir = normalize(position);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const skyFrag = /* glsl */ `
+  uniform vec3 bandN;
+  varying vec3 vDir;
+  float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+  float noise(vec3 p) {
+    vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+               mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+  }
+  void main() {
+    vec3 d = normalize(vDir);
+    float lat = dot(d, bandN);
+    float n = noise(d * 3.0) * 0.6 + noise(d * 7.0) * 0.3 + noise(d * 16.0) * 0.1;
+    float band = exp(-lat * lat * 40.0) * (0.2 + 0.8 * n * n);
+    float dust = smoothstep(0.55, 0.75, noise(d * 9.0 + 4.0)) * exp(-lat * lat * 90.0);
+    vec3 col = mix(vec3(0.12, 0.16, 0.30), vec3(0.30, 0.30, 0.40), n) * band * (1.0 - 0.7 * dust);
+    // A faint deep-blue haze over the whole sky so space is not flat black.
+    col += vec3(0.008, 0.012, 0.03) * (0.6 + 0.4 * n);
+    gl_FragColor = vec4(col * 0.8, 1.0);
+  }
+`;
+
+function Starfield({ reducedMotion }: { reducedMotion: boolean }) {
+  const { gl } = useThree();
+  const geo = useMemo(() => {
+    const rnd = mulberry32(20261114);
+    const pos = new Float32Array(STAR_COUNT * 3);
+    const size = new Float32Array(STAR_COUNT);
+    const phase = new Float32Array(STAR_COUNT);
+    const tint = new Float32Array(STAR_COUNT * 3);
+    const v = new THREE.Vector3();
+    const palette = [new THREE.Color("#9db8ff"), new THREE.Color("#cfdcff"), new THREE.Color("#ffffff"), new THREE.Color("#fff1d6"), new THREE.Color("#ffd2a1")];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      // Uniform direction, then a third pulled toward the band plane.
+      v.set(rnd() * 2 - 1, rnd() * 2 - 1, rnd() * 2 - 1);
+      if (v.lengthSq() < 1e-6) v.set(1, 0, 0);
+      v.normalize();
+      if (rnd() < 0.36) v.addScaledVector(BAND_N, -v.dot(BAND_N) * (0.82 + rnd() * 0.18)).normalize();
+      v.multiplyScalar(SKY_R);
+      pos.set([v.x, v.y, v.z], i * 3);
+      // Mostly faint pinpricks, a few bright stars (power-law sizes).
+      const m = Math.pow(rnd(), 9);
+      size[i] = 1.6 + m * 16;
+      phase[i] = rnd();
+      const c = palette[Math.floor(rnd() * palette.length)];
+      const b = 0.8 + 0.2 * Math.min(1, 0.3 + m * 3 + rnd() * 0.6);
+      tint.set([c.r * b, c.g * b, c.b * b], i * 3);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setAttribute("size", new THREE.BufferAttribute(size, 1));
+    g.setAttribute("phase", new THREE.BufferAttribute(phase, 1));
+    g.setAttribute("tint", new THREE.BufferAttribute(tint, 3));
+    return g;
+  }, []);
+  useEffect(() => () => geo.dispose(), [geo]);
+  const starUniforms = useMemo(() => ({ time: { value: 0 }, dpr: { value: gl.getPixelRatio() } }), [gl]);
+  const skyUniforms = useMemo(() => ({ bandN: { value: BAND_N.clone() } }), []);
+  useFrame((_, dt) => {
+    starUniforms.dpr.value = gl.getPixelRatio();
+    if (!reducedMotion) starUniforms.time.value += Math.min(0.05, dt);
+  });
+  return (
+    <group renderOrder={-1}>
+      <mesh renderOrder={-2}>
+        <sphereGeometry args={[SKY_R + 5, 48, 32]} />
+        <shaderMaterial vertexShader={skyVert} fragmentShader={skyFrag} uniforms={skyUniforms} side={THREE.BackSide} depthWrite={false} />
+      </mesh>
+      <points geometry={geo} renderOrder={-1}>
+        <shaderMaterial vertexShader={starVert} fragmentShader={starFrag} uniforms={starUniforms} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      </points>
     </group>
   );
 }
@@ -567,14 +795,29 @@ function useLoadProgress(onProgress: (f: number) => void) {
 }
 
 export function HeroEarth(props: Props) {
-  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, dive: null, cloudFill: 0, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, zoom: 1, zoomTo: 1 });
+  const motion = useRef<Motion>({ spin: 0, tilt: THREE.MathUtils.degToRad(20), vSpin: 0, vTilt: 0, dragging: false, last: null, fly: null, dive: null, cloudFill: 0, off: { cur: props.offsetX, from: props.offsetX, to: props.offsetX, t0: 0 }, camAt: 0, introT0: 0, zoom: 1, zoomTo: 1 });
   const pinEls = useRef(new Map<string, HTMLElement>());
   const pinAlpha = useRef(new Map<string, number>());
   const pinOff = useRef(new Map<string, number>());
   const leaderEls = useRef(new Map<string, SVGGElement>());
+  const labels = useRef<Labels>({ els: new Map(), alpha: new Map(), w: new Map() });
   const hovered = useRef<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+  const places = useRef<PlaceLabels>({ cities: [], els: [], alpha: [], pointer: null });
+  const lens = useRef<HTMLDivElement>(null);
   useLoadProgress(props.onProgress);
+  useEffect(() => {
+    let off = false;
+    fetch(PLACES)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { places?: Place[] } | null) => {
+        if (!off && d?.places) places.current.cities = d.places.filter((x) => x.kind === "city");
+      })
+      .catch(() => {});
+    return () => {
+      off = true;
+    };
+  }, []);
 
   // Start facing the Americas (like the Cesium home view), then whatever the user does.
   useMemo(() => {
@@ -583,8 +826,8 @@ export function HeroEarth(props: Props) {
     motion.current.tilt = a.tilt;
   }, []);
 
-  // Turn a farm to face the viewer (eased arc along the shortest way round); the selected farm turns on selection.
-  const { selectedId, farms } = props;
+  // Turn a farm to face the viewer (eased arc along the shortest way round).
+  const { farms } = props;
   const face = (f: Farm | undefined) => {
     if (!f) return;
     const m = motion.current;
@@ -610,6 +853,13 @@ export function HeroEarth(props: Props) {
       },
       face(id) {
         faceRef.current(farms.find((x) => x.id === id));
+      },
+      faceLonLat(lon, lat) {
+        const m = motion.current;
+        const a = faceAngles(lon, lat);
+        m.vSpin = 0;
+        m.vTilt = 0;
+        m.fly = { fromSpin: m.spin, toSpin: shortest(m.spin, a.spin), fromTilt: m.tilt, toTilt: THREE.MathUtils.clamp(a.tilt, -MAX_TILT, MAX_TILT), t0: performance.now(), id: "" };
       },
       resetZoom() {
         motion.current.zoomTo = 1;
@@ -675,6 +925,24 @@ export function HeroEarth(props: Props) {
   const started = useRef(false);
   const downAt = useRef({ x: 0, y: 0 });
   const onPointerMove = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse") {
+      const r = wrap.current?.getBoundingClientRect();
+      if (r) {
+        places.current.pointer = { x: e.clientX - r.left, y: e.clientY - r.top };
+        // Over the Earth's disc (centre and radius on screen from the camera distance)?
+        const m0 = motion.current;
+        const vf = r.width / r.height >= 1 ? 2 * Math.atan(Math.tan(CESIUM_FOV_RAD / 2) / (r.width / r.height)) : CESIUM_FOV_RAD;
+        const d0 = CAM_DIST * m0.zoom;
+        const rad = r.height / 2 / (Math.tan(vf / 2) * Math.sqrt(d0 * d0 - 1));
+        const cx = r.width / 2 + (m0.off.cur * r.width) / 2;
+        const over = Math.hypot(e.clientX - r.left - cx, e.clientY - r.top - r.height / 2) < rad;
+        const ring = lens.current;
+        if (ring) {
+          ring.style.transform = `translate3d(${e.clientX - r.left}px, ${e.clientY - r.top}px, 0) translate(-50%, -50%)`;
+          ring.style.opacity = over && !m0.dragging && !m0.dive ? "1" : "0";
+        }
+      }
+    }
     const m = motion.current;
     if (!m.dragging || !m.last) return;
     if (!started.current && Math.hypot(e.clientX - downAt.current.x, e.clientY - downAt.current.y) >= hero.dragThresholdPx) {
@@ -744,10 +1012,14 @@ export function HeroEarth(props: Props) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onPointerLeave={() => {
+        places.current.pointer = null;
+        if (lens.current) lens.current.style.opacity = "0";
+      }}
     >
       <Canvas linear flat dpr={[1, 2]} frameloop={props.active ? "always" : "never"} gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }} camera={{ position: [0, 0, CAM_DIST], fov: 35 }} onCreated={({ gl }) => gl.setClearColor("#000000", 1)}>
         <Suspense fallback={null}>
-          <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} pinOff={pinOff} leaderEls={leaderEls} hovered={hovered} />
+          <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} pinOff={pinOff} leaderEls={leaderEls} labels={labels} hovered={hovered} places={places} />
         </Suspense>
       </Canvas>
       {props.zoomEnabled && (
@@ -760,6 +1032,28 @@ export function HeroEarth(props: Props) {
           </div>
         </div>
       )}
+      {/* Vignette: darkens the frame edges so the Earth holds the centre. */}
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.32) 100%)" }} aria-hidden />
+      {/* Glass cursor: a small lens ring over the Earth (brightens and saturates what is under it). */}
+      <div
+        ref={lens}
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 rounded-full transition-opacity duration-300"
+        style={{ width: 72, height: 72, opacity: 0, border: "1px solid rgba(255,255,255,0.35)", boxShadow: "inset 0 1px 1px rgba(255,255,255,0.35), 0 8px 24px rgba(0,0,0,0.35)", backdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)", WebkitBackdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)" }}
+      />
+      {/* Major city names: placed every frame by the scene, brighter near the cursor and as you zoom in. */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        {Array.from({ length: CITY_LABELS_MAX }, (_, i) => (
+          <span
+            key={i}
+            ref={(el) => {
+              if (el) places.current.els[i] = el;
+            }}
+            className="absolute left-0 top-0 whitespace-nowrap pb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[rgba(255,253,226,0.74)] after:absolute after:bottom-0 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-[rgba(255,253,226,0.7)] after:content-['']"
+            style={{ opacity: 0, textShadow: "0 1px 3px rgba(0,0,0,0.9)", fontFamily: "'Satoshi', var(--font-hero-ui), sans-serif" }}
+          />
+        ))}
+      </div>
       {/* Waypoints: positioned every frame by the scene. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Hairline stems from a fanned-out glyph to its true spot (hidden until two pins overlap). */}
@@ -774,8 +1068,8 @@ export function HeroEarth(props: Props) {
               }}
             >
               <line stroke="#0b0d12" strokeWidth={3} strokeLinecap="round" />
-              <line stroke="#ffc857" strokeWidth={1.2} strokeLinecap="round" />
-              <circle r={2.6} fill="#ffc857" stroke="#0b0d12" strokeWidth={1.2} />
+              <line stroke="#ef3b36" strokeWidth={1.2} strokeLinecap="round" />
+              <circle r={2.6} fill="#ef3b36" stroke="#0b0d12" strokeWidth={1.2} />
             </g>
           ))}
         </svg>
@@ -815,6 +1109,19 @@ export function HeroEarth(props: Props) {
                 className="block origin-bottom transition-transform duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:-translate-y-[2px] group-hover:scale-[1.08] group-focus-visible:-translate-y-[2px] group-focus-visible:scale-[1.08] group-active:translate-y-px group-active:scale-[0.9] group-active:duration-[60ms] group-active:ease-out motion-reduce:transition-none"
                 style={{ transform: on ? "scale(1.18)" : undefined }}
               />
+              {/* Name label beside the head (shown only where it does not cover another pin or label; see the scene). */}
+              <span
+                aria-hidden
+                ref={(el) => {
+                  if (el) labels.current.els.set(f.id, el);
+                  else labels.current.els.delete(f.id);
+                }}
+                className="absolute flex max-w-[190px] items-center gap-1.5 rounded-full border border-white/[0.12] bg-[#07090d]/80 py-[3px] pr-2.5 pl-2 text-[12px] leading-[16px] font-medium whitespace-nowrap text-white/[0.94] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.5)] backdrop-blur-md transition-colors group-hover:border-[#ffc857]/50 group-focus-visible:border-[#ffc857]/70"
+                style={{ left: 36, top: 19, transform: "translateY(-50%)", ...(on && { borderColor: "rgba(255,200,87,0.7)" }) }}
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: f.tier === "twin" ? "#ffc857" : "rgba(255,255,255,0.45)" }} />
+                <span className="truncate">{shortName(f.name)}</span>
+              </span>
             </button>
           );
         })}

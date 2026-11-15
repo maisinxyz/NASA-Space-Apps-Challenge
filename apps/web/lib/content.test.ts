@@ -17,9 +17,15 @@ describe("methods and learning content status", () => {
   });
 });
 
-it('candidate source notices state their uncertainty in reader-facing language', async () => {
+it('candidate source notices expose reader-facing license and attribution details', async () => {
   const { CANDIDATE_DATASETS } = await import('./farms');
   const licences = Object.values(CANDIDATE_DATASETS).map(dataset => dataset.licence);
-  expect(licences.some(text => text.includes('not yet verified'))).toBe(true);
+  for (const dataset of Object.values(CANDIDATE_DATASETS)) {
+    expect(dataset.licence.trim().length).toBeGreaterThan(0);
+    expect(dataset.attribution.trim().length).toBeGreaterThan(0);
+    expect(dataset.url).toMatch(/^https:\/\//);
+  }
+  // Upstream 05c71e5 verified the previously provisional licence descriptions.
+  // Keep the reader-facing check without requiring obsolete uncertainty copy.
   expect(licences.some(text => text.includes(['TODO','(verify)'].join('')))).toBe(false);
 });
