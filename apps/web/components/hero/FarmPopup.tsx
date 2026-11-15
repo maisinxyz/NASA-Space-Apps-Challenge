@@ -165,11 +165,11 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
     };
   }, [farm.id]);
 
-  // Escape or a press anywhere outside the card (and outside a pin, which swaps the card) closes it.
+  // Escape or a press outside closes the card. Sharing keeps the selected farm intact.
   useEffect(() => {
     const down = (e: PointerEvent) => {
       const el = e.target instanceof Element ? e.target : null;
-      if (!el || box.current?.contains(el) || el.closest("[data-pin]")) return;
+      if (!el || box.current?.contains(el) || el.closest("[data-pin], [data-share-view]")) return;
       onClose();
     };
     const key = (e: KeyboardEvent) => {

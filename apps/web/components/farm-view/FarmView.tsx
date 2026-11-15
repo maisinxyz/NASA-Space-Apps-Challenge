@@ -54,7 +54,7 @@ const WORKSPACE_CSS = `
 .fv-workspace .fv-preview .fv-legend{position:relative !important;right:auto !important;bottom:auto !important;width:100%;}
 .fv-workspace .fv-preview .fv-card{position:relative !important;top:auto !important;right:auto !important;width:100%;max-height:35vh;overflow:auto;}
 .fv-workspace .fv-title-block{animation:fv-title-enter .4s ease-out both;}
-@keyframes fv-title-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fv-title-enter{from{opacity:0}to{opacity:1}}
 @keyframes fv-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.fv-workspace .fv-title-block{animation:none}}
 .fv-workspace .fv-zone{width:100%;font-size:12px;}

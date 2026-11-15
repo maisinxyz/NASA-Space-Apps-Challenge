@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Farm } from "@/components/globe/types";
+import { encodeShare } from "@/lib/share";
+import { useAppStore } from "@/lib/store";
 import { type Place, type SearchHit, searchPlaces } from "@/lib/globe/search";
 
 const FONT = "'Satoshi', var(--font-hero-ui), ui-sans-serif, system-ui, sans-serif";
@@ -150,6 +152,24 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
 function ShareButton() {
   const [done, setDone] = useState<string | null>(null);
   const share = async () => {
+    const state = useAppStore.getState();
+    if (state.farmId) {
+      const hash = encodeShare({
+        farm: state.farmId, mode: state.twinMode, field: state.twinFieldId,
+        a: state.compareA, b: state.compareB, divider: state.divider,
+        surface: state.twinSurface, look: state.look, camera: null,
+        scenario: state.scenarioId,
+        inputs: state.scenarioId ? state.scenarioInputs[state.scenarioId] : undefined,
+        detail: state.detail, scenarioRotation: state.scenarioRotation,
+        scenarioProgress: state.scenarioProgress, twinYear: state.twinYear,
+        twinMonth: state.twinMonth, showCropFills: state.showCropFills,
+        panelsHidden: state.panelsHidden, leftOpen: state.leftOpen, rightOpen: state.rightOpen,
+      });
+      // Keep the recovery message truthful even when clipboard access is denied.
+      history.replaceState(null, "", hash);
+    } else {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
     const url = window.location.href;
     try {
       if (navigator.share) await navigator.share({ title: "FieldTwin", url });
@@ -164,7 +184,7 @@ function ShareButton() {
   };
   return (
     <div className="pointer-events-auto relative">
-      <button type="button" aria-label="Share this view" onClick={share} className="grid h-11 w-11 place-items-center rounded-full transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, backdropFilter: "blur(2px) saturate(1.35)" }}>
+      <button type="button" data-share-view aria-label="Share this view" onClick={share} className="grid h-11 w-11 place-items-center rounded-full transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, backdropFilter: "blur(2px) saturate(1.35)" }}>
         <svg viewBox="0 0 24 24" aria-hidden className="h-[18px] w-[18px]" fill="none" stroke={INK} strokeWidth="1.5">
           <circle cx="6" cy="12" r="2.5" />
           <circle cx="18" cy="5" r="2.5" />
