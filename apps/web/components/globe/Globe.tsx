@@ -631,8 +631,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const { scene } = viewer;
     const { camera, canvas } = scene;
     scene.screenSpaceCameraController.maximumZoomDistance = MAX_ZOOM_OUT_M;
-    // Pitch-black space, as in the hero: no star field, sun or moon disc (the dive starts from the hero's black).
-    if (scene.skyBox) scene.skyBox.show = false;
+    // Black space with Cesium's bundled star field behind the Earth; no sun or moon disc.
+    if (scene.skyBox) scene.skyBox.show = true;
     if (scene.sun) scene.sun.show = false;
     if (scene.moon) scene.moon.show = false;
     scene.backgroundColor = Color.BLACK;
