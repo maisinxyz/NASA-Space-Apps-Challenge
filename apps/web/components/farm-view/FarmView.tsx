@@ -24,6 +24,12 @@ import { FV_CSS } from "./styles";
 import { ComparisonTimeline } from "./Timeline";
 import { ConditionCard, LayerLegend } from "./Cards";
 import { Twin } from "./Twin";
+import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
+import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
+import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
+import { MapEffects } from "@/components/farm-future/MapEffects";
+import { StrategyBar } from "@/components/farm-future/SoilHealth";
+import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer } from "./icons";
 
 const PILL_ICON: Record<ConditionId, typeof Droplet> = { rainfall: Droplet, moisture: Droplet, vigor: Leaf, heat: Thermometer };
@@ -37,12 +43,16 @@ export type FarmViewProps = {
   zoneControl?: ReactNode;
   onCamera?(action: CameraAction): void;
   initialReportOpen?: boolean;
+  initialSim?: SimState;
+  initialPanelsHidden?: boolean;
 };
 const WORKSPACE_CSS = `
 .fv-root.fv-workspace{position:absolute;inset:0;z-index:20;padding:16px;pointer-events:none;color:#f2ebdd;font-size:14px;}
-.fv-workspace .fv-panels{display:contents}.fv-workspace .fv-panels[hidden],.fv-workspace .fv-toolbar[hidden]{display:none}
+.fv-workspace .fv-panels,.fv-workspace .fv-mode-content{display:contents}.fv-workspace .fv-mode-content[hidden]{display:none}.fv-workspace .fv-panels[hidden],.fv-workspace .fv-toolbar[hidden]{display:none}
 .fv-workspace .fv-toolbar-shell{min-width:0;pointer-events:auto;display:grid;gap:6px;justify-items:start;}
-.fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:20px;align-items:start;}
+.fv-workspace .fv-control-content{min-width:0;width:100%;display:grid;gap:6px;justify-items:start;}
+.fv-workspace .fv-control-content[hidden]{display:none}
+.fv-workspace .fv-heading[hidden]{display:none}.fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:20px;align-items:start;}
 .fv-workspace .fv-title-block{min-width:0;max-width:720px;background:rgba(16,20,18,.86);padding:12px 16px;border-radius:14px;pointer-events:auto;}
 .fv-workspace .fv-title{font-size:clamp(24px,2.4vw,36px);line-height:1.15;overflow-wrap:anywhere;}
 .fv-workspace .fv-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;align-content:start;pointer-events:auto;max-height:calc(100dvh - 280px);overflow:auto;padding:2px;}
@@ -77,18 +87,22 @@ export function FarmView({
   zoneControl,
   onCamera,
   initialReportOpen = false,
+  initialSim,
+  initialPanelsHidden,
 }: FarmViewProps) {
   const reduced = !!useReducedMotion();
   const [reportOpen, setReportOpen] = useState(initialReportOpen);
   const [toolbarOpen, setToolbarOpen] = useState(true);
   const [sim, setSimState] = useState<SimState>(() => {
+    if (initialSim) return initialSim;
     const hash = typeof window === "undefined" ? "" : window.location.hash;
     return decodeShare(hash)?.farm === useAppStore.getState().farmId
       ? sharePanelState(hash)
       : { open: false, section: "scenarios" };
   });
   const reportBefore = useRef(false);
-  const panelsHidden = useAppStore((s) => s.panelsHidden);
+  const storePanelsHidden = useAppStore((s) => s.panelsHidden);
+  const panelsHidden = initialPanelsHidden ?? storePanelsHidden;
   const restorePanels = useRef<HTMLButtonElement>(null);
   const hidePanels = useRef<HTMLButtonElement>(null);
   const previousPanelsHidden = useRef(panelsHidden);
@@ -98,6 +112,8 @@ export function FarmView({
       previousPanelsHidden.current = panelsHidden;
     }
   }, [panelsHidden]);
+  const futureMode = useFutureStore((s) => s.mode);
+  const reviewFor = useFutureStore((s) => s.reviewFor);
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const farmId = useAppStore((s) => s.farmId);
   // Preserve upstream explore-only entry fix: absence of a twin is supported here.
@@ -118,10 +134,10 @@ export function FarmView({
     if (!next.open && sim.open) setReportOpen(reportBefore.current);
     setSimState(next);
   };
-  useSimKeys(sim, setSim, !!simProps);
+  useSimKeys(sim, setSim, !!simProps && futureMode === "now");
   useEffect(() => sound.installUnlock(), []);
   useEffect(() => {
-    if (simProps) return;
+    if (simProps && futureMode === "now") return;
     const togglePanels = (event: KeyboardEvent) => {
       const target = event.target instanceof HTMLElement ? event.target : null;
       if (event.altKey || event.ctrlKey || event.metaKey || target?.closest('input,textarea,select,[contenteditable="true"]') || document.querySelector('dialog[open]')) return;
@@ -129,17 +145,20 @@ export function FarmView({
     };
     window.addEventListener('keydown', togglePanels);
     return () => window.removeEventListener('keydown', togglePanels);
-  }, [simProps]);
+  }, [simProps, futureMode]);
   const selectField = (id: string) => {
     useAppStore.setState({ twinFieldId: id });
     setSim({ open: true, section: "field" });
   };
   return (
     <div className="fv-root fv-workspace" data-testid="farm-view">
-      <style>{FV_CSS + WORKSPACE_CSS}</style>
+      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS}</style>
+      <MapEffects />
       {panelsHidden && (
         <FvButton
           ref={restorePanels}
+          data-testid="show-panels"
+          aria-keyshortcuts="H"
           className="fv-glass fv-restore"
           onClick={() => useAppStore.setState({ panelsHidden: false })}
         >
@@ -147,7 +166,8 @@ export function FarmView({
         </FvButton>
       )}
       <div className="fv-panels" hidden={panelsHidden}>
-          <div className="fv-heading">
+          {futureMode === "compare" && <FvButton ref={futureMode === "compare" ? undefined : hidePanels} className="fv-glass fv-seg" style={{ position: "absolute", right: 16, top: 16, pointerEvents: "auto" }} onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>}
+          <div className="fv-heading" hidden={futureMode === "compare"}>
             <div className="fv-title-block">
               <FvButton
                 className="fv-back"
@@ -157,26 +177,30 @@ export function FarmView({
               >
                 ← Globe
               </FvButton>
-              <FvButton ref={hidePanels} className="fv-glass fv-seg" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>
+              <FvButton ref={futureMode === "compare" ? undefined : hidePanels} className="fv-glass fv-seg" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>
               <h1 className="fv-title">{farmName}</h1>
               <p className="fv-sub">
                 {place}
                 {place ? " · " : ""}
                 {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
               </p>
+              <ModeSwitch />
+              {futureMode === "future" && <StrategyBar />}
               {simProps && twin && (
                 <details className="fv-cap" style={{ marginTop: 8 }}>
                   <summary>Approximate outlines · illustrative crops</summary>
                   <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
                 </details>
               )}
-              {simProps && (
-                <SimulationTab props={simProps} sim={sim} setSim={setSim} />
-              )}
+              {simProps && <div hidden={futureMode !== "now"}><SimulationTab props={simProps} sim={sim} setSim={setSim} /></div>}
             </div>
             <div className="fv-toolbar-shell">
               <FvButton className="fv-glass fv-seg" aria-expanded={toolbarOpen} aria-controls="farm-controls" onClick={() => setToolbarOpen(!toolbarOpen)}>{toolbarOpen ? "Hide farm controls" : "Show farm controls"}</FvButton>
-            <div id="farm-controls" className="fv-toolbar" hidden={!toolbarOpen}>
+            <div id="farm-controls" className="fv-control-content" hidden={!toolbarOpen}>
+              {futureMode === "future" && <LensControl />}
+            <div className="fv-toolbar">
+              {futureMode === "future" && <FuturePills />}
+              <div className="fv-mode-content" hidden={futureMode !== "now"}>
               <div
                 className="fv-glass fv-bar"
                 role="radiogroup"
@@ -264,9 +288,12 @@ export function FarmView({
                   {zoneControl}
                 </div>
               )}
+              </div>
+            </div>
             </div>
             </div>
           </div>
+          <div className="fv-mode-content" hidden={futureMode !== "now"}>
           {!sim.open && (
             <FvButton
               className="fv-glass fv-seg fv-auto"
@@ -391,6 +418,9 @@ export function FarmView({
             )}
             <InvestigationControls simulationAvailable={!!simProps} />
           </div>
+          </div>
+          {futureMode !== "now" && <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />}
+          <FutureLayer />
       </div>
       <p className="sr-only">
         {reduced ? "Reduced motion enabled." : ""}This tool supports, and does

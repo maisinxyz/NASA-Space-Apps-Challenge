@@ -833,7 +833,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     canvas.setAttribute("aria-label", "Farm camera. Arrow keys pan, Shift plus arrows orbit, plus and minus zoom.");
     const onCameraKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || live.current.view !== "farm") return;
-      const action = cameraActionForKey(e.key, e.shiftKey);
+      const aliases: Record<string, string> = { a: "ArrowLeft", d: "ArrowRight", w: "ArrowUp", s: "ArrowDown", pageup: "+", pagedown: "-" };
+      const action = cameraActionForKey(aliases[e.key.toLowerCase()] ?? e.key, e.shiftKey);
       if (!action) return;
       e.preventDefault();
       moveRef.current(action);

@@ -20,7 +20,7 @@ export const FV_CSS = `
 .fv-seg { ${t("segment")} height: ${layout.layerBar.segHeight}px; padding: 0 ${layout.layerBar.segPadX}px; border-radius: ${radius.segment}px; color: ${color.inkSecondary}; border: 1px solid transparent !important; display: inline-flex; align-items: center; gap: 6px; transition: background-color 120ms, color 120ms; }
 .fv-seg:hover { color: ${color.ink}; background: ${color.fillHover}; }
 .fv-seg:active { background: ${color.fillPressed}; }
-.fv-seg[aria-checked="true"] { color: ${color.ink}; background: ${color.fillActive}; border-color: ${color.glassBorder} !important; }
+.fv-seg[aria-checked="true"], .fv-seg[aria-selected="true"] { color: ${color.ink}; background: ${color.fillActive}; border-color: ${color.glassBorder} !important; }
 .fv-div { width: 1px; height: 16px; background: ${color.glassBorder}; margin: 0 6px; }
 .fv-icon { width: ${layout.layerBar.resetSize}px; height: ${layout.layerBar.resetSize}px; border-radius: 50%; display: inline-grid; place-items: center; color: ${color.inkSecondary}; transition: background-color 120ms, color 120ms; }
 .fv-icon:hover { color: ${color.ink}; background: ${color.fillHover}; }

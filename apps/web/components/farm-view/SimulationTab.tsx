@@ -186,7 +186,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
 
           <div role="tablist" aria-label="Simulation section" style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
             {sections.map((s) => (
-              <FvButton key={s.id} id={`sim-tab-${s.id}`} role="tab" aria-selected={section === s.id} aria-controls={`sim-content-${s.id}`} tabIndex={section === s.id ? 0 : -1} className="fv-seg" data-testid={`sim-section-${s.id}`} onClick={() => choose(s.id)} onKeyDown={(e) => {
+              <FvButton key={s.id} id={`sim-tab-${s.id}`} role="tab" aria-selected={section === s.id} aria-controls={`sim-panel-${s.id}`} tabIndex={section === s.id ? 0 : -1} className="fv-seg" data-testid={`sim-section-${s.id}`} onClick={() => choose(s.id)} onKeyDown={(e) => {
                 const next = nextSimulationTab(sections.map((item) => item.id), s.id, e.key);
                 if (next) { e.preventDefault(); choose(next); document.getElementById(`sim-tab-${next}`)?.focus(); }
               }} style={{ height: 28, padding: "0 12px", ...(section === s.id && { color: "#fff", background: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.35)" }) }}>
@@ -195,7 +195,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
             ))}
           </div>
 
-          <div id={`sim-content-${section}`} role="tabpanel" aria-labelledby={`sim-tab-${section}`} tabIndex={0} className="text-sm">
+          <div id={`sim-panel-${section}`} role="tabpanel" aria-labelledby={`sim-tab-${section}`} tabIndex={0} className="text-sm">
             {section === "scenarios" && (
               <>
                 <SimulateBody runSource={runSource} frame={frame} />

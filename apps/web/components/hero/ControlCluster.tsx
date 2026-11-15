@@ -146,7 +146,6 @@ export function ControlCluster({
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const triggers = useRef<Partial<Record<Panel, HTMLElement | null>>>({});
-
   useEffect(() => {
     if (open) panel.current?.focus({ preventScroll: true });
   }, [open]);

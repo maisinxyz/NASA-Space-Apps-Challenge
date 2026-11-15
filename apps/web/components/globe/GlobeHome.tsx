@@ -36,6 +36,7 @@ import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverl
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
+import { resetFutureInvestigation } from "@/lib/farm-future/store";
 import { decodeShare } from "@/lib/share";
 import { selectFarm, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
@@ -151,6 +152,7 @@ type Phase = "dive" | "hold" | "explore";
 export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource } = {}) {
   const farmId = useAppStore((s) => s.farmId);
   const view = useAppStore((s) => s.globeView);
+  useEffect(() => resetFutureInvestigation(), [farmId]);
   const reducedMotion = !!useReducedMotion();
   const wide = useWide();
   const globe = useRef<GlobeHandle>(null);
@@ -425,6 +427,9 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     const d = decodeShare(window.location.hash);
     if (!d) return;
     sharedCamera.current = d.camera ?? null;
+    const scenarioRotation = d.scenarioRotation ?? d.rotation;
+    const scenarioProgress = d.scenarioProgress ?? d.time;
+    const twinYear = d.twinYear ?? d.year;
     useAppStore.setState({
       farmId: d.farm,
       globeView: "farm",
@@ -437,15 +442,17 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       ...(d.look && { look: d.look }),
       ...(d.detail && { detail: d.detail }),
       scenarioPlaying: false,
-      ...(d.scenarioRotation && { scenarioRotation: d.scenarioRotation }),
-      ...(d.scenarioProgress !== undefined && { scenarioProgress: d.scenarioProgress }),
-      ...(d.twinYear !== undefined && { twinYear: d.twinYear }),
+      ...(scenarioRotation && { scenarioRotation }),
+      ...(scenarioProgress !== undefined && { scenarioProgress }),
+      ...(twinYear !== undefined && { twinYear }),
       ...(d.twinMonth !== undefined && { twinMonth: d.twinMonth }),
       ...(d.showCropFills !== undefined && { showCropFills: d.showCropFills }),
       ...(d.panelsHidden !== undefined && { panelsHidden: d.panelsHidden }),
+      ...(d.panel && { leftOpen: d.panel !== "none" }),
       ...(d.leftOpen !== undefined && { leftOpen: d.leftOpen }),
       ...(d.rightOpen !== undefined && { rightOpen: d.rightOpen }),
       ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
+
     });
   }, []);
   useEffect(() => {

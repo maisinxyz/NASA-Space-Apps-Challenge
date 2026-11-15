@@ -258,7 +258,7 @@ test("Methods identifies the chosen farm; Learn remains provisional", async ({
   );
   await page.getByRole("link", { name: "Learn", exact: true }).click();
   await expect(
-    page.getByText("Provisional learning material", { exact: true }),
+    page.getByText("Draft educational fixtures:", { exact: true }),
   ).toBeVisible();
 });
 

@@ -8,11 +8,12 @@ import { Card } from "@/components/ui/Card";
 
 const STEPS = [
   { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Full digital twin\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
-  { title: "Explore a synthetic storm", body: "Choose synthetic storm inputs and explore illustrative weather effects and relative readouts. These are not observed weather on this farm." },
-  { title: "Compare rotations", body: "Run the same storm on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
+  { title: "Simulate weather scenarios", body: "Explore synthetic storm and drought inputs and illustrative weather effects on a 3D model of the land. These are not observed weather on this farm; live NASA POWER replay is in development." },
+  { title: "Compare rotations", body: "Run the same synthetic scenario on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];
 
 const ROADMAP = [
+  { title: "Live NASA POWER replay", body: "Replaying historical storms directly from the NASA POWER archive (currently disabled in favour of synthetic scenario models)." },
   { title: "Drone capture", body: "Building the model from drone imagery." },
   { title: "Video capture", body: "Building the model from a walk-around video." },
 ];
@@ -40,7 +41,7 @@ export function AboutPanel() {
             </button>
           </div>
           <p className="mt-3 text-ink-muted">
-            FieldTwin builds a 3D model of farmland from open elevation data, shows synthetic demonstration scenarios on it, and compares rotations side by side. Results are relative comparisons, not predictions.
+            FieldTwin builds a 3D model of farmland from open elevation data, shows synthetic demonstration scenarios on it, and compares rotations side by side. Current runs are synthetic fixture inputs, not observed farm weather. Results are relative comparisons, not predictions.
           </p>
 
           <h3 className="mt-6 font-display text-xl">How it works</h3>

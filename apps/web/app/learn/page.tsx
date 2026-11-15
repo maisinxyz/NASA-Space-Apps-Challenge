@@ -43,16 +43,17 @@ export default function LearnPage() {
         <GlossaryTerm id="relative_score">relative scores</GlossaryTerm>.
       </p>
 
-      <aside
+<aside
         role="note"
         data-content-status={learningContentStatus(isMock ? "mock" : "live")}
         className="my-6 rounded border border-amber-600 bg-amber-50 p-4 text-amber-950"
       >
-        <strong>Provisional learning material</strong>
+        <strong>Draft educational fixtures:</strong>
         <p>
-          These draft explanations have not completed source review. They
-          describe general concepts, not verified guidance for this farm. This
-          status applies in both live and demo mode.
+          These illustrative explanations have not completed source review.
+          Citations marked as pending review are not authoritative agronomic
+          guidance; content describes general concepts, not verified guidance
+          for this farm. This status applies in both live and demo mode.
         </p>
       </aside>
       <Section id="satellite" title="Satellite vs ground-based data">
@@ -85,7 +86,9 @@ export default function LearnPage() {
               <h3 className="font-semibold text-ink">{c.short}</h3>
               <p className="mt-2 text-sm text-ink">{c.why_it_helps}</p>
               <p className="mt-2 text-sm text-ink-muted">Limits: {c.limits}</p>
-              <p className="mt-2 text-xs text-ink-muted">Source: {c.source}</p>
+              <p className="mt-2 text-xs text-ink-muted">
+                {c.source === "not yet verified" ? "Draft placeholder · Citation pending expert review" : `Source: ${c.source}`}
+              </p>
             </Card>
           ))}
         </div>
@@ -98,10 +101,12 @@ export default function LearnPage() {
               <dt className="font-semibold text-ink">{e.term}</dt>
               <dd className="text-ink">{e.short}</dd>
               <dd className="text-sm text-ink-muted">{e.long}</dd>
-              <dd className="text-sm text-ink-muted">
+<dd className="text-sm text-ink-muted">
                 How we use it: {e.how_we_use_it}
               </dd>
-              <dd className="text-xs text-ink-muted">Source: {e.source}</dd>
+              <dd className="text-xs text-ink-muted">
+                {e.source === "not yet verified" ? "Draft placeholder · Citation pending expert review" : `Source: ${e.source}`}
+              </dd>
             </div>
           ))}
         </dl>

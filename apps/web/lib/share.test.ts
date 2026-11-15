@@ -22,6 +22,31 @@ describe("share link", () => {
     expect(back).toEqual({ ...full(), camera: { lon: -76.254112, lat: 42.440912, height: 812.3, heading: 12.35, pitch: -35.68 } });
   });
 
+  it("round-trips rotation, time, year, month, and panel state", () => {
+    const state: ShareState = {
+      ...full(),
+      rotation: "rot_forage",
+      time: 0.42,
+      year: 2,
+      month: 7,
+      panel: "scenarios",
+    };
+    const hash = encodeShare(state);
+    expect(hash).toContain("rot=rot_forage");
+    expect(hash).toContain("t=0.42");
+    expect(hash).toContain("yr=2");
+    expect(hash).toContain("mo=7");
+    expect(hash).toContain("p=scenarios");
+    const decoded = decodeShare(hash);
+    expect(decoded).toMatchObject({
+      rotation: "rot_forage",
+      time: 0.42,
+      year: 2,
+      month: 7,
+      panel: "scenarios",
+    });
+  });
+
   it("ignores a removed scenario id", () => {
     expect(decodeShare("#farm=cornell-ruminant&m=simulate&sc=compound")).not.toHaveProperty("scenario");
   });

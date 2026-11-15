@@ -73,7 +73,25 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
 
   async function share() {
     const s = useAppStore.getState();
-    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera(), scenario: s.scenarioId, inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined, detail: s.detail });
+    const hash = encodeShare({
+      farm: farm.id,
+      mode: s.twinMode,
+      field: s.twinFieldId,
+      a: s.compareA,
+      b: s.compareB,
+      divider: s.divider,
+      surface: s.twinSurface,
+      look: s.look,
+      camera: getCamera(),
+      scenario: s.scenarioId,
+      inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined,
+      detail: s.detail,
+      rotation: s.scenarioRotation,
+      time: s.scenarioProgress,
+      year: s.twinYear,
+      month: s.twinMonth,
+      panel: s.leftOpen ? s.twinMode : "none",
+    });
     history.replaceState(null, "", hash);
     try {
       await navigator.clipboard.writeText(location.href);

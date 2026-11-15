@@ -33,6 +33,12 @@ export type ShareState = {
   rightOpen?: boolean;
   panelOpen?: boolean;
   panelSection?: SharePanelSection;
+  /** Additional simulation & compare state */
+  rotation?: string | null;
+  time?: number;
+  year?: number;
+  month?: number;
+  panel?: string | null;
 };
 
 const SURFACES: FarmSurface[] = ["google", "terrain"];
@@ -46,6 +52,11 @@ export function encodeShare(s: ShareState): string {
   const q = new URLSearchParams({ farm: s.farm, m: s.mode, a: s.a, b: s.b, d: String(round(s.divider, 3)), s: s.surface, l: s.look });
   if (s.field) q.set("f", s.field);
   if (s.detail && s.detail !== "medium") q.set("dt", s.detail);
+  if (s.rotation) q.set("rot", s.rotation);
+  if (s.time !== undefined && Number.isFinite(s.time)) q.set("t", String(round(s.time, 3)));
+  if (s.year !== undefined && Number.isFinite(s.year)) q.set("yr", String(s.year));
+
+  if (s.panel) q.set("p", s.panel);
   if (s.scenario) {
     q.set("sc", s.scenario);
     const si = Object.entries(s.inputs ?? {}).map(([k, v]) => `${k}:${round(v, 3)}`);
@@ -54,7 +65,8 @@ export function encodeShare(s: ShareState): string {
   if (s.scenarioRotation) q.set("sr", s.scenarioRotation);
   if (s.scenario && s.scenarioProgress !== undefined) q.set("sp", String(round(s.scenarioProgress, 4)));
   if (s.twinYear !== undefined) q.set("y", String(s.twinYear));
-  if (s.twinMonth !== undefined) q.set("mo", String(s.twinMonth));
+  const month = s.twinMonth ?? s.month;
+  if (month !== undefined && Number.isFinite(month)) q.set("mo", String(month));
   for (const [key, value] of [["fills", s.showCropFills], ["ph", s.panelsHidden], ["lo", s.leftOpen], ["ro", s.rightOpen], ["po", s.panelOpen]] as const) {
     if (value !== undefined) q.set(key, value ? "1" : "0");
   }
@@ -90,6 +102,14 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
   if (LOOKS.includes(look)) out.look = look;
   const detail = q.get("dt") as DetailLevel;
   if (DETAILS.includes(detail)) out.detail = detail;
+  const rot = q.get("rot");
+  if (rot && twin?.rotations.some((r) => r.id === rot)) out.rotation = rot;
+  const t = Number(q.get("t"));
+  if (twin && q.get("t")?.trim() && Number.isFinite(t)) out.time = Math.min(1, Math.max(0, t));
+  const yr = Number(q.get("yr"));
+  if (twin && q.get("yr")?.trim() && Number.isFinite(yr)) out.year = Math.max(0, Math.min(Math.max(0, ...twin.rotations.map(r => r.years.length - 1)), Math.floor(yr)));
+  const p = q.get("p");
+  if (twin && p && ["none", "scenarios", "compare", "evidence", "map", "field"].includes(p)) out.panel = p;
   // A scenario only exists for a twin farm and a known id; each input must be one of its inputs, clamped into range.
   const def = twin ? scenarioById(q.get("sc")) : undefined;
   if (def) {
@@ -119,7 +139,8 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
       const raw = q.get(key);
       if (raw === "0" || raw === "1") out[name] = raw === "1";
     }
-    const section = q.get("ps") as SharePanelSection;
+    if (out.twinMonth !== undefined && (out.rotation || out.time !== undefined || out.year !== undefined || out.panel)) out.month = out.twinMonth;
+    const section = (q.get("ps") ?? out.panel) as SharePanelSection;
     if (["scenarios", "compare", "evidence", "map"].includes(section) || (section === "field" && out.field)) out.panelSection = section;
   }
   const cam = q.get("cam")?.split(",").map(Number);
@@ -133,5 +154,5 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
 /** Defaults preserve the original collapsed panel for legacy links. */
 export function sharePanelState(hash: string): { open: boolean; section: SharePanelSection } {
   const share = decodeShare(hash);
-  return { open: share?.panelOpen ?? false, section: share?.panelSection ?? (share?.mode === "compare" || share?.mode === "evidence" ? share.mode : "scenarios") };
+  return { open: share?.panelOpen ?? Boolean(share?.panel && share.panel !== "none" && share.panelSection), section: share?.panelSection ?? (share?.mode === "compare" || share?.mode === "evidence" ? share.mode : "scenarios") };
 }

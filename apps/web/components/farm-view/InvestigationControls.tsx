@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useRotationStore } from "@/lib/rotation/store";
 import { resetZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { resetFutureInvestigation } from "@/lib/farm-future/store";
 import { RESET_EVENT } from "@/lib/keys";
 
 export function InvestigationControls({simulationAvailable = true}: {simulationAvailable?: boolean}) {
@@ -73,6 +74,7 @@ export function InvestigationControls({simulationAvailable = true}: {simulationA
               useAppStore.getState().reset();
               useRotationStore.getState().reset();
               resetZoneToggle();
+              resetFutureInvestigation();
               history.replaceState(
                 null,
                 "",

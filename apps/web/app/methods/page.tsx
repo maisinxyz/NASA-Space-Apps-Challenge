@@ -172,6 +172,7 @@ export default function MethodsPage() {
       setState({ kind: "unavailable" });
       return;
     }
+
     getProvenance(tid).then(
       (prov) => setState({ kind: "ok", prov }),
       (error) => setState({ kind: "error", error }),
@@ -189,8 +190,9 @@ export default function MethodsPage() {
         What FieldTwin is built from, what it assumes, and where it stops being
         reliable.{" "}
         <strong className="text-ink">
-          Rotation scores compare illustrative options; scenario displays use
-          synthetic inputs and are not predictions.
+          Now compares illustrative scenarios using synthetic inputs. Future and
+          Compare strategies use synthetic demo data to show how a ten-year
+          investigation could work. These views provide no farm-specific forecasts.
         </strong>
       </p>
 
@@ -253,12 +255,9 @@ export default function MethodsPage() {
         </div>
       </Section>
 
-      <Section id="datasets" title="Selected farm data">
+<Section id="datasets" title="Datasets">
         {state.kind === "unavailable" && (
-          <p
-            role="status"
-            className="rounded border border-line bg-surface p-4"
-          >
+          <p role="status" className="rounded border border-line bg-surface p-4">
             {farm
               ? `No associated terrain provenance is available for ${farm.name}.`
               : "Select a farm to inspect its available sources."}{" "}
@@ -277,7 +276,7 @@ export default function MethodsPage() {
           <ErrorCard
             title="Could not load the data sources"
             error={state.error}
-            onRetry={load}
+onRetry={load}
           />
         )}
         {state.kind === "ok" && (
@@ -557,8 +556,9 @@ export default function MethodsPage() {
             field-scale rainfall.
           </li>
           <li>
-            FieldTwin gives no yield, profit or absolute soil-loss figures. The
-            erosion index only ranks options against each other.
+            In Now, the erosion index ranks options against each other. Absolute
+            values shown in Future and Compare strategies are illustrative
+            figures from demo data.
           </li>
           <li>
             Field outlines on the farm twins are approximate, and their crops

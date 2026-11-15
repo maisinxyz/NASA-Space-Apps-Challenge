@@ -30,6 +30,7 @@ const BODY_FONT = "'Satoshi', var(--font-hero-ui), ui-sans-serif, system-ui, san
 
 /** Scale unit: 1px at the 1440 x 1022 design size, smaller on smaller viewports (never larger). */
 export const HERO_UNIT = `min(1px, calc(100vh / ${hero.designH}), calc(100vw / ${hero.designW}))`;
+const uClamp = (n: number, minPx: number) => `clamp(${minPx}px, calc(var(--u) * ${n}), ${n}px)`;
 const u = (n: number) => `calc(var(--u) * ${n})`;
 
 /**
@@ -162,7 +163,7 @@ export function RestingHero({
                 <dt className="uppercase text-gray-400" style={{ fontSize: `max(12px, ${u(10)})`, letterSpacing: "0.1em" }}>
                   {k}
                 </dt>
-                <dd className="font-bold text-white tabular-nums" style={{ fontSize: u(24), marginTop: u(8), lineHeight: 1.15 }}>
+                <dd className="font-bold text-white tabular-nums" style={{ fontSize: uClamp(24, 18), marginTop: u(8), lineHeight: 1.15 }}>
                   {v}
                 </dd>
               </div>
