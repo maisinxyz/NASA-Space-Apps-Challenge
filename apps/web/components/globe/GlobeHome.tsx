@@ -1,28 +1,15 @@
 "use client";
-// Homepage body. On screens ≥ 768 px: the resting hero (ORBIT-style layout: text left, Earth right, slow spin), and on
-// drag the map UI (Earth centred, waypoints, controls), then the dive and arrival sequence into a farm.
-// Two Earths: the hero and map UI use the light Three.js Earth (HeroEarth: smooth, pure black space); the Cesium globe
-// stays mounted underneath, hidden and idle, and takes over for the dive and the farm (real terrain and imagery). At
-// the hand-over Cesium jumps to the same whole-Earth view over the farm the hero Earth is showing.
-//   Hero states (globe view):  hero → dragging → centred → ui → (idle) → hero          (see tokens.hero)
-//   Farm phases (farm view):   dive (push-in + cloud loader with real progress, or a dive film: hold) → explore (title, controls)
-// Below 768 px, or if WebGL fails: the farm list fallback.
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useShallow } from "zustand/react/shallow";
 import dynamic from "next/dynamic";
-import { Component, type ReactNode, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Component, type ReactNode, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
 import { FarmView } from "@/components/farm-view/FarmView";
-import { UBCComparison } from "@/components/farm-view/UBCComparison";
 import { Non3dFarmWorkspace } from "@/components/farm-view/Non3dFarmWorkspace";
-import { ArrivalTitle } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
-import { CloudLoader, type CloudLoaderPhase } from "@/components/hero/CloudLoader";
 import { ControlCluster, type HeroSettings } from "@/components/hero/ControlCluster";
-import { DIVE_FILMS, DiveFilm } from "@/components/hero/DiveFilm";
-import { diveInteractive, diveStart } from "@/components/hero/divePerf";
 import { EarthLoading } from "@/components/hero/EarthLoading";
 import { HeroEarth, type HeroEarthApi } from "@/components/hero/HeroEarth";
 import { FarmPopup } from "@/components/hero/FarmPopup";
@@ -30,14 +17,17 @@ import { MarkerPulse } from "@/components/hero/FarmCard";
 import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
-import { GlobeChrome } from "@/components/hero/GlobeChrome";
+import { GlobeAssistant, GlobeChrome } from "@/components/hero/GlobeChrome";
 import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
-import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
+import { color, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { useFieldColourOverlays } from "@/components/farm-future/FieldColours";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
+import { imageryFor } from "@/lib/map2d/imagery";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
+import { useCopilot } from "@/lib/copilot/copilot";
+import type { SearchHit } from "@/lib/globe/search";
 import { resetFutureInvestigation } from "@/lib/farm-future/store";
 import { decodeShare } from "@/lib/share";
 import { selectFarm, useAppStore, useChrome } from "@/lib/store";
@@ -46,7 +36,7 @@ import { runSourceFor, type RunSource } from "@/lib/twin/scenarios/runSource";
 
 import { FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
-import type { CameraState, GlobeHandle, PinHover, TileTier } from "./types";
+import type { CameraState, GlobeHandle, PinHover } from "./types";
 
 /** Project name (screen-reader heading). */
 const PROJECT_NAME = "FieldTwin";
@@ -71,32 +61,9 @@ const CREDITS_CSS = `
 
 const Globe = dynamic(() => import("@/components/globe/Globe").then((m) => m.Globe), { ssr: false, loading: () => null });
 
-/** Share-link camera is applied after the fly-in: ground lookup + 3 s flight (Globe.tsx FLY_SECONDS), with margin. */
-const SHARE_CAMERA_DELAY_MS = 4500;
-/**
- * The dive: the hero Earth pushes in toward the farm (when it offers diveTo) while a cloud closes around the view
- * (CloudLoader "in"); under the full cloud Cesium lands on the farm view, already loading or loaded since the pin hover
- * (prewarm). The cloud holds with a REAL progress bar (Globe onFarmLoad, loadProgress.ts) until the farm is truly
- * loaded, then the camera passes through the rest of the cloud into the farm (CloudLoader "out"), input live as it clears.
- */
-const PUSH_IN_MS = 1100;
-/** CloudLoader's fade-in (CloudLoader.tsx IN_MS). It starts as HeroEarth's own cloud thickens (last ~35 % of the push-in)
- * and is fully opaque when the push-in ends, so the switch to the Cesium farm under it is never seen. */
-const CLOUD_IN_MS = 700;
-const CLOUD_IN_AT_MS = Math.max(0, PUSH_IN_MS - CLOUD_IN_MS);
-/** Reduced motion: plain fades (CloudLoader's reduced fade-in). */
-const CLOUD_IN_REDUCED_MS = 200;
-/** Never keep the user in the cloud for ever: after this a calm note, then in they go. */
-const CLOUD_SLOW_MS = 12000;
-const CLOUD_SLOW_NOTE_MS = 1800;
 /** Release the prewarmed farm scene this long after nothing points at a farm any more. */
 const PREWARM_RELEASE_MS = 6000;
-/** After the arrival title has gone: this long with only the farm on screen before any control shows. */
-const UI_AFTER_TITLE_MS = 500;
-/** The hero Earth's push-in, when it has one (components/hero/HeroEarth.tsx). */
-type PushIn = { diveTo?(farmId: string, durationMs: number, onDone: () => void): void; cancelDive?(): void };
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
-const dev = process.env.NODE_ENV !== "production";
 const PITCH = "Explore research farms and compare crop rotations using simulated weather.";
 
 // The globe is not mounted below 768 px. Server render counts as small, so the farm list is in the HTML.
@@ -141,13 +108,6 @@ function season(twin: TwinConfig | undefined, id: string, year: number, month: n
 }
 
 /**
- * Farm view after a dive: "dive" while the hand-over veil (or the dive film, for farms that have one) covers the landing,
- * "hold" while a dive film that is still playing covers the landed farm, then "explore": camera input and panels live,
- * with the arrival title playing over the farm (it no longer holds the panels back).
- */
-type Phase = "dive" | "hold" | "explore";
-
-/**
  * `runSourceProp` is only the dev page's override. In the product the run source is per farm (runSourceFor): "fixture"
  * (labelled "Synthetic demo data") for full-twin farms, "none" for explore-only farms.
  */
@@ -174,14 +134,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       moveViewFocus.current = false;
     }
   }, [listMode]);
-  const [tier, setTier] = useState<TileTier | null>(null);
   const [pending, setPending] = useState(0);
   const sharedCamera = useRef<CameraState | null>(null);
   // The hero Earth's own readiness (textures loaded). The hero shows as soon as it is ready; Cesium loads behind it.
   const [earthReady, setEarthReady] = useState(false);
   const heroEarth = useRef<HeroEarthApi | null>(null);
-  /** A waypoint was clicked while not facing the viewer: the Earth turns to it first, then the dive starts. */
-  const pendingDive = useRef<string | null>(null);
   const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: true, autoRotate: true });
 
   // ---------- resting hero state machine (globe view) ----------
@@ -231,7 +188,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     const p = press.current;
     if (!p || view !== "globe" || hsRef.current === "dragging") return;
     if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < HERO.dragThresholdPx) return;
-    pendingDive.current = null;
     // Press-and-drag: auto-rotation stops, text and map UI fade, the Earth heads for the centre.
     setHs("dragging");
     leaveHero(null);
@@ -274,52 +230,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   // Selected waypoint in globe view: the card shows once the fly-to has landed, with one confirm pulse.
   const [cardFor, setCardFor] = useState<string | null>(null);
   const [pulseNonce, setPulseNonce] = useState(0);
-  const [phase, setPhase] = useState<Phase>("explore");
-  // Dive film (components/hero/DiveFilm.tsx): buffered while on the globe; used for a dive only if it was ready when
-  // the dive began. Otherwise the procedural veil plays, exactly as for farms without a film.
-  const [filmReady, setFilmReady] = useState<Record<string, boolean>>({});
-  const [filmOn, setFilmOnState] = useState(false);
-  // Also a ref: the globe calls onArrive from the props it had when the dive began.
-  const filmOnRef = useRef(false);
-  const setFilmOn = (on: boolean) => {
-    filmOnRef.current = on;
-    setFilmOnState(on);
-  };
-  const filmCan = useRef(false);
-  filmCan.current = !reducedMotion && !!farmId && !!filmReady[farmId];
-  const lastView = useRef(view);
-  // Arrival: Globe lands (onArrive) during the same commit that enters farm view, before this component's effects run,
-  // so the landing is kept in a ref and read by the phase logic below rather than through setPhase.
-  const arrived = useRef<string | null>(null);
-  const [arriveNonce, setArriveNonce] = useState(0);
-  const [titleOn, setTitleOn] = useState(false);
-  const diveAt = useRef(0);
+  const [farmLoad, setFarmLoad] = useState<{ farmId: string; progress: number; done: boolean } | null>(null);
   useEffect(() => {
-    if (view === "farm" && lastView.current === "globe") {
-      setPhase("dive");
-      setFilmOn(filmCan.current);
-      diveAt.current = performance.now();
-      setPending(-1); // unknown until the farm view reports its first tile progress
-    }
     if (view === "globe") {
-      setPhase("explore");
-      setFilmOn(false);
-      setTitleOn(false);
-      setCloud(null);
-      setFarmLoad(null);
-      arrived.current = null;
-      // The hero Earth held the end of its push-in: glide back out to the whole Earth.
-      if (lastView.current === "farm") (heroEarth.current as (HeroEarthApi & PushIn) | null)?.cancelDive?.();
-      // Back from a farm: land in the map UI with the Earth centred; idle returns to the hero as usual.
-      if (lastView.current === "farm") {
-        setHs("ui");
-        setEarthCentre(true);
-        armIdleRef.current();
-      }
+      setHs("ui");
+      setEarthCentre(true);
+      onHoverPin(null);
+      setCardFor(null);
     }
-    lastView.current = view;
-    onHoverPin(null);
-    setCardFor(null);
   }, [view]);
   useEffect(() => {
     if (cardFor && cardFor !== farmId) setCardFor(null);
@@ -332,90 +250,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     const t = setTimeout(() => setWarmId(null), PREWARM_RELEASE_MS);
     return () => clearTimeout(t);
   }, [hoverId, cardFor, farmId, view]);
-  // Arrival title: in, hold (then `titleLeaving`), out; the farm controls mount only when its exit has finished.
-  const [titleLeaving, setTitleLeaving] = useState(false);
-  const titleHoldEnd = useCallback(() => setTitleLeaving(true), []);
-  const titleExited = useCallback(() => {
-    setTitleLeaving(false);
-    setTitleOn(false);
-  }, []);
-  // The beat after the title: false while the title is up, true UI_AFTER_TITLE_MS after it has gone.
-  const [uiBeatDone, setUiBeatDone] = useState(false);
-  useEffect(() => {
-    if (titleOn) return setUiBeatDone(false);
-    const t = setTimeout(() => setUiBeatDone(true), UI_AFTER_TITLE_MS);
-    return () => clearTimeout(t);
-  }, [titleOn]);
-  /** Dive over: camera input and panels live, the arrival title plays over the farm. */
-  const toExplore = () => {
-    setPhase("explore");
-    setTitleOn(true);
-    if (farmId) diveInteractive(farmId);
-  };
-  // The film has begun dissolving into the landed farm.
-  const filmDone = () => {
-    if (phase === "hold") toExplore();
-  };
-  // The film could not play: the procedural dive takes over (veil if still diving, title if already landed).
-  const filmFailed = () => {
-    setFilmOn(false);
-    filmDone();
-  };
-
-  // Dive cloud (CloudLoader): "in" over the push-in, "hold" with the real progress once in farm view, "out" when the farm
-  // is truly loaded (or after CLOUD_SLOW_MS), then gone. Null = no cloud (share link / reset fly-in, or a dive film).
-  const [cloud, setCloudState] = useState<{ farmId: string; phase: CloudLoaderPhase } | null>(null);
-  const cloudRef = useRef(cloud);
-  const setCloud = (c: typeof cloud) => {
-    cloudRef.current = c;
-    setCloudState(c);
-  };
-  const [cloudSlow, setCloudSlow] = useState(false);
-  /** Latest real load report of the prewarmed / landed farm view (Globe onFarmLoad). */
-  const [farmLoad, setFarmLoad] = useState<{ farmId: string; progress: number; done: boolean } | null>(null);
-  const cloudTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(cloudTimer.current), []);
-  const farmReady = !!farmId && farmLoad?.farmId === farmId && farmLoad.done;
-  // Landed: a dive film takes over (DiveFilm onFinish); a dive under the cloud waits for the real load; any other entry
-  // into farm view (share link, the non-dive fly-in) goes straight to explore.
-  useEffect(() => {
-    if (phase !== "dive" || view !== "farm" || arrived.current !== farmId) return;
-    if (filmOnRef.current) {
-      setCloud(null);
-      return setPhase("hold");
-    }
-    if (!cloudRef.current) return toExplore();
-  }, [phase, view, farmId, arriveNonce]);
-  // Cloud hold: out as soon as the farm is loaded underneath; after CLOUD_SLOW_MS a calm note, then in anyway.
-  const holding = cloud?.phase === "hold" && view === "farm" && arrived.current === farmId;
-  const clearCloud = () => {
-    setCloud(cloudRef.current && { ...cloudRef.current, phase: "out" });
-    toExplore(); // input and panels live as the cloud clears; the farm is already drawn underneath
-  };
-  useEffect(() => {
-    if (!holding || !farmReady) return;
-    clearCloud();
-  }, [holding, farmReady, arriveNonce]);
-  useEffect(() => {
-    if (!holding) return;
-    const slow = setTimeout(() => setCloudSlow(true), Math.max(0, CLOUD_SLOW_MS - (performance.now() - diveAt.current)));
-    return () => clearTimeout(slow);
-  }, [holding]);
-  useEffect(() => {
-    if (!cloudSlow) return;
-    const t = setTimeout(clearCloud, CLOUD_SLOW_NOTE_MS);
-    return () => clearTimeout(t);
-  }, [cloudSlow]);
-
   const farm = farmById(farmId);
   const runSource = runSourceFor(farm, runSourceProp);
   const showGlobe = wide && !listMode && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
-  // Twin fields are built once the camera has landed (building them mid-dive costs frames).
-  // (`lastView` still holds the previous view on the render where the dive starts, before the phase effect runs.)
-  const diving = phase === "dive" || (view === "farm" && lastView.current === "globe");
-  // Farm twin (only "twin" farms with a twin config): fields + the season of the rotation chosen in Compare.
-  const twin = view === "farm" && (!showGlobe || !diving) ? twinConfig(farm?.id ?? null) : undefined;
+  const twin = view === "farm" ? twinConfig(farm?.id ?? null) : undefined;
   const fields = twin?.fields;
   const inTwin = !!farm && view === "farm" && !!twin;
   const zoneOverlays = useZoneOverlays(inTwin && showGlobe ? (farm?.id ?? null) : null);
@@ -424,6 +263,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail, map2d } = useAppStore(
     useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail, map2d: s.map2d })),
   );
+  const imageryPending = inFarm && !map2d && (load !== "ready" || farmLoad?.farmId !== farmId || !farmLoad.done);
+  const [imagerySlow, setImagerySlow] = useState(false);
+  useEffect(() => {
+    setImagerySlow(false);
+    if (!imageryPending) return;
+    const timer = setTimeout(() => setImagerySlow(true), 4500);
+    return () => clearTimeout(timer);
+  }, [farmId, imageryPending]);
   // Compare paints rotation A (left of the split) and B (right) for the chosen season; other modes show current crops.
   const comparing = inTwin && twinMode === "compare";
   const cropA = useMemo(() => (comparing ? season(twin, compareA, twinYear, twinMonth) : undefined), [comparing, twin, compareA, twinYear, twinMonth]);
@@ -475,12 +322,9 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   useEffect(() => {
     const cam = sharedCamera.current;
     if (!cam || load !== "ready" || !inFarm) return;
-    const t = setTimeout(() => {
-      sharedCamera.current = null;
-      globe.current?.setCamera(cam);
-    }, reducedMotion ? 800 : SHARE_CAMERA_DELAY_MS);
-    return () => clearTimeout(t);
-  }, [load, inFarm, reducedMotion]);
+    sharedCamera.current = null;
+    globe.current?.setCamera(cam);
+  }, [load, inFarm]);
 
   // Global Reset key: TourController resets the store (back to the globe, no farm); re-centre the camera too.
   useEffect(() => {
@@ -507,6 +351,29 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     </p>
   );
 
+  const openFarm = (id: string, question?: string) => {
+    if (!farmById(id)) return;
+    if (id !== useAppStore.getState().farmId || view !== "farm") {
+      useCopilot.getState().startFarm(id, question);
+    }
+    dive(id);
+  };
+  const askAtFarm = (question: string, id: string) => openFarm(id, question);
+  const navigation = {
+    farms: FARMS,
+    includePlaces: showGlobe,
+    onPick: (hit: SearchHit) => {
+      if (hit.kind === "farm") {
+        if (showGlobe || farmById(hit.id)?.tier === "twin") openFarm(hit.id);
+        else select(hit.id);
+      }
+      else {
+        useAppStore.setState({ globeView: "globe" });
+        heroEarth.current?.faceLonLat(hit.lon, hit.lat);
+      }
+    },
+  };
+
   if (!showGlobe) {
     return (
       <div className={`theme-dark min-h-[calc(100dvh-5.5rem)] ${SPACE_BG} px-4 py-8 text-ink`}>
@@ -524,15 +391,13 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           )}
           {wide && !listMode && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
           <p className="text-sm text-ink-muted">Compare what could happen under different rotations. The demo uses illustrative crops and simulated weather, with no live farm measurements.</p>
-          {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
-            {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => useAppStore.setState({globeView:"farm",twinMode:"simulate"}) : undefined} />}
-            {farm?.id === "ubc-farm" && (
-              <section aria-labelledby="list-rotation-title" className="rounded-lg border border-line bg-[#101412] p-4 text-[#f2ebdd]">
-                <h2 id="list-rotation-title" className="mb-3 text-lg font-semibold">Compare crop rotations</h2>
-                <UBCComparison />
-              </section>
-            )}
-            <FarmList farms={FARMS} selectedId={farmId} onSelect={select} />
+          {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} navigation={navigation} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
+            {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => openFarm(farm.id) : undefined} />}
+            <GlobeAssistant navigation={navigation} onAsk={askAtFarm} />
+            <FarmList farms={FARMS} selectedId={farmId} onSelect={(id) => {
+              if (id && farmById(id)?.tier === "twin") openFarm(id);
+              else select(id);
+            }} />
           </>}
         </div>
         {live}
@@ -541,69 +406,12 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   }
 
   const hoverFarm = hoverId ? farmById(hoverId) : null;
-  // Picking the farm that is already selected (e.g. after coming back from it) shows its card again with a pulse;
-  // any other farm flies there first (the card follows onFlyDone).
-  const pickFarm = (id: string) => {
-    if (id !== farmId) {
-      select(id);
-      heroEarth.current?.face(id);
-      return;
-    }
-    setCardFor(id);
-    setPulseNonce((n) => n + 1);
-  };
   /** A click on the pin itself: its popup opens in place; the globe stays exactly where it is. */
   const pickPin = (id: string) => {
     if (id !== farmId) select(id);
     setCardFor(id);
   };
-  /**
-   * The dive: the hero Earth pushes in toward the farm (if it can), then farm view; Cesium lands at once on the farm view
-   * it has prewarmed, under the cloud loader, which holds until the farm is really loaded.
-   */
-  const startDive = (id: string) => {
-    if (!farmById(id)) return;
-    pendingDive.current = null;
-    diveStart(id);
-    setWarmId(id);
-    arrived.current = null;
-    setCloudSlow(false);
-    if (farmLoad?.farmId !== id) setFarmLoad(null);
-    clearTimeout(cloudTimer.current);
-    const push = heroEarth.current as (HeroEarthApi & PushIn) | null;
-    // A dive film (when one is ready) covers the approach itself; no cloud.
-    if (!reducedMotion && filmReady[id]) {
-      heroEarth.current?.resetZoom();
-      return dive(id);
-    }
-    // Under the full cloud: farm view (Cesium lands at once on the prewarmed view) and the hold with the real progress.
-    const intoCloud = () => {
-      clearTimeout(cloudTimer.current);
-      setCloud({ farmId: id, phase: "hold" });
-      dive(id);
-    };
-    // The push-in needs the Earth centred (map UI), which it is whenever a popup or waypoint can be clicked.
-    if (push?.diveTo && !reducedMotion && earthCentre) {
-      selectFarm(id);
-      cloudTimer.current = setTimeout(() => setCloud({ farmId: id, phase: "in" }), CLOUD_IN_AT_MS);
-      push.diveTo(id, PUSH_IN_MS, intoCloud);
-      return;
-    }
-    // No push-in: the cloud closes in place, then the switch.
-    heroEarth.current?.resetZoom();
-    setCloud({ farmId: id, phase: "in" });
-    cloudTimer.current = setTimeout(intoCloud, reducedMotion ? CLOUD_IN_REDUCED_MS : CLOUD_IN_MS);
-  };
-  /** Waypoint or "descend": dive now if the farm faces the viewer (or a dive film will cover the turn), else turn first. */
-  const requestDive = (id: string) => {
-    if (reducedMotion || filmReady[id] || heroEarth.current?.isFacing(id)) return startDive(id);
-    pendingDive.current = id;
-    select(id);
-    heroEarth.current?.face(id);
-  };
   const onGlobe = view === "globe";
-  // Farm controls appear only after the arrival title has completely left, plus a beat with just the farm on screen.
-  const panels = phase === "explore" && !titleOn && uiBeatDone;
   // Hero visuals wait for the hero Earth only; Cesium is needed from the dive on.
   const ready = earthReady;
   const uiShown = onGlobe && hs === "ui";
@@ -647,13 +455,13 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               prewarm={warmId ? { farmId: warmId, simBbox: twinConfig(warmId)?.simBbox } : null}
               onFarmLoad={setFarmLoad}
               onArrive={(id) => {
-                arrived.current = id;
-                setArriveNonce((n) => n + 1);
+                const camera = sharedCamera.current;
+                if (camera && useAppStore.getState().farmId === id) {
+                  sharedCamera.current = null;
+                  globe.current?.setCamera(camera);
+                }
               }}
-              onReady={(info) => {
-                setTier(info.tier);
-                setLoad("ready");
-              }}
+              onReady={() => setLoad("ready")}
               onError={() => setLoad("error")}
               fields={fields}
               selectedFieldId={twinFieldId}
@@ -693,13 +501,12 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               active={onGlobe}
               onReady={() => setEarthReady(true)}
               onProgress={loadBus.set}
-              onDragStart={() => void (pendingDive.current = null)}
+              onDragStart={() => {}}
               onDragEnd={() => {}}
               onPinClick={pickPin}
               onHover={onHoverPin}
               onTrack={trackBus.set}
               onFlyDone={(id) => {
-                if (pendingDive.current === id) return startDive(id);
                 setCardFor(id);
                 setPulseNonce((n) => n + 1);
               }}
@@ -710,25 +517,15 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       </div>
 
       {onGlobe && (
-        <button
-          ref={viewButton}
-          type="button"
-          onClick={switchView}
-          className="absolute bottom-20 left-5 z-40 min-h-11 rounded border border-line bg-surface px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Browse farms without 3D
-        </button>
-      )}
-
-      {/* Resting hero: text left, Earth right. */}
-      {onGlobe && ready && (
-        <GlobeChrome
-          farms={FARMS}
-          selectedId={farmId}
-          onPickFarm={pickFarm}
-          onFlyTo={(lon, lat) => heroEarth.current?.faceLonLat(lon, lat)}
-          controls={<ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />}
-        />
+        <GlobeChrome navigation={navigation} onAsk={askAtFarm} controls={
+          <>
+            <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={openFarm} settings={settings} onSettings={setSettings} />
+            <p className="mt-3 max-w-52 text-xs text-white/75">Drag to rotate. Click the globe to use arrow keys. Scroll or press + / − to zoom.</p>
+            <button ref={viewButton} type="button" onClick={switchView} className="mt-3 rounded border border-white/25 px-3 py-2 text-sm">
+              Browse farms without 3D
+            </button>
+          </>
+        } />
       )}
 
       {/* Map UI: waypoint label, confirm pulse, farm card, controls. Fades in 2 s after a drag; not focusable while hidden. */}
@@ -743,7 +540,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           {hoverFarm && hoverFarm.id !== cardFor && <PinLabel key={hoverFarm.id} farm={hoverFarm} />}
           {pulseNonce > 0 && !reducedMotion && <MarkerPulse nonce={pulseNonce} />}
           <div className="pointer-events-auto">
-            <FarmPopup farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
+            <FarmPopup farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={openFarm} />
           </div>
         </motion.div>
       )}
@@ -760,47 +557,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
 
       <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
 
-      {/* Dive film: above the globe, below the attribution, the title and the panels. */}
-      {ready &&
-        !reducedMotion &&
-        FARMS.filter((f) => DIVE_FILMS[f.id]).map((f) => (
-          <DiveFilm
-            key={f.id}
-            spec={DIVE_FILMS[f.id]}
-            run={inFarm && filmOn && f.id === farmId}
-            landed={phase !== "dive"}
-            onReady={(ok) => setFilmReady((m) => (!!m[f.id] === ok ? m : { ...m, [f.id]: ok }))}
-            onFinish={filmDone}
-            onFail={filmFailed}
-          />
-        ))}
-      {cloud && (
-        <>
-          <CloudLoader key={cloud.farmId} progress={farmLoad?.farmId === cloud.farmId ? farmLoad.progress : 0} phase={cloud.phase} onOutDone={() => setCloud(null)} />
-          {cloudSlow && cloud.phase === "hold" && (
-            <p role="status" className="pointer-events-none fixed inset-x-0 bottom-[6%] z-[401] text-center text-[12px] tracking-[0.04em] text-[rgba(40,52,76,0.72)]">
-              The farm is still loading. Taking you in; detail will keep sharpening.
-            </p>
-          )}
-        </>
-      )}
-      <AnimatePresence onExitComplete={titleExited}>
-        {inFarm && titleOn && !titleLeaving && <ArrivalTitle key={farm.id} farm={farm} reducedMotion={reducedMotion} onHoldEnd={titleHoldEnd} />}
-      </AnimatePresence>
-
-      {/* Farm view controls: mounted only once the title has gone (phase "explore"), then fade in. */}
-      {inFarm && panels && (
-        <motion.div
-          className="pointer-events-none absolute inset-0 p-4 *:pointer-events-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
-        >
+      {inFarm && (
+        <div className="pointer-events-none absolute inset-0 p-4">
           <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
           <FarmView
             key={farm.id}
             farmId={farm.id}
             farmName={farm.name}
+            navigation={navigation}
             place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
             onBack={() => useAppStore.setState({ globeView: "globe" })}
             onReset={() => globe.current?.resetView()}
@@ -809,7 +573,15 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
             sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
           />
           </ErrorBoundary>
-        </motion.div>
+          {imageryPending && (
+            <div className="absolute bottom-3 right-4 flex items-center gap-2 rounded bg-[#111a20]/95 px-3 py-2 text-xs">
+              <p role="status">Loading 3D imagery…</p>
+              {imagerySlow && imageryFor(farm.id) && <button type="button"
+                className="pointer-events-auto rounded border border-white/30 px-2 py-1"
+                onClick={() => useAppStore.setState({ map2d: true })}>Use 2D map</button>}
+            </div>
+          )}
+        </div>
       )}
 
       {!onGlobe && (

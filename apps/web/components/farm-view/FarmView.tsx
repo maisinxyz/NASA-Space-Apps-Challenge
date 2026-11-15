@@ -25,7 +25,6 @@ import {
 import { FV_CSS } from "./styles";
 import { ComparisonTimeline } from "./Timeline";
 import { ConditionCard, LayerLegend } from "./Cards";
-import { Twin } from "./Twin";
 import { RotationComparison } from "@/components/farm-future/RotationComparison";
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
@@ -36,7 +35,9 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer, X } from "./icons";
 import dynamic from "next/dynamic";
 import { imageryFor } from "@/lib/map2d/imagery";
-import { CopilotButton, CopilotPanel } from "@/components/copilot/CopilotPanel";
+import { CopilotPanel } from "@/components/copilot/CopilotPanel";
+import type { PlaceNavigation } from "@/components/copilot/CopilotComposer";
+import { useCopilot } from "@/lib/copilot/copilot";
 import { RotationPlanner } from "@/components/rotation-planner/RotationPlanner";
 import { usePlannerStore } from "@/lib/rotation-planner/store";
 import { siteForFarm } from "@/lib/forecast/sites";
@@ -51,6 +52,7 @@ export type FarmViewProps = {
   farmName: string;
   farmId?: string;
   place?: string;
+  navigation?: PlaceNavigation;
   onBack(): void;
   onReset(): void;
   sim?: SimProps;
@@ -68,17 +70,17 @@ const WORKSPACE_CSS = `
 .fv-workspace .fv-title-block{min-width:0;width:fit-content;max-width:min(620px,calc(100% - 60px));pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.75),0 0 12px rgba(0,0,0,.6),0 0 30px rgba(0,0,0,.45);}
 .fv-workspace .fv-title-block :is(button,a,summary,details,[role="listbox"],[role="radiogroup"]){pointer-events:auto;}
 .fv-workspace .fv-title-block :is(.fv-glass,.ff-seg,.ff-menu){text-shadow:none;}
-.fv-workspace .fv-title{font-size:clamp(24px,2.4vw,36px);line-height:1.15;overflow-wrap:anywhere;}
+.fv-workspace .fv-title{font-size:clamp(19px,2vw,27px);line-height:1.15;overflow-wrap:anywhere;}
 .fv-workspace .fv-bar{height:auto;min-height:40px;flex-wrap:wrap;border-radius:12px;width:fit-content;}
-/* Side rail: every secondary panel is one tab on the right edge; one drawer pops out at a time. */
-.fv-workspace .fv-rail{position:absolute;right:0;top:50%;transform:translateY(-50%);display:grid;gap:6px;pointer-events:auto;z-index:31;}
+/* Put farm actions and the active drawer on the same side as the assistant. */
+.fv-workspace .fv-menu{pointer-events:auto;position:relative;width:fit-content;font-size:14px;text-shadow:none;}
+.fv-workspace .fv-menu>summary{padding:8px 14px;border-radius:999px;cursor:pointer;list-style:none;}
+.fv-workspace .fv-menu-body{position:absolute;top:calc(100% + 8px);left:0;width:min(360px,calc(100vw - 32px));max-height:58dvh;overflow:auto;background:#172129;padding:12px;border-radius:14px;z-index:55;display:grid;gap:8px;}
+.fv-workspace .fv-rail{display:flex;flex-wrap:wrap;gap:6px;}
 .fv-workspace .fv-rail[hidden]{display:none;}
-.fv-workspace .fv-rail-tab{width:34px;padding:14px 0;border-radius:12px 0 0 12px;border-right:0;display:grid;place-items:center;transition:background-color 120ms;}
-.fv-workspace .fv-rail-tab .t{writing-mode:vertical-rl;font-size:12.5px;line-height:1;letter-spacing:.02em;color:#f2ebdd;}
-.fv-workspace .fv-rail-tab:hover{background:rgba(52,44,36,.92);}
+.fv-workspace .fv-rail-tab{padding:0 12px;border-radius:999px;}
 .fv-workspace .fv-rail-tab[aria-expanded="true"]{background:rgba(52,44,36,.96);box-shadow:inset 2px 0 0 #E2B866;}
-.fv-workspace .fv-drawer{position:absolute;right:46px;top:16px;width:min(340px,calc(100% - 62px));max-height:calc(100% - 136px);overflow:auto;overscroll-behavior:contain;padding:14px 16px 16px;border-radius:16px;pointer-events:auto;display:grid;gap:12px;align-content:start;z-index:30;font-size:13px;}
-.fv-workspace .fv-drawer[data-future="true"]{top:64px;max-height:calc(100% - 260px);}
+.fv-workspace .fv-drawer{position:absolute;left:16px;top:112px;width:min(390px,calc(100% - 32px));max-height:calc(100% - 220px);overflow:auto;overscroll-behavior:contain;padding:14px 16px 16px;border-radius:16px;pointer-events:auto;display:grid;gap:12px;align-content:start;z-index:30;font-size:13px;}
 .fv-workspace .fv-drawer[hidden],.fv-workspace .fv-drawer [hidden]{display:none;}
 .fv-workspace .fv-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .fv-workspace .fv-drawer-body{display:grid;gap:12px;}
@@ -108,8 +110,7 @@ const WORKSPACE_CSS = `
 .fv-workspace .fv-more>.fv-glass>p{padding:6px 10px 0;color:#c9bfae;font-size:12px;}
 .fv-workspace .fv-camera summary{cursor:pointer;}
 .fv-workspace .fv-camera .fv-seg{background:rgba(255,255,255,.06);text-transform:capitalize;}
-.fv-workspace .fv-lens-slot{position:absolute;right:46px;top:16px;pointer-events:auto;z-index:32;}
-/* What-if opens from the side rail; its floating pill would duplicate the tab. */
+/* The farm menu opens What-if. */
 .fv-workspace [data-testid="whatif-pill"]{display:none;}
 .fv-workspace .fv-title-block{animation:fv-title-enter .4s ease-out both;}
 @keyframes fv-title-enter{from{opacity:0}to{opacity:1}}
@@ -129,6 +130,7 @@ export function FarmView({
   farmName,
   farmId: propFarmId,
   place,
+  navigation,
   onBack,
   onReset,
   sim: simProps,
@@ -150,11 +152,12 @@ export function FarmView({
   const storePanelsHidden = useAppStore((s) => s.panelsHidden);
   const panelsHidden = initialPanelsHidden ?? storePanelsHidden;
   const restorePanels = useRef<HTMLButtonElement>(null);
-  const moreTab = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDetailsElement>(null);
+  const menuTrigger = useRef<HTMLElement>(null);
   const previousPanelsHidden = useRef(panelsHidden);
   useEffect(() => {
     if (previousPanelsHidden.current !== panelsHidden) {
-      (panelsHidden ? restorePanels : moreTab).current?.focus();
+      (panelsHidden ? restorePanels : menuTrigger).current?.focus();
       previousPanelsHidden.current = panelsHidden;
     }
   }, [panelsHidden]);
@@ -199,6 +202,8 @@ export function FarmView({
   const toggle = (id: Drawer) => {
     const next = active === id ? null : id;
     if (next) {
+      if (menu.current) menu.current.open = false;
+      useCopilot.getState().close();
       sound.pop();
       useFutureStore.getState().openPanel(null);
     } else sound.close();
@@ -234,8 +239,7 @@ export function FarmView({
         </FvButton>
       )}
       <div className="fv-panels" hidden={panelsHidden}>
-          {futureMode === "compare" && <FvButton className="fv-glass fv-seg" style={{ position: "absolute", right: 16, top: 16, pointerEvents: "auto" }} onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>}
-          <div className="fv-heading" hidden={futureMode === "compare"}>
+          <div className="fv-heading">
             <div className="fv-title-block">
               <FvButton
                 className="fv-back"
@@ -251,6 +255,9 @@ export function FarmView({
                 {place ? " · " : ""}
                 {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
               </p>
+              <details ref={menu} className="fv-menu">
+                <summary ref={menuTrigger} className="fv-glass" aria-label="Farm menu">? Menu</summary>
+                <div className="fv-menu-body">
               <div className="fv-action-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, pointerEvents: "auto" }}>
                 {(isUbc || isKpu) && (
                   <FvButton
@@ -273,17 +280,23 @@ export function FarmView({
                   </FvButton>
                 )}
                 {siteForFarm(farmId ?? null) && (
-                  <FvButton className="fv-glass fv-seg" data-testid="action-plan-rotations" onClick={() => usePlannerStore.setState((s) => ({ open: !s.open }))}>
+                  <FvButton className="fv-glass fv-seg" data-testid="action-plan-rotations" onClick={() => {
+                    if (menu.current) menu.current.open = false;
+                    useCopilot.getState().close();
+                    usePlannerStore.setState((s) => ({ open: !s.open }));
+                  }}>
                     Plan rotations
                   </FvButton>
                 )}
-                <CopilotButton />
                 {imageryFor(farmId ?? null) && (
                   <FvButton
                     className="fv-glass fv-seg"
                     data-testid="action-map2d"
                     aria-pressed={map2d}
-                    onClick={() => useAppStore.setState({ map2d: !map2d })}
+                    onClick={() => {
+                      if (menu.current) menu.current.open = false;
+                      useAppStore.setState({ map2d: !map2d });
+                    }}
                   >
                     {map2d ? "3D Explore" : "2D Map"}
                   </FvButton>
@@ -306,14 +319,8 @@ export function FarmView({
                   <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
                 </details>
               )}
-            </div>
-          </div>
-          {futureMode === "future" && <div className="fv-lens-slot"><LensControl /></div>}
           <nav className="fv-rail" aria-label="Farm panels" hidden={futureMode === "compare"}>
-            {(isUbc || isKpu) && <RailTab id="rotations" active={active} onToggle={toggle} data-testid="rail-rotations" />}
-            {isKpu && <RailTab id="campus" active={active} onToggle={toggle} data-testid="rail-campus" />}
             <RailTab id="conditions" active={active} onToggle={toggle} />
-            {futureMode === "now" && <RailTab id="view" active={active} onToggle={toggle} />}
             {futureMode === "now" && (
               <RailTab
                 id="report"
@@ -333,8 +340,13 @@ export function FarmView({
                 <span className="t">What-if</span>
               </FvButton>
             )}
-            <RailTab ref={moreTab} id="more" active={active} onToggle={toggle} aria-label="More options" />
+            <RailTab id="more" active={active} onToggle={toggle} aria-label="More options" />
           </nav>
+          {futureMode === "future" && <LensControl />}
+                </div>
+              </details>
+            </div>
+          </div>
           <aside
             id="farm-drawer"
             className="fv-glass fv-drawer"
@@ -563,7 +575,6 @@ export function FarmView({
             </div>
           </aside>
           <div className="fv-mode-content" hidden={futureMode !== "now"}>
-          <Twin bottom={comparing ? 110 : undefined} />
           {simProps && comparing && (
             <>
               <DividerHandle />
@@ -577,7 +588,7 @@ export function FarmView({
           {futureMode === "future" && <HorizonTabs bottom={horizon === "months" ? 228 : 236} />}
           <FutureLayer />
           {siteForFarm(farmId ?? null) && <RotationPlanner siteId={siteForFarm(farmId ?? null)!} />}
-          <CopilotPanel />
+          <CopilotPanel navigation={navigation} />
       </div>
       <p className="sr-only">
         {reduced ? "Reduced motion enabled." : ""}This tool supports, and does

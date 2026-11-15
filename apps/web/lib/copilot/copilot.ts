@@ -2,7 +2,7 @@
 // The client sends ids and slider values only, never forecast numbers; the server builds the numbers from the snapshot.
 import { create } from "zustand";
 
-import { ApiError, postCopilotChat } from "@/lib/api/client";
+import { ApiError, isMock, postCopilotChat } from "@/lib/api/client";
 import type { CopilotChatRequest, CopilotSnapshot } from "@/lib/api/types";
 
 export type SelectedKind = "field" | "flag" | "strategy";
@@ -68,6 +68,8 @@ export const termsIn = (text: string) => Object.keys(TERMS).filter((t) => text.t
 type ChatState = {
   open: boolean;
   draft: string;
+  pendingFarm: string | null;
+  conversation: number;
   selected: ScreenState["selected"];
   /** Overrides the screen's strategy/field when a button asks about a specific one. */
   strategyId: string | null;
@@ -76,6 +78,7 @@ type ChatState = {
   status: "idle" | "sending" | "error";
   error: string | null;
   ask(q: { question: string; kind: SelectedKind; id: string; strategyId?: string | null; fieldId?: string | null }): void;
+  startFarm(farmId: string, question?: string): void;
   send(message: string, screen: ScreenState): Promise<void>;
   close(): void;
 };
@@ -83,6 +86,8 @@ type ChatState = {
 export const useCopilot = create<ChatState>((set, get) => ({
   open: false,
   draft: "",
+  pendingFarm: null,
+  conversation: 0,
   selected: null,
   strategyId: null,
   fieldId: null,
@@ -90,15 +95,27 @@ export const useCopilot = create<ChatState>((set, get) => ({
   status: "idle",
   error: null,
   ask: ({ question, kind, id, strategyId = null, fieldId = null }) => set({ open: true, draft: question, selected: { kind, id }, strategyId, fieldId, error: null }),
+  startFarm: (farmId, question) => set((state) => ({
+    conversation: state.conversation + 1, open: true, draft: question ?? "",
+    pendingFarm: question ? farmId : null, selected: null, strategyId: null, fieldId: null,
+    messages: [], status: "idle", error: null,
+  })),
   async send(message, screen) {
     if (!message.trim() || get().status === "sending") return;
+    if (isMock) {
+      set({ status: "error", error: "Farm answers need a connection to the live forecast API." });
+      return;
+    }
     const history = get().messages;
+    const conversation = get().conversation;
     const body = requestOf(message, screen, history);
     set({ messages: [...history, { role: "user", content: body.message }], draft: "", status: "sending", error: null });
     try {
       const r = await postCopilotChat(body);
+      if (get().conversation !== conversation) return;
       set((s) => ({ messages: [...s.messages, { role: "assistant", content: r.reply, tips: r.local_validation_tips, layers: r.referenced_layers }], status: "idle" }));
     } catch (e) {
+      if (get().conversation !== conversation) return;
       set({ status: "error", error: errorText(e) });
     }
   },

@@ -18,13 +18,16 @@ describe('honest farm controls', () => {
     expect(markup).not.toContain('41%');
     expect(markup).not.toContain('0.48');
   });
-  it('offers a clearly identified synthetic preview assistant', () => {
-    expect(html()).toContain('aria-label="Ask Twin preview"');
-    expect(html()).toContain('Synthetic preview');
+  it('offers one assistant input with place search in the farm workspace', () => {
+    const markup = renderToStaticMarkup(<FarmView farmName="UBC Farm" farmId="ubc-farm" onBack={noop} onReset={noop}
+      navigation={{ farms: FARMS, onPick: noop }} />);
+    expect(markup).toContain('placeholder="Ask a question or find a place"');
+    expect(markup.match(/data-testid="copilot-input"/g)).toHaveLength(1);
   });
-  it('offers a hide-panels control and keeps farm controls in side-rail tabs', () => {
+  it('groups farm controls in the collapsible menu', () => {
     expect(html()).toContain('Hide panels');
-    for (const id of ['rail-conditions', 'rail-view', 'field-report-toggle', 'rail-more'])
+    expect(html()).toContain('aria-label="Farm menu"');
+    for (const id of ['rail-conditions', 'action-map-tools', 'field-report-toggle', 'rail-more'])
       expect(html()).toContain(`data-testid="${id}"`);
     expect(html()).toMatch(/<aside[^>]*id="farm-drawer"[^>]*hidden=""/);
   });
@@ -114,7 +117,6 @@ describe('farm-specific content', () => {
     expect(ubcHtml).toContain('data-testid="action-compare-rotations"');
     expect(ubcHtml).toContain("Compare rotations");
     expect(ubcHtml).toContain('data-testid="action-map-tools"');
-    expect(ubcHtml).toContain('data-testid="rail-rotations"');
 
     useAppStore.setState({ farmId: "kpu-langley", globeView: "farm", panelsHidden: false });
     const kpuHtml = renderToStaticMarkup(
@@ -122,6 +124,5 @@ describe('farm-specific content', () => {
     );
     expect(kpuHtml).toContain('data-testid="action-explore-campus"');
     expect(kpuHtml).toContain("Explore campus");
-    expect(kpuHtml).toContain('data-testid="rail-campus"');
   });
 });

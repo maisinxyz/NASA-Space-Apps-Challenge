@@ -10,14 +10,20 @@ import {
   type SimState,
 } from "./SimulationTab";
 import { InvestigationControls } from "./InvestigationControls";
+import { CopilotPanel } from "@/components/copilot/CopilotPanel";
+import type { PlaceNavigation } from "@/components/copilot/CopilotComposer";
+import { RotationComparison } from "@/components/farm-future/RotationComparison";
+import { siteForFarm } from "@/lib/forecast/sites";
 
 /** Data-first workspace uses the very same scenario/compare/evidence components as the 3D drawer. */
 export function Non3dFarmWorkspace({
   sim,
   onBack,
+  navigation,
 }: {
   sim: SimProps;
   onBack(): void;
+  navigation?: PlaceNavigation;
 }) {
   const [state, setState] = useState<SimState>(() => {
     return fallbackPanelState(
@@ -45,6 +51,7 @@ export function Non3dFarmWorkspace({
         ← Choose another farm
       </button>
       <h2 className="mb-2 font-display text-2xl">{sim.farm.name}</h2>
+      <CopilotPanel navigation={navigation} inline />
       <p className="mb-4 text-sm">
         Non-3D workspace · Synthetic demo scenarios, illustrative crops, and
         relative comparisons. No live farm measurements.
@@ -61,6 +68,10 @@ export function Non3dFarmWorkspace({
         <button type="button" className="mb-3 rounded border px-4 py-2" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</button>
       )}
       <div hidden={hidden}>
+        {siteForFarm(sim.farm.id) && <details className="my-4 rounded border border-line p-3">
+          <summary className="cursor-pointer">Compare rotations</summary>
+          <RotationComparison layout="stack" />
+        </details>}
         <SimulationTab props={sim} sim={state} setSim={setState} embedded />
       </div>
       <div className="mt-4">
