@@ -152,6 +152,8 @@ export function FarmView({
   const reduced = !!useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   useWindowHost(rootRef);
+  // Each farm visit starts with its dashboard available, even after a saved close/minimise.
+  useEffect(() => { useWindowManager.getState().restore("nav"); }, [propFarmId]);
   const [drawer, setDrawer] = useState<Drawer | null>(initialReportOpen ? "report" : null);
   const [sim, setSimState] = useState<SimState>(() => {
     if (initialSim) return initialSim;

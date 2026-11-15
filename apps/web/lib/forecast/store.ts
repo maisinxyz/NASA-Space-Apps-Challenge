@@ -1,11 +1,8 @@
 "use client";
-// Loads the engine forecast for a farm and keeps it for the farm view. live = POST /forecast (NEXT_PUBLIC_API_MODE=live);
-// prebuilt = real engine output shipped as a static file (offline/mock mode); mock = contract placeholder fixture.
+
 import { create } from "zustand";
-
-import { apiMode, ApiError, getForecast, getPrebuiltForecast } from "@/lib/api/client";
-import type { Forecast } from "@/lib/api/types";
-
+import { apiMode, getForecast, getPrebuiltForecast } from "@/lib/api/client";
+import type { Forecast, ForecastRequest } from "@/lib/api/types";
 import { requestFor } from "./sites";
 
 export type ForecastSource = "live" | "prebuilt" | "mock";
@@ -13,49 +10,80 @@ export type ForecastState = {
   siteId: string | null;
   status: "idle" | "loading" | "ready" | "error";
   forecast: Forecast | null;
+  request: ForecastRequest | null;
+  pendingRequest: ForecastRequest | null;
   source: ForecastSource | null;
   error: string | null;
+  run(siteId: string, request: ForecastRequest): Promise<void>;
+  retry(): Promise<void>;
   load(siteId: string, whatIf?: { rainPct: number; tempC: number }): Promise<void>;
   reset(): void;
 };
 
-let ticket = 0; // a later load supersedes an earlier one still in flight
-
+let ticket = 0;
 export const useForecastStore = create<ForecastState>((set, get) => ({
   siteId: null,
   status: "idle",
   forecast: null,
+  request: null,
+  pendingRequest: null,
   source: null,
   error: null,
 
-  async load(siteId, whatIf) {
+  async run(siteId, request) {
     const mine = ++ticket;
-    const keep = get().siteId === siteId ? get().forecast : null; // keep the old result visible while a slider refetch runs
-    set({ siteId, status: "loading", forecast: keep, source: keep ? get().source : null, error: null });
+    const same = get().siteId === siteId;
+    set({
+      siteId,
+      status: "loading",
+      pendingRequest: request,
+      error: null,
+      ...(same ? {} : { forecast: null, request: null, source: null }),
+    });
     try {
-      const body = requestFor(siteId, whatIf);
-      if (!body) throw new ApiError({ code: "SITE_NOT_FOUND", message: `No forecast request for ${siteId}.`, retryable: false }, 404);
       let forecast: Forecast;
       let source: ForecastSource;
       if (apiMode === "live") {
-        forecast = await getForecast(siteId, body);
+        forecast = await getForecast(siteId, request);
         source = "live";
       } else {
+        const defaultRequest = requestFor(siteId);
+        if (!defaultRequest || JSON.stringify(request) !== JSON.stringify(defaultRequest)) {
+          throw new Error("Live forecast access is required to score edited inputs. The saved forecast remains visible.");
+        }
         try {
           forecast = await getPrebuiltForecast(siteId);
           source = "prebuilt";
         } catch {
-          forecast = await getForecast(siteId, body); // contract fixture, labelled mock
+          forecast = await getForecast(siteId, request);
           source = "mock";
         }
       }
-      if (mine === ticket) set({ status: "ready", forecast, source });
-    } catch (e) {
-      if (mine === ticket) set({ status: "error", error: e instanceof Error ? e.message : "Forecast failed." });
+      if (mine === ticket) {
+        set({ status: "ready", forecast, request: source === "live" ? request : null, source, pendingRequest: null });
+      }
+    } catch (error) {
+      if (mine === ticket) set({ status: "error", error: error instanceof Error ? error.message : "Forecast failed." });
     }
   },
-  reset: () => {
+
+  async retry() {
+    const { siteId, pendingRequest } = get();
+    if (siteId && pendingRequest) await get().run(siteId, pendingRequest);
+  },
+
+  async load(siteId, whatIf) {
+    const request = requestFor(siteId, whatIf);
+    if (request) {
+      await get().run(siteId, request);
+    } else {
+      ++ticket;
+      set({ siteId, status: "error", forecast: null, request: null, pendingRequest: null, source: null, error: `No forecast request for ${siteId}.` });
+    }
+  },
+
+  reset() {
     ++ticket;
-    set({ siteId: null, status: "idle", forecast: null, source: null, error: null });
+    set({ siteId: null, status: "idle", forecast: null, request: null, pendingRequest: null, source: null, error: null });
   },
 }));

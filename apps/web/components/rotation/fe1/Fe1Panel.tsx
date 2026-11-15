@@ -1,5 +1,6 @@
 "use client";
 // Frontend 1 entry: priorities + constraints form, then analysis results. Mounted in ComparePanel.
+import { siteForFarm } from "@/lib/forecast/sites";
 import { ClimatePanel } from "@/components/rotation/fe2/ClimatePanel";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 import { normalizeWeights } from "@/lib/rotation/rank";
@@ -20,7 +21,7 @@ export function Fe1Panel() {
       <PrioritiesForm allZero={allZero} />
       <ConstraintsForm cropNames={cropNames} />
       {/* Frontend 2 scenario sliders, hazard timeline and feature charts: same rotScenario state drives the results below. */}
-      {farmId && <ClimatePanel siteId={farmId} monthlyCover={data?.rotations.find((r) => r.is_existing)?.cover_calendar.monthly_cover} />}
+      {siteForFarm(farmId) && <ClimatePanel siteId={siteForFarm(farmId)!} monthlyCover={data?.rotations.find((r) => r.is_existing)?.cover_calendar.monthly_cover} />}
       {!farmId ? (
         <p className="text-xs text-ink-muted">Pick a farm to see rotation results.</p>
       ) : error ? (

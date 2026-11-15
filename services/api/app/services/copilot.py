@@ -7,6 +7,7 @@ import re
 import threading
 import time
 from collections import defaultdict, deque
+from functools import lru_cache
 import httpx
 
 from dotenv import dotenv_values
@@ -115,6 +116,24 @@ def _strategy_label(strategy: dict) -> str:
     return f"{base} ({', '.join(crops)})" if crops else base
 
 
+@lru_cache(maxsize=1)
+def _contract_components() -> dict:
+    import yaml
+    return yaml.safe_load((REPO_ROOT / "packages/contracts/openapi.yaml").read_text(encoding="utf-8"))["components"]
+
+
+def accepted_request(snapshot: dict) -> dict:
+    """Validate inputs against the published contract; forecast values are always rebuilt server-side."""
+    from jsonschema import Draft202012Validator
+    body = snapshot.get("forecast_request")
+    if body is None:  # no accepted run yet: fall back to the site's default inputs
+        body = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[snapshot["site_id"]][1]).read_text(encoding="utf-8"))
+    schema = {"$ref": "#/components/schemas/ForecastRequest", "components": _contract_components()}
+    if list(Draft202012Validator(schema).iter_errors(body)):
+        raise ApiError("INVALID_INPUT", "The accepted forecast inputs are invalid. Run the forecast again.")
+    return body
+
+
 def snapshot_context(snapshot: dict, message: str = "") -> dict:
     site = snapshot["site_id"]
     if site not in FARMS or snapshot["farm_id"] != FARMS[site][0]:
@@ -123,8 +142,7 @@ def snapshot_context(snapshot: dict, message: str = "") -> dict:
         return monthly_context(snapshot, message)
     if not 0 <= snapshot["time_index"] <= 10:
         raise ApiError("INVALID_INPUT", "The year must be between 0 and 10.")
-    body = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[site][1]).read_text(encoding="utf-8"))
-    body["scenario"] = snapshot["scenario"]
+    body = accepted_request(snapshot)
     doc = forecast(site, body)
     field_id = snapshot.get("field_id")
     section = next((f for f in doc["fields"] if f["field_id"] == field_id), None) if field_id else doc["farm_rollup"]
@@ -165,7 +183,9 @@ def snapshot_context(snapshot: dict, message: str = "") -> dict:
         flag = next((f for f in strategy.get("review_flags", []) if f["id"] == selected["id"]), None)
         if flag is None:
             flag = {"availability": "The selected flag is not in the reconstructed demo data."}
-    return {"description": "Reconstructed demo forecast; it may differ from the screen or an edited rotation.",
+    described = ("Forecast reconstructed from the accepted inputs shown on screen." if snapshot.get("forecast_request") is not None
+                 else "Forecast reconstructed from default inputs, not an accepted run.")
+    return {"description": described,
             "site_id": site, "field_id": field_id, "year": year, "strategy": labels.get(sid, sid),
             "data_mode": doc["data_mode"], "metrics": metrics, "strategy_comparison": compare, "selected_flag": flag,
             "weather_resolution": POWER_RESOLUTION_NOTE,
@@ -194,9 +214,10 @@ def chat(body: dict, client: str) -> dict:
     snapshot = body["snapshot"]
     site = snapshot["site_id"]
     if site in FARMS and snapshot["farm_id"] == FARMS[site][0]:
-        request = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[site][1]).read_text(encoding="utf-8"))
-        if result := reply_for_planting(site, request, body["message"], snapshot, body.get("history", [])):
-            return result
+        if snapshot.get("forecast_request") is not None or snapshot.get("horizon") == "years":
+            request = accepted_request(snapshot)
+            if result := reply_for_planting(site, request, body["message"], snapshot, body.get("history", [])):
+                return result
     if os.getenv("OFFLINE") == "1":
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable in offline mode.", retryable=True)
     # Existing environment wins. Read only the required setting and do not

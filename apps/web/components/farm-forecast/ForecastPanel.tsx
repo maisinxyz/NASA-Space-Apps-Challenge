@@ -43,15 +43,31 @@ export function ForecastStatus({ status, source, error, hasForecast, dataMode, o
 /** Loads the forecast when Future mode opens on a farm that has an engine site; refetches (live only) when the what-if sliders move. */
 export function useFarmForecast() {
   const farmId = useAppStore((s) => s.farmId);
-  const mode = useFutureStore((s) => s.mode);
   const whatIf = useFutureStore((s) => s.whatIf);
   const siteId = siteForFarm(farmId);
   const { rainPct, tempC } = whatIf;
+  const accepted = useForecastStore((s) => s.siteId === siteId ? s.request : null);
+  const status = useForecastStore((s) => s.siteId === siteId ? s.status : "idle");
   useEffect(() => {
-    if (!siteId) return; // also in Now mode: the "Compare rotations" drawer reads the same forecast
-    const timer = setTimeout(() => void useForecastStore.getState().load(siteId, { rainPct, tempC }), 350); // debounce slider drags
+    if (!siteId) return;
+    const state = useForecastStore.getState();
+    if (state.siteId !== siteId || (!state.forecast && state.status === "idle")) void state.load(siteId, { rainPct, tempC });
+  }, [siteId]);
+  useEffect(() => {
+    if (!siteId) return;
+    if (!accepted || status !== "ready") return;
+    const scenario = accepted.scenario;
+    const sameScenario = typeof scenario === "string"
+      ? scenario === "baseline" && rainPct === 0 && tempC === 0
+      : (scenario.rain_scale_pct ?? 0) === rainPct && (scenario.temp_offset_c ?? 0) === tempC;
+    if (sameScenario) return;
+    const timer = setTimeout(() => {
+      const current = useForecastStore.getState();
+      if (current.request !== accepted || current.status === "loading") return;
+      void current.run(siteId, { ...accepted, scenario: { preset: "baseline", rain_scale_pct: rainPct, temp_offset_c: tempC } });
+    }, 350);
     return () => clearTimeout(timer);
-  }, [siteId, mode, rainPct, tempC]);
+  }, [siteId, rainPct, tempC, accepted, status]);
   return siteId;
 }
 
@@ -71,7 +87,7 @@ export function ForecastPanel() {
       error={error}
       year={forecast ? yearOfClock(t, forecast.horizon_years) : 1}
       onClose={() => useFutureStore.getState().openPanel(null)}
-      onRetry={() => void useForecastStore.getState().load(siteId, useFutureStore.getState().whatIf)}
+      onRetry={() => void useForecastStore.getState().retry()}
       onPickYear={(y) => useFutureStore.getState().setT(tOf(y - 1, 194))}
     />
   );
@@ -93,7 +109,8 @@ export type ForecastCardProps = {
 export function ForecastCard({ open, status, forecast, source, error, year, onClose, onPickYear, onRetry }: ForecastCardProps) {
   const [metric, setMetric] = useState<MetricKey>("soil_organic_index");
   const [strategy, setStrategy] = useState(0);
-  const [fieldId, setFieldId] = useState<string | null>(null);
+  const fieldId = useFutureStore((s) => s.focusFieldId);
+  const setFieldId = (id: string | null) => useFutureStore.setState({ focusFieldId: id });
 
   const strategies = useMemo(() => (forecast ? strategiesOf(forecast) : []), [forecast]);
   const shown = strategies[Math.min(strategy, strategies.length - 1)];
@@ -112,7 +129,7 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             {strategies.map((s, i) => (
               <FvButton key={s.id} role="tab" aria-selected={i === strategy} className="fv-pill fv-auto" data-testid={`fc-strategy-${s.id}`} onClick={() => setStrategy(i)} style={{ opacity: i === strategy ? 1 : 0.7 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />
-                <span className="l" style={{ color: color.ink }}>{s.role === "existing" ? "Current rotation" : s.label}</span>
+                <span className="l" style={{ color: color.ink }}>{s.role === "existing" ? "Current rotation (illustrative)" : s.label}</span>
               </FvButton>
             ))}
           </div>
@@ -136,14 +153,14 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             {lines[0]?.series && <Basis b={lines[0].series.basis} />}
           </div>
           {lines.map(({ s, series }, i) => {
-            if (!series) return <Row key={s.id} k={s.role === "existing" ? "Current rotation" : s.label} v="Unavailable" />;
+            if (!series) return <Row key={s.id} k={s.role === "existing" ? "Current rotation (illustrative)" : s.label} v="Unavailable" />;
             const v = valueAt(series, year);
             const ranged = v.p10 !== null && v.p90 !== null && v.p10 !== v.p90;
             return (
               <Row
                 key={s.id}
                 strong={s.id === shown.id}
-                k={<><span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />{s.role === "existing" ? "Current rotation" : s.label}</>}
+                k={<><span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />{s.role === "existing" ? "Current rotation (illustrative)" : s.label}</>}
                 v={<>{fmt(v.p50, series.unit.split(",")[0])}{ranged ? <span style={{ color: color.inkSecondary }}> ({fmt(v.p10!)}–{fmt(v.p90!)})</span> : null}</>}
               />
             );

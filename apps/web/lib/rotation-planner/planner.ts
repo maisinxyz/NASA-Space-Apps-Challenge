@@ -61,7 +61,7 @@ export function inputFrom(base: ForecastRequest): PlannerInput {
     constraints: { ...base.constraints, equipment: [...base.constraints.equipment] },
     strategyCount: base.strategy_count ?? 3,
     waterQuotaMm: base.farm_water_quota_mm_per_season ?? null,
-    custom: null,
+    custom: base.custom_strategies?.[0]?.map((slot) => ({ ...slot })) ?? null,
   };
 }
 

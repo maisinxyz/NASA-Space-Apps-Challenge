@@ -26,7 +26,7 @@ export function useConditionView() {
   return useMemo(() => {
     const cond = condById(selected);
     if (!cond || !feats.length) return null;
-    return { ...conditionView(cond, feats, { forecast, engineId }, year), now: conditionView(cond, feats, { forecast, engineId }, 1) };
+    return conditionView(cond, feats, { forecast, engineId }, year);
   }, [selected, feats, forecast, engineId, year]);
 }
 

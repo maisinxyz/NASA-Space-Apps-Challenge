@@ -19,15 +19,15 @@ export function FarmOverview() {
   const farmId = useAppStore((s) => s.farmId);
   const { forecast, data } = useFutureData();
   const { status, source } = useForecastStore();
-  const { t, strategyId } = useFutureStore();
+  const { t, strategyId, focusFieldId } = useFutureStore();
   if (!siteForFarm(farmId)) return null;
   const strategy = strategyOf(data, strategyId);
   const year = forecast ? forecastYear(t, forecast.horizon_years) : 1;
   return <section className="fv-overview" data-testid="farm-overview" aria-label="Farm forecast summary">
     <h2>Farm outlook</h2>
-    <p>{forecast ? `${strategy.name} · year ${year}` : status === "error" ? "Forecast unavailable" : "Loading forecast…"}</p>
+    <p>{forecast ? `${strategy.name} · ${forecast.fields.find((f) => f.field_id === focusFieldId)?.name ?? "Whole farm"} · year ${year}` : status === "error" ? "Forecast unavailable" : "Loading forecast…"}</p>
     {forecast && <dl>{SUMMARY.map(({ key, label }) => {
-      const series = seriesOf(forecast, strategy.engineId, key);
+      const series = seriesOf(forecast, strategy.engineId, key, focusFieldId);
       const value = series?.points.find((p) => p.year === year);
       return <div key={key}><dt>{label}</dt><dd>{value && series ? fmt(value.p50, key === "soil_organic_index" ? undefined : series.unit) : "Unavailable"}</dd></div>;
     })}</dl>}

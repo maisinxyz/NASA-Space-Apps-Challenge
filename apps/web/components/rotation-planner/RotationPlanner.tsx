@@ -6,9 +6,9 @@
 // No income and no fertilizer figures (D3).
 import { useEffect, useMemo, useState } from "react";
 
-import { apiMode, ApiError, getCropCatalog, getForecast, getPrebuiltForecast } from "@/lib/api/client";
+import { apiMode, getCropCatalog } from "@/lib/api/client";
 import type { CropCatalog, Forecast, ForecastStrategy, RotationSlot } from "@/lib/api/types";
-import { CURRENT_ROTATION } from "@/lib/farm-future/data";
+import { CURRENT_ROTATION, originNote } from "@/lib/farm-future/data";
 import { color } from "@/lib/farm-view/tokens";
 import { fmt } from "@/lib/forecast/select";
 import { baseRequest } from "@/lib/forecast/sites";
@@ -16,6 +16,11 @@ import {
   buildRequest, calendarOf, categoryLabel, cropAt, cropColour, cycleOf, inputFrom, MONTHS, namesOf, plainSource, roleLabel,
   ruleStatus, SEASON_LABEL, SEASONS, setCell, strategiesFor, validate, type PlannerInput, type Season,
 } from "@/lib/rotation-planner/planner";
+import { useForecastStore } from "@/lib/forecast/store";
+import { useFutureStore } from "@/lib/farm-future/store";
+import { tOf } from "@/lib/farm-future/model";
+import { yearOfClock } from "@/lib/forecast/select";
+import { useRotationStore } from "@/lib/rotation/store";
 import { usePlannerStore } from "@/lib/rotation-planner/store";
 
 import { AskCopilot } from "@/components/copilot/AskCopilot";
@@ -45,15 +50,20 @@ type Run = { status: "idle" | "loading" | "ready" | "error"; forecast: Forecast 
 export function RotationPlanner({ siteId }: { siteId: string }) {
   const open = usePlannerStore((s) => s.open);
   const close = () => usePlannerStore.setState({ open: false });
-  const base = baseRequest(siteId);
+  const shared = useForecastStore();
+  const base = shared.siteId === siteId ? (shared.request ?? baseRequest(siteId)) : baseRequest(siteId);
+  const priorities = useRotationStore((s) => s.farmerRequest);
+  const t = useFutureStore((s) => s.t);
+  const focusFieldId = useFutureStore((s) => s.focusFieldId);
   const [catalog, setCatalog] = useState<CropCatalog | null>(null);
   const [input, setInput] = useState<PlannerInput | null>(() => (base ? inputFrom(base) : null));
   const [query, setQuery] = useState("");
-  const [fieldId, setFieldId] = useState<string | null>(null);
-  const [year, setYear] = useState(1);
+  const fieldId = focusFieldId;
+  const year = yearOfClock(t, 10);
   const [customCycle, setCustomCycle] = useState(3);
   const [editing, setEditing] = useState(false);
-  const [run, setRun] = useState<Run>({ status: "idle", forecast: null, note: null, error: null });
+  const [localError, setLocalError] = useState<string | null>(null);
+  const run: Run = { status: shared.status, forecast: shared.siteId === siteId ? shared.forecast : null, note: shared.source && shared.source !== "live" ? "Saved forecast: edited inputs require the live API." : null, error: shared.error };
 
   useEffect(() => {
     if (!open || catalog) return;
@@ -65,25 +75,20 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
 
   const execute = async (i: PlannerInput) => {
     if (!base) return;
-    setRun((r) => ({ ...r, status: "loading", error: null }));
-    try {
-      if (apiMode === "live") {
-        const forecast = await getForecast(siteId, buildRequest(base, i));
-        setRun({ status: "ready", forecast, note: null, error: null });
-      } else {
-        const forecast = await getPrebuiltForecast(siteId);
-        setRun({ status: "ready", forecast, note: "Pre-built engine run for the farm's default crop pool. Pool, constraint and custom-rotation changes are scored when the app runs against the live API.", error: null });
-      }
-    } catch (e) {
-      setRun({ status: "error", forecast: null, note: null, error: e instanceof ApiError ? `${e.message}${e.hint ? ` ${e.hint}` : ""}` : "The rotations could not be scored." });
+    const selected = priorities.criteria_selected.length ? priorities.criteria_selected : Object.keys(priorities.weights) as (keyof typeof priorities.weights)[];
+    const weights = Object.fromEntries(selected.map((key) => [key, priorities.weights[key]]));
+    if (Object.values(weights).every((value) => value === 0)) {
+      setLocalError("Choose at least one priority with a weight above zero."); return;
     }
+    setLocalError(null);
+    await useForecastStore.getState().run(siteId, { ...buildRequest(base, i), priorities: { criteria_selected: priorities.criteria_selected, weights } });
   };
 
-  // First open: score the farm's default request.
   useEffect(() => {
-    if (open && input && run.status === "idle") void execute(input);
+    if (open && base) setInput(inputFrom(base));
+    // Refresh on opening or farm change, not while editing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, siteId]);
 
   if (!open || !base || !input) return null;
   const problems = validate(input);
@@ -179,19 +184,26 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
           <h2 style={{ margin: 0 }}>Rotations · 10 years</h2>
           {f && (
             <label>Area
-              <select value={fieldId ?? ""} onChange={(e) => setFieldId(e.target.value || null)} data-testid="planner-field">
+              <select value={fieldId ?? ""} onChange={(e) => useFutureStore.setState({ focusFieldId: e.target.value || null })} data-testid="planner-field">
                 <option value="">Whole farm</option>
                 {f.fields.map((x) => <option key={x.field_id} value={x.field_id}>{x.name}</option>)}
               </select>
             </label>
           )}
           <label>Calendar year
-            <select value={year} onChange={(e) => setYear(+e.target.value)}>{Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select>
+            <select value={year} onChange={(e) => useFutureStore.getState().setT(tOf(+e.target.value - 1, 194))}>{Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select>
           </label>
         </div>
+        {apiMode !== "live" && <p className="muted">Edits cannot be scored without the live API.</p>}
+        {shared.request && JSON.stringify(inputFrom(shared.request)) !== JSON.stringify(input) && <p className="muted">Planner edits are not yet scored; showing the last accepted forecast.</p>}
+        {shared.request && shared.source === "live" && <button type="button" className="chip" onClick={() => {
+          const blob = new Blob([JSON.stringify({ version: 1, site_id: siteId, request: shared.request }, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `${siteId}-forecast-request.json`; link.click(); URL.revokeObjectURL(url);
+        }}>Download accepted forecast inputs</button>}
+        {shared.request && <p className="muted">To rerun, post the downloaded JSON’s request property to /api/v1/sites/{siteId}/forecast.</p>}
         {run.note && <p className="muted" data-testid="planner-note">{run.note}</p>}
         {run.status === "loading" && <p role="status">Scoring the rotations…</p>}
-        {run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
+        {localError ? <p role="alert" className="bad">{localError}</p> : run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
         {f && !fieldId && f.fields.length > 1 && <p className="muted">Plans shown for {field?.name}; numbers are area-weighted over {f.fields.length} fields.</p>}
 
         {strategies.map((s) => (
@@ -269,6 +281,7 @@ function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrate
         {onEdit && <FvButton className="fv-seg" onClick={onEdit} data-testid="edit-rotation">Edit</FvButton>}
         <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested for this farm, and what should I check locally?`} />
       </div>
+      {originNote(s.role) && <span className="muted" data-testid="planner-origin" style={{ fontSize: 11 }}>{originNote(s.role)}</span>}
       <table aria-label={`${label}, years 1 to 10 by season`}>
         <thead><tr><th />{Array.from({ length: 10 }, (_, i) => <th key={i} style={{ fontWeight: i + 1 === year ? 600 : 400 }}>{i + 1}</th>)}</tr></thead>
         <tbody>
@@ -299,9 +312,9 @@ function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrate
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 12px", fontSize: 12 }}>
         {TRAJ.map((t) => {
           const series = traj[t.key];
-          const p = series?.points.find((x) => x.year === 10);
+          const p = series?.points.find((x) => x.year === year);
           if (!series || !p) return null;
-          return <span key={t.key}>{t.label}, year 10: <b style={{ fontWeight: 500 }}>{fmt(p.p50, t.note ? undefined : series.unit)}</b>{p.p10 !== undefined && p.p90 !== undefined && p.p10 !== p.p90 ? <span className="muted"> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}{t.note ? <span className="muted"> {t.note}</span> : null}</span>;
+          return <span key={t.key}>{t.label}, year {year}: <b style={{ fontWeight: 500 }}>{fmt(p.p50, t.note ? undefined : series.unit)}</b>{p.p10 !== undefined && p.p90 !== undefined && p.p10 !== p.p90 ? <span className="muted"> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}{t.note ? <span className="muted"> {t.note}</span> : null}</span>;
         })}
       </div>
       {ex && ex.crop_roles.length > 0 && (

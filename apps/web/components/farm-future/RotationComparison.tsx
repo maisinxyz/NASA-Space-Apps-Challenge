@@ -3,10 +3,9 @@
 // the "Compare rotations" drawer. Crop sequence, crop-role badges from the API, review flags by severity, why
 // suggested, evidence, information gaps, local review risks. Hero numbers: soil health, irrigation need against the
 // quota, frost-free and heat-stress days. Per-field or whole-farm. No income or fertilizer figures (D3).
-import { useState } from "react";
 
 import type { Forecast, ForecastStrategy } from "@/lib/api/types";
-import { CURRENT_ROTATION, cropName, rotationText, SWATCHES, STRATEGY_IDS } from "@/lib/farm-future/data";
+import { CURRENT_ROTATION, cropName, originNote, rotationText, SWATCHES, STRATEGY_IDS } from "@/lib/farm-future/data";
 import { forecastYear } from "@/lib/farm-future/data";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
@@ -58,12 +57,12 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
   const { forecast } = useFutureData();
   const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const { status, source, error, siteId } = useForecastStore();
-  const whatIf = useFutureStore((s) => s.whatIf);
-  const retry = () => { if (siteId) void useForecastStore.getState().load(siteId, whatIf); };
-  const [fieldId, setFieldId] = useState<string | null>(null);
+  const retry = () => { if (siteId) void useForecastStore.getState().retry(); };
+  const fieldId = useFutureStore((s) => s.focusFieldId);
+  const setFieldId = (id: string | null) => useFutureStore.setState({ focusFieldId: id });
   if (!forecast) return <ForecastStatus status={status} source={null} error={error} hasForecast={false} onRetry={retry} />;
   const field = (fieldId && forecast.fields.find((x) => x.field_id === fieldId)) || forecast.fields[0];
-  const strategies = field?.strategies.slice(0, 4) ?? [];
+  const strategies = field?.strategies ?? [];
   const year = forecastYear(t, forecast.horizon_years);
   const rank = forecast.comparison.rank_by_priority;
   return (
@@ -95,6 +94,7 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
                 <strong style={{ fontSize: 14 }}>{LETTERS[i]} · {label}</strong>
                 {!fieldId && rankPos >= 0 && <span style={{ marginLeft: "auto", fontSize: 11, color: color.inkSecondary }}>farm rank {rankPos + 1}</span>}
               </header>
+              {originNote(s.role) && <span data-testid="comparison-origin" style={{ fontSize: 11, color: color.inkSecondary }}>{originNote(s.role)}</span>}
               <span style={{ fontSize: 12 }}>{rotationText(s.plan, s.cycle_years)} · {s.cycle_years}-year cycle</span>
               {s.rotation_explanation && s.rotation_explanation.crop_roles.length > 0 && (
                 <div>{s.rotation_explanation.crop_roles.map((r) => <span key={`${r.crop_id}-${r.role}`} title={r.text} style={{ display: "inline-flex", fontSize: 10.5, border: "1px solid rgba(242,235,221,.25)", borderRadius: 9, padding: "1px 8px", margin: "0 4px 4px 0" }}>{roleLabel(r.role)} · {cropName(r.crop_id)}</span>)}</div>

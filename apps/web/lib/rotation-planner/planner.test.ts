@@ -53,3 +53,11 @@ describe("rotation planner", () => {
     expect(cropColour("crop_barley")).toBe(cropColour("crop_barley"));
   });
 });
+
+it("round-trips an accepted custom strategy when editing its quota", () => {
+  const custom = [{ year_index: 1, season: "spring" as const, crop_id: "crop_barley" }];
+  const accepted = { ...baseRequest("site_ubc_farm")!, custom_strategies: [custom] };
+  const input = inputFrom(accepted);
+  expect(input.custom).toEqual(custom);
+  expect(buildRequest(accepted, { ...input, waterQuotaMm: 75 }).custom_strategies).toEqual([custom]);
+});

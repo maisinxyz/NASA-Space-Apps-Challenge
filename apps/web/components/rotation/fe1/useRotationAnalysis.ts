@@ -7,6 +7,7 @@ import { getCrops, isMock } from "@/lib/api/client";
 import { postRotationAnalysis } from "@/lib/rotation/api";
 import type { RotationAnalysis } from "@/lib/rotation/draft-types";
 import { buildAnalysisRequest, useRotationStore } from "@/lib/rotation/store";
+import { siteForFarm } from "@/lib/forecast/sites";
 import { useAppStore } from "@/lib/store";
 
 type State = { data?: RotationAnalysis; error?: unknown; done: boolean };
@@ -23,7 +24,9 @@ export function useRotationAnalysis() {
   useEffect(() => {
     if (!farmId) return;
     let stale = false;
-    postRotationAnalysis(farmId, buildAnalysisRequest())
+    const siteId = siteForFarm(farmId);
+    if (!siteId) { setRes({ key, error: new Error("Forecast analysis is not available for this farm. Choose UBC Farm or KPU Langley."), done: true }); return; }
+    postRotationAnalysis(siteId, buildAnalysisRequest())
       .then((data) => !stale && setRes({ key, data, done: true }))
       .catch((error) => !stale && setRes((r) => ({ key, error, data: r.data, done: true })));
     return () => {
@@ -34,7 +37,7 @@ export function useRotationAnalysis() {
 
   const current = res.key === key;
   // Stale-while-revalidate: `data` keeps the last success while refetching (so results do not unmount); errors only for the current key.
-  return { farmId, isMock, data: res.data, error: current ? res.error : undefined, loading: !!farmId && !(current && res.done), retry: () => setTick((t) => t + 1) };
+  return { farmId, isMock, data: current ? res.data : undefined, error: current ? res.error : undefined, loading: !!farmId && !(current && res.done), retry: () => setTick((t) => t + 1) };
 }
 
 /** crop_id -> display name from GET /crops; empty until loaded, callers fall back to the id. */

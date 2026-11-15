@@ -1,5 +1,6 @@
 "use client";
 // F1-1: which criteria matter, how much (0-5), or a preset. Weight edits clear the preset.
+import { useForecastStore } from "@/lib/forecast/store";
 import { CRITERIA, type Criterion, type WeightPreset, WEIGHT_PRESETS } from "@/lib/rotation/draft-types";
 import { updateFarmerRequest, useRotationStore } from "@/lib/rotation/store";
 import { PRIORITIES_NOTE } from "@/lib/twin/rotations";
@@ -9,6 +10,7 @@ import { CRITERION_LABELS, PRESET_LABELS, PRESET_WEIGHTS } from "./presets";
 const clamp = (v: number) => Math.min(5, Math.max(0, Math.round(v) || 0));
 
 export function PrioritiesForm({ allZero }: { allZero: boolean }) {
+  const forecast = useForecastStore();
   const { criteria_selected, weights, weight_preset } = useRotationStore((s) => s.farmerRequest);
   const setWeight = (c: Criterion, v: number) => updateFarmerRequest({ weights: { ...weights, [c]: clamp(v) }, weight_preset: null });
   const toggle = (c: Criterion, on: boolean) => updateFarmerRequest({ criteria_selected: CRITERIA.filter((x) => (x === c ? on : criteria_selected.includes(x))), weight_preset: null });
@@ -68,6 +70,12 @@ export function PrioritiesForm({ allZero }: { allZero: boolean }) {
           Every weight is 0, so there is nothing to rank by. Raise at least one weight above 0 and tick its box.
         </p>
       )}
+      <p className="text-xs text-ink-muted">Priority changes are unscored until applied to the forecast. The analysis below is a separate ranking.</p>
+      <button type="button" className="rounded border border-white/20 px-2 py-1 text-xs" disabled={allZero || !forecast.siteId || !forecast.request || forecast.status === "loading"} onClick={() => {
+        if (!forecast.siteId || !forecast.request) return;
+        const selected = criteria_selected.length ? criteria_selected : CRITERIA;
+        void forecast.run(forecast.siteId, { ...forecast.request, priorities: { criteria_selected, weights: Object.fromEntries(selected.map((key) => [key, weights[key]])) } });
+      }}>Apply priorities to forecast</button>
       <p className="text-[0.7rem] leading-snug text-ink-muted">{PRIORITIES_NOTE}</p>
     </fieldset>
   );

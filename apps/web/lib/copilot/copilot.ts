@@ -3,12 +3,13 @@
 import { create } from "zustand";
 
 import { ApiError, isMock, postCopilotChat } from "@/lib/api/client";
-import type { CopilotChatRequest, CopilotSnapshot } from "@/lib/api/types";
+import type { CopilotChatRequest, CopilotSnapshot, ForecastRequest } from "@/lib/api/types";
 
 export type SelectedKind = "field" | "flag" | "strategy";
 export type ChatMessage = { role: "user" | "assistant"; content: string; tips?: string[]; layers?: string[]; placeholder?: boolean };
 
 export type ScreenState = {
+  forecastRequest?: ForecastRequest | null;
   farmId: string;
   siteId: string;
   fieldId: string | null;
@@ -25,6 +26,7 @@ export const MAX_HISTORY = 6;
 
 export function snapshotOf(s: ScreenState): CopilotSnapshot {
   return {
+    ...(s.forecastRequest ? { forecast_request: s.forecastRequest } : {}),
     farm_id: s.farmId,
     site_id: s.siteId,
     field_id: s.fieldId,
@@ -96,7 +98,7 @@ export const useCopilot = create<ChatState>((set, get) => ({
   error: null,
   ask: ({ question, kind, id, strategyId = null, fieldId = null }) => set({ open: true, draft: question, selected: { kind, id }, strategyId, fieldId, error: null }),
   startFarm: (farmId, question) => set((state) => ({
-    conversation: state.conversation + 1, open: true, draft: question ?? "",
+    conversation: state.conversation + 1, open: !!question?.trim(), draft: question ?? "",
     pendingFarm: question ? farmId : null, selected: null, strategyId: null, fieldId: null,
     messages: [], status: "idle", error: null,
   })),

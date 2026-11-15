@@ -3107,9 +3107,10 @@ components:
         id: { type: string, minLength: 1 }
     CopilotSnapshot:
       type: object
-      description: Screen state. Holds ids and slider values only, never forecast numbers.
+      description: Screen state and optional accepted forecast inputs, never forecast numbers.
       required: [farm_id, site_id, field_id, horizon, time_index, scenario, strategy_id, selected]
       properties:
+        forecast_request: { $ref: '#/components/schemas/ForecastRequest' }
         farm_id: { type: string, minLength: 1 }
         site_id: { $ref: '#/components/schemas/SiteId' }
         field_id: { type: [string, 'null'] }

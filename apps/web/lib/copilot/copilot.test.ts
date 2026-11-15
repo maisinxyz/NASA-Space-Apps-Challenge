@@ -122,3 +122,12 @@ it("keeps an initial contextual selection when first send binds the farm", async
   await useCopilot.getState().send("Why this strategy?", screen);
   expect(useCopilot.getState()).toMatchObject({ open: true, selected: { kind: "strategy", id: "rot_alt_1" }, strategyId: "rot_alt_1" });
 });
+
+it("opens Gus only for an explicit farm question, including reentry", () => {
+  useCopilot.getState().startFarm("ubc-farm");
+  expect(useCopilot.getState()).toMatchObject({ open: false, draft: "", pendingFarm: null });
+  useCopilot.getState().startFarm("ubc-farm", "What changed?");
+  expect(useCopilot.getState()).toMatchObject({ open: true, draft: "What changed?", pendingFarm: "ubc-farm" });
+  useCopilot.getState().startFarm("ubc-farm");
+  expect(useCopilot.getState()).toMatchObject({ open: false, draft: "", pendingFarm: null });
+});

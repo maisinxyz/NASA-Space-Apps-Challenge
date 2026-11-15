@@ -2314,8 +2314,9 @@ export interface components {
             kind: "field" | "flag" | "strategy";
             id: string;
         };
-        /** @description Screen state. Holds ids and slider values only, never forecast numbers. */
+        /** @description Screen state and optional accepted forecast inputs, never forecast numbers. */
         CopilotSnapshot: {
+            forecast_request?: components["schemas"]["ForecastRequest"];
             farm_id: string;
             site_id: components["schemas"]["SiteId"];
             field_id: string | null;

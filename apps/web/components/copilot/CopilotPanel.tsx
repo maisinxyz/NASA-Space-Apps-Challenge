@@ -9,6 +9,7 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
 import { color } from "@/lib/farm-view/tokens";
 import { MAX_MESSAGE, TERMS, termsIn, useCopilot, type ScreenState } from "@/lib/copilot/copilot";
+import { useForecastStore } from "@/lib/forecast/store";
 import { siteForFarm } from "@/lib/forecast/sites";
 import { useAppStore } from "@/lib/store";
 
@@ -21,20 +22,21 @@ const GUS_BG = "linear-gradient(rgba(17,26,32,.35), rgba(17,26,32,.35)), url(/gu
 
 export function useScreenState(): ScreenState | null {
   const farmId = useAppStore((s) => s.farmId);
-  const twinFieldId = useAppStore((s) => s.twinFieldId);
   const { t, whatIf, strategyId, focusFieldId, horizon, monthIndex } = useFutureStore();
   const { data } = useFutureData();
   const c = useCopilot();
   const siteId = siteForFarm(farmId);
+  const accepted = useForecastStore((s) => s.siteId === siteId && s.source === "live" ? s.request : null);
   if (!farmId || !siteId) return null;
   return {
+    forecastRequest: accepted,
     farmId,
     siteId,
-    fieldId: c.fieldId ?? focusFieldId ?? twinFieldId ?? null,
+    fieldId: c.fieldId ?? focusFieldId ?? null,
     horizon,
     timeIndex: horizon === "months" ? monthIndex : Math.floor(t) + 1,
-    rainPct: whatIf.rainPct,
-    tempC: whatIf.tempC,
+    rainPct: accepted && typeof accepted.scenario !== "string" ? accepted.scenario.rain_scale_pct ?? 0 : whatIf.rainPct,
+    tempC: accepted && typeof accepted.scenario !== "string" ? accepted.scenario.temp_offset_c ?? 0 : whatIf.tempC,
     strategyId: c.strategyId ?? (data.source === "engine" ? strategyOf(data, strategyId).engineId : null),
     selected: c.selected,
   };

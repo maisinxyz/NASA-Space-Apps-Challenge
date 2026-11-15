@@ -7,9 +7,9 @@ import { useReducedMotion } from "framer-motion";
 import { useEffect, useId, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
 
-import { limitsFor, WINDOW_CONFIG, type WindowId } from "@/lib/window/config";
-import { dragRect, easeOutBack, lerpRect, resizeRect, sameRect, type Dir, type Rect } from "@/lib/window/geometry";
-import { flushLayout, regionFor, useWindowManager, zIndexOf } from "@/lib/window/store";
+import { WINDOW_CONFIG, type WindowId } from "@/lib/window/config";
+import { boundedRecoilRect, dragRect, easeOutBack, lerpRect, resizeRect, sameRect, type Dir, type Rect } from "@/lib/window/geometry";
+import { flushLayout, regionForWindow, windowLimits, useWindowManager, zIndexOf } from "@/lib/window/store";
 
 const HANDLES: { dir: Dir; name: string }[] = [
   { dir: { x: 0, y: -1 }, name: "n" },
@@ -195,7 +195,9 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     const start = performance.now();
     const step = (now: number) => {
       const k = Math.min(1, (now - start) / RECOIL_MS);
-      applyRect(el, lerpRect(from, to, easeOutBack(k)));
+      const bounds = useWindowManager.getState().bounds;
+      const frame = lerpRect(from, to, easeOutBack(k));
+      applyRect(el, bounds ? boundedRecoilRect(from, to, k, regionForWindow(id, bounds), windowLimits(id, bounds)) : frame);
       if (k < 1) anim.current = requestAnimationFrame(step);
       else commit();
     };
@@ -261,7 +263,7 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     if (s.wins[id].maximized || !s.bounds) return;
     const b = s.bounds;
     const start = s.wins[id].rect;
-    track(e, (dx, dy) => dragRect(start, dx, dy, regionFor(b), limitsFor(id, b)));
+    track(e, (dx, dy) => { const { target } = dragRect(start, dx, dy, regionForWindow(id, b), windowLimits(id, b)); return { show: target, target }; });
   };
 
   const startResize = (e: React.PointerEvent, dir: Dir) => {
@@ -269,7 +271,7 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     if (!s.bounds) return;
     const b = s.bounds;
     const start = s.wins[id].rect;
-    track(e, (dx, dy) => resizeRect(start, dir, dx, dy, regionFor(b), limitsFor(id, b)));
+    track(e, (dx, dy) => { const { target } = resizeRect(start, dir, dx, dy, regionForWindow(id, b), windowLimits(id, b)); return { show: target, target }; });
   };
 
   const onKey = (e: React.KeyboardEvent) => {

@@ -3,7 +3,7 @@
 // plus the per-device layout persistence (localStorage, never synced). z-index is assigned only here.
 import { create } from "zustand";
 
-import { BOTTOM_STRIP, DOCK_H, limitsFor, WINDOW_CONFIG, WINDOW_IDS, workArea, type WindowId } from "./config";
+import { BOTTOM_STRIP, DOCK_H, NARROW_W, limitsFor, WINDOW_CONFIG, WINDOW_IDS, workArea, type WindowId } from "./config";
 import { clampRect, fromFrac, toFrac, type Bounds, type Rect } from "./geometry";
 
 export type WinState = {
@@ -47,16 +47,31 @@ const DEFAULT_ORDER: WindowId[] = ["nav", "time", "simulation", "inspector", "fu
 /** Where windows may sit: the whole screen below the dock row. */
 export const regionFor = (b: Bounds): Rect => ({ x: 0, y: DOCK_H, w: b.w, h: Math.max(0, b.h - DOCK_H - BOTTOM_STRIP) });
 
+/** Desktop keeps the dashboard in a dedicated left column, including during gestures. */
+export function regionForWindow(id: WindowId, b: Bounds): Rect {
+  const r = regionFor(b);
+  if (b.w < NARROW_W) return r;
+  const split = 288;
+  return id === "nav" ? { ...r, w: split - 8 } : { ...r, x: split, w: r.w - split };
+}
+
+export function windowLimits(id: WindowId, b: Bounds) {
+  const lim = limitsFor(id, b);
+  const region = regionForWindow(id, b);
+  const maxW = Math.min(lim.maxW, region.w);
+  return { ...lim, minW: Math.min(lim.minW, maxW), maxW };
+}
+
 /** The maximised rect: the region less each window's margin. */
 export function maxRect(id: WindowId, b: Bounds): Rect {
   const m = WINDOW_CONFIG[id].maxMargin;
-  const r = regionFor(b);
+  const r = regionForWindow(id, b);
   return { x: r.x + m, y: r.y, w: Math.max(0, r.w - 2 * m), h: Math.max(0, r.h - m) };
 }
 
 export const zIndexOf = (order: WindowId[], id: WindowId) => Z_BASE + Math.max(0, order.indexOf(id));
 
-const fitRect = (id: WindowId, r: Rect, b: Bounds) => clampRect(r, regionFor(b), limitsFor(id, b));
+const fitRect = (id: WindowId, r: Rect, b: Bounds) => clampRect(r, regionForWindow(id, b), windowLimits(id, b));
 
 function fit(id: WindowId, w: WinState, b: Bounds): WinState {
   if (w.maximized) return { ...w, rect: maxRect(id, b), prev: w.prev && fitRect(id, w.prev, b) };

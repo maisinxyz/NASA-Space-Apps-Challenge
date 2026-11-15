@@ -1,6 +1,6 @@
 "use client";
 // Collapsible condition legend: grouped conditions, one hue each; click one to colour the plots (2D and 3D) by it.
-// The selected condition shows its light -> dark scale with the real number range, and what to do this year and now.
+// The selected condition shows its light -> dark scale with the real number range, and what to do that year (illustrative values, no current-conditions advice).
 import { useState } from "react";
 
 import { CONDITIONS, GROUPS, tint, type Cond, type GroupId } from "@/lib/conditions/model";
@@ -24,7 +24,7 @@ export function ConditionLegend({ embedded = false }: { embedded?: boolean }) {
   return (
     <section className="fv-glass fv-auto ff-card" data-testid="condition-legend" aria-label="Conditions legend" style={{ ...(embedded ? { position: "relative" as const, width: "100%", boxSizing: "border-box" as const } : { right: 40, bottom: 200, width: 320, maxHeight: "calc(100vh - 300px)", overflowY: "auto" as const }), gap: 6, padding: "10px 12px" }}>
       <FvButton className="ff-link" aria-expanded={open} data-testid="condition-legend-toggle" onClick={() => set({ open: !open })} style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-        <strong style={{ color: color.ink }}>Conditions{view ? ` · ${view.cond.label}` : ""}</strong>
+        <strong style={{ color: color.ink }}>Conditions{view ? ` · ${view.cond.label} · illustrative` : ""}</strong>
         <span aria-hidden>{open ? "▾" : "▸"}</span>
       </FvButton>
 
@@ -63,7 +63,6 @@ function Detail({ view }: { view: NonNullable<ReturnType<typeof useConditionView
   const name = (id: string) => twin?.fields.find((f) => f.id === id)?.name ?? id;
   const avg = view.series[view.year - 1];
   const sevAvg = view.plots.reduce((a, p) => a + p.sev, 0) / (view.plots.length || 1);
-  const sevNow = view.now.plots.reduce((a, p) => a + p.sev, 0) / (view.now.plots.length || 1);
   const r = RECS[c.id];
   const lo = c.invert ? view.max : view.min, hi = c.invert ? view.min : view.max;
   return (
@@ -73,6 +72,7 @@ function Detail({ view }: { view: NonNullable<ReturnType<typeof useConditionView
         <span>{c.low} · {num(c, lo)}</span>
         <span>{c.high} · {num(c, hi)}</span>
       </div>
+      <span data-testid="condition-illustrative" style={{ color: color.inkSecondary, fontSize: 11 }}>Illustrative: plot values are synthetic and scaled from the farm forecast. Not measured at your fields.</span>
       <span>Year {view.year} ({FIRST_YEAR + view.year - 1}), farm average: <b>{num(c, avg)}</b></span>
       <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 2 }}>
         {view.plots.map((p) => (
@@ -84,7 +84,6 @@ function Detail({ view }: { view: NonNullable<ReturnType<typeof useConditionView
         ))}
       </ul>
       <div data-testid="condition-rec-year"><b style={{ fontWeight: 600 }}>In {FIRST_YEAR + view.year - 1}:</b> {r.year[band(sevAvg)]}</div>
-      <div data-testid="condition-rec-now"><b style={{ fontWeight: 600 }}>Right now:</b> {r.now[band(sevNow)]}</div>
     </div>
   );
 }
