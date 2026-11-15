@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { WINDOW_IDS, limitsFor, type WindowId } from "./config";
-import { defaultWins, LAYOUT_KEY, maxRect, parseLayout, regionFor, serializeLayout } from "./store";
+import { defaultWins, LAYOUT_KEY, maxRect, parseLayout, regionFor, serializeLayout, useWindowManager } from "./store";
 import type { Bounds, Rect } from "./geometry";
 
 const BIG: Bounds = { w: 1440, h: 900 };
@@ -158,4 +158,34 @@ describe("desktop workspace visibility", () => {
     expect(limitsFor("time", BIG).minH).toBeGreaterThanOrEqual(260);
     expect(defaultWins(BIG).time.rect.h).toBeGreaterThanOrEqual(260);
   });
+});
+
+describe("dashboard-safe content", () => {
+  it("keeps moved, maximized, restored and migrated content to the right of navigation", () => {
+    const manager = useWindowManager.getState();
+    manager.init(BIG);
+    const navRight = () => useWindowManager.getState().wins.nav.rect.x + useWindowManager.getState().wins.nav.rect.w;
+    manager.setRect("copilot", { x: 0, y: 60, w: 400, h: 400 });
+    expect(useWindowManager.getState().wins.copilot.rect.x).toBeGreaterThanOrEqual(navRight());
+    manager.toggleMaximize("copilot");
+    expect(useWindowManager.getState().wins.copilot.rect.x).toBeGreaterThanOrEqual(navRight());
+    manager.toggleMaximize("copilot");
+    expect(useWindowManager.getState().wins.copilot.rect.x).toBeGreaterThanOrEqual(navRight());
+    const raw = savedJson(BIG, (d) => { d.wins.copilot.r = [0, 0.1, 0.3, 0.5]; });
+    const parsed = parseLayout(raw, BIG)!;
+    expect(parsed.wins.copilot.rect.x).toBeGreaterThanOrEqual(parsed.wins.nav.rect.x + parsed.wins.nav.rect.w);
+  });
+  it("keeps navigation and content apart through resizing and saved maximized layouts", () => {
+    const manager = useWindowManager.getState();
+    manager.init(BIG);
+    manager.setRect("nav", { x: 900, y: 60, w: 1000, h: 400 });
+    manager.setRect("inspector", { x: 0, y: 60, w: 1200, h: 400 });
+    let wins = useWindowManager.getState().wins;
+    expect(wins.inspector.rect.x).toBeGreaterThanOrEqual(wins.nav.rect.x + wins.nav.rect.w);
+    const raw = savedJson(BIG, (d) => { d.wins.copilot.max = true; d.wins.copilot.p = [0, 0.1, 0.3, 0.5]; });
+    wins = parseLayout(raw, BIG)!.wins;
+    expect(wins.copilot.rect.x).toBeGreaterThanOrEqual(wins.nav.rect.x + wins.nav.rect.w);
+    expect(wins.copilot.prev!.x).toBeGreaterThanOrEqual(wins.nav.rect.x + wins.nav.rect.w);
+  });
+
 });

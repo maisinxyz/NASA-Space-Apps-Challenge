@@ -7,9 +7,9 @@ import { useReducedMotion } from "framer-motion";
 import { useEffect, useId, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
 
-import { limitsFor, WINDOW_CONFIG, type WindowId } from "@/lib/window/config";
+import { WINDOW_CONFIG, type WindowId } from "@/lib/window/config";
 import { dragRect, easeOutBack, lerpRect, resizeRect, sameRect, type Dir, type Rect } from "@/lib/window/geometry";
-import { flushLayout, regionFor, useWindowManager, zIndexOf } from "@/lib/window/store";
+import { flushLayout, regionForWindow, windowLimits, useWindowManager, zIndexOf } from "@/lib/window/store";
 
 const HANDLES: { dir: Dir; name: string }[] = [
   { dir: { x: 0, y: -1 }, name: "n" },
@@ -261,7 +261,7 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     if (s.wins[id].maximized || !s.bounds) return;
     const b = s.bounds;
     const start = s.wins[id].rect;
-    track(e, (dx, dy) => dragRect(start, dx, dy, regionFor(b), limitsFor(id, b)));
+    track(e, (dx, dy) => { const { target } = dragRect(start, dx, dy, regionForWindow(id, b), windowLimits(id, b)); return { show: target, target }; });
   };
 
   const startResize = (e: React.PointerEvent, dir: Dir) => {
@@ -269,7 +269,7 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     if (!s.bounds) return;
     const b = s.bounds;
     const start = s.wins[id].rect;
-    track(e, (dx, dy) => resizeRect(start, dir, dx, dy, regionFor(b), limitsFor(id, b)));
+    track(e, (dx, dy) => { const { target } = resizeRect(start, dir, dx, dy, regionForWindow(id, b), windowLimits(id, b)); return { show: target, target }; });
   };
 
   const onKey = (e: React.KeyboardEvent) => {

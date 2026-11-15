@@ -96,7 +96,7 @@ export const useCopilot = create<ChatState>((set, get) => ({
   error: null,
   ask: ({ question, kind, id, strategyId = null, fieldId = null }) => set({ open: true, draft: question, selected: { kind, id }, strategyId, fieldId, error: null }),
   startFarm: (farmId, question) => set((state) => ({
-    conversation: state.conversation + 1, open: true, draft: question ?? "",
+    conversation: state.conversation + 1, open: !!question?.trim(), draft: question ?? "",
     pendingFarm: question ? farmId : null, selected: null, strategyId: null, fieldId: null,
     messages: [], status: "idle", error: null,
   })),

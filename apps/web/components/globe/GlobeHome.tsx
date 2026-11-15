@@ -442,6 +442,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const openFarm = (id: string, question?: string) => {
     if (!farmById(id)) return;
     if (id !== useAppStore.getState().farmId || view !== "farm") {
+      resetFutureInvestigation();
       useCopilot.getState().startFarm(id, question);
     }
     if (view === "globe") requestDive(id);

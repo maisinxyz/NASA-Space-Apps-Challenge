@@ -68,7 +68,7 @@ test.describe("farm windows", () => {
     const t = await bar(page, "nav").boundingBox();
     await dragBy(page, { x: t!.x + 60, y: t!.y + 17 }, 120, 40);
     const moved = await box(page, "nav");
-    expect(Math.round(moved.x - start.x)).toBe(120);
+    expect(moved.x + moved.width).toBeLessThanOrEqual(280);
     expect(Math.round(moved.y - start.y)).toBe(Math.round(Math.min(40, vh - BOTTOM_STRIP - start.y - start.height)));
     expect(moved.y + moved.height).toBeLessThanOrEqual(vh - BOTTOM_STRIP + 0.5);
 
@@ -93,11 +93,11 @@ test.describe("farm windows", () => {
     b = await box(page, "nav");
     expect([b.x, b.y, b.width, b.height].map(Math.round)).toEqual([before.x, before.y, before.width, before.height].map(Math.round));
 
-    // Maximise fills the work area; double-click the title bar restores.
+    // Maximise fills the dashboard column; double-click the title bar restores.
     await tid(page, "window-max-nav").click();
     await page.waitForTimeout(300);
     b = await box(page, "nav");
-    expect(b.width).toBeGreaterThan(vw - 40);
+    expect(b.width).toBeLessThanOrEqual(280);
     await bar(page, "nav").dblclick({ position: { x: 60, y: 17 } });
     await page.waitForTimeout(300);
     b = await box(page, "nav");
@@ -119,10 +119,11 @@ test.describe("farm windows", () => {
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("Shift+ArrowDown");
     const b = await box(page, "nav");
-    expect(Math.round(b.x - a.x)).toBe(10);
+    expect(b.x).toBeGreaterThan(a.x);
+    expect(b.x + b.width).toBeLessThanOrEqual(280);
     await page.keyboard.press("Enter");
     await page.waitForTimeout(300);
-    expect((await box(page, "nav")).width).toBeGreaterThan(1400);
+    expect((await box(page, "nav")).width).toBeLessThanOrEqual(280);
   });
 
   test("layout persists across reload; cleared storage gives defaults; shrinking never strands a window", async ({ page }) => {
@@ -151,4 +152,64 @@ test.describe("farm windows", () => {
     for (const id of ["nav"]) expect(inside(await box(page, id), 1024, 600 - BOTTOM_STRIP)).toBe(true);
     expect(errors).toEqual([]);
   });
+});
+
+test("ordinary entry shows only the dashboard; Ask opens Gus without covering it", async ({ page }) => {
+  await page.addInitScript((key) => localStorage.removeItem(key), KEY);
+  await open(page);
+  await expect(win(page, "nav")).toBeVisible();
+  for (const id of ["time", "simulation", "inspector", "future", "planner", "copilot"]) await expect(win(page, id)).toBeHidden();
+  await page.getByRole("button", { name: "Ask Gus", exact: true }).click();
+  await expect(win(page, "copilot")).toBeVisible();
+  const nav = await box(page, "nav");
+  await bar(page, "copilot").focus();
+  for (let i = 0; i < 120; i++) await page.keyboard.press("ArrowLeft");
+  expect((await box(page, "copilot")).x).toBeGreaterThanOrEqual(nav.x + nav.width);
+  await tid(page, "window-max-copilot").click();
+  await page.waitForTimeout(300);
+  expect((await box(page, "copilot")).x).toBeGreaterThanOrEqual(nav.x + nav.width);
+});
+
+test("reentering a farm restores its dashboard after it was closed", async ({ page }) => {
+  await page.addInitScript((key) => { if (!sessionStorage.getItem("started")) { localStorage.removeItem(key); sessionStorage.setItem("started", "1"); } }, KEY);
+  await open(page);
+  await tid(page, "window-close-nav").click();
+  await expect(win(page, "nav")).toBeHidden();
+  await page.waitForTimeout(250);
+  await page.reload();
+  await expect(win(page, "nav")).toBeVisible({ timeout: 45_000 });
+  await expect(win(page, "copilot")).toBeHidden();
+});
+
+test("selecting and revisiting UBC from Farms starts with only its dashboard", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript((key) => localStorage.removeItem(key), KEY);
+  await page.goto("/");
+  const enter = async () => {
+    await page.getByRole("button", { name: "Farms", exact: true }).click();
+    await page.getByRole("dialog", { name: "Farms" }).getByRole("button", { name: /UBC Farm, University of British Columbia/ }).click();
+    await expect(win(page, "nav")).toBeVisible({ timeout: 45_000 });
+    for (const id of ["time", "simulation", "inspector", "future", "planner", "copilot"]) await expect(win(page, id)).toBeHidden();
+  };
+  await enter();
+  await tid(page, "mode-future").click();
+  await expect(win(page, "time")).toBeVisible();
+  await page.getByRole("button", { name: "Back to the globe" }).click();
+  await enter();
+});
+
+test("a legacy overlapping Gus layout is recovered on reload", async ({ page }) => {
+  await open(page);
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), KEY)).not.toBeNull();
+  await page.evaluate((key) => {
+    const layout = JSON.parse(localStorage.getItem(key)!);
+    layout.wins.copilot.r = [0, 0.1, 0.3, 0.5];
+    sessionStorage.setItem("legacyLayout", JSON.stringify(layout));
+  }, KEY);
+  await page.addInitScript((key) => { const legacy = sessionStorage.getItem("legacyLayout"); if (legacy) { localStorage.setItem(key, legacy); sessionStorage.removeItem("legacyLayout"); } }, KEY);
+  await page.reload();
+  await expect(win(page, "nav")).toBeVisible({ timeout: 45_000 });
+  await page.getByRole("button", { name: "Ask Gus", exact: true }).click();
+  const nav = await box(page, "nav");
+  expect((await box(page, "copilot")).x).toBeGreaterThanOrEqual(nav.x + nav.width);
 });
