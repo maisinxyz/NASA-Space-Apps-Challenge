@@ -129,7 +129,7 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             {strategies.map((s, i) => (
               <FvButton key={s.id} role="tab" aria-selected={i === strategy} className="fv-pill fv-auto" data-testid={`fc-strategy-${s.id}`} onClick={() => setStrategy(i)} style={{ opacity: i === strategy ? 1 : 0.7 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />
-                <span className="l" style={{ color: color.ink }}>{s.role === "existing" ? "Current rotation" : s.label}</span>
+                <span className="l" style={{ color: color.ink }}>{s.role === "existing" ? "Current rotation (illustrative)" : s.label}</span>
               </FvButton>
             ))}
           </div>
@@ -153,14 +153,14 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             {lines[0]?.series && <Basis b={lines[0].series.basis} />}
           </div>
           {lines.map(({ s, series }, i) => {
-            if (!series) return <Row key={s.id} k={s.role === "existing" ? "Current rotation" : s.label} v="Unavailable" />;
+            if (!series) return <Row key={s.id} k={s.role === "existing" ? "Current rotation (illustrative)" : s.label} v="Unavailable" />;
             const v = valueAt(series, year);
             const ranged = v.p10 !== null && v.p90 !== null && v.p10 !== v.p90;
             return (
               <Row
                 key={s.id}
                 strong={s.id === shown.id}
-                k={<><span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />{s.role === "existing" ? "Current rotation" : s.label}</>}
+                k={<><span style={{ width: 8, height: 8, borderRadius: 4, background: SWATCH[i % SWATCH.length], display: "inline-block", marginRight: 6 }} aria-hidden />{s.role === "existing" ? "Current rotation (illustrative)" : s.label}</>}
                 v={<>{fmt(v.p50, series.unit.split(",")[0])}{ranged ? <span style={{ color: color.inkSecondary }}> ({fmt(v.p10!)}–{fmt(v.p90!)})</span> : null}</>}
               />
             );

@@ -62,6 +62,7 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
   const year = yearOfClock(t, 10);
   const [customCycle, setCustomCycle] = useState(3);
   const [editing, setEditing] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const run: Run = { status: shared.status, forecast: shared.siteId === siteId ? shared.forecast : null, note: shared.source && shared.source !== "live" ? "Saved forecast: edited inputs require the live API." : null, error: shared.error };
 
   useEffect(() => {
@@ -77,8 +78,9 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
     const selected = priorities.criteria_selected.length ? priorities.criteria_selected : Object.keys(priorities.weights) as (keyof typeof priorities.weights)[];
     const weights = Object.fromEntries(selected.map((key) => [key, priorities.weights[key]]));
     if (Object.values(weights).every((value) => value === 0)) {
-      useForecastStore.setState({ status: "error", error: "Choose at least one priority with a weight above zero." }); return;
+      setLocalError("Choose at least one priority with a weight above zero."); return;
     }
+    setLocalError(null);
     await useForecastStore.getState().run(siteId, { ...buildRequest(base, i), priorities: { criteria_selected: priorities.criteria_selected, weights } });
   };
 
@@ -201,7 +203,7 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
         {shared.request && <p className="muted">To rerun, post the downloaded JSON’s request property to /api/v1/sites/{siteId}/forecast.</p>}
         {run.note && <p className="muted" data-testid="planner-note">{run.note}</p>}
         {run.status === "loading" && <p role="status">Scoring the rotations…</p>}
-        {run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
+        {localError ? <p role="alert" className="bad">{localError}</p> : run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
         {f && !fieldId && f.fields.length > 1 && <p className="muted">Plans shown for {field?.name}; numbers are area-weighted over {f.fields.length} fields.</p>}
 
         {strategies.map((s) => (

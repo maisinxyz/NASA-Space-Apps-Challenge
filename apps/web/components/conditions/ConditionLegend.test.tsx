@@ -11,12 +11,13 @@ import ubc from "../../public/prebuilt/site_ubc_farm_forecast.json";
 import { ConditionLegend } from "./ConditionLegend";
 
 // SSR reads zustand initial state, so feed the legend a real view built from the prebuilt forecast.
+const legend = vi.hoisted(() => ({ open: true }));
 vi.mock("@/lib/conditions/useConditionView", () => {
   const cond = condById("heat")!;
   const ctx = { forecast: ubc as unknown as Forecast, engineId: "rot_existing" };
   const feats = plotFeats(twinConfig("ubc-farm")!.fields);
   const view = { ...conditionView(cond, feats, ctx, 3) };
-  return { useConditionStore: () => ({ selected: "heat", open: true }), useConditionView: () => view };
+  return { useConditionStore: () => ({ selected: "heat", open: legend.open }), useConditionView: () => view };
 });
 
 describe("condition legend", () => {
@@ -28,5 +29,14 @@ describe("condition legend", () => {
     expect(html).toContain("condition-rec-year");
     expect(html).not.toContain("Right now");
     expect(html).not.toContain("condition-rec-now");
+  });
+
+  it("keeps the illustrative cue visible when the legend is collapsed", () => {
+    legend.open = false;
+    try {
+      const html = renderToStaticMarkup(createElement(ConditionLegend, { embedded: true }));
+      expect(html).not.toContain("condition-detail");
+      expect(html).toContain("· illustrative");
+    } finally { legend.open = true; }
   });
 });

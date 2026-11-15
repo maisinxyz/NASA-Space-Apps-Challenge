@@ -24,7 +24,7 @@ export function ConditionLegend({ embedded = false }: { embedded?: boolean }) {
   return (
     <section className="fv-glass fv-auto ff-card" data-testid="condition-legend" aria-label="Conditions legend" style={{ ...(embedded ? { position: "relative" as const, width: "100%", boxSizing: "border-box" as const } : { right: 40, bottom: 200, width: 320, maxHeight: "calc(100vh - 300px)", overflowY: "auto" as const }), gap: 6, padding: "10px 12px" }}>
       <FvButton className="ff-link" aria-expanded={open} data-testid="condition-legend-toggle" onClick={() => set({ open: !open })} style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-        <strong style={{ color: color.ink }}>Conditions{view ? ` · ${view.cond.label}` : ""}</strong>
+        <strong style={{ color: color.ink }}>Conditions{view ? ` · ${view.cond.label} · illustrative` : ""}</strong>
         <span aria-hidden>{open ? "▾" : "▸"}</span>
       </FvButton>
 
