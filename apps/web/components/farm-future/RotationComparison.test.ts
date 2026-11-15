@@ -120,3 +120,26 @@ it("shows an accepted custom strategy after the generated alternatives", () => {
   expect(renderToStaticMarkup(createElement(RotationComparison))).toContain("My custom rotation");
   useForecastStore.getState().reset();
 });
+
+describe("baseline labels", () => {
+  const render = (roles: string[]) => {
+    const f = structuredClone(ubc);
+    const base = f.fields[0].strategies[0];
+    f.fields[0].strategies = roles.map((role, i) => ({ ...base, id: `rot_lbl_${i}`, role })) as Forecast["fields"][number]["strategies"];
+    useForecastStore.setState({ siteId: f.site_id, forecast: f, source: "live", status: "ready", error: null });
+    const html = renderToStaticMarkup(createElement(RotationComparison));
+    useForecastStore.getState().reset();
+    return html;
+  };
+  it("marks the preset current rotation as an illustrative baseline needing local confirmation", () => {
+    const html = render(["existing", "alternative"]);
+    expect(html).toContain("Illustrative baseline");
+    expect(html).toContain("confirm locally");
+    expect(html).not.toContain("Farmer-entered plan");
+  });
+  it("distinguishes a farmer-entered custom plan", () => {
+    const html = render(["existing", "custom"]);
+    expect(html).toContain("Farmer-entered plan");
+    expect(html.match(/Illustrative baseline/g)).toHaveLength(1);
+  });
+});

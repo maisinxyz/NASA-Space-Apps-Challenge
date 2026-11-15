@@ -5,7 +5,7 @@
 // quota, frost-free and heat-stress days. Per-field or whole-farm. No income or fertilizer figures (D3).
 
 import type { Forecast, ForecastStrategy } from "@/lib/api/types";
-import { CURRENT_ROTATION, cropName, rotationText, SWATCHES, STRATEGY_IDS } from "@/lib/farm-future/data";
+import { CURRENT_ROTATION, cropName, originNote, rotationText, SWATCHES, STRATEGY_IDS } from "@/lib/farm-future/data";
 import { forecastYear } from "@/lib/farm-future/data";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
@@ -94,6 +94,7 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
                 <strong style={{ fontSize: 14 }}>{LETTERS[i]} · {label}</strong>
                 {!fieldId && rankPos >= 0 && <span style={{ marginLeft: "auto", fontSize: 11, color: color.inkSecondary }}>farm rank {rankPos + 1}</span>}
               </header>
+              {originNote(s.role) && <span data-testid="comparison-origin" style={{ fontSize: 11, color: color.inkSecondary }}>{originNote(s.role)}</span>}
               <span style={{ fontSize: 12 }}>{rotationText(s.plan, s.cycle_years)} · {s.cycle_years}-year cycle</span>
               {s.rotation_explanation && s.rotation_explanation.crop_roles.length > 0 && (
                 <div>{s.rotation_explanation.crop_roles.map((r) => <span key={`${r.crop_id}-${r.role}`} title={r.text} style={{ display: "inline-flex", fontSize: 10.5, border: "1px solid rgba(242,235,221,.25)", borderRadius: 9, padding: "1px 8px", margin: "0 4px 4px 0" }}>{roleLabel(r.role)} · {cropName(r.crop_id)}</span>)}</div>

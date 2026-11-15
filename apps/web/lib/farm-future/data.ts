@@ -9,6 +9,9 @@ export const STRATEGY_IDS: readonly StrategyId[] = ["current", "a", "b"];
 export const SWATCHES: Record<StrategyId, string> = { current: "#C9BFAE", a: "#E2B866", b: "#9CC28A" };
 /** Name shown for the farm's existing rotation (product rule 2, D11). */
 export const CURRENT_ROTATION = "Current rotation";
+/** Who authored a plan: the preset baseline is illustrative until the farmer confirms it; custom plans are the farmer's. */
+export const originNote = (role: string): string | null =>
+  role === "existing" ? "Illustrative baseline: confirm locally against what you actually grow." : role === "custom" ? "Farmer-entered plan." : null;
 
 export type FutureFlag = {
   id: string;

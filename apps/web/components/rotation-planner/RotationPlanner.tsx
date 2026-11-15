@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { apiMode, getCropCatalog } from "@/lib/api/client";
 import type { CropCatalog, Forecast, ForecastStrategy, RotationSlot } from "@/lib/api/types";
-import { CURRENT_ROTATION } from "@/lib/farm-future/data";
+import { CURRENT_ROTATION, originNote } from "@/lib/farm-future/data";
 import { color } from "@/lib/farm-view/tokens";
 import { fmt } from "@/lib/forecast/select";
 import { baseRequest } from "@/lib/forecast/sites";
@@ -279,6 +279,7 @@ function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrate
         {onEdit && <FvButton className="fv-seg" onClick={onEdit} data-testid="edit-rotation">Edit</FvButton>}
         <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested for this farm, and what should I check locally?`} />
       </div>
+      {originNote(s.role) && <span className="muted" data-testid="planner-origin" style={{ fontSize: 11 }}>{originNote(s.role)}</span>}
       <table aria-label={`${label}, years 1 to 10 by season`}>
         <thead><tr><th />{Array.from({ length: 10 }, (_, i) => <th key={i} style={{ fontWeight: i + 1 === year ? 600 : 400 }}>{i + 1}</th>)}</tr></thead>
         <tbody>
