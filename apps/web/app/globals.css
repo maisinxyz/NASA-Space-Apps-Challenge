@@ -137,3 +137,100 @@ textarea,
 [data-presenter] .presenter-only {
   display: inline-flex;
 }
+.planting-comparison {
+  border: 1px solid rgba(242, 235, 221, 0.22);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(16, 13, 10, 0.55);
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+.planting-comparison summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.planting-comparison p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.planting-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  border: 0;
+  margin: 10px 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.planting-controls label {
+  display: grid;
+  flex: 1 1 140px;
+  gap: 4px;
+  min-width: 0;
+}
+
+.planting-comparison :is(select, button) {
+  min-height: 34px;
+  max-width: 100%;
+  border: 1px solid rgba(242, 235, 221, 0.28);
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: rgb(35, 30, 25);
+  color: inherit;
+  font: inherit;
+}
+
+.planting-comparison button {
+  cursor: pointer;
+}
+
+.planting-comparison button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.planting-controls button:not(:disabled),
+.planting-weather button[aria-pressed="true"] {
+  background: rgb(227, 214, 183);
+  color: rgb(27, 24, 21);
+}
+
+.planting-weather {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.planting-results table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.planting-results caption {
+  text-align: left;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.planting-results :is(th, td) {
+  border-bottom: 1px solid rgba(242, 235, 221, 0.18);
+  padding: 5px 4px;
+  text-align: right;
+}
+
+.planting-results :is(th, td):first-child {
+  text-align: left;
+}
+
+.planting-results small {
+  display: block;
+  font-size: 11px;
+  opacity: 0.78;
+}

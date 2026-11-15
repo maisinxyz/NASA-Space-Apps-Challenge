@@ -97,12 +97,12 @@ export const V4_DATASETS: DatasetRow[] = [
   },
   {
     name: "Open-Meteo seasonal forecast",
-    usedFor: "A real seasonal forecast layered on the typical-year monthly outlook.",
+    usedFor: "Optional SEAS5 anomalies layered on the typical-year monthly outlook when enabled by the API.",
     source: "Open-Meteo",
     url: "https://open-meteo.com/en/docs/seasonal-forecast-api",
-    licence: "Not yet confirmed (horizon, members and licence are being checked)",
-    attribution: "Weather data by Open-Meteo.com",
-    status: "roadmap",
+    licence: "CC BY 4.0 data. Public API access follows Open-Meteo usage terms.",
+    attribution: "ECMWF SEAS5 via Open-Meteo",
+    status: "in use",
   },
 ];
 
@@ -110,7 +110,7 @@ export const V4_DATASETS: DatasetRow[] = [
 export const V4_ASSUMPTIONS = [
   "Each forecast year replays observed 1991–2024 weather, shifted by the climate trend and by the what-if sliders.",
   "Slider and scenario changes are phased in linearly from year 0 to year 10.",
-  "Weather is one 55 km NASA POWER cell; the farm sits near sea level, below the cell's mean elevation, so temperatures may be biased until a local station check lands.",
+  "Weather is one roughly 55 km NASA POWER cell. Paired weather records showed that POWER averaged 3.34 °C cooler than the station near UBC and 1.60 °C cooler near KPU Langley.",
   "Soil is one 250 m SoilGrids pixel per farm, not measured on these fields.",
   "The current rotation of each farm is the team's defined starting rotation and can be edited in the rotation planner.",
   "Index series start at 100 in year 0 and compare strategies with each other; p10–p90 is the range of the replayed years.",
@@ -119,7 +119,6 @@ export const V4_ASSUMPTIONS = [
 
 export const ROADMAP = [
   "30 m cell map and erosion, water-stress and frost hotspot layers (needs NASADEM and satellite data).",
-  "Real seasonal forecast in the monthly outlook.",
   "Income and fertilizer estimates.",
   "Drone and video capture.",
   "Custom drawn fields inside the 3D digital twin (custom fields work in the 2D map only).",

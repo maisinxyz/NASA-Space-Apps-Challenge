@@ -213,9 +213,8 @@ export default function MethodsPage() {
         </select>
       </label>
       <p className="mt-2 text-sm text-ink-muted">
-        {farm ? `Sources for ${farm.name}. ` : "No farm selected. "}The
-        interactive scenarios currently use synthetic fixtures, not observed
-        farm weather.
+        {farm ? `Sources for ${farm.name}. ` : "Choose a farm to see its sources. "}
+        The live UBC and KPU rotation forecasts use NASA POWER. The storm and terrain demo views can use synthetic fixtures.
       </p>
       <nav
         aria-label="On this page"
@@ -585,15 +584,12 @@ onRetry={load}
               </li>
             ))}
           <li>
-            Rotation scores compare illustrative options. Scenario inputs are
-            synthetic; no observed or historical storm is replayed. NASA POWER
-            integration is planned, and its coarse grid will not describe
-            field-scale rainfall.
+            NASA POWER represents regional weather at roughly 55 km resolution.
+            Check field rainfall and irrigation records before using the comparison to make a planting decision.
           </li>
           <li>
-            In Now, the erosion index ranks options against each other. Absolute
-            values shown in Future and Compare strategies are illustrative
-            figures from demo data.
+            The erosion proxy uses assumed rainfall erosivity. Soil organic matter is
+            shown as an index starting at 100, and the weather ranges describe simulated outcomes.
           </li>
           <li>
             Field outlines on the farm twins are approximate, and their crops

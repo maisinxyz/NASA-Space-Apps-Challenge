@@ -1,5 +1,7 @@
 # What happens if I plant a different crop this year?
 
+Open a forecast-enabled farm in the web app, choose **Compare**, and expand **What if I plant a different crop this year?** Choose the field, the planting to replace, and a crop. The comparison runs both historical weather and drier summers through the live API. Switch weather tabs to compare soil organic matter and irrigation in years 1, 3, 5, and 10 of a ten-year run. Set `NEXT_PUBLIC_API_MODE=live` in the web environment and point it at the running FieldTwin API. Saved forecasts are available for viewing in mock mode.
+
 Use `POST /api/v1/sites/{siteId}/forecast` to compare a field's baseline with a one-time crop replacement. The backend advances soil carbon, water storage, and nutrient and pest state through the remaining rotation. Both strategies start from the same conditions and share the same sampled weather. All other planting slots remain the same.
 
 In the existing forecast request, add this property to the field whose first-year spring planting you want to replace.

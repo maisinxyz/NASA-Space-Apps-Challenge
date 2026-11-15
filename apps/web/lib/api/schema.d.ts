@@ -2218,6 +2218,17 @@ export interface components {
             polygon?: components["schemas"]["GeoJsonPolygon"];
             existing_rotation: "preset" | components["schemas"]["RotationSlot"][];
             selection_override?: components["schemas"]["ForecastSelection"];
+            /**
+             * @description Replace exactly one year-one baseline slot in this field for a one-time
+             *     comparison. All other slots and sampled weather are held fixed.
+             *     The response adds rot_first_year_planting. Fields without a replacement
+             *     contribute their unchanged baseline to that strategy's farm rollup.
+             */
+            first_year_planting?: {
+                /** @enum {string} */
+                season: "spring" | "summer" | "fall" | "winter";
+                crop_id: components["schemas"]["CropId"] | "fallow";
+            };
         };
         ForecastConstraints: {
             equipment: components["schemas"]["EquipmentId"][];

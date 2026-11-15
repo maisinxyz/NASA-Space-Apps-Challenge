@@ -15,6 +15,7 @@ import { fmt } from "@/lib/forecast/select";
 import { roleLabel } from "@/lib/rotation-planner/planner";
 
 import { AskCopilot } from "@/components/copilot/AskCopilot";
+import { PlantingComparison } from "./PlantingComparison";
 
 /** Evidence lines never show money or fertilizer amounts (D3). */
 export const HIDDEN_EVIDENCE = /income|fertili[sz]er|price|revenue|profit|\$|CAD/i;
@@ -59,6 +60,7 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
   const rank = forecast.comparison.rank_by_priority;
   return (
     <div data-testid="rotation-comparison" style={{ display: "grid", gap: 10 }}>
+      <PlantingComparison key={forecast.site_id} forecast={forecast} />
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
         <label style={{ display: "flex", gap: 6, alignItems: "center" }}>Area
           <select value={fieldId ?? ""} onChange={(e) => setFieldId(e.target.value || null)} data-testid="comparison-field" style={{ background: "transparent", color: color.ink, border: "1px solid rgba(242,235,221,.22)", borderRadius: 6, padding: "2px 6px", fontSize: 12 }}>
