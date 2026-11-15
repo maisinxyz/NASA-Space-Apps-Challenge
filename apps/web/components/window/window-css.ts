@@ -30,8 +30,7 @@ export const WINDOW_CSS = `
   flex:1 1 auto;min-height:0;height:auto!important;overflow:auto;overscroll-behavior:contain;box-sizing:border-box}
 .fv-workspace .fw-win>.fw-body>:not(style,[data-testid="horizon-tabs"]){box-shadow:none!important;border:0!important;border-radius:0!important;
   background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-/* Gus keeps his photo background inside the window (the frame strips panel glass above). */
-.fv-workspace .fw-win>.fw-body>aside.gus-panel{background:var(--gus-bg)!important}
+.fw-win[data-window="copilot"]{background:#191713}
 /* The drawer's own heading and close button duplicate the title bar. */
 .fv-workspace .fw-win .fv-drawer-head{display:none}
 /* Timeline window: tabs on top, the fixed-height clock below; nothing stretches. */

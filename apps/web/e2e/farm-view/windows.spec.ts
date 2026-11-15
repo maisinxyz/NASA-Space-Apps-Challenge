@@ -161,6 +161,8 @@ test("ordinary entry shows only the dashboard; Ask opens Gus without covering it
   for (const id of ["time", "simulation", "inspector", "future", "planner", "copilot"]) await expect(win(page, id)).toBeHidden();
   await page.getByRole("button", { name: "Ask Gus", exact: true }).click();
   await expect(win(page, "copilot")).toBeVisible();
+  await expect(win(page, "copilot")).toHaveCSS("background-color", "rgb(25, 23, 19)");
+  await expect(tid(page, "copilot-panel")).toHaveCSS("background-image", "none");
   const nav = await box(page, "nav");
   await bar(page, "copilot").focus();
   for (let i = 0; i < 120; i++) await page.keyboard.press("ArrowLeft");
@@ -168,6 +170,9 @@ test("ordinary entry shows only the dashboard; Ask opens Gus without covering it
   await tid(page, "window-max-copilot").click();
   await page.waitForTimeout(300);
   expect((await box(page, "copilot")).x).toBeGreaterThanOrEqual(nav.x + nav.width);
+  await page.reload();
+  await expect(win(page, "nav")).toBeVisible({ timeout: 45_000 });
+  await expect(win(page, "copilot")).toBeHidden();
 });
 
 test("reentering a farm restores its dashboard after it was closed", async ({ page }) => {

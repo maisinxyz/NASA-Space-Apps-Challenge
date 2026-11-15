@@ -17,8 +17,6 @@ import { FvButton } from "@/components/farm-view/FvButton";
 import type { PlaceNavigation } from "./CopilotComposer";
 
 const SLOW_MS = 8000;
-// Light tint so the photo shows; message bubbles carry their own dark fill for contrast.
-const GUS_BG = "linear-gradient(rgba(17,26,32,.35), rgba(17,26,32,.35)), url(/gus/chat-bg.jpg) 25% center / cover"; // 25%: the farmer sits left of the photo's centre
 
 export function useScreenState(): ScreenState | null {
   const farmId = useAppStore((s) => s.farmId);
@@ -73,8 +71,8 @@ export function CopilotPanel({ navigation, inline = false }: {
   const showConversation = open && !!screen;
   if (!showConversation) return null;
   return (
-    <aside className="fv-glass gus-panel" aria-label="Advice from Gus" data-testid={showConversation ? "copilot-panel" : undefined}
-      style={{ position: inline ? "relative" : "absolute", left: inline ? undefined : 16, bottom: inline ? undefined : 26, width: inline ? "100%" : "min(420px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 12, display: "grid", gridTemplateRows: showConversation ? "auto 1fr auto" : undefined, gap: 10, fontSize: 13, background: GUS_BG, "--gus-bg": GUS_BG } as React.CSSProperties}>
+    <aside className="fv-glass" aria-label="Advice from Gus" data-testid={showConversation ? "copilot-panel" : undefined}
+      style={{ position: inline ? "relative" : "absolute", left: inline ? undefined : 16, bottom: inline ? undefined : 26, width: inline ? "100%" : "min(420px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 12, display: "grid", gridTemplateRows: showConversation ? "auto 1fr auto" : undefined, gap: 10, fontSize: 13, background: "#191713" }}>
       {showConversation && <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
