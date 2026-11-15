@@ -161,3 +161,17 @@ Planting day-of-year is still null. The BC cole and lettuce guides and the WSU S
 - 2026-11-15 KPU forecast still 503 (no soil seed) — B6. Web sends `lib/forecast/kpu-request.json` (4 OSM farmland fields near the pin, `existing_rotation: "preset"`).
 - 2026-11-15 Uncached UBC slider forecast takes ~2.5 s; acceptance 5 wants < 1 s. Could the engine cache or speed up scenario re-runs?
 - 2026-11-15 Product owner: please confirm the KPU field outlines (OSM ways 95899267, 95899276, 96026582, 95899281 are not named in OSM) and the City of Vancouver / Township of Langley orthophoto licences.
+
+## 2026-11-15 — Backend sprint hard stop (08:30 local; verified on main)
+
+- 2026-11-15 B1 PARTIAL: CMIP6 seeds pre-existed on main; engine wiring, provenance and sidecar metadata remain unfinished. Builder blocked on inaccessible Windows worktree in Docker; no sprint commit.
+- 2026-11-15 B2 NOT STARTED: optional AppEEARS lane was parked behind unfinished core work; no submission or seed.
+- 2026-11-15 B3 NOT STARTED: builder blocked on inaccessible worktree; no station bias or seed.
+- 2026-11-15 B4 NOT STARTED: builder blocked on inaccessible worktree; curated vegetable windows/current rotation remain unfinished.
+- 2026-11-15 B5 NOT STARTED: Kanban todo, dependent on unfinished B1/B4; no calibration changes.
+- 2026-11-15 B6 NOT STARTED: builder blocked on inaccessible worktree (after transient gateway disconnect); KPU forecast still needs missing-soil handling.
+- 2026-11-15 B7 NOT STARTED: Kanban todo behind B11; monthly outlook backend not implemented.
+- 2026-11-15 B8 NOT STARTED: Kanban todo behind B11/B4; rotation explanations/custom scoring not implemented.
+- 2026-11-15 B9 NOT STARTED: Kanban todo behind B11; co-pilot backend not implemented.
+- 2026-11-15 B10 NOT STARTED: Kanban todo behind B11; custom field analysis backend not implemented.
+- 2026-11-15 B11 DONE (contract only): v1.3.0 committed on main earlier as `b1dd80c`; 94 contract tests passed at hard stop. Its verification builder was blocked on inaccessible worktree, and B7/B9/B10 routes are not yet mounted. Overall API suite is red: 259 passed, 4 failed, all CMIP6 sidecar completeness checks. No sprint branch or PR merged at hard stop; no new tag was created.

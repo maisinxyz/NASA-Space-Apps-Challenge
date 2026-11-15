@@ -1,0 +1,3 @@
+# FT-B1 — hard-stop status (2026-11-15)
+
+PARTIAL prerequisite only: CMIP6 delta seeds were already on main, but the forecast/climate engine has not been wired to them and provenance/seasonal math acceptance is unverified. Builder task `t_f1705f52` was capability-blocked: its Windows worktree was unavailable inside the Docker backend. Its branch remained at `d16f82c`, clean, with no sprint edits. No merge was made. The preset-to-SSP mapping still needs a documented decision/validation. Main's backend run: 259 passed, 4 failed on incomplete CMIP6 sidecars (empty product_version, license, resolution_temporal). Do not fabricate these values; verify against source before repair.

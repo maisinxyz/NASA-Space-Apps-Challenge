@@ -1,0 +1,3 @@
+# FT-B11 — hard-stop verification (2026-11-15)
+
+The v1.3.0 contract was already committed to main by Person B as `b1dd80c`, with its full handoff in `FT-B11.md`; the B11 builder verification task `t_08fcdb93` was capability-blocked before edits because its Windows worktree was not mounted in Docker. This run verified 94 contract tests passing on main. No new B11 branch merge or implementation occurred. Overall main is **not green**: API tests reported 259 passed, 4 failures in CMIP6 seed sidecar checks. The contract files are on main; the three new routes are still unmounted per `FT-B11.md` and depend on B7/B9/B10.
