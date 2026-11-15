@@ -15,7 +15,7 @@ COPY apps/web/ ./
 COPY packages/contracts/ /stardew-earth/packages/contracts/
 ARG NEXT_PUBLIC_CESIUM_ION_TOKEN
 ENV NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE=/api/v1 \
-    FIELDTWIN_API_ORIGIN=http://127.0.0.1:8000 NEXT_TELEMETRY_DISABLED=1
+    STARDEW_EARTH_API_ORIGIN=http://127.0.0.1:8000 NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
 FROM python:3.14-slim-bookworm
@@ -32,6 +32,6 @@ COPY --from=web /stardew-earth/apps/web/node_modules apps/web/node_modules
 COPY apps/web/package.json apps/web/next.config.ts apps/web/
 COPY scripts/run_hosted.py scripts/run_hosted.py
 ENV NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE=/api/v1 \
-    FIELDTWIN_API_ORIGIN=http://127.0.0.1:8000 NEXT_TELEMETRY_DISABLED=1
+    STARDEW_EARTH_API_ORIGIN=http://127.0.0.1:8000 NEXT_TELEMETRY_DISABLED=1
 EXPOSE 10000
 CMD ["python", "scripts/run_hosted.py"]

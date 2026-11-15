@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // OFFLINE=1 at build/dev time -> client reads only local files (lib/api/client.ts).
   env: { NEXT_PUBLIC_OFFLINE: process.env.OFFLINE ?? "" },
   async rewrites() {
-    const apiOrigin = process.env.FIELDTWIN_API_ORIGIN?.replace(/\/$/, "");
+    const apiOrigin = process.env.STARDEW_EARTH_API_ORIGIN?.replace(/\/$/, "");
     return apiOrigin ? [{ source: "/api/v1/:path*", destination: `${apiOrigin}/api/v1/:path*` }] : [];
   },
 };
