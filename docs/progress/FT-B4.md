@@ -9,3 +9,5 @@ Both BC preset labels are Current rotation. KPU retains its FT-EC2 crop sequence
 Frontend integration request: the current UBC demo request explicitly supplies older cereal rotations and a cereal-heavy selection. To expose these backend presets and vegetables, the frontend should send existing_rotation: preset for unchanged fields, use the expanded catalog for its pool, and use Current rotation for its label. This checkpoint is backend-only.
 
 Verification: the offline crop, generator, and six-field forecast regression suite passed 15 tests. The contract suite passed all 94 tests after refreshing only its crop catalog fixture.
+
+Full-suite integration found three older assertions still expecting the previous rotation label and version. Updated the label assertions and the default rotation-analysis fixture's version/hash. The 38 KPU and rotation regression tests then passed.

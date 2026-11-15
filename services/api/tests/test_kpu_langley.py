@@ -79,8 +79,8 @@ def test_ubc_forecast_assumption_names_the_vegetable_preset():
         },
         members=1,
     )
-    assert any("Typical vegetable rotation (not this farm's records)" in line for line in doc["assumptions"])
-    assert doc["fields"][0]["strategies"][0]["label"] == "Typical vegetable rotation (not this farm's records)"
+    assert any("Current rotation" in line for line in doc["assumptions"])
+    assert doc["fields"][0]["strategies"][0]["label"] == "Current rotation"
 
 
 def test_bc_presets_are_a_vegetable_rotation_not_corn():
@@ -88,7 +88,7 @@ def test_bc_presets_are_a_vegetable_rotation_not_corn():
 
     for site_id in ("site_ubc_farm", "site_kpu_langley"):
         preset = SITE_PRESETS[site_id]
-        assert preset["name"] == "Typical vegetable rotation (not this farm's records)"
+        assert preset["name"] == "Current rotation"
         mains = [main for _year, main, _off in preset["slots"]]
         covers = [off for _year, _main, off in preset["slots"]]
         assert "crop_maize" not in mains and "crop_soybean" not in mains

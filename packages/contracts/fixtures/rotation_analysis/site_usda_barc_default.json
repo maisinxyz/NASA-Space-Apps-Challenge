@@ -1,7 +1,7 @@
 {
  "site_id": "site_usda_barc",
- "engine_version": "1.0.0",
- "request_hash": "fef7df3591792159",
+ "engine_version": "1.0.1",
+ "request_hash": "538c311f24edf7af",
  "request_echo": {
   "allowed_crops": [
    "crop_alfalfa",
