@@ -34,9 +34,17 @@ def test_forecast_absolute_estimates_when_the_service_exists():
     build = getattr(forecast_mod, "forecast", None)
     if build is None:
         pytest.skip("forecast() is not defined yet (W9)")
-    sample = build("site_usda_barc", {"selection": {"crops": ["crop_maize", "crop_soybean"]}})
+    sample = build("site_usda_barc", {"selection": {"crops": ["crop_maize", "crop_soybean"]}}, members=2)
     assert number_problems(sample) == []
     assert sample.get("support_sentence")
+    estimates = sample["fields"][0]["strategies"][0]["estimates"]
+    for key in ABSOLUTE_SERIES:
+        if key == "yield_t_ha":
+            for row in estimates[key]:
+                assert series_range_problems(row["series"], key) == []
+            continue
+        assert series_range_problems(estimates[key], key) == []
+    assert estimates["income_estimate"] is None
 
 
 def test_support_sentence_constant_is_the_prd_sentence():
