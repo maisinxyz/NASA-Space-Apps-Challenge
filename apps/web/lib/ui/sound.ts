@@ -118,6 +118,11 @@ export function createSound(deps: SoundDeps = {}) {
       if (t0 - lastTick < TICK_MIN_GAP_MS) return false;
       lastTick = t0;
     }
+    if (process.env.NEXT_PUBLIC_E2E === "1" && typeof window !== "undefined") {
+      // Dev-only log for the Playwright checks (hive/farm-view/DECISIONS.md D4).
+      const w = window as unknown as { __soundLog?: { name: string; t: number }[] };
+      (w.__soundLog ??= []).push({ name, t: now() });
+    }
     if (!ctx) return false;
     try {
       const t = ctx.currentTime;
