@@ -19,7 +19,6 @@ import { zIndex } from "@/lib/farm-view/tokens";
 import { scenarioById } from "@/lib/twin/scenarios/registry";
 import type { RunSource } from "@/lib/twin/scenarios/runSource";
 import type { ScenarioFrame } from "@/lib/twin/scenario";
-import { SYNTHETIC_BADGE, SYNTHETIC_NOTE } from "@/lib/twin/scenarios/runSource";
 
 import { FvButton } from "./FvButton";
 import { ChevronLeft, ChevronRight } from "./icons";
@@ -101,7 +100,6 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
   }, [msg]);
 
   const comparing = mode === "compare";
-  const fixture = runSource === "fixture";
   const label = comparing ? "Comparing A / B" : def ? def.label : "Simulation";
   const canPlay = !!def && runSource !== "none" && mode === "simulate";
 
@@ -150,11 +148,6 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
             {playing ? "❚❚" : "▶"}
           </FvButton>
         )}
-        {fixture && def && SYNTHETIC_BADGE && (
-          <span className="fv-cap" style={{ border: "1px solid #BE8426", borderRadius: 9999, padding: "1px 8px", color: "#F2EBDD", pointerEvents: "auto" }} title={SYNTHETIC_NOTE}>
-            {SYNTHETIC_BADGE}
-          </span>
-        )}
       </div>
 
       {sim.open && (
@@ -176,13 +169,6 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
               </FvButton>
             </div>
           </div>
-
-          {fixture && section !== "scenarios" && SYNTHETIC_BADGE && (
-            <p className="fv-cap" style={{ margin: "0 0 8px" }}>
-              <span style={{ border: "1px solid #BE8426", borderRadius: 9999, padding: "1px 8px", marginRight: 6 }}>{SYNTHETIC_BADGE}</span>
-              {SYNTHETIC_NOTE}
-            </p>
-          )}
 
           <div role="tablist" aria-label="Simulation section" style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
             {sections.map((s) => (

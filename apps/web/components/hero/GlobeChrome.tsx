@@ -252,14 +252,14 @@ function FarmPicker({ farms, selectedId, onPick }: { farms: Farm[]; selectedId: 
                   }}
                   className="flex w-full items-center gap-3 px-5 py-2 text-left transition-opacity hover:opacity-75"
                   aria-pressed={f.id === selectedId}
-                  aria-label={`${f.name} — ${f.tier === "twin" ? "Digital twin" : "Explore only"}`}
+                  aria-label={`${f.name} — ${f.tier === "twin" ? "Explorable" : "Explore only"}`}
                 >
                   <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: f.id === selectedId ? "#39e6d4" : "rgba(255,253,226,0.6)" }} />
                   <span className="flex-1 truncate text-[13px] font-medium" style={{ color: INK }}>
                     {f.name.split(/[,(]/)[0].trim()}
                   </span>
                   <span className="text-[12px] uppercase tracking-[0.22em]" style={{ color: MUTED }}>
-                    {f.tier === "twin" ? "Digital twin" : "Explore only"}
+                    {f.tier === "twin" ? "Explorable" : "Explore only"}
                   </span>
                 </button>
               </li>

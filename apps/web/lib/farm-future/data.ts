@@ -3,7 +3,7 @@
 // Pure: same forecast in, same object out. The UI never reads Forecast directly for these panels.
 import type { Forecast, ForecastStrategy, ReviewFlag, RotationSlot, YearSeries } from "@/lib/api/types";
 
-import { REVIEW_FLAGS, STRATEGIES, type StrategyId } from "./fixtures";
+import { STRATEGIES, type StrategyId } from "./fixtures";
 
 export const STRATEGY_IDS: readonly StrategyId[] = ["current", "a", "b"];
 export const SWATCHES: Record<StrategyId, string> = { current: "#C9BFAE", a: "#E2B866", b: "#9CC28A" };
@@ -104,18 +104,14 @@ function fromEngine(f: Forecast): FutureData {
 
 function fromFixtures(): FutureData {
   const strategies = STRATEGIES.map((s): FutureStrategy => ({
-    id: s.id, engineId: s.id, role: s.id === "current" ? "existing" : "alternative", name: s.name, rotation: s.rotation,
+    id: s.id, engineId: s.id, role: s.id === "current" ? "existing" : "alternative", name: s.name, rotation: "No data",
     swatch: s.swatch, cycleYears: 1, plan: [],
   }));
-  const flags = Object.fromEntries(
-    STRATEGY_IDS.map((id) => [id, REVIEW_FLAGS[id].map((r, i): FutureFlag => ({
-      id: `${id}-${i}`, severity: "caution", text: `${r.title}. ${r.detail}`, fieldIds: r.goTo.fieldId ? [r.goTo.fieldId] : [], week: Math.floor(r.goTo.doy / 7), layer: "synthetic",
-    }))]),
-  ) as Record<StrategyId, FutureFlag[]>;
+  const flags = Object.fromEntries(STRATEGY_IDS.map((id) => [id, [] as FutureFlag[]])) as Record<StrategyId, FutureFlag[]>;
   return { source: "synthetic", strategies, flags };
 }
 
-/** The read model. An engine forecast with at least one strategy wins; otherwise the synthetic fixtures. */
+/** The read model. An engine forecast with at least one strategy wins; otherwise empty "No data" placeholders (names only). */
 export function buildFutureData(f: Forecast | null): FutureData {
   return f && f.fields[0]?.strategies.length ? fromEngine(f) : fromFixtures();
 }

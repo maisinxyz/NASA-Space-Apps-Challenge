@@ -10,7 +10,6 @@ import { color, motion as m } from "@/lib/farm-view/tokens";
 import { FvButton } from "@/components/farm-view/FvButton";
 
 export const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
-export const SYNTHETIC = "";
 export const MUTED_RED = "#C46A52";
 export const HAIR = "rgba(242,235,221,0.22)";
 export const HAIR_STRONG = "rgba(242,235,221,0.45)";
@@ -29,9 +28,9 @@ export function Basis({ b }: { b: BasisOrRelative }) {
   );
 }
 
-export function SyntheticBadge({ onMap = false }: { onMap?: boolean }) {
-  if (!SYNTHETIC) return null;
-  return <span className={`ff-synth ${onMap ? "fv-onmap" : ""}`} data-testid="synthetic-badge">{SYNTHETIC}</span>;
+/** Placeholder for any value the app has no real data for. */
+export function NoData() {
+  return <p className="ff-p" data-testid="no-data">No data</p>;
 }
 
 /** Animated number (300 ms count-up); instant under reduced motion. */

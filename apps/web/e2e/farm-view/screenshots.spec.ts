@@ -13,10 +13,5 @@ for (const [w, h] of [[1440, 900], [1280, 720]]) {
       await openFarm(page); await tid(page, "layer-vigor").click(); await page.waitForTimeout(600);
       await page.screenshot({ path: `${OUT}/${w}-vigor.png` });
     });
-    test.fixme(`soil moisture + Twin answering (report + moisture card open)`, async ({ page }) => {
-      await openFarm(page); await tid(page, "layer-moisture").click();
-      await tid(page, "twin-button").click(); await tid(page, "twin-input").fill("Which field needs me first?"); await tid(page, "twin-send").click();
-      await page.waitForTimeout(3000); await page.screenshot({ path: `${OUT}/${w}-moisture-twin.png` });
-    });
   });
 }

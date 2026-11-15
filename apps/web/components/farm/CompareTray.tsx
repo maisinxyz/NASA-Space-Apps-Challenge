@@ -139,9 +139,7 @@ export function CompareTray({
             Show crops on map
           </label>
           <span>
-            Crops are illustrative, not farm records. Hover a field to see its
-            name and crop · in the calendar, outlined = bare soil · fields are
-            staggered by a year
+            Hover a field to see its name · crop data: No data
           </span>
           <label className="flex items-center gap-1.5">
             <input type="checkbox" disabled aria-describedby="diff-note" />
@@ -153,7 +151,7 @@ export function CompareTray({
         </div>
       ) : (
         <p className="text-xs text-ink-muted">
-          Crop calendars are illustrative, not farm records. Compare bare months
+          Compare bare months
           above; map-only controls are unavailable in this workspace.
         </p>
       )}

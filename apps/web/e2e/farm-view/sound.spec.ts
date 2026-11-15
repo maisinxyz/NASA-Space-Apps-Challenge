@@ -14,10 +14,6 @@ test.describe("sound calls (spec: Sound module)", () => {
   });
   test.fixme("layer switch plays tick", async ({ page }) => { await clearSoundLog(page); await tid(page, "layer-vigor").click(); expect(await names(page)).toContain("tick"); });
   test.fixme("pill click plays tick", async ({ page }) => { await clearSoundLog(page); await tid(page, "condition-pill-heat").click(); expect(await names(page)).toContain("tick"); });
-  test.fixme("Twin open plays pop; close plays soft close", async ({ page }) => {
-    await clearSoundLog(page); await tid(page, "twin-button").click(); expect(await names(page)).toContain("pop");
-    await clearSoundLog(page); await page.keyboard.press("Escape"); expect(await names(page)).toContain("close");
-  });
   test.fixme("success plays on message sent, layer loaded, 'Show on map' done", async ({ page }) => {});
   test.fixme("timeline: week tick per week crossed, heavier month tick per month boundary, ≤1 tick / 35 ms", async ({ page }) => {
     await clearSoundLog(page);

@@ -15,7 +15,7 @@ describe("FarmCard", () => {
     const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} onOpen={noop} />);
     expect(html).toContain(hero.name);
     expect(html).toContain(hero.owner);
-    expect(html).toContain("Full digital twin");
+    expect(html).toContain("Explorable");
     expect(html).toContain("Approximate location");
     expect(html).toContain(`href="${hero.sourceUrl}"`);
     expect(html).toContain('target="_blank"');
@@ -40,16 +40,16 @@ describe("FarmCard", () => {
     expect(html).toContain("Approximate location");
   });
 
-  it("without a globe: no Open twin and no link to removed pages", () => {
+  it("without a globe: no Open farm and no link to removed pages", () => {
     const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} />);
     expect(html).not.toContain("Open farm workspace");
     expect(html).not.toContain("/simulate");
     expect(html).not.toContain("data-dev-only");
   });
 
-  it("without a globe: provides clear statement of unavailable 3D twin and non-3D links", () => {
+  it("without a globe: provides clear statement of unavailable 3D view and non-3D links", () => {
     const html = renderToStaticMarkup(<FarmCard farm={hero} onClose={noop} />);
-    expect(html).toContain("3D Digital Twin Unavailable");
+    expect(html).toContain("3D view unavailable");
     expect(html).toContain("Scientific methods");
     expect(html).toContain("Documentation");
   });

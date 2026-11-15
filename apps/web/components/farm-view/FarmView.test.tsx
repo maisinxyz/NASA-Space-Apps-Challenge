@@ -18,9 +18,9 @@ describe('honest farm controls', () => {
     expect(markup).not.toContain('41%');
     expect(markup).not.toContain('0.48');
   });
-  it('offers a clearly identified synthetic preview assistant', () => {
-    expect(html()).toContain('aria-label="Ask Gus preview"');
-    expect(html()).toContain('Synthetic preview');
+  it('offers no fabricated assistant preview and shows no synthetic labels', () => {
+    expect(html()).not.toContain('Ask Gus preview');
+    expect(html()).not.toMatch(/[Ss]ynthetic/);
   });
   it('offers a hide-panels control and keeps secondary panels in rail tabs and Map tools in the left menu', () => {
     expect(html()).toContain('Hide panels');
@@ -30,9 +30,9 @@ describe('honest farm controls', () => {
       expect(html()).toContain(`data-testid="${id}"`);
     expect(html()).toMatch(/<aside[^>]*id="farm-drawer"[^>]*hidden=""/);
   });
-  it('marks condition controls as synthetic and includes the reserved zone control', () => {
+  it('keeps condition controls label-free and includes the reserved zone control', () => {
     const markup = renderToStaticMarkup(<FarmView farmName="Cornell" onBack={() => {}} onReset={() => {}} zoneControl={<span>Vulnerability zones</span>} />);
-    expect(markup).toContain('Synthetic preview · not this farm’s measurements');
+    expect(markup).not.toMatch(/[Ss]ynthetic/);
     expect(markup).toContain('Vulnerability zones');
   });
   it('does not offer an unrelated calendar outside comparison', () => {

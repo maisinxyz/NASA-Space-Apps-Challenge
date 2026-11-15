@@ -4,8 +4,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useState } from "react";
 
-import { STRATEGIES, WHAT_IF_LIMITS } from "@/lib/farm-future/fixtures";
-import { conditionsAt, scoreWithWhatIf, whatIfActive } from "@/lib/farm-future/model";
+import { WHAT_IF_LIMITS } from "@/lib/farm-future/fixtures";
+import { whatIfActive } from "@/lib/farm-future/model";
 import { engineSeries, pointAt } from "@/lib/farm-future/data";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
 import { fmt } from "@/lib/forecast/select";
@@ -18,7 +18,7 @@ import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "@/components/farm-view/FvButton";
 import { Droplet, Leaf, Thermometer } from "@/components/farm-view/icons";
-import { CardHead, EASE_OUT, HAIR, Label, Num, PopCard, SyntheticBadge, useDismiss } from "./ui";
+import { CardHead, EASE_OUT, Label, NoData, PopCard, useDismiss } from "./ui";
 
 /* ---------------- Mode switch (under the farm name) ---------------- */
 const MODES: { id: FutureMode; label: string }[] = [
@@ -130,15 +130,12 @@ const LensIcon = () => (
 
 /* ---------------- Future condition pills (projected, with deltas vs 2026) ---------------- */
 export function FuturePills() {
-  const t = useFutureStore((s) => s.t);
-  const w = useFutureStore((s) => s.whatIf);
   const setLens = useFutureStore((s) => s.setLens);
-  const c = conditionsAt(t, w);
   const pills = [
-    { id: "rain", icon: Droplet, label: "Rain", value: <Num value={c.rainMm} unit=" mm" />, delta: <Num value={c.rainDeltaPct} unit="%" signed />, lens: "rain" as LensId },
-    { id: "moisture", icon: Droplet, label: "Soil moisture", value: <Num value={c.moisturePct} unit="%" />, delta: <Num value={c.moistureDelta} unit=" pts" signed />, lens: "water" as LensId },
-    { id: "heat", icon: Thermometer, label: "Heat days", value: <Num value={c.heatDays} />, delta: <Num value={c.heatDelta} signed />, lens: "heat" as LensId },
-    { id: "frost", icon: Leaf, label: "Frost-free", value: <Num value={c.frostFreeDays} unit=" d" />, delta: <Num value={c.frostFreeDelta} signed />, lens: "frost" as LensId },
+    { id: "rain", icon: Droplet, label: "Rain", lens: "rain" as LensId },
+    { id: "moisture", icon: Droplet, label: "Soil moisture", lens: "water" as LensId },
+    { id: "heat", icon: Thermometer, label: "Heat days", lens: "heat" as LensId },
+    { id: "frost", icon: Leaf, label: "Frost-free", lens: "frost" as LensId },
   ];
   return (
     <div className="fv-auto ff-pills-col" data-testid="future-pills">
@@ -149,8 +146,7 @@ export function FuturePills() {
             <span className="l">{p.label}</span>
           </div>
           <div className="ff-future-bar-right">
-            <span className="v">{p.value}</span>
-            <span className="l" style={{ fontSize: 11 }}>{p.delta}</span>
+            <span className="v">No data</span>
           </div>
         </FvButton>
       ))}
@@ -183,30 +179,7 @@ export function WhatIf({ raised = false }: { raised?: boolean }) {
         <Slider label="Rainfall" value={w.rainPct} {...WHAT_IF_LIMITS.rainPct} fmt={(v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}%`} onChange={(v) => setWhatIf({ rainPct: v })} centered />
         <Slider label="Temperature" value={w.tempC} {...WHAT_IF_LIMITS.tempC} fmt={(v) => `+${v.toFixed(1)} °C`} onChange={(v) => setWhatIf({ tempC: Math.round(v * 10) / 10 })} />
         <hr className="ff-hr" />
-        {forecast ? <EngineWhatIf /> : <>
-        <Label>Score in 2035 · ring = no change</Label>
-        {STRATEGIES.map((s) => {
-          const now = scoreWithWhatIf(s, w);
-          return (
-            <div key={s.id} style={{ display: "grid", gridTemplateColumns: "104px 1fr 54px", alignItems: "center", gap: 8, fontSize: 12 }}>
-              <span style={{ color: color.inkSecondary }}>{s.name}</span>
-              <div style={{ position: "relative", height: 10 }} aria-hidden>
-                <div style={{ position: "absolute", left: 0, right: 0, top: 5, height: 1, background: HAIR }} />
-                <div style={{ position: "absolute", left: `${Math.min(now, s.score2035)}%`, width: `${Math.abs(s.score2035 - now)}%`, top: 5, height: 1, background: color.inkMuted }} />
-                <div style={{ position: "absolute", left: `${s.score2035}%`, top: 2, width: 6, height: 6, marginLeft: -3, borderRadius: 3, border: `1px solid ${color.inkMuted}`, boxSizing: "border-box" }} />
-                <motion.div animate={{ left: `${now}%` }} transition={{ duration: 0.3, ease: EASE_OUT }} style={{ position: "absolute", top: 1, width: 8, height: 8, marginLeft: -4, borderRadius: 4, background: s.swatch }} />
-              </div>
-              <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                <Num value={now} /> <span style={{ color: color.inkSecondary }}><Num value={now - s.score2035} signed /></span>
-              </span>
-            </div>
-          );
-        })}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span className="ff-label">Relative score: compare strategies, not an amount</span>
-          <SyntheticBadge />
-        </div>
-        </>}
+        {forecast ? <EngineWhatIf /> : <NoData />}
       </PopCard>
     </>
   );

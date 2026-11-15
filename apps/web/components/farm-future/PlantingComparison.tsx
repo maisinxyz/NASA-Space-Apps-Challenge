@@ -165,7 +165,7 @@ function PlantingResults({ run, weather, before, after }: { run: Run; weather: P
           </table>
         );
       })}
-      <p>Values show the median and the 10th–90th percentile range across sampled weather. The soil index starts at 100. Crop plans are illustrative. Check crop dates, soil tests and water access locally.</p>
+      <p>Values show the median and the 10th–90th percentile range across sampled weather. The soil index starts at 100. Check crop dates, soil tests and water access locally.</p>
       <details>
         <summary>Weather data and assumptions</summary>
         <p>{run.forecast.scenario.note}</p>

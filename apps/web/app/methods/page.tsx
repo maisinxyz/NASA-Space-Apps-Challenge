@@ -137,7 +137,7 @@ const TWIN_SOURCES: {
     basis: "assumed",
     licence: "Made by the FieldTwin team",
     attribution: "FieldTwin",
-    note: "Traced by eye on Google Photorealistic 3D imagery, 2026-11-13 (OpenStreetMap has no farmland outlines there). Approximate: they may not match the farm's managed fields. Field names and crops on both twins are made up by us, not farm records.",
+    note: "Traced by eye on Google Photorealistic 3D imagery, 2026-11-13 (OpenStreetMap has no farmland outlines there). Approximate: they may not match the farm's managed fields.",
   },
   {
     name: "NASA POWER",
@@ -214,7 +214,7 @@ export default function MethodsPage() {
       </label>
       <p className="mt-2 text-sm text-ink-muted">
         {farm ? `Sources for ${farm.name}. ` : "Choose a farm to see its sources. "}
-        The live UBC and KPU rotation forecasts use NASA POWER. The storm and terrain demo views can use synthetic fixtures.
+        The live UBC and KPU rotation forecasts use NASA POWER.
       </p>
       <nav
         aria-label="On this page"
@@ -279,10 +279,6 @@ export default function MethodsPage() {
             <Badge variant="pre-built" /> curated site prepared ahead of time
           </span>
           <span>
-            <Badge variant="illustrative" /> made up for illustration, such as
-            field outlines and crops on curated sites
-          </span>
-          <span>
             <Badge variant="coarse" /> low-resolution data, not fine-scale
             detail
           </span>
@@ -295,7 +291,7 @@ export default function MethodsPage() {
             {farm
               ? `No associated terrain provenance is available for ${farm.name}.`
               : "Select a farm to inspect its available sources."}{" "}
-            Synthetic fixture provenance from unrelated example sites is not
+            Provenance from unrelated example sites is not
             attributed to this farm. Shared imagery and outline sources are
             listed separately below.
           </p>
@@ -534,10 +530,9 @@ onRetry={load}
                 </dd>
                 {f.tier === "twin" && (
                   <>
-                    <dt className="text-ink-muted">Twin</dt>
+                    <dt className="text-ink-muted">Explorable</dt>
                     <dd>
-                      Approximate field outlines; illustrative crops and
-                      rotations (not farm records).
+                      Approximate field outlines; crops: No data.
                     </dd>
                   </>
                 )}
@@ -592,9 +587,8 @@ onRetry={load}
             shown as an index starting at 100, and the weather ranges describe simulated outcomes.
           </li>
           <li>
-            Field outlines on the farm twins are approximate, and their crops
-            and rotations are illustrative, not surveyed boundaries or farm
-            records.
+            Field outlines on the explorable farms are approximate, not surveyed
+            boundaries. Crop records are not available (No data).
           </li>
           <li>
             Farm pins are approximate locations: the sources publish no exact

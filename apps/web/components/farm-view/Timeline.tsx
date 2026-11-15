@@ -203,7 +203,7 @@ export function ComparisonTimeline() {
       }}
     >
       <span>
-        Illustrative crop calendar · Year {year + 1} · {MONTH_NAMES[month]}
+        Crop calendar · Year {year + 1} · {MONTH_NAMES[month]}
       </span>
       <input
         aria-label="Comparison crop month"

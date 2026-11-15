@@ -9,11 +9,12 @@ import { buildFutureData, CURRENT_ROTATION, cropName, engineSeries, forecastYear
 const ubc = JSON.parse(readFileSync(resolve(__dirname, "../../public/prebuilt/site_ubc_farm_forecast.json"), "utf-8")) as Forecast;
 
 describe("buildFutureData", () => {
-  it("falls back to the synthetic fixtures without a forecast", () => {
+  it("has no data without a forecast", () => {
     const d = buildFutureData(null);
     expect(d.source).toBe("synthetic");
     expect(d.strategies.map((s) => s.id)).toEqual(["current", "a", "b"]);
-    expect(d.flags.current.length).toBeGreaterThan(0);
+    expect(d.flags.current).toEqual([]);
+    expect(d.strategies[0].rotation).toBe("No data");
   });
 
   it("maps the engine strategies in order, existing first, named Current rotation", () => {

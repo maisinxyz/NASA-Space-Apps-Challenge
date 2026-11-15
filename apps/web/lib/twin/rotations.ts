@@ -61,7 +61,7 @@ const ROOTS_PRINCIPLE = "Soil-health principles promoted by USDA NRCS include ke
 const LEGUME_PRINCIPLE = "Legumes such as alfalfa and soybean fix nitrogen from the air through root nodules, which can reduce the nitrogen needed by the following crop.";
 const NY_SPRING = "In upstate New York, snowmelt and spring rain on thawing, bare soil is a common time for runoff and soil loss."; // TODO(verify): check against NASA POWER monthly precipitation for Harford, NY.
 const MD_RAIN = "Central Maryland gets rain in every season, so soil left bare over winter and early spring is exposed to it."; // TODO(verify): check against NASA POWER monthly precipitation for Beltsville, MD.
-const NO_RECORDS = "Real crops and dates on this farm are not public: this sequence is illustrative.";
+const NO_RECORDS = "Real crops and dates on this farm are not public: no crop records.";
 const NO_SITE_DATA = "No measured soil, drainage or slope data for these fields.";
 
 /**
@@ -80,7 +80,7 @@ const NY_DAIRY: TwinRotation[] = [
     scores: { water: 2, erosion: 1, soilCover: 1, income: 4 },
     card: {
       rotation_id: "rot_existing",
-      why_suggested: "This is the illustrative current rotation: the baseline the other two are compared against.",
+      why_suggested: "This is the current rotation: the baseline the other two are compared against.",
       evidence: [COVER_PRINCIPLE, NY_SPRING],
       benefits: ["Simple: one crop and one set of equipment.", "Corn silage feeds the dairy herd directly."],
       information_gaps: [NO_RECORDS, NO_SITE_DATA],
@@ -145,7 +145,7 @@ const MD_GRAIN: TwinRotation[] = [
     scores: { water: 2, erosion: 2, soilCover: 2, income: 4 },
     card: {
       rotation_id: "rot_existing",
-      why_suggested: "This is the illustrative current rotation: the baseline the other two are compared against.",
+      why_suggested: "This is the current rotation: the baseline the other two are compared against.",
       evidence: [COVER_PRINCIPLE, MD_RAIN],
       benefits: ["Familiar crops and equipment.", "Soybean fixes some of its own nitrogen."],
       information_gaps: [NO_RECORDS, NO_SITE_DATA],

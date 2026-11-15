@@ -62,7 +62,7 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
         </div>
       ) : farm.tier === "twin" ? (
         <div className="mt-3 rounded border border-line bg-surface-2 p-3 text-sm">
-          <p className="font-semibold text-ink">3D Digital Twin Unavailable</p>
+          <p className="font-semibold text-ink">3D view unavailable</p>
           <p className="mt-1 text-xs text-ink-muted">
             Interactive 3D simulation and rotation comparison require a WebGL-capable desktop browser.
           </p>

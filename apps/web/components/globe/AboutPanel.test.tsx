@@ -10,13 +10,13 @@ describe("AboutPanel", () => {
 
     // Honest scenario description
     expect(html).toContain("Simulate weather scenarios");
-    expect(html).toContain("Current runs are synthetic fixture inputs");
+    expect(html).not.toContain("synthetic");
     expect(html).not.toContain("calibrated against regional historical baselines");
     expect(html).not.toContain("Replay a real storm");
     expect(html).not.toContain("replays storms from the NASA POWER record on it");
 
     // Roadmap items
     expect(html).toContain("Live NASA POWER replay");
-    expect(html).toContain("Replaying historical storms directly from the NASA POWER archive (currently disabled in favour of synthetic scenario models)");
+    expect(html).toContain("Replaying historical storms directly from the NASA POWER archive (currently disabled)");
   });
 });

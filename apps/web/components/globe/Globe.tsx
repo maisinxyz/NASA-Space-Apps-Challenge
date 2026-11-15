@@ -177,7 +177,7 @@ function repaintFields(r: Runtime, p: GlobeProps) {
 }
 
 /**
- * Hover label at the field's centroid (just above the ground, never hidden by tiles): "<name> · <crop> (illustrative)".
+ * Hover label at the field's centroid (just above the ground, never hidden by tiles): "<name> · Crop: No data".
  * In the A/B split the crop is the one of the side under the cursor (`xFrac` = cursor x / canvas width).
  */
 function setFieldHover(r: Runtime, p: GlobeProps, id: string | null, xFrac: number) {

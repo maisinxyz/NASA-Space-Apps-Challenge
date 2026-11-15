@@ -8,15 +8,15 @@ import { FarmPopup } from "./FarmPopup";
 const noop = () => {};
 
 describe("FarmPopup", () => {
-  it("renders honest copy and action button for full digital twin farms", () => {
+  it("renders honest copy and action button for explorable farms", () => {
     const farm = farmById("cornell-ruminant")!;
     const html = renderToStaticMarkup(
       <FarmPopup farm={farm} reduced={true} onClose={noop} onDescend={noop} />
     );
 
-    expect(html).toContain("Digital twin");
-    expect(html).toContain("Enter digital twin");
-    expect(html).toContain(`aria-label="Enter digital twin for ${farm.name}"`);
+    expect(html).toContain("Explorable");
+    expect(html).toContain("Enter farm");
+    expect(html).toContain(`aria-label="Enter farm view for ${farm.name}"`);
     expect(html).not.toContain("Simulation available on Cornell &amp; Beltsville only");
   });
 
@@ -30,7 +30,7 @@ describe("FarmPopup", () => {
     expect(html).toContain("Explore in 3D (no simulation)");
     expect(html).toContain("Simulation available on Cornell &amp; Beltsville only (2 of 14 farms)");
     expect(html).toContain(`aria-label="Explore ${farm.name} in 3D (simulation unavailable)"`);
-    expect(html).not.toContain("Enter digital twin");
+    expect(html).not.toContain("Enter farm");
   });
 
   it("renders tailored action button for Vancouver-area demos", () => {
@@ -39,13 +39,13 @@ describe("FarmPopup", () => {
       <FarmPopup farm={ubc} reduced={true} onClose={noop} onDescend={noop} />
     );
     expect(ubcHtml).toContain("Compare rotations");
-    expect(ubcHtml).toContain("Digital twin · scenarios and comparison");
+    expect(ubcHtml).toContain("Explorable · scenarios and comparison");
 
     const kpu = farmById("kpu-langley")!;
     const kpuHtml = renderToStaticMarkup(
       <FarmPopup farm={kpu} reduced={true} onClose={noop} onDescend={noop} />
     );
     expect(kpuHtml).toContain("Compare rotations");
-    expect(kpuHtml).toContain("Digital twin · scenarios and comparison");
+    expect(kpuHtml).toContain("Explorable · scenarios and comparison");
   });
 });

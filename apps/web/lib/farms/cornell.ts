@@ -51,7 +51,7 @@ export const CORNELL_TWIN: TwinSpec = {
     berry: "Berries",
     bare: "Bare soil",
   },
-  labels: ["Approximate field boundaries", "Illustrative field layout and crops (not farm records)"],
+  labels: ["Approximate field boundaries"],
   attribution: ["Field outlines traced by FieldTwin on Google 3D imagery (approximate)"],
   outlineSource: "tracedOutlines",
   outlineDate: "2026-11-13",

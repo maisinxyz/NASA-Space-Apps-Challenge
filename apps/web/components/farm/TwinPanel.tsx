@@ -16,7 +16,7 @@ import { ComparePanel } from "./ComparePanel";
 import { CompareTray, DividerHandle } from "./CompareTray";
 import { EvidenceBody, ExploreBody, FieldCard } from "./Inspector";
 import { ScenarioClock, SimulateBody } from "./ScenarioPanel";
-import { CropSwatch, hudBtn, hudBtnOn, hudSelect, Kbd, Panel, useTwin } from "./shared";
+import { hudBtn, hudBtnOn, hudSelect, Kbd, Panel, useTwin } from "./shared";
 
 const MODE_LABEL: Record<TwinMode, string> = { explore: "Explore", simulate: "Simulate", compare: "Compare", evidence: "Evidence" };
 const SURFACES: { id: FarmSurface; label: string }[] = [
@@ -128,7 +128,7 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
 
       {show && (
         <Panel title="Fields & layers" open={leftOpen} onToggle={() => useAppStore.setState({ leftOpen: !leftOpen })} className="absolute top-3 left-3 max-h-[calc(100%-8rem)] w-[18.75rem]">
-          <LeftBody fields={fields} crops={cropA} />
+          <LeftBody fields={fields} />
         </Panel>
       )}
 
@@ -249,14 +249,14 @@ export function MapSettings() {
             ))}
           </select>
           <span id="look-note" className="text-[0.7rem] text-ink-muted">
-            Illustrative styling, not sensor data.
+            Map styling only.
           </span>
         </label>
       </section>
   );
 }
 
-function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string, CropLook> | undefined }) {
+function LeftBody({ fields }: { fields: FarmField[] }) {
   const { twinFieldId: fieldId } = useAppStore();
   return (
     <div className="grid gap-4 text-sm">
@@ -275,14 +275,14 @@ function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string
               >
                 <span className="font-medium">{f.name}</span>
                 <span className="text-xs text-ink-muted">
-                  <CropSwatch crop={crops?.[f.id] ?? f.crop} /> · {f.areaHa.toLocaleString("en-US", { maximumFractionDigits: 1 })} ha
+                  No data · {f.areaHa.toLocaleString("en-US", { maximumFractionDigits: 1 })} ha
                 </span>
               </button>
             </li>
           ))}
         </ul>
         <p className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-ink-muted">
-          Area <BasisChip basis="derived" /> from the approximate outline; crops <BasisChip basis="assumed" /> illustrative. On the map, hover a field to see its name and crop.
+          Area <BasisChip basis="derived" /> from the approximate outline; crops: No data. On the map, hover a field to see its name and crop.
         </p>
       </section>
 

@@ -4,15 +4,14 @@
 // year / month boundary), snap on release, haptics, keyboard, play. Everything else subscribes to the store.
 import { useEffect, useRef, useState } from "react";
 
-import { BASELINE, CROP_STAGES, HEAVY_RAIN, YEARS } from "@/lib/farm-future/fixtures";
-import { clampT, dateAt, moistureBand, MONTH_NAMES, monthStartT, rainEventsT, T_MAX, tOf } from "@/lib/farm-future/model";
+import { YEARS } from "@/lib/farm-future/fixtures";
+import { clampT, dateAt, MONTH_NAMES, monthStartT, T_MAX } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { vibrate } from "@/lib/farm-view/timeline";
 import { color, shadow } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "@/components/farm-view/FvButton";
-import { MUTED_RED, SyntheticBadge } from "./ui";
 
 const MONTH_T = 1 / 12;
 const WEEK_T = 7 / 365;
@@ -29,8 +28,6 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
   const t = useFutureStore((s) => s.t);
   const zoom = useFutureStore((s) => s.zoom);
   const playing = useFutureStore((s) => s.playing);
-  const lens = useFutureStore((s) => s.lens);
-  const whatIf = useFutureStore((s) => s.whatIf);
   const { setT, setZoom, setPlaying } = useFutureStore.getState();
 
   const track = useRef<HTMLDivElement>(null);
@@ -133,27 +130,9 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
   const hx = toX(t);
   const labels = zoom === "10y" ? YEARS.map((y, i) => ({ text: String(y), at: i + 0.5, sel: i === d.yearIndex })) : MONTH_NAMES.map((n, i) => ({ text: n.slice(0, 3), at: d.yearIndex + (i + 0.5) / 12, sel: i === d.month }));
   const ticks = zoom === "10y" ? [...Array(11)].map((_, i) => i) : [...Array(13)].map((_, i) => d.yearIndex + i / 12);
-  const band = moistureBand(t, whatIf);
 
   return (
     <div data-testid="future-timeline" style={{ position: "absolute", left: 40, right, bottom: 30, height: 150, pointerEvents: "none" }}>
-      {/* Crop growth strip (1 yr zoom + Erosion lens): 2 px lines, stress windows as 4 px muted red. */}
-      {zoom === "1y" && lens === "erosion" && (
-        <div aria-label="Crop stages and stress windows" role="img" style={{ position: "absolute", left: 0, right: 0, bottom: 150, height: 92 }}>
-          <div className="ff-legend" style={{ position: "absolute", left: 0, top: -20 }}>
-            <span>Crop stages, {d.year}</span>
-            <span><span style={{ width: 14, height: 4, borderRadius: 2, background: MUTED_RED }} />Stress window</span>
-          </div>
-          {CROP_STAGES.map((c, i) => (
-            <div key={c.crop} style={{ position: "absolute", left: 0, right: 0, top: i * 22, height: 22 }}>
-              <span className="ff-tl-lab" style={{ position: "absolute", left: 0, top: 0, transform: "none", fontSize: 10.5 }}>{c.crop}</span>
-              {c.grow.map(([a, b], k) => <div key={k} style={{ position: "absolute", left: (a / 12) * width, width: ((b - a) / 12) * width, top: 15, height: 2, borderRadius: 1, background: "rgba(242,235,221,0.5)" }} />)}
-              {c.stress.map(([a, b], k) => <div key={`s${k}`} style={{ position: "absolute", left: (a / 12) * width, width: ((b - a) / 12) * width, top: 14, height: 4, borderRadius: 2, background: MUTED_RED }} />)}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Readout row */}
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 82, display: "flex", alignItems: "center", gap: 12 }}>
         <FvButton className="fv-glass fv-icon fv-auto" style={{ width: 32, height: 32, color: color.ink }} aria-label={playing ? "Pause" : "Play"} data-testid="future-play" onClick={() => setPlaying(!playing)}>
@@ -174,24 +153,8 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
             </FvButton>
           ))}
         </div>
-        <SyntheticBadge onMap />
         <div style={{ flex: 1 }} />
-        {zoom === "10y" && (
-          <div className="ff-legend">
-            {lens === "uncertainty" ? (
-              <>
-                <span><span style={{ width: 14, height: 8, background: "rgba(242,235,221,0.25)" }} />p10–p90 {band.p10}–{band.p90}%</span>
-                <span><span style={{ width: 14, borderTop: `1px dashed ${color.ink}` }} />p50</span>
-              </>
-            ) : (
-              <>
-                <span><span style={{ width: 14, height: 2, background: "linear-gradient(90deg,#6F98C6,#D08A47)" }} />Mean temp</span>
-                <span><span style={{ width: 2, height: 9, background: color.water }} />Heavy rain</span>
-                <span><span style={{ width: 14, height: 2, background: "rgba(242,235,221,0.5)" }} />Frost-free window</span>
-              </>
-            )}
-          </div>
-        )}
+        <span className="ff-tl-meta fv-onmap" data-testid="timeline-no-data">No data</span>
       </div>
 
       {/* Track */}
@@ -205,18 +168,6 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
         onPointerCancel={onUp}
         style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 72, touchAction: "none", cursor: dragging ? "grabbing" : "pointer" }}
       >
-        {zoom === "10y" && (
-          <>
-            <div aria-hidden style={{ position: "absolute", left: 0, right: 0, bottom: 44, height: 2, borderRadius: 1, background: `linear-gradient(90deg, #6F98C6, #C9B48A ${(BASELINE.tempAnomalyC.findIndex((v) => v >= 0.9) / 9) * 100}%, #D08A47)` }} />
-            {rainEventsT(HEAVY_RAIN).map((e, i) => (
-              <div key={i} aria-hidden style={{ position: "absolute", left: toX(e.t) - 1, bottom: 50, width: 2, height: 4 + e.mm / 5, borderRadius: 1, background: color.water }} />
-            ))}
-            {YEARS.map((_, i) => (
-              <div key={i} aria-hidden style={{ position: "absolute", left: toX(tOf(i, BASELINE.lastSpringFrostDoy[i])), width: toX(tOf(i, BASELINE.firstFallFrostDoy[i])) - toX(tOf(i, BASELINE.lastSpringFrostDoy[i])), bottom: 39, height: 2, borderRadius: 1, background: "rgba(242,235,221,0.4)" }} />
-            ))}
-            {lens === "uncertainty" && <UncertaintyFan width={width} />}
-          </>
-        )}
         <div aria-hidden style={{ position: "absolute", left: 0, right: 0, bottom: 33, height: 1, background: "rgba(242,235,221,0.45)" }} />
         <div aria-hidden style={{ position: "absolute", left: 0, width: hx, bottom: 33, height: 1, background: color.ink }} />
         {ticks.map((v, i) => <div key={i} aria-hidden className="ff-tl-tick" style={{ left: toX(v), bottom: 26, height: 7 }} />)}
@@ -237,21 +188,5 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
         </div>
       </div>
     </div>
-  );
-}
-
-/** p10–p90 band widening over the 10 years, with a dashed p50 (Uncertainty lens only). */
-function UncertaintyFan({ width }: { width: number }) {
-  const whatIf = useFutureStore((s) => s.whatIf);
-  const pts = YEARS.map((_, i) => ({ x: ((i + 0.5) / T_MAX) * width, b: moistureBand(i + 0.5, whatIf) }));
-  const y = (v: number) => 56 - (v - 25) * 1.4; // 25–55 % → 56..14 px
-  const top = pts.map((p) => `${p.x.toFixed(1)},${y(p.b.p90).toFixed(1)}`).join(" ");
-  const bot = [...pts].reverse().map((p) => `${p.x.toFixed(1)},${y(p.b.p10).toFixed(1)}`).join(" ");
-  const mid = pts.map((p) => `${p.x.toFixed(1)},${y(p.b.p50).toFixed(1)}`).join(" ");
-  return (
-    <svg width={width} height={60} viewBox={`0 0 ${width} 60`} role="img" aria-label="July soil moisture, p10 to p90 range, widening each year" style={{ position: "absolute", left: 0, bottom: 36 }}>
-      <polygon points={`${top} ${bot}`} fill={color.ink} fillOpacity={0.18} />
-      <polyline points={mid} fill="none" stroke={color.ink} strokeWidth={1} strokeDasharray="3 3" />
-    </svg>
   );
 }

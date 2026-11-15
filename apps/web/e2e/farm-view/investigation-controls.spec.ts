@@ -7,7 +7,7 @@ async function openSection(page: Page, section: "map" | "compare" | "evidence" |
   await expect(page.getByRole("tab", { name: section === "scenarios" ? "Scenarios" : section[0].toUpperCase() + section.slice(1), exact: true })).toHaveAttribute("aria-selected", "true");
 }
 
-test("map surface, height, detail and illustrative look controls retain their selections", async ({ page }) => {
+test("map surface, height, detail and look controls retain their selections", async ({ page }) => {
   await openSection(page, "map");
   const panel = page.getByRole("tabpanel");
   for (const name of ["Terrain only", "Photoreal 3D"]) {
@@ -24,7 +24,7 @@ test("map surface, height, detail and illustrative look controls retain their se
     await expect(radio).toBeChecked();
   }
   const look = panel.getByRole("combobox", { name: "Look" });
-  await expect(panel.getByText("Illustrative styling, not sensor data.")).toBeVisible();
+  await expect(panel.getByText("Map styling only.")).toBeVisible();
   for (const value of ["none", "thermal", "vegetation", "night"]) {
     await look.selectOption(value);
     await expect(look).toHaveValue(value);

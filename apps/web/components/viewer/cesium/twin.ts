@@ -38,6 +38,7 @@ const FILL_ALPHA_SELECTED = 0.68;
 const OUTLINE = "#f4ecd2";
 const OUTLINE_ALPHA = 0.7;
 const OUTLINE_SELECTED = "#ffd54a";
+const NEUTRAL_FILL = "#9aa3ad";
 /** Fills off (default, user choice: keep the real imagery visible): faint edges only on the selected / hovered field. */
 const OUTLINE_ALPHA_SELECTED_FAINT = 0.75;
 const OUTLINE_ALPHA_HOVER_FAINT = 0.3;
@@ -47,10 +48,10 @@ export type FieldState = { selected?: boolean; hovered?: boolean; /** FarmTwinPr
 
 /**
  * Pure: fill and outline CSS colour + alpha for a field. Without fills (default) the field is invisible (alpha 0,
- * still pickable) apart from a faint edge while selected or hovered; with fills, the illustrative crop colours.
+ * still pickable) apart from a faint edge while selected or hovered; with fills, one neutral colour (no crop data).
  */
-export function fieldStyle(look: CropLook, st: FieldState): { fill: string; fillAlpha: number; outline: string; outlineAlpha: number } {
-  const fill = CROP_COLORS[look] ?? CROP_COLORS.bare;
+export function fieldStyle(_look: CropLook, st: FieldState): { fill: string; fillAlpha: number; outline: string; outlineAlpha: number } {
+  const fill = NEUTRAL_FILL; // no crop data: every field gets the same neutral fill
   if (!st.fills)
     return { fill, fillAlpha: 0, outline: st.selected ? OUTLINE_SELECTED : OUTLINE, outlineAlpha: st.selected ? OUTLINE_ALPHA_SELECTED_FAINT : st.hovered ? OUTLINE_ALPHA_HOVER_FAINT : 0 };
   return {
@@ -63,10 +64,9 @@ export function fieldStyle(look: CropLook, st: FieldState): { fill: string; fill
 
 export { CROP_WORDS };
 
-/** Pure: hover label text, e.g. "Centre field · Corn (illustrative)". */
-export function fieldHoverText(f: Pick<FarmField, "id" | "name" | "crop">, cropByField?: Record<string, CropLook>): string {
-  const look = cropByField?.[f.id] ?? f.crop;
-  return `${f.name} · ${CROP_WORDS[look] ?? look} (illustrative)`;
+/** Pure: hover label text, e.g. "Centre field · Crop: No data". */
+export function fieldHoverText(f: Pick<FarmField, "id" | "name">, _cropByField?: Record<string, CropLook>): string {
+  return `${f.name} · Crop: No data`;
 }
 
 /** Pure: mean of the ring's vertices (label anchor; inside for the convex-ish fields we draw). */

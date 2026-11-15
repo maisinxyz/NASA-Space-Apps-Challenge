@@ -105,7 +105,6 @@ export function FieldCard({
       <SourceFooter
         ids={[
           twin.outlineSource,
-          "illustrativeCrops",
           ...(rows.length ? (["rotationCalendar"] as const) : []),
         ]}
       />

@@ -41,7 +41,7 @@ const BC_CROP_LABELS: Record<CropLook, string> = {
   bare: "Bare soil",
 };
 
-const LABELS = ["Approximate field boundaries", "Illustrative field layout and crops (not farm records)"];
+const LABELS = ["Approximate field boundaries"];
 const OSM = "Field outlines: © OpenStreetMap contributors, ODbL";
 
 const twinOf = (req: { fields?: ReqField[] }, crop: CropLook, centre: [number, number], area: string, extra: string[] = []): TwinSpec => {

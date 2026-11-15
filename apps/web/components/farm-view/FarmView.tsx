@@ -25,7 +25,6 @@ import {
 import { FV_CSS } from "./styles";
 import { ComparisonTimeline } from "./Timeline";
 import { ConditionCard, LayerLegend } from "./Cards";
-import { Twin } from "./Twin";
 import { RotationComparison } from "@/components/farm-future/RotationComparison";
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
@@ -352,7 +351,7 @@ export function FarmView({
           </nav>
               {simProps && twin && (
                 <details className="fv-cap" style={{ marginTop: 8 }}>
-                  <summary>Approximate outlines · illustrative crops</summary>
+                  <summary>Approximate outlines</summary>
                   <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
                 </details>
               )}
@@ -390,7 +389,7 @@ export function FarmView({
                   <div style={{ fontSize: 12, color: "#a3bfe9", display: "flex", flexDirection: "column", gap: 4, margin: "0 0 12px 0" }}>
                     <span><strong>Location:</strong> 49°07′N 122°38′W (Langley, BC)</span>
                     <span><strong>Facilities:</strong> High-tech greenhouses, field lab, apiary</span>
-                    <span><strong>Status:</strong> Digital twin · No field sensors connected</span>
+                    <span><strong>Status:</strong> No field sensors connected</span>
                   </div>
                   <a href="https://www.kpu.ca/langley/campus-highlights" target="_blank" rel="noreferrer" className="fv-glass fv-seg" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", color: "#f2ebdd", padding: "8px 12px", borderRadius: 8, fontSize: 12 }}>
                     Visit KPU Campus Highlights ↗
@@ -417,14 +416,13 @@ export function FarmView({
                       ))}
                     </dl>
                     <p className="fv-cap">
-                      No dated farm observations are connected. Simulation inputs
-                      are synthetic.
+                      No dated farm observations are connected.
                     </p>
                   </div>
                   <hr />
                   <div>
-                    <h3>Synthetic preview · not this farm’s measurements</h3>
-                    <div className="fv-preview" aria-label="Synthetic condition preview">
+                    <h3>Conditions</h3>
+                    <div className="fv-preview" aria-label="Condition preview">
                       {CONDITIONS.map((c) => {
                         const Icon = PILL_ICON[c.id];
                         return <FvButton key={c.id} className="fv-glass fv-pill" data-testid={`condition-pill-${c.id}`}
@@ -590,7 +588,6 @@ export function FarmView({
             </div>
           </aside>
           <div className="fv-mode-content" hidden={futureMode !== "now"}>
-          {!siteForFarm(farmId ?? null) && <Twin bottom={comparing ? 110 : undefined} />}
           {simProps && comparing && (
             <>
               <DividerHandle />

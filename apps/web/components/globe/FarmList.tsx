@@ -2,7 +2,7 @@
 // farm and the fallback when the globe cannot load.
 import type { Farm, FarmTier } from "./types";
 
-export const TIER_LABEL: Record<FarmTier, string> = { twin: "Full digital twin", explore: "Explore only" };
+export const TIER_LABEL: Record<FarmTier, string> = { twin: "Explorable", explore: "Explore only" };
 
 /** Tier as words (never colour alone). */
 export function TierTag({ tier }: { tier: FarmTier }) {

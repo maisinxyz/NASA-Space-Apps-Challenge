@@ -127,7 +127,7 @@ export function FarmDetail({ farm, reduced, onClose, onDescend }: { farm: FarmIn
                 {farm.name}
               </h2>
               <p className="mt-0.5 text-[13px] text-white/[0.6]">{farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}</p>
-              <p className="mt-2 inline-block rounded-full border border-white/[0.16] px-2 py-0.5 text-[11px] text-white/[0.75]">{farm.tier === "twin" ? "Digital twin" : "Explore only"}</p>
+              <p className="mt-2 inline-block rounded-full border border-white/[0.16] px-2 py-0.5 text-[11px] text-white/[0.75]">{farm.tier === "twin" ? "Explorable" : "Explore only"}</p>
               <dl className="mt-3 grid gap-1.5 border-t border-white/[0.08] pt-3">
                 <Row k="Operated by">{farm.owner}</Row>
                 {farm.areaHa !== undefined && (
@@ -149,7 +149,7 @@ export function FarmDetail({ farm, reduced, onClose, onDescend }: { farm: FarmIn
               </p>
               <div className="mt-4">
                 <Pressable onClick={() => open(farm)} className="relative rounded-[10px] bg-white/[0.92] px-4 py-2 text-[14px] font-medium text-black hover:bg-white focus-visible:ring-2 focus-visible:ring-white/70">
-                  {farm.tier === "twin" ? "Open twin" : "Fly in"}
+                  {farm.tier === "twin" ? "Open farm" : "Fly in"}
                   {confirm > 0 && !reduced && (
                     <motion.span
                       key={confirm}

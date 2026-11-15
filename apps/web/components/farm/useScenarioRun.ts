@@ -48,7 +48,6 @@ export function useScenarioRun({ farmId, runSource, enabled, reducedMotion }: { 
   return useMemo(() => {
     if (!live || !def || !farmId) return null;
     const frame = composeFrame({ scenarioId: def.id, farmId, progress: s.progress, inputs: resolveInputs(def, s.stored[def.id]), rotationId: def.rotationDependent ? s.rotation : null, timeS });
-    // Fixture numbers are made up: every readout says so.
-    return runSource === "fixture" ? { ...frame, readouts: frame.readouts.map((r) => ({ ...r, basis: "synthetic" as const })) } : frame;
-  }, [live, def, farmId, runSource, s.progress, s.stored, s.rotation, timeS]);
+    return frame;
+  }, [live, def, farmId, s.progress, s.stored, s.rotation, timeS]);
 }

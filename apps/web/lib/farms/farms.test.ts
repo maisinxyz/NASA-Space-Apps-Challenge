@@ -68,7 +68,7 @@ describe.each(twins)("twin $id", (farm) => {
   it("carries honesty labels, attribution and three rotations", () => {
     const { labels, attribution, rotations, cropLabels } = t();
     expect(labels).toContain("Approximate field boundaries");
-    expect(labels).toContain("Illustrative field layout and crops (not farm records)");
+    expect(labels).not.toContain("Illustrative field layout and crops (not farm records)");
     expect(attribution.length).toBeGreaterThan(0);
     expect(rotations).toHaveLength(3);
     expect(cropLabels.bare).toBe("Bare soil");

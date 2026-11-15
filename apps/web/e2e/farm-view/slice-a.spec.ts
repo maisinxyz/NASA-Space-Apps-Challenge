@@ -35,15 +35,15 @@ test.describe("Farm view controls", () => {
     }
   });
 
-  test("condition cards and legends are clearly synthetic previews", async ({ page }) => {
-    await expect(page.getByText("Synthetic preview · not this farm’s measurements")).toBeVisible();
+  test("condition cards and legends show No data", async ({ page }) => {
+    await expect(page.getByText(/synthetic/i)).toHaveCount(0);
     for (const id of ["rainfall", "moisture", "vigor", "heat"]) {
       await expect(tid(page, `condition-pill-${id}`)).toBeVisible();
     }
     await tid(page, "condition-pill-moisture").click();
     await expect(tid(page, "condition-pill-moisture")).toHaveAttribute("aria-expanded", "true");
-    await expect(tid(page, "card-moisture")).toContainText("Synthetic preview · not measurements for the selected farm");
-    await expect(tid(page, "layer-legend")).toContainText("Map overlay unavailable");
+    await expect(tid(page, "card-moisture")).toContainText("No data");
+    await expect(tid(page, "layer-legend")).toContainText("No data");
     await tid(page, "condition-pill-rainfall").click();
     await expect(tid(page, "card-rainfall")).toBeVisible();
     await expect(tid(page, "card-moisture")).toBeHidden();
@@ -51,7 +51,7 @@ test.describe("Farm view controls", () => {
     await expect(tid(page, "card-rainfall")).toBeHidden();
   });
 
-  test("field report shows Cornell's illustrative fields without invented measurements and supports keyboard selection", async ({ page }) => {
+  test("field report shows Cornell's fields without invented measurements and supports keyboard selection", async ({ page }) => {
     await tid(page, "field-report-toggle").click();
     const report = tid(page, "field-report");
     await expect(report).toBeVisible();
@@ -66,21 +66,6 @@ test.describe("Farm view controls", () => {
     await expect(page.getByRole("tab", { name: "Field", exact: true })).toHaveAttribute("aria-selected", "true");
     await tid(page, "reset-view").click();
     await expect(page.getByRole("tab", { name: "Field", exact: true })).toHaveAttribute("aria-selected", "true");
-  });
-
-  test("Twin accepts a question and offers a synthetic answer and follow-up", async ({ page }) => {
-    await tid(page, "twin-button").click();
-    const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
-    await expect(input).toBeFocused();
-    await input.fill("Which field needs water first?");
-    await page.getByRole("button", { name: "Send", exact: true }).click();
-    const answer = tid(page, "twin-answer");
-    await expect(answer).toContainText("Synthetic preview (not this farm’s measurements)");
-    await expect(answer).toContainText("Trial plots needs water first", { timeout: 15_000 });
-    await answer.getByRole("button", { name: "Why not the main block?" }).click();
-    await expect(answer).toContainText("Main block is dry too", { timeout: 15_000 });
-    await page.getByRole("button", { name: "Close Twin" }).first().click();
-    await expect(tid(page, "twin-button")).toBeFocused();
   });
 
   test("mute setting persists across reload", async ({ page }) => {
@@ -114,10 +99,10 @@ test("comparison calendar controls the same month as the comparison tray", async
   const month = page.getByRole("slider", { name: "Comparison crop month" });
   await expect(month).toBeVisible();
   await month.fill("0");
-  await expect(page.getByText(/Illustrative crop calendar · Year \d+ · January/)).toBeVisible();
+  await expect(page.getByText(/Crop calendar · Year \d+ · January/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Show Jan on the fields", exact: true }).first()).toHaveAttribute("aria-pressed", "true");
   await month.fill("6");
-  await expect(page.getByText(/Illustrative crop calendar · Year \d+ · July/)).toBeVisible();
+  await expect(page.getByText(/Crop calendar · Year \d+ · July/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Show Jul on the fields", exact: true }).first()).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -187,12 +172,8 @@ test("hidden farm controls and panels restore their open state", async ({ page }
   await expect(tid(page, "card-rainfall")).toBeHidden();
   await page.getByRole("button", { name: "Show farm controls", exact: true }).click();
   await expect(tid(page, "card-rainfall")).toBeVisible();
-  await tid(page, "twin-button").click();
-  const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
-  await input.fill("Keep this question");
   await page.getByRole("button", { name: "Hide panels", exact: true }).click();
   await expect(page.getByRole("button", { name: "Show panels", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Show panels", exact: true }).click();
-  await expect(input).toHaveValue("Keep this question");
   await expect(tid(page, "card-rainfall")).toBeVisible();
 });

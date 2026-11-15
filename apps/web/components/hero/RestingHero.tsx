@@ -18,7 +18,7 @@ import { color, ease, hero } from "./tokens";
 export const HERO_COPY = {
   eyebrow: "FieldTwin",
   headline: ["Farms", "from", "orbit"],
-  body: "Explore research farms in 3D, then compare illustrative crop rotations and weather scenarios on two digital twins.",
+  body: "Explore research farms in 3D, then compare crop rotations and weather scenarios on two explorable farms.",
   action: "Explore the farms",
   statusRight: "NASA Space Apps 2026",
 } as const;
@@ -91,8 +91,8 @@ export function RestingHero({
   const approx = simLabel.includes("~") ? "~" : "";
   const stats: [string, string][] = [
     ["Research farms", String(farms.length).padStart(2, "0")],
-    ["Digital twins", String(farms.filter((f) => f.tier === "twin").length).padStart(2, "0")],
-    ["Digital twin", twin ? (twin.locality?.split(",")[0] ?? twin.name) : "—"],
+    ["Explorable farms", String(farms.filter((f) => f.tier === "twin").length).padStart(2, "0")],
+    ["Explorable", twin ? (twin.locality?.split(",")[0] ?? twin.name) : "—"],
     ["Simulation area", simKm ? `${approx}${simKm} × ${simKm} km` : "—"],
   ];
   const props = { shown, reduced };
@@ -175,7 +175,7 @@ export function RestingHero({
             Choose a research farm
             <select value={selectedId ?? ""} onChange={(e) => e.target.value && onPickFarm(e.target.value)} className="mt-1 block w-full rounded border border-white/30 bg-[#07090d] px-2 py-2 text-sm text-white">
               <option value="">Select a farm</option>
-              {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name} — {farm.tier === "twin" ? "Digital twin" : "Explore only"}</option>)}
+              {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name} — {farm.tier === "twin" ? "Explorable" : "Explore only"}</option>)}
             </select>
           </label>
           <div className="pointer-events-auto w-full">

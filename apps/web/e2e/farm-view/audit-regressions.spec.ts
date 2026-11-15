@@ -19,12 +19,8 @@ for (const id of ["cornell-ruminant", "usda-barc"]) {
   test(`first scenario works in non-3D workspace: ${id}`, async ({ page }) => {
     await mobileFarm(page, id);
     await page.getByRole("button", { name: /^Storm Replay/ }).click();
-    await expect(
-      page.getByRole("heading", { name: "Readouts", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Synthetic demo data", { exact: true }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "No data" })).toBeVisible();
+    await expect(page.getByText(/synthetic/i)).toHaveCount(0);
     await page
       .getByRole("spinbutton", { name: "Peak rain rate value" })
       .fill("55");
@@ -159,8 +155,8 @@ test("farm observations, unavailable layers, field keyboard selection and camera
   await desktopFarm(page);
   await expect(page.getByTestId("layer-vigor")).toBeDisabled();
   await expect(page.getByTestId("layer-moisture")).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Ask Gus preview", exact: true })).toBeVisible();
-  await expect(page.getByText("Synthetic preview · not this farm’s measurements", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ask Gus preview", exact: true })).toHaveCount(0);
+  await expect(page.getByText(/synthetic/i)).toHaveCount(0);
   await page
     .getByText("Farm observations: Not available", { exact: true })
     .click();

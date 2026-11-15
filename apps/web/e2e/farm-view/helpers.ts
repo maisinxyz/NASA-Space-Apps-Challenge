@@ -28,7 +28,7 @@ export async function openFarm(page: Page) {
 /** Count visible pop-ups: condition cards + field popover + Twin answer. Rule: never more than 1. */
 export async function openPopupCount(page: Page) {
   return page.evaluate(() =>
-    ["card-rainfall", "card-moisture", "card-vigor", "card-heat", "field-popover", "twin-answer", "twin-pill"].filter((id) => {
+    ["card-rainfall", "card-moisture", "card-vigor", "card-heat", "field-popover"].filter((id) => {
       const el = document.querySelector(`[data-testid="${id}"]`);
       return !!el && getComputedStyle(el).visibility !== "hidden" && (el as HTMLElement).offsetParent !== null;
     }).length,

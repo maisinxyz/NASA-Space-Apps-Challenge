@@ -2,33 +2,9 @@
 // Screen-level lens effects over the 3D map. pointer-events: none, aria-hidden, and a still under reduced motion.
 // Field-polygon drapes (anomaly colours, erosion outlines, flow lines, soil-test pins on the ground) need the
 // farm's field geometry in Cesium; they land with the farm-view map-layer slice (see docs/progress note).
-import { useReducedMotion } from "framer-motion";
-
-import { conditionsAt } from "@/lib/farm-future/model";
-import { useFutureStore } from "@/lib/farm-future/store";
-
+/** The lens effects were driven by made-up numbers, so nothing is drawn until real data feeds them. */
 export function MapEffects() {
-  const lens = useFutureStore((s) => s.lens);
-  const mode = useFutureStore((s) => s.mode);
-  const t = useFutureStore((s) => s.t);
-  const w = useFutureStore((s) => s.whatIf);
-  const reduced = !!useReducedMotion();
-  if (mode === "now") return null;
-  const c = conditionsAt(t, w);
-  // Warm tint grows with heat days: subtle at all times in Future mode, stronger under the Heat lens.
-  const heat = Math.max(0, Math.min(1, (c.heatDays - 9) / 20));
-  const tint = lens === "heat" ? 0.06 + heat * 0.12 : heat * 0.05;
-  return (
-    <div aria-hidden data-testid="map-effects" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}>
-      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 60% 60%, rgba(217,135,58,${tint.toFixed(3)}), rgba(217,135,58,${(tint * 0.4).toFixed(3)}) 70%)`, mixBlendMode: "multiply", transition: reduced ? "none" : "background 300ms" }} />
-      {lens === "heat" && !reduced && <div className="ff-shimmer" style={{ position: "absolute", inset: 0 }} />}
-      {lens === "frost" && <div style={{ position: "absolute", inset: 0, background: "rgba(191,211,230,0.10)", mixBlendMode: "screen" }} />}
-      {lens === "uncertainty" && (
-        <div style={{ position: "absolute", left: 0, right: 0, top: 120, bottom: 140, backgroundImage: "linear-gradient(rgba(242,235,221,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(242,235,221,0.16) 1px, transparent 1px)", backgroundSize: "96px 96px" }} />
-      )}
-      {lens === "rain" && !reduced && <div className="ff-rain" style={{ position: "absolute", inset: 0 }} />}
-    </div>
-  );
+  return null;
 }
 
 export const EFFECTS_CSS = `

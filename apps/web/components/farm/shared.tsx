@@ -4,7 +4,7 @@ import { type ReactNode, useId } from "react";
 import type { CropLook } from "@/components/globe/types";
 import { farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { useAppStore } from "@/lib/store";
-import { CROP_LABELS, MONTHS } from "@/lib/twin/rotations";
+import { CROP_LABELS } from "@/lib/twin/rotations";
 
 /** The current farm's twin. Returns the twin config if configured, or a safe stub for explore-only farms. */
 export function useTwin(): TwinConfig {
@@ -93,43 +93,7 @@ export function Panel({ title, open, onToggle, className = "", children, footer 
   );
 }
 
-/**
- * Month-by-year ground-cover calendar; bare months are outlined. `rows` = one 12-month row per label. Month labels
- * on top; with `onPickMonth` they are buttons that pick the month shown on the fields.
- */
-export function CoverCalendar({ rows, month, onPickMonth, activeRow }: { rows: { label: string; months: CropLook[] }[]; month?: number; onPickMonth?(m: number): void; activeRow?: number }) {
-  const labels = useCropLabels();
-  const grid = "grid grid-cols-[4.5rem_repeat(12,minmax(0,1fr))] items-center gap-px";
-  return (
-    <div className="grid gap-0.5 text-[0.65rem]">
-      <div className={`${grid} text-center text-ink-muted`}>
-        <span />
-        {MONTHS.map((m, i) =>
-          onPickMonth ? (
-            <button key={m} type="button" title={m} aria-pressed={i === month} aria-label={`Show ${m} on the fields`} onClick={() => onPickMonth(i)} className={`min-h-6 rounded ${i === month ? "bg-accent font-semibold text-accent-ink" : "hover:bg-white/10"}`}>
-              {m[0]}
-            </button>
-          ) : (
-            <span key={m} title={m} className={i === month ? "font-semibold text-ink" : ""}>
-              <span aria-hidden>{m[0]}</span>
-              <span className="sr-only">{m}</span>
-            </span>
-          ),
-        )}
-      </div>
-      {rows.map((r, ri) => (
-        <div key={r.label} role="group" className={grid} aria-label={`${r.label}: ${r.months.filter((c) => c === "bare").length} bare months`}>
-          <span className={`truncate ${ri === activeRow ? "font-semibold text-ink" : "text-ink-muted"}`}>{r.label}</span>
-          {r.months.map((c, m) => (
-            <span
-              key={m}
-              title={`${r.label}, ${MONTHS[m]}: ${labels[c]}`}
-              className={`h-3 rounded-[2px] ${c === "bare" ? "outline outline-1 -outline-offset-1 outline-amber-300" : ""} ${m === month && ri === activeRow ? "ring-2 ring-white" : ""}`}
-              style={{ background: CROP_COLOR[c] }}
-            />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
+/** The crop sequences are made up, so no calendar is drawn: "No data" until real crop records exist. */
+export function CoverCalendar(_props: { rows?: unknown; month?: number; onPickMonth?(m: number): void; activeRow?: number }) {
+  return <p className="text-xs text-ink-muted">No data</p>;
 }

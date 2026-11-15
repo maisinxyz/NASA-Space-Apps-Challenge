@@ -50,7 +50,7 @@ export const BELTSVILLE_TWIN: TwinSpec = {
     berry: "Berries",
     bare: "Bare soil",
   },
-  labels: ["Approximate field boundaries", "Illustrative field layout and crops (not farm records)"],
+  labels: ["Approximate field boundaries"],
   attribution: ["Field outlines: © OpenStreetMap contributors, ODbL"],
   outlineSource: "osm",
   outlineDate: "2026-11-13",

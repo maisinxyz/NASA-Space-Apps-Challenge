@@ -41,23 +41,7 @@ export function ConditionCard({ id, onClose }: { id: ConditionId; onClose(): voi
           <Minus size={16} />
         </FvButton>
       </div>
-      <p className="fv-big">
-        <span className="b">{c.big}</span>
-        <span className="u">{c.unit}</span>
-      </p>
-      {c.description && <p className="fv-sum">{c.description}</p>}
-      {c.grid && (
-        <div className="fv-grid">
-          {c.grid.map((g) => (
-            <div key={g.label}>
-              <span className="fv-cap">{g.label}</span>
-              <span className="v">{g.value}</span>
-              {g.note && <span className="n">{g.note}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-      <p className="fv-cap" style={{ margin: "12px 0 0" }}>Synthetic preview · not measurements for the selected farm</p>
+      <p className="fv-big"><span className="b">No data</span></p>
     </motion.section>
   );
 }
@@ -78,13 +62,7 @@ export function LayerLegend({ layer }: { layer: LayerId }) {
       transition={{ duration: m.layerFadeMs / 1000, ease: "linear" }}
     >
       <h2>{l.title}</h2>
-      <div className="bar" style={{ background: `linear-gradient(90deg, ${l.from}, ${l.to})` }} />
-      <div className="ends fv-cap">
-        <span>{l.lo}</span>
-        <span>{l.hi}</span>
-      </div>
-      <p className="fv-cap" style={{ margin: "8px 0 0" }}>Synthetic preview legend</p>
-      <p className="fv-cap" style={{ margin: "4px 0 0" }}>Map overlay unavailable: field shading is not drawn.</p>
+      <p className="fv-big"><span className="b">No data</span></p>
     </motion.section>
   );
 }

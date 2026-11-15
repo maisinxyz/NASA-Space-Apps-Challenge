@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { openFarm, tid } from "./helpers";
 
-// Future / Compare modes (components/farm-future). Fixture-driven: every view shows "Synthetic demo data".
+// Future / Compare modes (components/farm-future). Fixture-driven: values show "No data".
 test.describe("farm view: future features", () => {
   test.beforeEach(async ({ page }) => {
     await openFarm(page);
@@ -17,7 +17,7 @@ test.describe("farm view: future features", () => {
     await expect(tid(page, "whatif-pill")).toBeVisible();
     await expect(tid(page, "future-timeline")).toBeVisible();
     await expect(tid(page, "future-pills")).toBeVisible();
-    await expect(tid(page, "synthetic-badge").first()).toBeVisible();
+    await expect(tid(page, "future-pill-rain")).toContainText("No data");
     await expect(tid(page, "lens-card")).toHaveCount(0);
   });
 

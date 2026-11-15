@@ -517,13 +517,13 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           ) : wide ? (
             <div role="alert" className="rounded-lg border border-line bg-surface p-4">
               <p className="font-semibold">The 3D globe could not load</p>
-              <p className="mt-1 text-sm text-ink-muted">You can use scenarios and comparisons without the map. Select a digital twin below.</p>
+              <p className="mt-1 text-sm text-ink-muted">You can use scenarios and comparisons without the map. Select an explorable farm below.</p>
             </div>
           ) : (
-            <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Digital twins still offer scenarios, comparisons, and evidence here.</p>
+            <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Explorable farms still offer scenarios, comparisons, and evidence here.</p>
           )}
           {wide && !listMode && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
-          <p className="text-sm text-ink-muted">Compare what could happen under different rotations with illustrative crops and simulated weather.</p>
+          <p className="text-sm text-ink-muted">Compare what could happen under different rotations.</p>
           {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
             {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => useAppStore.setState({globeView:"farm",twinMode:"simulate"}) : undefined} />}
             {farm?.id === "ubc-farm" && (

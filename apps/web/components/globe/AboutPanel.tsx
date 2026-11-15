@@ -7,13 +7,13 @@ import { useRef } from "react";
 import { Card } from "@/components/ui/Card";
 
 const STEPS = [
-  { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Full digital twin\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
-  { title: "Simulate weather scenarios", body: "Explore synthetic storm and drought inputs and illustrative weather effects on a 3D model of the land. These are not observed weather on this farm; live NASA POWER replay is in development." },
-  { title: "Compare rotations", body: "Run the same synthetic scenario on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
+  { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Explorable\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
+  { title: "Simulate weather scenarios", body: "Weather scenarios on a 3D model of the land show No data until real weather data is connected; live NASA POWER replay is in development." },
+  { title: "Compare rotations", body: "Compare two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];
 
 const ROADMAP = [
-  { title: "Live NASA POWER replay", body: "Replaying historical storms directly from the NASA POWER archive (currently disabled in favour of synthetic scenario models)." },
+  { title: "Live NASA POWER replay", body: "Replaying historical storms directly from the NASA POWER archive (currently disabled)." },
   { title: "Drone capture", body: "Building the model from drone imagery." },
   { title: "Video capture", body: "Building the model from a walk-around video." },
 ];
@@ -41,7 +41,7 @@ export function AboutPanel() {
             </button>
           </div>
           <p className="mt-3 text-ink-muted">
-            FieldTwin builds a 3D model of farmland from open elevation data, shows synthetic demonstration scenarios on it, and compares rotations side by side. Current runs are synthetic fixture inputs, not observed farm weather. Results are relative comparisons, not predictions.
+            FieldTwin builds a 3D model of farmland from open elevation data, shows weather scenarios on it once real data is connected, and compares rotations side by side. Results are relative comparisons, not predictions.
           </p>
 
           <h3 className="mt-6 font-display text-xl">How it works</h3>
@@ -62,7 +62,7 @@ export function AboutPanel() {
             .
           </p>
 
-          <p className="mt-4 text-sm">Real NASA POWER event replay is upcoming. The current interactive scenarios use fixture inputs and do not represent this farm’s observed weather.</p>
+          <p className="mt-4 text-sm">Real NASA POWER event replay is upcoming. Until then, scenarios show No data.</p>
           <h3 className="mt-6 font-display text-xl">Roadmap</h3>
           <p className="mt-1 text-sm text-ink-muted">Ideas we have not built. They do not work in this version.</p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">

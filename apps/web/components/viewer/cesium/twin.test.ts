@@ -28,9 +28,9 @@ describe("fieldsBbox", () => {
 });
 
 describe("fieldStyle", () => {
-  it("gives every crop look its own colour", () => {
+  it("fills every field with one neutral colour, whatever the crop look", () => {
     const looks = Object.keys(CROP_COLORS) as CropLook[];
-    expect(new Set(looks.map((l) => fieldStyle(l, { fills: true }).fill)).size).toBe(looks.length);
+    expect(new Set(looks.map((l) => fieldStyle(l, { fills: true }).fill)).size).toBe(1);
   });
   it("is invisible by default: no fill, faint edge only when selected or hovered", () => {
     const plain = fieldStyle("corn", {});
@@ -54,9 +54,9 @@ describe("fieldStyle", () => {
 
 describe("hover label", () => {
   const f = { id: "f1", name: "Centre field", crop: "corn" as const };
-  it("names the field and its illustrative crop, honouring cropByField", () => {
-    expect(fieldHoverText(f)).toBe("Centre field · Corn (illustrative)");
-    expect(fieldHoverText(f, { f1: "cover" })).toBe(`Centre field · ${CROP_WORDS.cover} (illustrative)`);
+  it("names the field and shows No data for the crop", () => {
+    expect(fieldHoverText(f)).toBe("Centre field · Crop: No data");
+    expect(fieldHoverText(f, { f1: "cover" })).toBe("Centre field · Crop: No data");
     expect(Object.keys(CROP_WORDS).sort()).toEqual(Object.keys(CROP_COLORS).sort());
   });
   it("anchors at the ring centroid", () => {

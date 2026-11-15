@@ -26,7 +26,7 @@ function TierChip({ farm }: { farm: FarmInfo }) {
   return (
     <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[12px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#a3bfe9" : "rgba(255,255,255,0.78)" }}>
       <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: twin ? "#a3bfe9" : "rgba(255,255,255,0.55)" }} />
-      {twin ? "Digital twin" : "Explore only"}
+      {twin ? "Explorable" : "Explore only"}
     </span>
   );
 }
@@ -209,7 +209,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
               </svg>
               <span className="truncate">{where}</span>
             </span>
-            <span className="mt-2 block text-[12px] font-semibold text-white">{farm.tier === "twin" ? "Digital twin · scenarios and comparison" : "Explore landscape · no simulation"}</span>
+            <span className="mt-2 block text-[12px] font-semibold text-white">{farm.tier === "twin" ? "Explorable · scenarios and comparison" : "Explore landscape · no simulation"}</span>
             <span className="mt-2.5 line-clamp-2 text-[12px] leading-[1.5] text-white/[0.62]">{line}</span>
             {farm.tier === "explore" && (
               <span className="mt-2 block rounded bg-[#a3bfe9]/10 px-2 py-1 text-[11px] leading-snug font-medium text-[#c3d6f4] border border-[#a3bfe9]/20">
@@ -231,13 +231,13 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
         <motion.button
           type="button"
           onClick={() => onDescend(farm.id)}
-          aria-label={farm.tier === "twin" ? `Enter digital twin for ${farm.name}` : `Explore ${farm.name} in 3D (simulation unavailable)`}
+          aria-label={farm.tier === "twin" ? `Enter farm view for ${farm.name}` : `Explore ${farm.name} in 3D (simulation unavailable)`}
           whileTap={reduced ? undefined : { scale: 0.96, transition: { duration: 0.07, ease: "easeOut" } }}
           transition={{ type: "spring", stiffness: 620, damping: 16, mass: 0.9 }}
           className="relative mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[#05070c] shadow-[0_10px_30px_-6px_rgba(163,191,233,0.6)] outline-none transition-[filter,box-shadow] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           style={{ height: BTN_H, background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)` }}
         >
-          {farm.id === "ubc-farm" || farm.id === "kpu-langley" ? "Compare rotations" : farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
+          {farm.id === "ubc-farm" || farm.id === "kpu-langley" ? "Compare rotations" : farm.tier === "twin" ? "Enter farm" : "Explore in 3D (no simulation)"}
           <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>

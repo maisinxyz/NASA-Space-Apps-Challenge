@@ -121,5 +121,5 @@ export const ROADMAP = [
   "30 m cell map and erosion, water-stress and frost hotspot layers (needs NASADEM and satellite data).",
   "Income and fertilizer estimates.",
   "Drone and video capture.",
-  "Custom drawn fields inside the 3D digital twin (custom fields work in the 2D map only).",
+  "Custom drawn fields inside the 3D farm view (custom fields work in the 2D map only).",
 ];

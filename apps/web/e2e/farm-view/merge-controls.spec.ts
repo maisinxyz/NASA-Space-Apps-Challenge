@@ -119,40 +119,18 @@ test.describe("merged globe and farm controls", () => {
 
   test("condition preview cards are mutually exclusive and can be closed", async ({ page }) => {
     await openFarm(page);
-    await expect(page.getByText("Synthetic preview · not this farm’s measurements")).toBeVisible();
+    await expect(page.getByText(/synthetic/i)).toHaveCount(0);
 
     await page.getByTestId("condition-pill-rainfall").click();
     const rainfall = page.getByTestId("card-rainfall");
     await expect(rainfall).toBeVisible();
-    await expect(rainfall).toContainText("Synthetic preview · not measurements for the selected farm");
+    await expect(rainfall).toContainText("No data");
 
     await page.getByTestId("condition-pill-moisture").click();
     await expect(page.getByTestId("card-moisture")).toBeVisible();
     await expect(rainfall).toBeHidden();
     await page.getByRole("button", { name: "Minimize Soil moisture" }).click();
     await expect(page.getByTestId("card-moisture")).toBeHidden();
-  });
-
-  test("Twin preview sends a question, supports a follow-up, and Escape returns focus", async ({ page }) => {
-    await openFarm(page);
-    const twin = page.getByRole("button", { name: "Ask Gus preview" });
-    await twin.click();
-    const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
-    await expect(input).toBeFocused();
-    await input.fill("Which field needs water first?");
-    await page.getByRole("button", { name: "Send" }).click();
-
-    const answer = page.getByTestId("twin-answer");
-    await expect(answer).toContainText("Gus · Synthetic preview");
-    await expect(answer).toContainText("Trial plots needs water first", { timeout: 30_000 });
-    const followUp = page.getByRole("button", { name: "Why not the main block?" });
-    await expect(followUp).toBeVisible();
-    await followUp.click();
-    await expect(answer).toContainText("Main block is dry too", { timeout: 30_000 });
-
-    await page.keyboard.press("Escape");
-    await expect(answer).toBeHidden();
-    await expect(twin).toBeFocused();
   });
 
   test("field report collapses and reopens from its persistent control", async ({ page }) => {

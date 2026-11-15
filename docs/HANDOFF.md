@@ -3,7 +3,20 @@
 **Status: implementing.** Reserved until this section says done: `apps/web/components/hero/`, `components/globe/`, `components/farm-view/`, `components/farm/`, `components/farm-future/`, `apps/web/app/methods/`, `apps/web/e2e/farm-view/`.
 
 1. **"Digital twin" → "Explorable"** (done locally, not pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "FieldTwin" product name unchanged.
-2. **Synthetic data → "No data"** (in progress): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. A per-feature list will be added here. The sr-only "supports, and does not replace, local agronomic expertise" line stays.
+2. **Synthetic data → "No data"** (in progress): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. Twin chat preview ("Ask Gus preview") removed entirely. Features now showing "No data":
+
+| Farm(s) | Feature | Before | Now |
+|---|---|---|---|
+| Non-site farms (Cornell, Beltsville, explore-only) | Ask Gus preview chat (`Twin.tsx`, deleted) | Fabricated answers | Removed; real Ask Gus on UBC/KPU |
+| All farms, Now mode | Condition cards: rainfall, soil moisture, crop vigor, heat & frost (`farm-view/Cards.tsx`) | Fake values (64 mm, 41%…) | No data |
+| All farms | Vigor/moisture layer legend (`Cards.tsx`) | Fake gradient | No data |
+| Cornell, Beltsville | Scenario runs: readouts, map effect, play/clock (`lib/twin/scenarios/runSource.ts`) | Fabricated readouts | No data / "No run yet" |
+| Farms without an engine forecast | Future pills, lens cards, soil health panel, what-if scores, compare view, strategy text + flags (`components/farm-future/`, `lib/farm-future/data.ts`) | Modelled fixture values | No data, 0 flags |
+| All farms, Future mode | Timeline overlays (temp, rain, frost-free, uncertainty, crop stages) | Fixture overlays | No data; date slider kept |
+| All farms, Future mode | Map heat/rain/frost tints (`MapEffects.tsx`) | Fixture tints | Not rendered |
+| Cornell, Beltsville | Field list crop label (`farm/TwinPanel.tsx`) | Crop swatch | No data · area |
+| In progress | Map hover crop names, crop fills, compare tray crop calendars | "Corn (illustrative)", made-up sequences | No data (pending) |
+ The sr-only "supports, and does not replace, local agronomic expertise" line stays.
 3. **Map credits:** Cesium ion and Google Maps logos stay. Google's 3D Tiles terms require them, and Cesium's free tier requires the Cesium logo. Removing the Cesium logo needs a paid plan or loading Google tiles directly; not planned.
 4. **Playwright** (full run against production build + live API, 19 min): 43 passed, 31 failed, 71 skipped. Failures are mostly specs for the old UI: old `.fv-toolbar` layout (9), synthetic preview features (4), Cornell / old Future lens menu (8), mobile/non-3D (3, out of desktop scope), and controls timing out at 30s (7: mute, sound toggle, keyboard camera, press feedback, hidden-panel restore, missing observations), which may be moved selectors or real bugs. Next: update/delete stale specs, flag real bugs, re-run only the failing specs.
 5. **API:** restarted on merged code with `CORS_ORIGINS=http://localhost:3003,http://localhost:3000`; Gus answers live (Groq, OpenRouter fallback).

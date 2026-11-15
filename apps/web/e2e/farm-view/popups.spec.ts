@@ -58,12 +58,6 @@ test.describe("one pop-up at a time (spec: POP-UPS)", () => {
     expect(await openPopupCount(page)).toBe(1);
     await expect(tid(page, "field-popover")).toBeHidden();
   });
-  test.fixme("opening Twin closes cards and popover", async ({ page }) => {
-    await tid(page, "condition-pill-moisture").click();
-    await tid(page, "twin-button").click();
-    await expect(tid(page, "card-moisture")).toBeHidden();
-    await expect(tid(page, "twin-pill")).toBeVisible();
-  });
   test.fixme("popover never covers the clicked point", async ({ page }) => {
     await tid(page, "layer-vigor").click();
     await page.mouse.click(300, 380);

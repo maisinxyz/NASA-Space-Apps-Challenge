@@ -113,7 +113,7 @@ function FarmRows({ farms, ready, selectedId, onPick }: { farms: Farm[]; ready: 
                 animate={{ opacity: 1 }}
                 transition={{ delay: (i * popover.rowStaggerMs + popover.detailDelayMs) / 1000, duration: 0.16 }}
               >
-                {f.country} · {f.tier === "twin" ? "Digital twin" : "Explore only"}
+                {f.country} · {f.tier === "twin" ? "Explorable" : "Explore only"}
               </motion.span>
             </Pressable>
           </motion.li>

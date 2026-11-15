@@ -1,7 +1,6 @@
 // What the farm card can honestly say about a farm today. Only real data: nothing is invented. Fields without data
 // are null and the card says so (CLAUDE.md honesty rules).
 import type { Farm } from "@/components/globe/types";
-import { twinConfig } from "@/lib/farms";
 
 export type FarmFacts = {
   /** Crops, with how we know them. */
@@ -15,11 +14,8 @@ export type FarmFacts = {
 };
 
 export function farmFacts(farm: Farm): FarmFacts {
-  // Twins: the field layout and crops are illustrative ("not farm records"); say so on the card. Regional crop names.
-  const twin = twinConfig(farm.id);
-  const crops = twin ? [...new Set(twin.fields.map((f) => twin.cropLabels[f.crop] ?? f.crop))] : [];
   return {
-    crop: crops.length ? { text: crops.join(", "), basis: "illustrative" } : null,
+    crop: null, // field crops are not public records: the card shows "no data"
     areaHa: farm.areaHa ?? null,
     ndvi: null,
     trend: null,
