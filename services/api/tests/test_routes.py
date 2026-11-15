@@ -215,7 +215,6 @@ def test_routes_match_openapi_exactly(client):
 
     # v1.3 paths in the contract that the API has not mounted yet (Person A removes each one when mounted).
     pending_v12: set[tuple[str, str]] = {
-        ("GET", "/sites/{}/outlook"),
         ("POST", "/field/analyze"),
     }
     spec = {(m.upper(), norm(p)) for p, ops in contract.openapi()["paths"].items() for m in ops if m in ("get", "post")}

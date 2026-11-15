@@ -15,6 +15,7 @@ from app.core.errors import ApiError
 from app.features.config import POWER_RESOLUTION_NOTE
 from app.rotation.traits import glossary
 from app.services.forecast import forecast
+from app.services.outlook import MAX_MONTHS, outlook
 
 # Groq structured output: https://console.groq.com/docs/structured-outputs
 URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -51,8 +52,22 @@ def check_rate(client: str) -> None:
 
 
 def monthly_context(snapshot: dict) -> dict:
-    """Integration seam for B7: do not pretend the monthly endpoint exists yet."""
-    return {"availability": "Monthly outlook is not in the data available to this co-pilot."}
+    index = snapshot["time_index"]
+    if not 0 <= index < MAX_MONTHS:
+        raise ApiError("INVALID_INPUT", "The month index must be between 0 and 11.")
+    scenario = snapshot["scenario"].get("preset") or "baseline"
+    doc = outlook(snapshot["site_id"], scenario=scenario)
+    row = doc["months"][index]
+    return {
+        "description": "Site-level historical monthly climatology for the selected preset.",
+        "site_id": snapshot["site_id"],
+        "month": row["month"],
+        "kind": row["kind"],
+        "data_mode": doc["data_mode"],
+        "metrics": {key: value for key, value in row.items() if key not in ("month", "kind")},
+        "weather_resolution": POWER_RESOLUTION_NOTE,
+        "glossary": glossary(),
+    }
 
 
 def snapshot_context(snapshot: dict) -> dict:
@@ -132,7 +147,12 @@ def chat(body: dict, client: str) -> dict:
     result["referenced_layers"] = [layer for layer in result["referenced_layers"] if layer in allowed_layers]
     # The frozen snapshot has no forecast request hash or rotation edits, so
     # even a correct reconstruction cannot prove it matches the visible UI.
-    result["reply"] = "This answer uses reconstructed demo data, which may differ from your screen. " + result["reply"]
+    description = (
+        "This answer uses the site's monthly climatology for the selected preset."
+        if body["snapshot"]["horizon"] == "months"
+        else "This answer uses reconstructed demo data, which may differ from your screen."
+    )
+    result["reply"] = f"{description} {result['reply']}"
     if not result["local_validation_tips"]:
         result["local_validation_tips"] = ["Check the relevant field conditions with a local agronomist."]
     return result

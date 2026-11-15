@@ -79,7 +79,9 @@ def test_unavailable_context_is_honest(client, monkeypatch):
     monkeypatch.setattr(copilot, "_provider", lambda payload, key: calls.append(payload) or {"reply": "Not in the data.", "referenced_layers": [], "local_validation_tips": []})
     body = request(); body["snapshot"]["horizon"] = "months"; body["snapshot"]["time_index"] = 0
     assert client.post('/api/v1/copilot/chat', json=body).status_code == 200
-    assert "not in the data" in calls[-1]["messages"][1]["content"]
+    context = json.loads(calls[-1]["messages"][1]["content"].removeprefix("Server-supplied context: "))
+    assert context["kind"] == "climatology"
+    assert context["metrics"]["water_balance_mm"]["unit"] == "mm"
     body = request(); body["snapshot"]["strategy_id"] = "rot_custom_1"
     assert client.post('/api/v1/copilot/chat', json=body).status_code == 200
     assert "not in the reconstructed demo data" in calls[-1]["messages"][1]["content"]
