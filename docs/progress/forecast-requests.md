@@ -72,3 +72,11 @@ Do not invent values. The outlook will read a file only when it already has thes
 - GRACE: `trend` as that same number object, plus `resolution_note`
 
 `GET /climate-outlook` has no `crops` parameter in the contract. Heat-stress days use the site's existing-rotation preset. Adding a crops query would be a contract change.
+
+## 2026-11-15 — Session B, W6a engine notes
+
+`build_members` and `run_water_year` take `lat` as a keyword (hemisphere for seasonal rain and season windows). `run_water_year` also takes keyword `catalog`, `no_till`, `storage_start_mm`, and an optional precomputed `profile`. Positional arguments stay as in PRD §6.4. `ScenarioApplied` has no per-year CMIP6 delta, so `cmip6_delta` and `history_resample` both use the linear ramp until Session C attaches a verified delta table.
+
+Compaction is in the PRD infiltration sentence and is not on `FieldCfg`. W6a does not invent a flag.
+
+Catalog rows with a null season window or null Kc (most of the new vegetable rows) are not placed and do not get a made-up date or Kc. Session A: a vegetable-only pool cannot form a timed plan until `season_window` and `kc_stages` are filled from a cited table. Null `reference_yield` omits `yield_t_ha` for that crop. It is not filled from a default tonne value.
