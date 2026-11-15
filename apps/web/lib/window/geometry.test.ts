@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clampRect, dragRect, easeOutBack, fromFrac, lerpRect, resizeRect, rubber, toFrac, type Limits, type Rect } from "./geometry";
+import { boundedRecoilRect, clampRect, dragRect, easeOutBack, fromFrac, lerpRect, resizeRect, rubber, toFrac, type Limits, type Rect } from "./geometry";
 
 const region: Rect = { x: 0, y: 48, w: 1440, h: 852 };
 const lim: Limits = { minW: 220, minH: 260, maxW: 1424, maxH: 844 };
@@ -159,5 +159,18 @@ describe("easeOutBack", () => {
 describe("lerpRect", () => {
   it("interpolates each field", () => {
     expect(lerpRect(start, { x: 200, y: 200, w: 400, h: 400 }, 0.5)).toEqual({ x: 150, y: 150, w: 350, h: 350 });
+  });
+});
+
+describe("bounded recoil", () => {
+  it("clamps overshooting animation frames to the content region", () => {
+    const content: Rect = { x: 288, y: 48, w: 1152, h: 812 };
+    const from: Rect = { x: 488, y: 64, w: 380, h: 500 };
+    const to: Rect = { ...from, x: 288 };
+    for (let k = 0; k <= 1; k += 0.01) {
+      const frame = boundedRecoilRect(from, to, k, content, lim);
+      expect(frame.x).toBeGreaterThanOrEqual(content.x);
+      expect(frame.x + frame.w).toBeLessThanOrEqual(content.x + content.w);
+    }
   });
 });

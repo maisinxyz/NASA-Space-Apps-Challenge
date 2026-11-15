@@ -8,7 +8,7 @@ import { useEffect, useId, useLayoutEffect, useRef, type ReactNode, type RefObje
 import { useShallow } from "zustand/react/shallow";
 
 import { WINDOW_CONFIG, type WindowId } from "@/lib/window/config";
-import { dragRect, easeOutBack, lerpRect, resizeRect, sameRect, type Dir, type Rect } from "@/lib/window/geometry";
+import { boundedRecoilRect, dragRect, easeOutBack, lerpRect, resizeRect, sameRect, type Dir, type Rect } from "@/lib/window/geometry";
 import { flushLayout, regionForWindow, windowLimits, useWindowManager, zIndexOf } from "@/lib/window/store";
 
 const HANDLES: { dir: Dir; name: string }[] = [
@@ -195,7 +195,9 @@ function useGesture(id: WindowId, frame: RefObject<HTMLDivElement | null>, reduc
     const start = performance.now();
     const step = (now: number) => {
       const k = Math.min(1, (now - start) / RECOIL_MS);
-      applyRect(el, lerpRect(from, to, easeOutBack(k)));
+      const bounds = useWindowManager.getState().bounds;
+      const frame = lerpRect(from, to, easeOutBack(k));
+      applyRect(el, bounds ? boundedRecoilRect(from, to, k, regionForWindow(id, bounds), windowLimits(id, bounds)) : frame);
       if (k < 1) anim.current = requestAnimationFrame(step);
       else commit();
     };

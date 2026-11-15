@@ -213,3 +213,29 @@ test("a legacy overlapping Gus layout is recovered on reload", async ({ page }) 
   const nav = await box(page, "nav");
   expect((await box(page, "copilot")).x).toBeGreaterThanOrEqual(nav.x + nav.width);
 });
+
+test("Escape recoil never moves Gus over the dashboard", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await open(page);
+  await page.getByRole("button", { name: "Ask Gus", exact: true }).click();
+  await bar(page, "copilot").focus();
+  for (let i = 0; i < 120; i++) await page.keyboard.press("ArrowLeft");
+  const start = await box(page, "copilot");
+  const title = (await bar(page, "copilot").boundingBox())!;
+  await page.mouse.move(title.x + 60, title.y + 17);
+  await page.mouse.down();
+  await page.mouse.move(title.x + 260, title.y + 17, { steps: 5 });
+  await expect.poll(async () => (await box(page, "copilot")).x).toBeGreaterThan(start.x + 100);
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-window="copilot"].fw-win')!;
+    const samples: number[] = [];
+    (window as unknown as { recoilSamples: number[] }).recoilSamples = samples;
+    new MutationObserver(() => samples.push(el.getBoundingClientRect().x)).observe(el, { attributes: true, attributeFilter: ["style"] });
+  });
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+  const samples = await page.evaluate(() => (window as unknown as { recoilSamples: number[] }).recoilSamples);
+  expect(samples.length).toBeGreaterThan(0);
+  expect(Math.min(...samples)).toBeGreaterThanOrEqual(start.x - 0.5);
+});

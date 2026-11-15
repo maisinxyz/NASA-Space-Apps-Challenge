@@ -78,3 +78,7 @@ export const lerpRect = (a: Rect, b: Rect, k: number): Rect => ({
   w: a.w + (b.w - a.w) * k,
   h: a.h + (b.h - a.h) * k,
 });
+
+/** Animation frames stay inside the region even when easing overshoots. */
+export const boundedRecoilRect = (from: Rect, to: Rect, k: number, region: Rect, limits: Limits): Rect =>
+  clampRect(lerpRect(from, to, easeOutBack(k)), region, limits);
