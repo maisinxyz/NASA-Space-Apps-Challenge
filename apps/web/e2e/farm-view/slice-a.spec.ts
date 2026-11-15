@@ -42,13 +42,13 @@ test.describe("Farm view controls", () => {
     }
     await tid(page, "condition-pill-moisture").click();
     await expect(tid(page, "condition-pill-moisture")).toHaveAttribute("aria-expanded", "true");
-    await expect(tid(page, "condition-card-moisture")).toContainText("Synthetic preview · not measurements for the selected farm");
+    await expect(tid(page, "card-moisture")).toContainText("Synthetic preview · not measurements for the selected farm");
     await expect(tid(page, "layer-legend")).toContainText("Map overlay unavailable");
     await tid(page, "condition-pill-rainfall").click();
-    await expect(tid(page, "condition-card-rainfall")).toBeVisible();
-    await expect(tid(page, "condition-card-moisture")).toBeHidden();
+    await expect(tid(page, "card-rainfall")).toBeVisible();
+    await expect(tid(page, "card-moisture")).toBeHidden();
     await page.keyboard.press("Escape");
-    await expect(tid(page, "condition-card-rainfall")).toBeHidden();
+    await expect(tid(page, "card-rainfall")).toBeHidden();
   });
 
   test("field report shows Cornell's illustrative fields without invented measurements and supports keyboard selection", async ({ page }) => {
@@ -140,7 +140,7 @@ for (const reduced of [false, true]) {
     if (reduced) expect(scale).toBeCloseTo(1, 2);
     else expect(scale).toBeCloseTo(0.95, 1);
     await page.mouse.up();
-    await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+    await expect(tid(page, "card-rainfall")).toBeVisible();
   });
 }
 
@@ -182,11 +182,11 @@ test(`expanded preview stays above bottom tools in compare mode: ${compare}`, as
 test("hidden farm controls and panels restore their open state", async ({ page }) => {
   await openFarm(page);
   await tid(page, "condition-pill-rainfall").click();
-  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+  await expect(tid(page, "card-rainfall")).toBeVisible();
   await page.getByRole("button", { name: "Hide farm controls", exact: true }).click();
-  await expect(tid(page, "condition-card-rainfall")).toBeHidden();
+  await expect(tid(page, "card-rainfall")).toBeHidden();
   await page.getByRole("button", { name: "Show farm controls", exact: true }).click();
-  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+  await expect(tid(page, "card-rainfall")).toBeVisible();
   await tid(page, "twin-button").click();
   const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
   await input.fill("Keep this question");
@@ -194,5 +194,5 @@ test("hidden farm controls and panels restore their open state", async ({ page }
   await expect(page.getByRole("button", { name: "Show panels", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Show panels", exact: true }).click();
   await expect(input).toHaveValue("Keep this question");
-  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+  await expect(tid(page, "card-rainfall")).toBeVisible();
 });

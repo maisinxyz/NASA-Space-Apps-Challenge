@@ -120,15 +120,15 @@ test.describe("merged globe and farm controls", () => {
     await expect(page.getByText("Synthetic preview · not this farm’s measurements")).toBeVisible();
 
     await page.getByTestId("condition-pill-rainfall").click();
-    const rainfall = page.getByTestId("condition-card-rainfall");
+    const rainfall = page.getByTestId("card-rainfall");
     await expect(rainfall).toBeVisible();
     await expect(rainfall).toContainText("Synthetic preview · not measurements for the selected farm");
 
     await page.getByTestId("condition-pill-moisture").click();
-    await expect(page.getByTestId("condition-card-moisture")).toBeVisible();
+    await expect(page.getByTestId("card-moisture")).toBeVisible();
     await expect(rainfall).toBeHidden();
     await page.getByRole("button", { name: "Minimize Soil moisture" }).click();
-    await expect(page.getByTestId("condition-card-moisture")).toBeHidden();
+    await expect(page.getByTestId("card-moisture")).toBeHidden();
   });
 
   test("Twin preview sends a question, supports a follow-up, and Escape returns focus", async ({ page }) => {
