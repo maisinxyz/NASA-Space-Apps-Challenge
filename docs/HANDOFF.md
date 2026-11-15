@@ -1,9 +1,9 @@
 # Active work — 2026-11-15 afternoon (Claude Code, on `main`)
 
-**Status: implementing.** Reserved until this section says done: `apps/web/components/hero/`, `components/globe/`, `components/farm-view/`, `components/farm/`, `components/farm-future/`, `apps/web/app/methods/`, `apps/web/e2e/farm-view/`.
+**Status: implementing (items 6–7).** Items 1–2 are done and pushed (0373889). Reserved until this section says done: `services/api/app/services/copilot.py` and its tests (Gus), and every file containing the old product name (rename).
 
-1. **"Digital twin" → "Explorable"** (done locally, not pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "FieldTwin" product name unchanged.
-2. **Synthetic data → "No data"** (in progress): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. Twin chat preview ("Ask Gus preview") removed entirely. Features now showing "No data":
+1. **"Digital twin" → "Explorable"** (done, pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "FieldTwin" product name unchanged.
+2. **Synthetic data → "No data"** (done, pushed): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. Twin chat preview ("Ask Gus preview") removed entirely. Features now showing "No data":
 
 | Farm(s) | Feature | Before | Now |
 |---|---|---|---|
@@ -15,11 +15,15 @@
 | All farms, Future mode | Timeline overlays (temp, rain, frost-free, uncertainty, crop stages) | Fixture overlays | No data; date slider kept |
 | All farms, Future mode | Map heat/rain/frost tints (`MapEffects.tsx`) | Fixture tints | Not rendered |
 | Cornell, Beltsville | Field list crop label (`farm/TwinPanel.tsx`) | Crop swatch | No data · area |
-| In progress | Map hover crop names, crop fills, compare tray crop calendars | "Corn (illustrative)", made-up sequences | No data (pending) |
+| Cornell, Beltsville | Map hover crop names, crop fills (`viewer/cesium/twin.ts`) | "Corn (illustrative)", crop colours | "Crop: No data", neutral fill |
+| Cornell, Beltsville | Compare tray crop calendars, cover calendar (`farm/shared.tsx`, `CompareTray`) | Made-up sequences | No data |
  The sr-only "supports, and does not replace, local agronomic expertise" line stays.
 3. **Map credits:** Cesium ion and Google Maps logos stay. Google's 3D Tiles terms require them, and Cesium's free tier requires the Cesium logo. Removing the Cesium logo needs a paid plan or loading Google tiles directly; not planned.
 4. **Playwright** (full run against production build + live API, 19 min): 43 passed, 31 failed, 71 skipped. Failures are mostly specs for the old UI: old `.fv-toolbar` layout (9), synthetic preview features (4), Cornell / old Future lens menu (8), mobile/non-3D (3, out of desktop scope), and controls timing out at 30s (7: mute, sound toggle, keyboard camera, press feedback, hidden-panel restore, missing observations), which may be moved selectors or real bugs. Next: update/delete stale specs, flag real bugs, re-run only the failing specs.
 5. **API:** restarted on merged code with `CORS_ORIGINS=http://localhost:3003,http://localhost:3000`; Gus answers live (Groq, OpenRouter fallback).
+
+6. **Gus answers: scoped, farmer-friendly, summarised** (in progress, `services/api/app/services/copilot.py`). Problem: the system prompt ordered Gus to quote exact p50/p10–p90 values, and the context dumped every metric plus the glossary, so answers repeated data and drifted. Fix: new prompt (answer the question first, 2–4 short plain sentences, at most 2 rounded numbers, no jargon unless asked, stay on this farm, decline off-topic); server computes a compact summary (change since year 0, direction, best/worst strategy) instead of raw p-values; glossary only when a term is asked; the fixed "reconstructed demo data" prefix removed. Response contract unchanged.
+7. **Rename to "Stardew Earth"** (in progress). Replaces every "FieldTwin" / "fieldtwin" / "field twin" in UI text, metadata, package names, API title, logger names, contracts text, docs and scripts. Repo name and internal `twin` ids unchanged. Done when `git grep -i "fieldtwin\|field twin"` returns nothing. Note: "Stardew" is a game trademark; check before using it on a product or domain.
 
 ---
 
