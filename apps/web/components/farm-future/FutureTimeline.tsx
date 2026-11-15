@@ -16,6 +16,17 @@ import { FvButton } from "@/components/farm-view/FvButton";
 const MONTH_T = 1 / 12;
 const WEEK_T = 7 / 365;
 
+// Label thinning step for a track of `width` px holding `count` labels of `labelPx` px each (+8 px gap).
+// 1 = every label, 2 = every 2nd, 3 = every 3rd (the smallest step that can fit).
+export function visibleLabelStep(width: number, count: number, labelPx: number): number {
+  if (count <= 0) return 1;
+  const slot = width / count;
+  const need = labelPx + 8;
+  if (slot >= need) return 1;
+  if (slot * 2 >= need) return 2;
+  return 3;
+}
+
 function stepKey(t: number, zoom: "10y" | "1y") {
   // Identity of the current detent: month index in 10 yr view, week index in 1 yr view.
   return zoom === "10y" ? Math.floor(t * 12 + 1e-6) : Math.floor((t * 365 + 1e-6) / 7);
@@ -130,12 +141,20 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
   const hx = toX(t);
   const labels = zoom === "10y" ? YEARS.map((y, i) => ({ text: String(y), at: i + 0.5, sel: i === d.yearIndex })) : MONTH_NAMES.map((n, i) => ({ text: n.slice(0, 3), at: d.yearIndex + (i + 0.5) / 12, sel: i === d.month }));
   const ticks = zoom === "10y" ? [...Array(11)].map((_, i) => i) : [...Array(13)].map((_, i) => d.yearIndex + i / 12);
+  // Label thinning: every label is kept on a step that fits, and a non-selected label is dropped when it would
+  // sit within one label width of the selected one. The selected label is always shown.
+  const labelPx = zoom === "10y" ? 32 : 26;
+  const labelStep = visibleLabelStep(width, labels.length, labelPx);
+  const labelSlot = labels.length > 0 ? width / labels.length : 0;
+  const selLabel = labels.findIndex((l) => l.sel);
+  const labelShown = (i: number, sel: boolean) =>
+    sel || (i % labelStep === 0 && Math.abs(i - selLabel) * labelSlot >= labelPx + 8);
 
   return (
     <div data-testid="future-timeline" style={{ position: "absolute", left: 40, right, bottom: 30, height: 150, pointerEvents: "none" }}>
       {/* Readout row */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 82, display: "flex", alignItems: "center", gap: 12 }}>
-        <FvButton className="fv-glass fv-icon fv-auto" style={{ width: 32, height: 32, color: color.ink }} aria-label={playing ? "Pause" : "Play"} data-testid="future-play" onClick={() => setPlaying(!playing)}>
+      <div className="ff-tl-readout">
+        <FvButton className="fv-glass fv-icon fv-auto ff-tl-play" style={{ color: color.ink }} aria-label={playing ? "Pause" : "Play"} data-testid="future-play" onClick={() => setPlaying(!playing)}>
           {playing ? (
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M8 5v14M16 5v14" /></svg>
           ) : (
@@ -143,8 +162,9 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
           )}
         </FvButton>
         <span className="ff-tl-year fv-onmap" data-testid="future-date">{zoom === "10y" ? d.year : d.monthName}</span>
-        <span className="ff-tl-meta fv-onmap">
-          {zoom === "10y" ? `${d.monthName} ${d.day} · year ${d.yearIndex + 1} of ${T_MAX}` : `${d.day} · ${d.year} · year ${d.yearIndex + 1} of ${T_MAX}`}
+        <span className="ff-tl-metabox fv-onmap">
+          <span className="ff-tl-meta-long">{zoom === "10y" ? `${d.monthName} ${d.day} · year ${d.yearIndex + 1} of ${T_MAX}` : `${d.day} · ${d.year} · year ${d.yearIndex + 1} of ${T_MAX}`}</span>
+          <span className="ff-tl-meta-short">{zoom === "10y" ? `Yr ${d.yearIndex + 1}/${T_MAX}` : `${d.day} · ${d.year} · Yr ${d.yearIndex + 1}/${T_MAX}`}</span>
         </span>
         <div role="group" aria-label="Timeline zoom" className="ff-seg fv-auto">
           {(["10y", "1y"] as const).map((z) => (
@@ -153,7 +173,7 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
             </FvButton>
           ))}
         </div>
-        <div style={{ flex: 1 }} />
+        <div />
         <span className="ff-tl-meta fv-onmap" data-testid="timeline-no-data">No data</span>
       </div>
 
@@ -171,7 +191,7 @@ export function FutureTimeline({ reduced, right = 40 }: { reduced: boolean; righ
         <div aria-hidden style={{ position: "absolute", left: 0, right: 0, bottom: 33, height: 1, background: "rgba(242,235,221,0.45)" }} />
         <div aria-hidden style={{ position: "absolute", left: 0, width: hx, bottom: 33, height: 1, background: color.ink }} />
         {ticks.map((v, i) => <div key={i} aria-hidden className="ff-tl-tick" style={{ left: toX(v), bottom: 26, height: 7 }} />)}
-        {labels.map((l) => <span key={l.text + l.at} aria-hidden className="ff-tl-lab" data-sel={l.sel} style={{ left: toX(l.at), bottom: 4 }}>{l.text}</span>)}
+        {labels.map((l, i) => (labelShown(i, l.sel) ? <span key={l.text + l.at} aria-hidden className="ff-tl-lab" data-sel={l.sel} style={{ left: toX(l.at), bottom: 4 }}>{l.text}</span> : null))}
         <div
           role="slider"
           tabIndex={0}

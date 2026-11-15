@@ -48,9 +48,6 @@ export const DESKTOP_WORKSPACE_CSS = `
 .fv-workspace .map2d-tools{right:34px!important;top:158px;bottom:auto!important;width:324px!important;box-sizing:border-box;max-height:calc(100% - var(--time-space) - 174px);overflow:auto;z-index:35!important;background:#25221b;}
 .fv-workspace .map2d-popover{left:var(--content-left)!important;top:16px!important;box-sizing:border-box;max-height:calc(100% - var(--time-space) - 16px);overflow:auto;}
 .fv-workspace .map2d-analysis{left:auto!important;right:16px!important;top:16px!important;bottom:var(--time-space)!important;width:360px!important;max-height:none!important;box-sizing:border-box;overflow:auto;}
-.fv-workspace .maplibregl-ctrl-bottom-left{left:var(--content-left);bottom:0;}
-.fv-workspace .maplibregl-ctrl-attrib{font-size:10px;max-width:calc(100vw - 320px);}
-.fv-workspace [data-testid="map2d"]>p.fv-cap{left:var(--content-left)!important;bottom:6px!important;right:180px;}
 .fv-workspace .ff-drawer{top:16px;right:16px;bottom:var(--time-space);width:360px;box-sizing:border-box;border-radius:16px;z-index:35;}
 .fv-workspace [data-testid="compare-view"]>section{left:var(--content-left)!important;right:16px!important;top:16px!important;bottom:var(--time-space)!important;max-height:none!important;}
 .fv-workspace [data-testid="compare-exit"]{left:var(--content-left)!important;top:auto!important;bottom:calc(var(--time-space) - 10px)!important;}

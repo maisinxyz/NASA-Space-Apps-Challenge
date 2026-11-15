@@ -28,6 +28,17 @@ import { AskCopilot } from "@/components/copilot/AskCopilot";
 const NEUTRAL = "#E2B866";
 const VIEW_M = 3000;
 
+// Map chrome lives in the bottom 40px strip the floating windows leave free: scale bar bottom-left, caption beside it,
+// MapLibre attribution bottom-right. Scoped to the map2d root; no global rules.
+const MAP_CHROME_CSS = `
+[data-testid="map2d"] .maplibregl-ctrl-bottom-left{left:16px;bottom:6px;display:flex;flex-direction:row;align-items:flex-end;gap:8px;max-height:28px;overflow:hidden}
+[data-testid="map2d"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0}
+[data-testid="map2d"] .maplibregl-ctrl-scale{font-size:10px;line-height:12px;margin:0}
+[data-testid="map2d"] .maplibregl-ctrl-bottom-right{right:6px;bottom:6px;display:flex;flex-direction:column;align-items:flex-end}
+[data-testid="map2d"] .maplibregl-ctrl-bottom-right .maplibregl-ctrl{margin:0}
+[data-testid="map2d"] .maplibregl-ctrl-attrib,[data-testid="map2d"] .maplibregl-ctrl-attrib-inner{font-size:10px;line-height:14px;white-space:nowrap}
+`;
+
 function styleFor(farmId: string): StyleSpecification {
   const img = imageryFor(farmId);
   return {
@@ -216,6 +227,7 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
   const img = imageryFor(farm.id);
   const area = ringAreaHa(points);
   const tooBig = area > MAX_FIELD_HA;
+  const capText = img ? `Aerial photo: ${img.attribution}, captured ${img.year} (not the forecast period)` : "";
 
   const reset = () => {
     const map = mapRef.current;
@@ -247,6 +259,7 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
 
   return (
     <div data-testid="map2d" data-fields-ready={fieldsReady} style={{ position: "absolute", inset: 0, pointerEvents: "auto", zIndex: 0 }}>
+      <style>{MAP_CHROME_CSS}</style>
       <div ref={box} style={{ position: "absolute", inset: 0 }} aria-label={`2D map of ${farm.name}`} role="region" />
 
       {initFailed && (
@@ -298,8 +311,12 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
       )}
 
       {img && (
-        <p className="fv-cap" style={{ position: "absolute", left: 16, bottom: 80, margin: 0, fontSize: 11, zIndex: 2, textShadow: "0 1px 2px rgba(0,0,0,.8)" }}>
-          Aerial photo: {img.attribution}, captured {img.year} (not the forecast period)
+        <p
+          className="fv-cap map2d-cap"
+          title={capText}
+          style={{ position: "absolute", left: 256, right: 280, bottom: 6, margin: 0, fontSize: 11, lineHeight: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", zIndex: 2, textShadow: "0 1px 2px rgba(0,0,0,.8)" }}
+        >
+          {capText}
         </p>
       )}
 

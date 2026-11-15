@@ -35,11 +35,28 @@ export const FF_CSS = `
 .ff-slider .knob { position: absolute; top: 3px; width: 12px; height: 12px; margin-left: -6px; border-radius: 6px; background: ${color.ink}; box-shadow: 0 0 0 3px rgba(242,235,221,0.14); }
 .fv-root .ff-slider:focus-visible { outline: none; }
 .ff-slider:focus-visible .knob { box-shadow: 0 0 0 3px ${color.focusRing}; }
-.ff-tl-year { font: 400 40px/1 ${font.display}; letter-spacing: -0.02em; color: ${color.ink}; }
+.ff-tl-readout { --ff-yr: 40px; --ff-yr-w: calc(var(--ff-yr) * 5.2); --ff-meta-fs: 13px; --ff-meta-w: calc(var(--ff-meta-fs) * 16); --ff-c-play: 32px; --ff-c-tog: 132px; --ff-row: calc(var(--ff-yr) * 1.2); position: absolute; left: 0; right: 0; bottom: 82px; height: var(--ff-row); display: grid; grid-template-columns: var(--ff-c-play) var(--ff-yr-w) var(--ff-meta-w) var(--ff-c-tog) minmax(0, 1fr) auto; grid-template-rows: var(--ff-row); column-gap: 12px; row-gap: 0; align-items: center; }
+.ff-tl-play { width: var(--ff-c-play); height: var(--ff-c-play); }
+.ff-tl-year { display: block; width: var(--ff-yr-w); height: var(--ff-row); overflow: hidden; white-space: nowrap; text-align: left; font: 400 var(--ff-yr)/1 ${font.display}; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; color: ${color.ink}; }
+.ff-tl-metabox { display: block; width: var(--ff-meta-w); height: 16px; overflow: hidden; white-space: nowrap; text-align: left; font: 400 var(--ff-meta-fs)/16px ${font.sans}; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; color: ${color.ink}; }
+.ff-tl-meta-short { display: none; }
 .ff-tl-meta { font: 400 13px/16px ${font.sans}; color: ${color.ink}; }
 .ff-tl-tick { position: absolute; width: 1px; background: rgba(242,235,221,0.45); }
 .ff-tl-lab { position: absolute; transform: translateX(-50%); font: 400 11.5px/14px ${font.sans}; color: #E4DBCB; white-space: nowrap; text-shadow: ${shadow.textOnMap}; }
 .ff-tl-lab[data-sel="true"] { color: ${color.ink}; font-weight: 600; }
+/* Responsive tiers, keyed on the nearest container named fw (window body). Regular = base rules above. */
+@container fw (max-width: 519px) {
+  .ff-tl-readout { --ff-yr: clamp(24px, 5.5cqi, 28px); --ff-meta-w: calc(var(--ff-meta-fs) * 9.6); --ff-c-play: 40px; --ff-c-tog: 82px; --ff-row: calc(var(--ff-yr) * 1.2); bottom: 76px; height: 74px; grid-template-columns: var(--ff-c-play) var(--ff-meta-w) var(--ff-c-tog) minmax(0, 1fr) auto; grid-template-rows: var(--ff-row) 40px; column-gap: 8px; }
+  .ff-tl-readout > * { grid-row: 2; }
+  .ff-tl-readout > .ff-tl-year { grid-row: 1; grid-column: 1 / -1; }
+  .ff-tl-readout .ff-seg { padding: 0; border: 0; }
+  .ff-tl-readout .ff-seg .fv-seg { width: 40px; min-width: 40px; height: 40px; padding: 0; }
+  .ff-tl-meta-long { display: none; }
+  .ff-tl-meta-short { display: inline; }
+}
+@container fw (min-width: 900px) {
+  .ff-tl-readout { --ff-yr: clamp(40px, 4cqi, 52px); --ff-meta-fs: 14px; padding: 0 12px; column-gap: 16px; }
+}
 .ff-legend { display: flex; gap: 14px; font: 400 11px/14px ${font.sans}; color: #E4DBCB; white-space: nowrap; text-shadow: ${shadow.textOnMap}; }
 .ff-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .ff-pane-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(242,235,221,0.45); }

@@ -46,6 +46,9 @@ import { FarmOverview } from "./FarmOverview";
 import { ConditionLegend } from "@/components/conditions/ConditionLegend";
 import { DESKTOP_WORKSPACE_CSS } from "./desktop-workspace";
 import { HorizonTabs, MonthlyOutlook } from "@/components/farm-future/MonthlyOutlook";
+import { useWindowHost, Window } from "@/components/window/Window";
+import { WINDOW_CSS } from "@/components/window/window-css";
+import { Dock, DOCK_CSS } from "@/components/window/Dock";
 
 // MapLibre is large and needs the browser: load the 2D map only when it is opened.
 const Map2D = dynamic(() => import("@/components/map2d/Map2D").then((m) => m.Map2D), { ssr: false });
@@ -145,6 +148,8 @@ export function FarmView({
   initialPanelsHidden,
 }: FarmViewProps) {
   const reduced = !!useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  useWindowHost(rootRef);
   const [drawer, setDrawer] = useState<Drawer | null>(initialReportOpen ? "report" : null);
   const [sim, setSim] = useState<SimState>(() => {
     if (initialSim) return initialSim;
@@ -244,8 +249,8 @@ export function FarmView({
     if (futurePanel) setDrawer(null);
   }, [futurePanel]);
   return (
-    <div className="fv-root fv-workspace" data-testid="farm-view" data-surface={gusOpen ? "gus" : plannerOpen ? "planner" : active ? "drawer" : futurePanel ? "future" : "overview"} data-horizon={futureMode === "now" ? "none" : horizon} data-wide={active === "rotations" || plannerOpen || futureMode === "compare"}>
-      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS + DESKTOP_WORKSPACE_CSS}</style>
+    <div ref={rootRef} className="fv-root fv-workspace" data-testid="farm-view" data-surface={gusOpen ? "gus" : plannerOpen ? "planner" : active ? "drawer" : futurePanel ? "future" : "overview"} data-horizon={futureMode === "now" ? "none" : horizon} data-wide={active === "rotations" || plannerOpen || futureMode === "compare"}>
+      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS + DESKTOP_WORKSPACE_CSS + WINDOW_CSS + DOCK_CSS}</style>
       {map2d && <Map2D toolsOpen={active === "view" && !panelsHidden} onExit={() => useAppStore.setState({ map2d: false })} />}
       {!map2d && <MapEffects />}
       {panelsHidden && (
@@ -260,6 +265,8 @@ export function FarmView({
         </FvButton>
       )}
       <div className="fv-panels" hidden={panelsHidden}>
+          <Dock />
+          <Window id="nav" title={farmName}>
           <div className="fv-heading" data-testid="farm-sidebar">
             <div className="fv-title-block">
               <FvButton
@@ -369,8 +376,9 @@ export function FarmView({
               )}
             </div>
           </div>
-          
+          </Window>
 
+          <Window id="inspector" present={!!active} title={active ? DRAWER_TITLE[active] : undefined} onClose={() => active && toggle(active)}>
           <aside
             id="farm-drawer"
             className="fv-glass fv-drawer"
@@ -599,6 +607,7 @@ export function FarmView({
               <InvestigationControls simulationAvailable={!!simProps} />
             </div>
           </aside>
+          </Window>
           <div className="fv-mode-content" hidden={futureMode !== "now"}>
           {simProps && comparing && (
             <>
@@ -607,13 +616,21 @@ export function FarmView({
             </>
           )}
           </div>
-          {futureMode !== "now" && (futureMode === "future" && horizon === "months"
-            ? <MonthlyOutlook />
-            : <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />)}
-          {futureMode === "future" && <HorizonTabs bottom={horizon === "months" ? 228 : 236} />}
-          <FutureLayer />
-          {siteForFarm(farmId ?? null) && <RotationPlanner key={siteForFarm(farmId ?? null)!} siteId={siteForFarm(farmId ?? null)!} />}
-          <CopilotPanel />
+          <Window id="time" present={futureMode !== "now" && !plannerOpen}>
+            {futureMode === "future" && <HorizonTabs bottom={horizon === "months" ? 228 : 236} />}
+            {futureMode !== "now" && (futureMode === "future" && horizon === "months"
+              ? <MonthlyOutlook />
+              : <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />)}
+          </Window>
+          <Window id="future" present={futureMode === "future" && !!futurePanel} onClose={closeFuturePanel}>
+            <FutureLayer />
+          </Window>
+          <Window id="planner" present={plannerOpen} onClose={() => usePlannerStore.setState({ open: false })}>
+            {siteForFarm(farmId ?? null) && <RotationPlanner key={siteForFarm(farmId ?? null)!} siteId={siteForFarm(farmId ?? null)!} />}
+          </Window>
+          <Window id="copilot" present={gusOpen} onClose={() => useCopilot.getState().close()}>
+            <CopilotPanel />
+          </Window>
       </div>
       <p className="sr-only">
         {reduced ? "Reduced motion enabled." : ""}This tool supports, and does
@@ -621,6 +638,13 @@ export function FarmView({
       </p>
     </div>
   );
+}
+
+/** Close whichever Future card is open (the review drawer has its own close). */
+function closeFuturePanel() {
+  const s = useFutureStore.getState();
+  if (s.panel === "review") s.openReview(null);
+  else s.openPanel(null);
 }
 
 /** One edge tab of the side rail; opens (or closes) its drawer. */
