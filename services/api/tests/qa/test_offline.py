@@ -4,10 +4,10 @@ import socket
 
 from app.twin.climate import build_climate_outlook
 
-SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm")
+SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm", "site_kpu_langley")
 
 
-def test_climate_outlook_offline_for_four_sites(monkeypatch):
+def test_climate_outlook_offline_for_every_curated_site(monkeypatch):
     def _refuse(*_args, **_kwargs):
         raise AssertionError("climate outlook tried to open a socket")
 

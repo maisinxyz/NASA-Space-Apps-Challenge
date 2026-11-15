@@ -26,7 +26,7 @@ from app.twin.climate import (
 from app.weather import power
 from fixtures_lib import contract
 
-SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm")
+SITES = ("site_usda_barc", "site_cornell_ruminant", "site_ucdavis_oakville", "site_ubc_farm", "site_kpu_langley")
 
 
 def _walk_numbers(obj, path=""):
@@ -117,7 +117,7 @@ def test_beltsville_2010_frost_matches_an_independent_scan():
     assert float(tmin[cold[-1] + 1]) > 0.0
 
 
-def test_four_sites_are_deterministic_and_do_not_call_the_network(monkeypatch):
+def test_five_sites_are_deterministic_and_do_not_call_the_network(monkeypatch):
     def _boom(*_args, **_kwargs):
         raise AssertionError("climate outlook called the live POWER client")
 

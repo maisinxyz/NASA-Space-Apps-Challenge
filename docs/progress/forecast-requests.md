@@ -146,3 +146,7 @@ Planting day-of-year is still null. The BC cole and lettuce guides and the WSU S
 `reference_yield` for ten horticulture rows is Statistics Canada Table 3-10, British Columbia, 2010, production divided by harvested hectares. Seasonal Ky for the crops in FAO Paper 66 Table 1 (Paper 33) is stored. Lettuce is not in that table, so its Ky stays null. BC nitrogen guides give ranges, so `typical_n_rate_kg_ha` stays null.
 
 `yield_t_ha` is still omitted for cabbage because `plant_doy` is null. `water.year_profile` says the season window is not set. That is the intended gate. Please do not invent the day. A test inside `tests/test_crop_catalog.py` shows that the same cabbage row returns 21.34 t/ha once a window is present.
+
+## 2026-11-15 — Session C, EC5 five-site smoke
+
+`scripts/smoke_forecast.py` now calls all five curated sites offline. KPU climate-outlook and exposure return 200. Forecast and sensitivity return 503 `DATA_SOURCE_UNAVAILABLE` because `load_soil` is null. The smoke script treats that one code as a noted gap and exits 0. Please let a curated site with a stored null SoilGrids summary run. No satellite value series is on main yet: Session A has NDVI gap sidecars for the four older sites only.
