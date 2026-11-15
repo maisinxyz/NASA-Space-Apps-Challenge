@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.1.2"  # B4 adds curated crop windows and per-field Current rotation presets
+ENGINE_VERSION = "1.2.0"  # B8 explains cycles and checks known host/return rules
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

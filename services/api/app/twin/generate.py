@@ -9,6 +9,7 @@ search does not yet drop a crop for climate fit.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import numpy as np
@@ -227,6 +228,43 @@ def _next_ok(previous: str, main: str, seq: tuple, crops: dict) -> bool:
     return False
 
 
+def cycle_conflicts(years: Iterable[Iterable[str]], crops: dict) -> tuple[bool | None, bool]:
+    """Return host-family break status and whether a known return interval is broken."""
+
+    rows = [[crops[crop_id] for crop_id in ids if crop_id in crops] for ids in years]
+    mains = [[crop for crop in row if not _is_cover(crop)] for row in rows]
+    if not rows or not any(mains):
+        return None, False
+
+    def hosts(crop: dict) -> set[str]:
+        families = set(crop.get("host_families") or ())
+        if not _is_cover(crop):
+            families.add(crop["family"])
+        return families
+
+    host_years = [set().union(*(hosts(crop) for crop in row)) for row in rows]
+    return_years = [active | {crop["family"] for crop in row} for active, row in zip(host_years, rows, strict=True)]
+    family_ok, short_return = True, False
+    for year, row in enumerate(rows):
+        repeated = host_years[year] & host_years[year - 1]
+        for family in repeated:
+            participants = [crop for idx in (year - 1, year) for crop in rows[idx] if family in hosts(crop)]
+            if len({crop["id"] for crop in participants}) != 1 or not participants[0].get("perennial"):
+                family_ok = False
+        for crop in row:
+            # Count cover crops and explicit alternate hosts toward known intervals.
+            family = crop["family"]
+            interval = crop.get("return_interval_years")
+            if interval is None or crop.get("perennial"):
+                continue
+            gap = next(
+                distance for distance in range(1, len(rows) + 1)
+                if family in return_years[year - distance]
+            )
+            short_return |= gap < interval
+    return family_ok, short_return
+
+
 def _search(pool: list[str], crops: dict, pinned: tuple[str, ...], max_years: int, lat: float) -> list[tuple]:
     mains = [crop_id for crop_id in pool if not _is_cover(crops[crop_id])]
     covers = [crop_id for crop_id in pool if _is_cover(crops[crop_id])]
@@ -249,6 +287,9 @@ def _search(pool: list[str], crops: dict, pinned: tuple[str, ...], max_years: in
             if not _family_ok([main for main, _off in seq], crops):
                 return
             if seq != min(seq[k:] + seq[:k] for k in range(len(seq))):
+                return
+            family_ok, short_return = cycle_conflicts(seq, crops)
+            if not family_ok or short_return:
                 return
             found.append(seq)
             return

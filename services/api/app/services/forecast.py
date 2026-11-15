@@ -22,8 +22,9 @@ from app.twin import config as TC
 from app.twin.catalog import load_catalog, validate_selection
 from app.twin.explain.evidence import evidence_card
 from app.twin.explain.flags import strategy_flags
+from app.twin.explain.rotation import explain_rotation, merge_explanations
 from app.twin.explain.uncertainty import gap_notes, station_bias, station_context, station_source, uncertainty_layers
-from app.twin.generate import build_strategies
+from app.twin.generate import build_strategies, cycle_conflicts
 from app.twin.run import series_to_dict, simulate
 from app.twin.score import (
     estimates,
@@ -250,12 +251,27 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
     rank_of = {strategy_id: index + 1 for index, strategy_id in enumerate(ranking)}
     existing = next(sim for plan, sim in zip(field_run.plans, simulations) if plan.strategy_id == "rot_existing")
     strategies = []
+    crops = TC.index_crops(prepared.catalog)
     for plan, sim, fit, card in zip(field_run.plans, simulations, fits, cards):
         saved = fertilizer_saved(sim["n_fertilizer_need_kg_ha"], existing["n_fertilizer_need_kg_ha"])
         income, income_notes = income_estimate(plan, sim, _req_for_field(req, field_run.field))
         flags = strategy_flags(
             plan.strategy_id, plan, sim, req, prepared.catalog, _site_id(prepared),
         )
+        cycle = [[] for _ in range(min(plan.cycle_years, req.horizon_years))]
+        for slot in plan.slots:
+            if slot.year_index <= len(cycle):
+                cycle[slot.year_index - 1].append(slot.crop_id)
+        matches = cycle_conflicts(cycle, crops) if len(cycle) == plan.cycle_years else (None, False)
+        explanation, unverified = explain_rotation(plan, crops, *matches)
+        if unverified:
+            flags.append({
+                "id": f"{plan.strategy_id}_uncited_rotation_trait",
+                "strategy_id": plan.strategy_id,
+                "severity": "verify",
+                "text": "Confirm crop traits or return intervals locally for: " + ", ".join(unverified) + ".",
+                "trigger": {"layer": "rotation", "rule": "uncited_rotation_trait"},
+            })
         if prepared.soil_summary and prepared.soil_summary.get("nearby_proxy") and field_run.field.soil_override is None:
             flags.append({
                 "id": f"{plan.strategy_id}_soil_proxy",
@@ -298,6 +314,7 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
                 risks=[flag["text"] for flag in flags if flag["severity"] in ("caution", "verify")],
             ),
             "review_flags": flags,
+            "rotation_explanation": explanation,
         })
     _attach_exposure(strategies, prepared)
     return {
@@ -398,6 +415,7 @@ def _blend_strategy(strategy_id: str, rows: list[tuple[float, dict]]) -> dict:
     fit = _blend_fit(rows, total)
     return {
         "id": strategy_id,
+        "rotation_explanation": merge_explanations([item["rotation_explanation"] for _, item in rows]),
         "trajectories": trajectories,
         "farm_fit": fit,
         "scorecard": scorecard,
