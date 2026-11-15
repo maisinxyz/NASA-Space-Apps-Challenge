@@ -76,8 +76,8 @@ def snapshot_context(snapshot: dict) -> dict:
         raise ApiError("INVALID_INPUT", "Farm and site must identify the same supported demo farm.")
     if snapshot["horizon"] == "months":
         return monthly_context(snapshot)
-    if not 1 <= snapshot["time_index"] <= 10:
-        raise ApiError("INVALID_INPUT", "The year must be between 1 and 10.")
+    if not 0 <= snapshot["time_index"] <= 10:
+        raise ApiError("INVALID_INPUT", "The year must be between 0 and 10.")
     body = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[site][1]).read_text(encoding="utf-8"))
     body["scenario"] = snapshot["scenario"]
     doc = forecast(site, body)

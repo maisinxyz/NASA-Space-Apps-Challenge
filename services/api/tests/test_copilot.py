@@ -93,3 +93,18 @@ def test_offline_never_calls_provider(client, monkeypatch):
     result = client.post('/api/v1/copilot/chat', json=request())
     assert result.status_code == 503
     assert result.json()["error"]["code"] == "DATA_SOURCE_UNAVAILABLE"
+
+
+def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr(copilot, "_provider", lambda payload, key: calls.append(payload) or {
+        "reply": "The soil index starts at 100.",
+        "referenced_layers": ["soil_organic_index"],
+        "local_validation_tips": ["Check the baseline with a local soil test."],
+    })
+    data = request()
+    data["snapshot"]["time_index"] = 0
+    response = client.post("/api/v1/copilot/chat", json=data)
+    assert response.status_code == 200
+    context = json.loads(calls[0]["messages"][1]["content"].removeprefix("Server-supplied context: "))
+    assert context["metrics"]["soil_organic_index"]["p50"] == 100
