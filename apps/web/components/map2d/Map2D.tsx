@@ -11,12 +11,14 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, postFieldAnalyze } from "@/lib/api/client";
 import type { FieldAnalyzeResponse } from "@/lib/api/types";
 import { FIELD_METRICS } from "@/lib/farm-future/fieldColours";
-import { useFutureStore } from "@/lib/farm-future/store";
 import { farmById, twinConfig } from "@/lib/farms";
 import { color } from "@/lib/farm-view/tokens";
 import { fmt } from "@/lib/forecast/select";
 import { boxAround, closeRing, MAX_FIELD_HA, ringAreaHa, savedCamera, saveCamera, type LonLat } from "@/lib/map2d/geo";
 import { imageryFor } from "@/lib/map2d/imagery";
+import { usePlots, usePlotStore } from "@/lib/plots/store";
+import { useConditionView } from "@/lib/conditions/useConditionView";
+import { useFutureStore } from "@/lib/farm-future/store";
 import { useAppStore } from "@/lib/store";
 
 import { useFieldValues } from "@/components/farm-future/FieldColours";
@@ -48,6 +50,10 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
   const farm = farmById(farmId);
   const twin = twinConfig(farmId);
   const fv = useFieldValues();
+  const cv = useConditionView();
+  const plots = usePlots(farmId);
+  const addPlot = usePlotStore((s) => s.add);
+  const removePlot = usePlotStore((s) => s.remove);
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const [ready, setReady] = useState(false);
@@ -57,6 +63,7 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
   const [attempt, setAttempt] = useState(0);
   const [projection, setProjection] = useState<"mercator" | "globe">("mercator");
   const [popover, setPopover] = useState<Popover | null>(null);
+  const [selPlot, setSelPlot] = useState<string | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [points, setPoints] = useState<LonLat[]>([]);
   const drawingRef = useRef(false);
@@ -101,28 +108,42 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
       if (e.sourceId === "fields" && e.isSourceLoaded) setFieldsReady(true);
     });
     map.on("load", () => {
+      // Forecast fields (the plots the engine forecasts): coloured by the selected metric at the scrubber year.
       map.addSource("fields", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({ id: "fields-fill", type: "fill", source: "fields", paint: { "fill-color": ["get", "colour"], "fill-opacity": 0.45 } });
-      map.addLayer({ id: "fields-line", type: "line", source: "fields", paint: { "line-color": "#f2ebdd", "line-width": 1.6 } });
+      map.addLayer({ id: "fields-fill", type: "fill", source: "fields", paint: { "fill-color": ["get", "colour"], "fill-opacity": 0.6, "fill-color-transition": { duration: 400 } } });
+      map.addLayer({ id: "fields-line", type: "line", source: "fields", paint: { "line-color": "#ffffff", "line-width": 3 } });
+      // Hotspot zones of the selected condition (erosion, water stress, frost pockets).
+      map.addSource("zones", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({ id: "zones-fill", type: "fill", source: "zones", paint: { "fill-color": ["get", "colour"], "fill-opacity": 0.85 } });
+      map.addLayer({ id: "zones-line", type: "line", source: "zones", paint: { "line-color": "#ffffff", "line-width": 1.5, "line-dasharray": [1, 1] } });
+      // User-drawn plots: display only, dashed outline.
+      map.addSource("plots", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({ id: "plots-fill", type: "fill", source: "plots", paint: { "fill-color": ["get", "colour"], "fill-opacity": 0.35 } });
+      map.addLayer({ id: "plots-line", type: "line", source: "plots", paint: { "line-color": "#ffffff", "line-width": 2, "line-dasharray": [2, 1.5] } });
       map.addSource("draft", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({ id: "draft-fill", type: "fill", source: "draft", filter: ["==", "$type", "Polygon"], paint: { "fill-color": "#a3bfe9", "fill-opacity": 0.3 } });
-      map.addLayer({ id: "draft-line", type: "line", source: "draft", paint: { "line-color": "#a3bfe9", "line-width": 2, "line-dasharray": [2, 1] } });
-      map.addLayer({ id: "draft-pts", type: "circle", source: "draft", filter: ["==", "$type", "Point"], paint: { "circle-radius": 4, "circle-color": "#a3bfe9", "circle-stroke-color": "#05070c", "circle-stroke-width": 1 } });
+      map.addLayer({ id: "draft-fill", type: "fill", source: "draft", filter: ["==", "$type", "Polygon"], paint: { "fill-color": "#ffd23f", "fill-opacity": 0.45 } });
+      map.addLayer({ id: "draft-line", type: "line", source: "draft", paint: { "line-color": "#ffd23f", "line-width": 3 } });
+      map.addLayer({ id: "draft-pts", type: "circle", source: "draft", filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": "#ffd23f", "circle-stroke-color": "#05070c", "circle-stroke-width": 1 } });
       setReady(true);
     });
     map.on("click", (e: MapMouseEvent) => {
       if (drawingRef.current) {
-        setPoints((p) => [...p, [e.lngLat.lng, e.lngLat.lat]]);
+        // Each click adds one corner of the plot.
+        const c: LonLat = [e.lngLat.lng, e.lngLat.lat];
+        setPoints((p) => [...p, c]);
         return;
       }
-      const hit = map.queryRenderedFeatures(e.point, { layers: ["fields-fill"] })[0];
-      const id = hit?.properties?.id as string | undefined;
+      const plotHit = map.queryRenderedFeatures(e.point, { layers: ["plots-fill"] })[0];
+      const fieldHit = plotHit ? undefined : map.queryRenderedFeatures(e.point, { layers: ["fields-fill"] })[0];
+      setSelPlot((plotHit?.properties?.id as string | undefined) ?? null);
+      const id = fieldHit?.properties?.id as string | undefined;
       setPopover(id ? { fieldId: id, at: [e.lngLat.lng, e.lngLat.lat] } : null);
       if (id) {
         useAppStore.setState({ twinFieldId: id });
         useFutureStore.setState({ focusFieldId: id });
       }
     });
+    map.on("mousemove", "plots-fill", () => (map.getCanvas().style.cursor = drawingRef.current ? "crosshair" : "pointer"));
     map.on("mousemove", "fields-fill", () => (map.getCanvas().style.cursor = drawingRef.current ? "crosshair" : "pointer"));
     map.on("mouseleave", "fields-fill", () => (map.getCanvas().style.cursor = drawingRef.current ? "crosshair" : ""));
     return () => {
@@ -135,11 +156,11 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
     };
   }, [farm, attempt]);
 
-  // Field outlines and colours.
+  // Forecast field outlines, coloured per year.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map || !twin) return;
-    const colours = new Map(fv?.values.map((v) => [v.fieldId, v.colour]) ?? []);
+    const colours = new Map(cv?.plots.map((p) => [p.fieldId, p.colour]) ?? []);
     (map.getSource("fields") as GeoJSONSource | undefined)?.setData({
       type: "FeatureCollection",
       features: twin.fields.map((f) => ({
@@ -148,7 +169,25 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
         geometry: { type: "Polygon", coordinates: [closeRing(f.ring)] },
       })),
     });
-  }, [ready, twin, fv]);
+    (map.getSource("zones") as GeoJSONSource | undefined)?.setData({
+      type: "FeatureCollection",
+      features: (cv?.zones ?? []).map((z) => ({ type: "Feature", properties: { colour: z.colour }, geometry: { type: "Polygon", coordinates: [closeRing(z.ring)] } })),
+    });
+  }, [ready, twin, cv]);
+
+  // Drawn plots.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    (map.getSource("plots") as GeoJSONSource | undefined)?.setData({
+      type: "FeatureCollection",
+      features: plots.map((f) => ({
+        type: "Feature",
+        properties: { id: f.id, name: f.name, colour: f.colour },
+        geometry: { type: "Polygon", coordinates: [closeRing(f.ring)] },
+      })),
+    });
+  }, [ready, plots]);
 
   // Draft polygon.
   useEffect(() => {
@@ -234,20 +273,44 @@ export function Map2D({ toolsOpen = false, onExit }: { toolsOpen?: boolean; onEx
         {(drawing || points.length > 0) && (
           <>
             <span style={{ fontSize: 11.5, color: color.inkSecondary }}>
-              {drawing ? "Click the map to add corners." : "Drawn field."} {points.length} {points.length === 1 ? "point" : "points"}
+              {drawing ? "Click each corner of the plot (3 or more), then Save plot." : "Drawn field."} 
               {points.length >= 3 ? ` · ${fmt(area, "ha")}` : ""}
             </span>
             {tooBig && <span role="alert" style={{ fontSize: 11.5, color: "#C46A52" }}>Over {MAX_FIELD_HA} ha. Draw a smaller field.</span>}
+            {drawing && <FvButton className="fv-seg" data-testid="map2d-undo" disabled={points.length === 0} onClick={() => setPoints((p) => p.slice(0, -1))}>Undo last corner</FvButton>}
+            {drawing && <FvButton className="fv-seg" data-testid="map2d-save" disabled={points.length < 3 || tooBig} onClick={() => { addPlot(farm.id, points); clearDraft(); }}>Save plot</FvButton>}
             {drawing && <FvButton className="fv-seg" data-testid="map2d-finish" disabled={points.length < 3 || tooBig} onClick={finish}>Analyse field</FvButton>}
             <FvButton className="fv-seg" data-testid="map2d-clear" onClick={clearDraft}>Clear drawing</FvButton>
           </>
         )}
       </div>
 
+      {plots.length > 0 && (
+        <ul className="fv-glass" data-testid="map2d-plots" style={{ position: "absolute", left: 16, top: 16, margin: 0, padding: 8, borderRadius: 12, zIndex: 2, listStyle: "none", display: "grid", gap: 4, fontSize: 12 }}>
+          {plots.map((p) => (
+            <li key={p.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span aria-hidden style={{ width: 12, height: 12, borderRadius: 2, background: p.colour, border: "1.5px solid #fff" }} />
+              <span style={{ flex: 1 }}>{p.name} · {fmt(ringAreaHa(p.ring), "ha")}</span>
+              <FvButton className="ff-link" aria-label={`Delete ${p.name}`} onClick={() => removePlot(farm.id, p.id)}>Delete</FvButton>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {img && (
         <p className="fv-cap" style={{ position: "absolute", left: 16, bottom: 80, margin: 0, fontSize: 11, zIndex: 2, textShadow: "0 1px 2px rgba(0,0,0,.8)" }}>
           Aerial photo: {img.attribution}, captured {img.year} (not the forecast period)
         </p>
+      )}
+
+      {selPlot && plots.find((p) => p.id === selPlot) && (
+        <div className="fv-glass" role="dialog" data-testid="map2d-plot-popover" style={{ position: "absolute", left: 16, top: 220, padding: 12, borderRadius: 12, zIndex: 2, display: "grid", gap: 6, fontSize: 12.5 }}>
+          <strong>{plots.find((p) => p.id === selPlot)!.name}</strong>
+          <div style={{ display: "flex", gap: 10 }}>
+            <FvButton className="fv-seg" data-testid="map2d-plot-delete" onClick={() => { removePlot(farm.id, selPlot); setSelPlot(null); }}>Delete plot</FvButton>
+            <FvButton className="ff-link" onClick={() => setSelPlot(null)}>Close</FvButton>
+          </div>
+        </div>
       )}
 
       {pop && popField && fv && (

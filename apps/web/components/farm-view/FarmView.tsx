@@ -42,7 +42,7 @@ import { siteForFarm } from "@/lib/forecast/sites";
 import { useCopilot, bindCopilotFarm } from "@/lib/copilot/copilot";
 import { closeWorkspaceTools, coordinateWorkspace } from "@/lib/farm-view/workspace";
 import { FarmOverview } from "./FarmOverview";
-import { FieldColourLegend } from "@/components/farm-future/FieldColours";
+import { ConditionLegend } from "@/components/conditions/ConditionLegend";
 import { DESKTOP_WORKSPACE_CSS } from "./desktop-workspace";
 import { HorizonTabs, MonthlyOutlook } from "@/components/farm-future/MonthlyOutlook";
 
@@ -400,7 +400,7 @@ export function FarmView({
 
             <div className="fv-drawer-body" hidden={active !== "conditions"}>
               {futureMode === "future" ? (
-                <><FuturePills /><details><summary>Field colours and values</summary><FieldColourLegend embedded /></details></>
+                <><FuturePills /><ConditionLegend embedded /></>
               ) : (
                 <>
                   <div className="fv-observations">

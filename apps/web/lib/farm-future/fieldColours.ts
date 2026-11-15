@@ -72,8 +72,9 @@ export function paintFields(canvas: HTMLCanvasElement, bbox: [number, number, nu
     ctx.closePath();
     ctx.fillStyle = colour;
     ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba(20,16,12,0.85)";
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#ffffff";
     ctx.stroke();
   }
 }

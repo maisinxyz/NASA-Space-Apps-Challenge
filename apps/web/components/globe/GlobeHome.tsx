@@ -35,6 +35,7 @@ import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { useFieldColourOverlays } from "@/components/farm-future/FieldColours";
+import { usePlotOverlays } from "@/components/farm-future/PlotOverlay";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
@@ -420,7 +421,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const inTwin = !!farm && view === "farm" && !!twin;
   const zoneOverlays = useZoneOverlays(inTwin && showGlobe ? (farm?.id ?? null) : null);
   const fieldOverlays = useFieldColourOverlays();
-  const overlays = useMemo(() => (inTwin ? [...zoneOverlays, ...fieldOverlays] : zoneOverlays), [inTwin, zoneOverlays, fieldOverlays]);
+  const plotOverlays = usePlotOverlays();
+  const overlays = useMemo(() => (inTwin ? [...zoneOverlays, ...fieldOverlays, ...plotOverlays] : zoneOverlays), [inTwin, zoneOverlays, fieldOverlays, plotOverlays]);
   const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail, map2d } = useAppStore(
     useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail, map2d: s.map2d })),
   );
@@ -750,15 +752,9 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
 
       <EarthLoading ready={ready} />
 
-      {/* Earth attribution, centred on the status bar line (one line, no wrap). Globe view: the hero Earth's NASA
-          textures (public/hero/earth/SOURCES.md). Farm view: Cesium's credit line, moved here, always visible. */}
-      {onGlobe && (
-        <p className="absolute z-10 -translate-x-1/2 translate-y-1/2 text-[11px] whitespace-nowrap" style={{ color: color.accent, left: `calc(50% + ${HERO_UNIT} * 48)`, bottom: `calc(${HERO_UNIT} * 28)` }}>
-          Earth imagery: NASA Blue Marble &amp; Earth at Night
-        </p>
-      )}
-
-      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
+      {/* No credit text on the hero globe (NASA imagery attribution: public/hero/earth/SOURCES.md and the Methods page).
+          Farm view: Cesium's credit line is rendered into the slot below and must stay visible there. */}
+      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", visibility: onGlobe ? "hidden" : undefined }} />
 
       {/* Dive film: above the globe, below the attribution, the title and the panels. */}
       {ready &&
