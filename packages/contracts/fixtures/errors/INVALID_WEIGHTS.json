@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "INVALID_WEIGHTS",
+    "message": "Every weight is zero.",
+    "hint": "Give at least one criterion a weight above zero.",
+    "retryable": false
+  }
+}

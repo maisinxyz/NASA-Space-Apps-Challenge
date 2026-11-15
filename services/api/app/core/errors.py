@@ -20,6 +20,11 @@ ErrorCode = Literal[
     "SIMULATION_TIMEOUT",
     "NOT_FOUND",
     "INTERNAL",
+    "SITE_NOT_FOUND",
+    "UNKNOWN_CROP",
+    "INVALID_WEIGHTS",
+    "NO_FEASIBLE_ALTERNATIVES",
+    "SCENARIO_OUT_OF_RANGE",
 ]
 
 STATUS: dict[str, int] = {
@@ -32,6 +37,11 @@ STATUS: dict[str, int] = {
     "SIMULATION_TIMEOUT": 504,
     "NOT_FOUND": 404,
     "INTERNAL": 500,
+    "SITE_NOT_FOUND": 404,
+    "UNKNOWN_CROP": 422,
+    "INVALID_WEIGHTS": 422,
+    "NO_FEASIBLE_ALTERNATIVES": 422,
+    "SCENARIO_OUT_OF_RANGE": 422,
 }
 
 log = logging.getLogger("fieldtwin.errors")

@@ -1,0 +1,136 @@
+{
+ "site_id": "site_usda_barc",
+ "data_mode": "seed",
+ "items": [
+  {
+   "id": "haz_heavy_rain_wet_ground",
+   "kind": "heavy_rain_wet_ground",
+   "label": "Heavy rain on wet ground",
+   "definition": "A day with at least 27.902 mm rain (wet-day p95) after a day with top-soil wetness at or above 0.76 (p75).",
+   "years_with_event": 25,
+   "years_total": 34,
+   "peak_weeks": [
+    11,
+    7,
+    12
+   ],
+   "worst_storm_id": null,
+   "basis": "derived",
+   "sources": [
+    {
+     "name": "NASA POWER daily point (MERRA-2 meteorology)",
+     "role": "weather",
+     "url": "https://power.larc.nasa.gov/docs/services/api/",
+     "license": "No restrictions on use; citation requested by the NASA POWER Project",
+     "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+     "basis": "modeled",
+     "resolution_m": 55000
+    }
+   ]
+  },
+  {
+   "id": "haz_multi_day_heavy_rain",
+   "kind": "multi_day_heavy_rain",
+   "label": "Multi-day heavy rain",
+   "definition": "3 days in a row totalling at least 41.9 mm (1.5 x the heavy-rain day, assumed).",
+   "years_with_event": 34,
+   "years_total": 34,
+   "peak_weeks": [
+    38,
+    49,
+    32
+   ],
+   "worst_storm_id": null,
+   "basis": "derived",
+   "sources": [
+    {
+     "name": "NASA POWER daily point (MERRA-2 meteorology)",
+     "role": "weather",
+     "url": "https://power.larc.nasa.gov/docs/services/api/",
+     "license": "No restrictions on use; citation requested by the NASA POWER Project",
+     "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+     "basis": "modeled",
+     "resolution_m": 55000
+    }
+   ]
+  },
+  {
+   "id": "haz_dry_spell",
+   "kind": "dry_spell",
+   "label": "Dry spell",
+   "definition": "At least 10 days in a row with less than 1.0 mm rain (assumed).",
+   "years_with_event": 33,
+   "years_total": 34,
+   "peak_weeks": [
+    40,
+    42,
+    0
+   ],
+   "worst_storm_id": null,
+   "basis": "derived",
+   "sources": [
+    {
+     "name": "NASA POWER daily point (MERRA-2 meteorology)",
+     "role": "weather",
+     "url": "https://power.larc.nasa.gov/docs/services/api/",
+     "license": "No restrictions on use; citation requested by the NASA POWER Project",
+     "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+     "basis": "modeled",
+     "resolution_m": 55000
+    }
+   ]
+  },
+  {
+   "id": "haz_heat_spell",
+   "kind": "heat_spell",
+   "label": "Heat spell",
+   "definition": "At least 3 days in a row reaching 32.0 degC (assumed).",
+   "years_with_event": 28,
+   "years_total": 34,
+   "peak_weeks": [
+    29,
+    30,
+    28
+   ],
+   "worst_storm_id": null,
+   "basis": "derived",
+   "sources": [
+    {
+     "name": "NASA POWER daily point (MERRA-2 meteorology)",
+     "role": "weather",
+     "url": "https://power.larc.nasa.gov/docs/services/api/",
+     "license": "No restrictions on use; citation requested by the NASA POWER Project",
+     "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+     "basis": "modeled",
+     "resolution_m": 55000
+    }
+   ]
+  },
+  {
+   "id": "haz_late_frost",
+   "kind": "late_frost",
+   "label": "Late frost",
+   "definition": "A day at or below 0.0 degC in spring (day of year 91 to 151, assumed).",
+   "years_with_event": 23,
+   "years_total": 34,
+   "peak_weeks": [
+    13,
+    14,
+    12
+   ],
+   "worst_storm_id": null,
+   "basis": "derived",
+   "sources": [
+    {
+     "name": "NASA POWER daily point (MERRA-2 meteorology)",
+     "role": "weather",
+     "url": "https://power.larc.nasa.gov/docs/services/api/",
+     "license": "No restrictions on use; citation requested by the NASA POWER Project",
+     "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+     "basis": "modeled",
+     "resolution_m": 55000
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "NO_FEASIBLE_ALTERNATIVES",
+    "message": "No alternative rotation fits these constraints.",
+    "hint": "Allow more crops or relax a constraint.",
+    "retryable": false
+  }
+}

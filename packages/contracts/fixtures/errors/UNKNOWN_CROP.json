@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "UNKNOWN_CROP",
+    "message": "Crop 'crop_example' is not in the crop library.",
+    "hint": "Choose crops from the crop list.",
+    "retryable": false
+  }
+}

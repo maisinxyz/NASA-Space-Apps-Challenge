@@ -609,6 +609,11 @@ ERRORS = {
     "SIMULATION_TIMEOUT": ("The simulation took too long.", "Lower the grid resolution and run it again.", True),
     "NOT_FOUND": ("No item with this ID.", "Check the link or go back to the site list.", False),
     "INTERNAL": ("Something went wrong on our side.", "Try again. If it keeps happening, tell the team.", True),
+    "SITE_NOT_FOUND": ("No site with this ID and a known location.", "Pick a curated site or a site with a location.", False),
+    "UNKNOWN_CROP": ("Crop 'crop_example' is not in the crop library.", "Choose crops from the crop list.", False),
+    "INVALID_WEIGHTS": ("Every weight is zero.", "Give at least one criterion a weight above zero.", False),
+    "NO_FEASIBLE_ALTERNATIVES": ("No alternative rotation fits these constraints.", "Allow more crops or relax a constraint.", False),
+    "SCENARIO_OUT_OF_RANGE": ("rain_scale_pct = 80 is outside -50 to 50 %.", "Move the slider back inside the range.", False),
 }
 
 

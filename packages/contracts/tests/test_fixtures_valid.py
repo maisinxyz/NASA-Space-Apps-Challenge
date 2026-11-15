@@ -30,8 +30,13 @@ for _t in TERRAINS:
     RESPONSES[f"terrain/{_t}/layers.json"] = ("/terrain/{terrainId}/layers", "get", "200")
     RESPONSES[f"terrain/{_t}/provenance.json"] = ("/terrain/{terrainId}/provenance", "get", "200")
     RESPONSES[f"terrain/{_t}/insights.json"] = ("/terrain/{terrainId}/insights", "get", "200")
+# v1.1 (Backend A): built from the real pipeline by scripts/build_seed.py
+for _dir, _path in [("features", "/sites/{siteId}/features"), ("hazard_calendar", "/sites/{siteId}/hazard-calendar"),
+                    ("hazards", "/sites/{siteId}/hazards"), ("zones", "/sites/{siteId}/zones")]:
+    for _p in (FIXTURES / _dir).glob("*.json"):
+        RESPONSES[f"{_dir}/{_p.name}"] = (_path, "get", "200")
 for _p in (FIXTURES / "simulations" / "sim_mock_001" / "diff").glob("*.json"):
-    RESPONSES[str(_p.relative_to(FIXTURES))] = ("/simulations/{simId}/diff", "get", "200")
+    RESPONSES[_p.relative_to(FIXTURES).as_posix()] = ("/simulations/{simId}/diff", "get", "200")
 
 
 def load(rel):
@@ -39,7 +44,7 @@ def load(rel):
 
 
 def test_every_json_fixture_is_mapped():
-    on_disk = {str(p.relative_to(FIXTURES)) for p in FIXTURES.rglob("*.json")}
+    on_disk = {p.relative_to(FIXTURES).as_posix() for p in FIXTURES.rglob("*.json")}
     errors = {f"errors/{p.name}" for p in (FIXTURES / "errors").glob("*.json")}
     assert on_disk - errors == set(RESPONSES), "add new fixtures to RESPONSES"
 

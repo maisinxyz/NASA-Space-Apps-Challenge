@@ -9,7 +9,7 @@ test:
 	cd apps/web && pnpm test
 
 seed:
-	@echo "seed: not yet implemented"
+	uv run --project services/api python scripts/build_seed.py
 
 fixtures:
 	uv run --project packages/contracts python scripts/make_fixtures_terrain.py

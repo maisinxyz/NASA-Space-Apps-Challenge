@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "SCENARIO_OUT_OF_RANGE",
+    "message": "rain_scale_pct = 80 is outside -50 to 50 %.",
+    "hint": "Move the slider back inside the range.",
+    "retryable": false
+  }
+}

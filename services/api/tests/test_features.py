@@ -1,0 +1,216 @@
+"""Backend A: feature pipeline, hazards, zones, seeds (backend rotation PRD §7, §12.2, §13, §18)."""
+
+import json
+import socket
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from app.core.errors import ApiError
+from app.features import config as C
+from app.features import pipeline as P
+from app.features import seeds
+from app.services import features as F
+from fixtures_lib import contract
+
+API = "/api/v1"
+FIX = Path(__file__).resolve().parents[3] / "packages" / "contracts" / "fixtures"
+SITES = sorted(C.CURATED_SITES)
+
+
+def toy_daily(rain, tmin=None, lat=40.0, start="2001-01-01"):
+    n = len(rain)
+    days = np.arange(np.datetime64(start, "D"), np.datetime64(start, "D") + np.timedelta64(n, "D"))
+    params = {}
+    tmin = [5.0] * n if tmin is None else tmin
+    cols = {"PRECTOTCORR": rain, "T2M": [t + 5 for t in tmin], "T2M_MAX": [t + 10 for t in tmin], "T2M_MIN": tmin,
+            "GWETROOT": [0.5] * n, "GWETTOP": [0.5] * n}
+    for k, vals in cols.items():
+        params[k] = {str(d).replace("-", ""): v for d, v in zip(days, vals)}
+    return P.daily_from_power({"parameters": params}, lat)
+
+
+# ---------------------------------------------------------------- unit: hand-computed series
+def test_weekly_sum_and_missing_week_is_none():
+    rain = [1.0] * 365
+    rain[10] = None  # day 11 -> week 1
+    d = toy_daily(rain)
+    years, g = P.weekly(d, d.v["PRECTOTCORR"], "sum")
+    assert years == [2001]
+    assert g[0, 0] == 7.0
+    assert np.isnan(g[0, 1])  # never filled
+    assert g[0, 51] == 8.0  # days 358-365 fold into week 51
+
+
+def test_in_runs():
+    m = np.array([1, 1, 0, 1, 1, 1, 0, 1], bool)
+    assert P.in_runs(m, 3).tolist() == [0, 0, 0, 1, 1, 1, 0, 0]
+
+
+def test_extraterrestrial_radiation_matches_fao56_example():
+    # FAO-56 Example 8: 20 degS, 3 September (J = 246) -> Ra = 32.2 MJ m-2 day-1
+    assert P.extraterrestrial_radiation(-20.0, np.array([246]))[0] == pytest.approx(32.2, abs=0.1)
+
+
+def test_hargreaves_hand_value():
+    d = toy_daily([0.0] * 365)
+    ra = P.extraterrestrial_radiation(40.0, d.doy)
+    expected = 0.0023 * 0.408 * ra * (10 + 17.8) * np.sqrt(10)
+    assert np.allclose(P.et0_hargreaves(d), expected)
+
+
+def test_anomaly_zero_when_std_zero():
+    base = np.ones((3, 52))
+    assert (P.anomaly(base, base) == 0).all()
+
+
+def test_scenario_range_and_preset_equivalence():
+    with pytest.raises(ApiError) as e:
+        P.resolve_scenario(rain_scale_pct=80)
+    assert e.value.code == "SCENARIO_OUT_OF_RANGE"
+    with pytest.raises(ApiError):
+        P.resolve_scenario(temp_offset_c=9)
+    preset = P.resolve_scenario("drier_summers")
+    custom = P.resolve_scenario("drier_summers", **{k: C.SCENARIO_PRESETS["drier_summers"][k] for k in ("rain_scale_pct", "temp_offset_c", "rain_scale_by_season")})
+    assert preset == custom
+
+
+def test_season_months_flip_south():
+    assert P.season_months("winter", 40) == (12, 1, 2)
+    assert P.season_months("winter", -33) == (6, 7, 8)
+
+
+def test_vulnerable_weeks():
+    ft = json.loads((FIX / "features" / "site_usda_barc.json").read_text())
+    out = P.vulnerable_weeks(ft, range(52))
+    frost = next(x for x in out if x["hazards"] == ["frost_prob"])
+    assert 0 in frost["weeks"] and 28 not in frost["weeks"]  # January frosty, late July not
+
+
+# ---------------------------------------------------------------- routes + contract
+@pytest.mark.parametrize("site", SITES)
+def test_feature_table_matches_contract(client, site):
+    r = client.get(f"{API}/sites/{site}/features")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    contract.validate_response(body, "/sites/{siteId}/features")
+    contract.validate_schema(body, "FeatureTable")
+    assert body["data_mode"] == "seed"
+    assert body["quality"]["years_available"] >= 30
+    assert body["quality"]["limited_data"] is False and body["soil"]["texture_class"]
+    for f in body["features"].values():
+        assert f["unit"] and f["basis"] in ("measured", "derived", "modeled", "assumed", "relative")
+        assert len(f["by_year"]) == body["quality"]["years_available"]
+    assert all(s["license"] and s["attribution"] for s in body["sources"])
+
+
+@pytest.mark.parametrize("url,template", [
+    ("/sites/site_usda_barc/hazard-calendar", "/sites/{siteId}/hazard-calendar"),
+    ("/sites/site_ucdavis_oakville/hazard-calendar?scenario=both", "/sites/{siteId}/hazard-calendar"),
+    ("/sites/site_cornell_ruminant/hazards", "/sites/{siteId}/hazards"),
+    ("/sites/site_usda_barc/zones", "/sites/{siteId}/zones"),
+    ("/sites/site_mock_okanagan/zones", "/sites/{siteId}/zones"),
+    ("/sites/site_usda_barc/features?scenario=drier_summers", "/sites/{siteId}/features"),
+])
+def test_v11_routes_match_contract(client, url, template):
+    r = client.get(API + url)
+    assert r.status_code == 200, r.text
+    contract.validate_response(r.json(), template)
+
+
+def test_route_equals_committed_fixture_and_is_deterministic(client):
+    a = client.get(f"{API}/sites/site_usda_barc/features").content
+    b = client.get(f"{API}/sites/site_usda_barc/features").content
+    assert a == b
+    assert json.loads(a) == json.loads((FIX / "features" / "site_usda_barc.json").read_text())
+
+
+def test_scenario_moves_features_the_right_way():
+    base = F.feature_table("site_ucdavis_oakville")
+    dry = F.feature_table("site_ucdavis_oakville", P.resolve_scenario("drier_summers"))
+    assert dry["scenario"]["label"] == "modeled scenario, not a forecast"
+    jul = 28
+    assert dry["features"]["rain_mm"]["mean"][jul] <= base["features"]["rain_mm"]["mean"][jul]
+    assert dry["features"]["et0_mm"]["mean"][jul] > base["features"]["et0_mm"]["mean"][jul]
+    assert dry["features"]["rain_mm"]["mean"][2] == base["features"]["rain_mm"]["mean"][2]  # January untouched
+    assert dry["thresholds"] == base["thresholds"]  # thresholds stay on the baseline
+
+
+def test_unknown_site_and_bad_scenario(client):
+    r = client.get(f"{API}/sites/site_nowhere/features")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "SITE_NOT_FOUND"
+    assert client.get(f"{API}/sites/site_usda_barc/features?scenario=apocalypse").status_code == 422
+
+
+def test_limited_data_fixture_has_no_satellite_values():
+    ft = json.loads((FIX / "features" / "site_explore_pirque.json").read_text())
+    assert ft["quality"]["limited_data"] is True and ft["soil"] is None
+    assert not {"ndvi", "ndvi_anomaly", "smap_anomaly"} & set(ft["features"])
+    assert [s["role"] for s in ft["sources"]] == ["weather"]
+
+
+def test_no_prediction_words_in_payloads(client):
+    for url in ("/sites/site_usda_barc/features", "/sites/site_usda_barc/hazards", "/sites/site_mock_okanagan/zones"):
+        text = client.get(API + url).text.lower()
+        assert "yield" not in text and "profit" not in text
+
+
+def test_mock_mode_only_for_mock_terrain(client):
+    assert client.get(f"{API}/sites/site_mock_okanagan/zones").json()["data_mode"] == "mock"
+    for s in SITES:
+        assert client.get(f"{API}/sites/{s}/features").json()["data_mode"] != "mock"
+
+
+# ---------------------------------------------------------------- offline (PRD §13)
+@pytest.fixture()
+def no_network(monkeypatch):
+    def refuse(*a, **k):
+        raise AssertionError("network call in OFFLINE mode")
+
+    monkeypatch.setenv("OFFLINE", "1")
+    monkeypatch.setattr(socket.socket, "connect", refuse)
+    F.base.cache_clear()
+    F._computed.cache_clear()
+    F._table.cache_clear()
+    yield
+    F.base.cache_clear()
+    F._computed.cache_clear()
+    F._table.cache_clear()
+
+
+def test_offline_curated_sites_work_without_network(client, no_network):
+    for s in SITES:
+        assert client.get(f"{API}/sites/{s}/hazard-calendar").status_code == 200
+
+
+def test_offline_cache_miss_is_weather_unavailable(client, no_network, monkeypatch, tmp_path):
+    from app.weather import power
+
+    monkeypatch.setattr(power, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(F.site_svc, "list_sites", lambda: [{"id": "site_lite_x", "name": "x", "location": [10.0, 50.0]}])
+    r = client.get(f"{API}/sites/site_lite_x/features")
+    assert r.status_code == 503 and r.json()["error"]["code"] == "WEATHER_UNAVAILABLE"
+
+
+# ---------------------------------------------------------------- seeds (PRD §6, §18 Data)
+def test_every_seed_file_has_complete_sidecar():
+    assert seeds.seed_files(), "no seed files"
+    assert seeds.sidecar_problems() == []
+
+
+def test_usda_texture():
+    assert seeds.usda_texture(40, 40, 20) == "loam"
+    assert seeds.usda_texture(90, 5, 5) == "sand"
+    assert seeds.usda_texture(10, 30, 60) == "clay"
+    assert seeds.usda_texture(50, 10, 38) == "sandy clay"
+
+
+def test_feature_schema_file_is_current():
+    import sys
+
+    sys.path.insert(0, str(FIX.parents[2] / "scripts"))
+    from build_seed import bundled_schema
+
+    on_disk = json.loads((FIX.parent / "schemas" / "feature_table.schema.json").read_text(encoding="utf-8"))
+    assert on_disk == bundled_schema("FeatureTable"), "run `make seed`"

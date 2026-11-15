@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "SITE_NOT_FOUND",
+    "message": "No site with this ID and a known location.",
+    "hint": "Pick a curated site or a site with a location.",
+    "retryable": false
+  }
+}

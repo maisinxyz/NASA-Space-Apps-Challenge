@@ -55,6 +55,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sites/{siteId}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Weekly feature table and data-quality flags (v1.1)
+         * @description 52-week feature table built from NASA POWER daily data (plus seeded soil/satellite data where present).
+         *     Every series carries a unit and a basis. A scenario reweights observed years; it is not a forecast.
+         *     Curated sites run the full pipeline; any other site with a `location` runs limited-data mode.
+         */
+        get: operations["getSiteFeatures"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sites/{siteId}/hazard-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Weekly heavy-rain-on-wet-ground and dry-spell shares (v1.1) */
+        get: operations["getHazardCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sites/{siteId}/hazards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hazard types with years-with-event counts (v1.1) */
+        get: operations["getHazardCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sites/{siteId}/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Derived vulnerability zones (v1.1)
+         * @description Derived from terrain and soil data, never field-measured. Empty when the site has no terrain package.
+         */
+        get: operations["getZones"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sites/{siteId}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Winter and summer exposure per rotation (v1.1) */
+        get: operations["compareRotations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sites/{siteId}/rotation-analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Farmer request to three scored rotations with evidence (v1.1) */
+        post: operations["analyzeRotations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/scans": {
         parameters: {
             query?: never;
@@ -326,6 +436,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/glossary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Glossary terms and crop-type explainers (v1.1, static, works offline) */
+        get: operations["listGlossary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rotations/presets": {
         parameters: {
             query?: never;
@@ -566,8 +693,11 @@ export interface components {
          * @description ISO 8601 UTC.
          */
         Timestamp: string;
-        /** @enum {string} */
-        LayerName: "slope" | "flow_accumulation" | "depressions" | "cover_class";
+        /**
+         * @description Clients render unknown values neutrally.
+         * @enum {string}
+         */
+        LayerName: "slope" | "flow_accumulation" | "depressions" | "cover_class" | "wetness_index" | "planting_suitability" | "soil_moisture_relative" | "irrigation_priority" | "water_received";
         Health: {
             /** @constant */
             status: "ok";
@@ -579,10 +709,14 @@ export interface components {
         Source: {
             name: string;
             /** @enum {string} */
-            role: "elevation" | "imagery" | "weather";
+            role: "elevation" | "imagery" | "weather" | "soil" | "vegetation" | "soil_moisture" | "crop_traits";
             resolution_m?: number;
             license: string;
             url?: string;
+            /** @description Credit line to show (v1.1). */
+            attribution?: string;
+            /** Format: date */
+            retrieved_on?: string;
             basis: components["schemas"]["Basis"];
         };
         TextureInfo: {
@@ -662,6 +796,21 @@ export interface components {
             pre_built: boolean;
             storm_ids: components["schemas"]["StormId"][];
             attribution: string[];
+            country?: string;
+            locality?: string;
+            owner?: string;
+            location?: components["schemas"]["LonLat"];
+            /** @description False shows "Approximate location". */
+            coords_verified?: boolean;
+            /** Format: uri */
+            source_url?: string;
+            /**
+             * @description `twin` = curated full data (Pre-built); `explore` = Lite mode.
+             * @enum {string}
+             */
+            tier?: "twin" | "explore";
+            sim_bbox?: components["schemas"]["BBox"];
+            radius_m?: number;
         };
         Storm: {
             id: components["schemas"]["StormId"];
@@ -689,6 +838,11 @@ export interface components {
                 resolution_km: number;
                 basis: components["schemas"]["Basis"];
             };
+            /** @description Rank among distinct storms by 1–3 day total, 1981 to present. */
+            rank?: number;
+            rank_of?: number;
+            /** @description TODO(verify) dates. */
+            named_event?: string | null;
         };
         CropTemplate: {
             id: components["schemas"]["CropId"];
@@ -773,6 +927,7 @@ export interface components {
             storm_id: components["schemas"]["StormId"];
             rotation_ids: components["schemas"]["RotationId"][];
             options?: components["schemas"]["SimulationOptions"];
+            scenario?: components["schemas"]["Scenario"];
         };
         /** @enum {string} */
         JobStatus: "queued" | "running" | "done" | "failed";
@@ -833,8 +988,11 @@ export interface components {
         };
         Insight: {
             id: components["schemas"]["InsightId"];
-            /** @enum {string} */
-            kind: "terrain" | "cover" | "storm" | "rotation" | "data_quality";
+            /**
+             * @description Clients render unknown values neutrally.
+             * @enum {string}
+             */
+            kind: "terrain" | "cover" | "storm" | "rotation" | "data_quality" | "opportunity" | "protected" | "winter_wet" | "summer_dry";
             title: string;
             body: string;
             why_it_matters: string;
@@ -850,11 +1008,19 @@ export interface components {
             data_refs: string[];
             /** @description 1 = lowest, 5 = highest. */
             severity: number;
+            /** @description One sentence (v1.1). */
+            action?: string;
+            zone_ids?: string[];
+            /** @description Weeks 0–51, wraps. */
+            active_weeks?: number[];
+            scenario?: components["schemas"]["Scenario"];
         };
         EvidenceCard: {
             rotation_id: components["schemas"]["RotationId"];
             why_suggested: string;
             evidence: string[];
+            /** @description Structured evidence with value, unit, basis and source (v1.1). `evidence` keeps the plain-text lines. */
+            evidence_items?: components["schemas"]["EvidenceItem"][];
             benefits: string[];
             information_gaps: string[];
             risks_for_local_review: string[];
@@ -1009,6 +1175,29 @@ export interface components {
             /** @description True when served from the on-disk cache after an upstream failure. */
             cached: boolean;
             series: components["schemas"]["TrendSeries"][];
+            climatology?: {
+                /** @constant */
+                weeks: 52;
+                rain_mm_median: components["schemas"]["WeekValues"];
+                rain_mm_p90: components["schemas"]["WeekValues"];
+                tmin_c_median: components["schemas"]["WeekValues"];
+                tmax_c_median: components["schemas"]["WeekValues"];
+                growing_season?: {
+                    last_frost_doy_median?: number | null;
+                    first_frost_doy_median?: number | null;
+                    frost_free_days_median?: number | null;
+                    /** @description Assumed base temperature. */
+                    gdd_base_c?: number;
+                    gdd_median?: number;
+                };
+                basis: components["schemas"]["Basis"];
+                years: {
+                    /** Format: date */
+                    start: string;
+                    /** Format: date */
+                    end: string;
+                };
+            };
         };
         NoteCreate: {
             terrain_id: components["schemas"]["TerrainId"];
@@ -1024,12 +1213,401 @@ export interface components {
             created_at: components["schemas"]["Timestamp"];
         };
         /**
-         * @description HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,
-         *     TERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,
-         *     SIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500.
+         * @description Preset that reweights observed years. Modeled scenario, not a forecast. Preset values are echoed in `ScenarioApplied`.
+         * @default baseline
          * @enum {string}
          */
-        ErrorCode: "INVALID_INPUT" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "TERRAIN_COVERAGE_MISSING" | "DATA_SOURCE_UNAVAILABLE" | "WEATHER_UNAVAILABLE" | "SIMULATION_TIMEOUT" | "NOT_FOUND" | "INTERNAL";
+        Scenario: "baseline" | "wetter_winters" | "drier_summers" | "both";
+        /** @description Preset plus optional custom values. Custom values override the preset. Allowed ranges are server config (assumed); outside them the API returns `SCENARIO_OUT_OF_RANGE`. */
+        ScenarioInput: {
+            preset?: components["schemas"]["Scenario"];
+            /** @description Percent change applied to every daily rain value, e.g. -20. */
+            rain_scale_pct?: number;
+            /** @description Degrees Celsius added to every daily temperature. */
+            temp_offset_c?: number;
+            rain_scale_by_season?: components["schemas"]["SeasonalRainScale"];
+        };
+        /** @description Percent rain change per meteorological season (winter = Dec–Feb in the northern hemisphere, Jun–Aug in the southern). Overrides `rain_scale_pct` for that season. */
+        SeasonalRainScale: {
+            winter?: number;
+            spring?: number;
+            summer?: number;
+            fall?: number;
+        };
+        ScenarioApplied: {
+            preset: components["schemas"]["Scenario"];
+            rain_scale_pct: number;
+            temp_offset_c: number;
+            rain_scale_by_season?: components["schemas"]["SeasonalRainScale"];
+            /** @constant */
+            label: "modeled scenario, not a forecast";
+            /** @constant */
+            note?: "built from observed years";
+        };
+        /**
+         * @description Where the data came from. `mock` must never appear in the demo build.
+         * @enum {string}
+         */
+        DataMode: "live" | "cached" | "seed" | "mock";
+        /** @enum {string} */
+        Confidence: "high" | "medium" | "low";
+        /** @description One value per week, index 0–51 (7-day blocks from 1 January; days 358–366 fold into index 51). `null` = missing. */
+        WeekValues: (number | null)[];
+        FeatureSeries: {
+            /**
+             * @example mm
+             * @example degC
+             * @example sigma
+             * @example fraction
+             */
+            unit: string;
+            basis: components["schemas"]["BasisOrRelative"];
+            description?: string;
+            mean: components["schemas"]["WeekValues"];
+            std: components["schemas"]["WeekValues"];
+            median: components["schemas"]["WeekValues"];
+            p10: components["schemas"]["WeekValues"];
+            p90: components["schemas"]["WeekValues"];
+            /** @description Year (e.g. `"1991"`) to 52 weekly values. Probability features (`*_prob`) hold 0/1 event flags per year. */
+            by_year: {
+                [key: string]: components["schemas"]["WeekValues"];
+            };
+            /** @description True when a coarser series was linearly interpolated to weekly. */
+            interpolated?: boolean;
+        };
+        /** @description Every threshold is assumed (stated so reviewers can change it) except `extreme_rain_mm` and `wet_ground_value`, which are derived from the site's own baseline history. */
+        FeatureThresholds: {
+            frost_c: number;
+            heat_c: number;
+            extreme_rain_percentile: number;
+            extreme_rain_mm: number;
+            wet_day_mm: number;
+            dry_day_mm: number;
+            dry_spell_days: number;
+            wet_ground_percentile: number;
+            /** @description Top-soil wetness (0–1) at that percentile. */
+            wet_ground_value: number;
+            vulnerable_prob: number;
+        };
+        SourceUsed: {
+            name: string;
+            resolution_note: string;
+        };
+        DataQuality: {
+            years_available: number;
+            missing_fraction: {
+                [key: string]: number;
+            };
+            sources_used: components["schemas"]["SourceUsed"][];
+            /** @description POWER wetness vs SMAP anomaly signs match in at least the stated share of weeks; null when no SMAP seed. */
+            sources_agree: boolean | null;
+            resolution_note: string;
+            interpolated_series: string[];
+            /** @description True when no seeded satellite or soil data is available. */
+            limited_data: boolean;
+        };
+        SoilSummary: {
+            clay_pct?: number;
+            sand_pct?: number;
+            silt_pct?: number;
+            soc_g_per_kg?: number;
+            ph?: number;
+            /** @example 0-30cm */
+            depth?: string;
+            /** @example loam */
+            texture_class: string;
+            /** @enum {string} */
+            infiltration_class: "high" | "medium" | "low";
+            basis: components["schemas"]["Basis"];
+            source: string;
+        };
+        FeatureTable: {
+            /** @constant */
+            schema_version: "1.1.0";
+            pipeline_version: string;
+            site_id: components["schemas"]["SiteId"];
+            location: components["schemas"]["LonLat"];
+            years: {
+                /** Format: date */
+                start: string;
+                /** Format: date */
+                end: string;
+            };
+            /** @constant */
+            weeks: 52;
+            scenario: components["schemas"]["ScenarioApplied"];
+            data_mode: components["schemas"]["DataMode"];
+            /** @description Feature id to series. Ids: rain_mm, rain_max_day_mm, tmean_c, tmax_c, tmin_c, soil_wetness_root, soil_wetness_top, soil_moisture_anomaly, et0_mm, water_balance_mm, frost_prob, heat_prob, extreme_rain_prob, dry_spell_prob; plus ndvi, ndvi_anomaly, smap_anomaly where seeded. */
+            features: {
+                [key: string]: components["schemas"]["FeatureSeries"];
+            };
+            thresholds: components["schemas"]["FeatureThresholds"];
+            soil: components["schemas"]["SoilSummary"] | null;
+            quality: components["schemas"]["DataQuality"];
+            sources: components["schemas"]["Source"][];
+            caveats: string[];
+        };
+        HazardCalendar: {
+            site_id: components["schemas"]["SiteId"];
+            scenario: components["schemas"]["Scenario"];
+            scenario_applied?: components["schemas"]["ScenarioApplied"];
+            data_mode?: components["schemas"]["DataMode"];
+            years: {
+                /** Format: date */
+                start: string;
+                /** Format: date */
+                end: string;
+            };
+            /** @description 0–1, share of years with heavy rain on wet ground in that week. */
+            j_wet: components["schemas"]["WeekValues"];
+            /** @description 0–1, share of years in a dry spell in that week. */
+            j_dry: components["schemas"]["WeekValues"];
+            thresholds: {
+                /** @description Heavy-rain day threshold, mm (derived percentile). */
+                q_rain: number;
+                /** @description Wet-ground threshold, top-soil wetness 0–1 (derived percentile). */
+                q_wet: number;
+                /** @description Consecutive dry days that make a dry spell (assumed). */
+                n_dry_days: number;
+                /** @description A day below this rain (mm) counts as dry (assumed). */
+                q_dry: number;
+            };
+            basis: components["schemas"]["Basis"];
+            sources: components["schemas"]["Source"][];
+            caveats?: string[];
+        };
+        /** @enum {string} */
+        HazardKind: "heavy_rain_wet_ground" | "multi_day_heavy_rain" | "dry_spell" | "heat_spell" | "late_frost";
+        HazardType: {
+            id: string;
+            kind: components["schemas"]["HazardKind"];
+            label: string;
+            /** @description Plain-language rule with its thresholds. */
+            definition?: string;
+            years_with_event: number;
+            years_total: number;
+            peak_weeks: number[];
+            worst_storm_id?: components["schemas"]["StormId"] | null;
+            basis: components["schemas"]["Basis"];
+            sources: components["schemas"]["Source"][];
+        };
+        HazardCatalog: {
+            site_id: components["schemas"]["SiteId"];
+            data_mode?: components["schemas"]["DataMode"];
+            items: components["schemas"]["HazardType"][];
+        };
+        GeoJsonPolygon: {
+            /** @constant */
+            type: "Polygon";
+            coordinates: components["schemas"]["LonLat"][][];
+        };
+        /** @enum {string} */
+        ZoneKind: "erosion_risk" | "water_stress" | "frost_pocket";
+        Zone: {
+            id: string;
+            kind?: components["schemas"]["ZoneKind"];
+            /** @description Plain language. */
+            label?: string;
+            /** @example Derived from terrain and soil data, not field-measured. */
+            note?: string;
+            outline: components["schemas"]["GeoJsonPolygon"];
+            icon_point: components["schemas"]["LonLat"];
+            area_ha: number;
+            /** @description Relative, field mean = 1. */
+            terrain_factor: number;
+            field_id?: string | null;
+            crop?: string | null;
+            /** @description Relative. */
+            winter_exposure?: number | null;
+            /** @description Relative. */
+            summer_exposure?: number | null;
+            basis: components["schemas"]["BasisOrRelative"];
+        };
+        ZoneCollection: {
+            site_id: components["schemas"]["SiteId"];
+            terrain_id?: components["schemas"]["TerrainId"] | null;
+            data_mode?: components["schemas"]["DataMode"];
+            zones: components["schemas"]["Zone"][];
+            caveats?: string[];
+        };
+        Exposure: {
+            value: number;
+            p10: number;
+            p90: number;
+            /** @constant */
+            basis?: "relative";
+        };
+        RotationComparison: {
+            site_id: components["schemas"]["SiteId"];
+            scenario: components["schemas"]["Scenario"];
+            rotations: {
+                rotation_id: components["schemas"]["RotationId"];
+                winter: components["schemas"]["Exposure"];
+                summer: components["schemas"]["Exposure"];
+                rank_stability: string | null;
+                /** @constant */
+                basis: "relative";
+            }[];
+        };
+        /** @enum {string} */
+        Criterion: "nutrient_cycling" | "erosion_risk" | "organic_matter" | "pest_disruption" | "water_use" | "forage_potential" | "market_suitability";
+        /** @enum {string} */
+        Season: "spring" | "summer" | "fall" | "winter";
+        RotationSlot: {
+            year_index: number;
+            season: components["schemas"]["Season"];
+            crop_id: components["schemas"]["CropId"] | "fallow";
+        };
+        FarmerPriorities: {
+            /** @description Empty or missing means all seven. */
+            criteria_selected?: components["schemas"]["Criterion"][];
+            /** @description Criterion to weight (>= 0). Normalized to sum 1; all zero gives `INVALID_WEIGHTS`. */
+            weights?: {
+                [key: string]: number;
+            };
+            /** @enum {string} */
+            weight_preset?: "water" | "income" | "soil_structure" | "erosion" | "forage";
+            constraints?: {
+                low_water?: boolean;
+                no_specialty_equipment?: boolean;
+                no_local_market?: boolean;
+            };
+        };
+        RotationAnalysisRequest: components["schemas"]["FarmerPriorities"] & {
+            existing_rotation?: "preset" | components["schemas"]["RotationSlot"][];
+            allowed_crops?: components["schemas"]["CropId"][];
+            scenario?: components["schemas"]["Scenario"] | components["schemas"]["ScenarioInput"];
+            location?: components["schemas"]["LonLat"];
+        };
+        ScoreInput: {
+            name: string;
+            value: number | string | boolean;
+            unit: string;
+            basis: components["schemas"]["BasisOrRelative"];
+        };
+        RotationScorecard: {
+            criterion: components["schemas"]["Criterion"];
+            /** @description Relative index across the three rotations; higher is better. */
+            score: number;
+            unit: string;
+            basis: components["schemas"]["BasisOrRelative"];
+            /** @description Only on climate-driven criteria (water use, erosion risk). */
+            range?: {
+                p10: number;
+                p90: number;
+            };
+            confidence: components["schemas"]["Confidence"];
+            needs_local_review: boolean;
+            note?: string;
+            inputs: components["schemas"]["ScoreInput"][];
+        };
+        EvidenceItem: {
+            label: string;
+            value: number | string;
+            unit: string;
+            basis: components["schemas"]["BasisOrRelative"];
+            source: string;
+        };
+        VulnerableSeason: {
+            weeks: number[];
+            hazards: ("frost_prob" | "heat_prob" | "dry_spell_prob" | "extreme_rain_prob")[];
+        };
+        AnalyzedRotation: {
+            rotation_id: components["schemas"]["RotationId"];
+            name?: string;
+            is_existing: boolean;
+            sequence: components["schemas"]["RotationSlot"][];
+            cover_calendar: components["schemas"]["CoverCalendar"];
+            scorecard: components["schemas"]["RotationScorecard"][];
+            overall: number;
+            rank: number;
+            rank_stability: string | null;
+            exposure: {
+                winter: components["schemas"]["Exposure"];
+                summer: components["schemas"]["Exposure"];
+            };
+            vulnerable_seasons?: components["schemas"]["VulnerableSeason"][];
+            evidence_card: components["schemas"]["EvidenceCard"];
+        };
+        AnalysisWarning: {
+            /**
+             * @example NO_FEASIBLE_ALTERNATIVES
+             * @example IGNORED_WEIGHT
+             */
+            code: string;
+            /** @enum {string} */
+            level: "info" | "warning" | "error";
+            message: string;
+        };
+        RotationAnalysis: {
+            site_id: components["schemas"]["SiteId"];
+            engine_version: string;
+            request_hash: string;
+            request_echo: components["schemas"]["RotationAnalysisRequest"];
+            scenario: components["schemas"]["ScenarioApplied"];
+            data_mode: components["schemas"]["DataMode"];
+            limited_data: boolean;
+            confidence: components["schemas"]["Confidence"];
+            /** @description Existing rotation first. Fewer than three only with a `NO_FEASIBLE_ALTERNATIVES` warning. */
+            rotations: components["schemas"]["AnalyzedRotation"][];
+            weights_applied: {
+                [key: string]: number;
+            };
+            warnings: components["schemas"]["AnalysisWarning"][];
+            /** @constant */
+            disclaimer: "This tool supports, and does not replace, local agronomic expertise.";
+        };
+        CropTrait: components["schemas"]["CropTemplate"] & {
+            /** @enum {string} */
+            water_need_class?: "low" | "medium" | "high";
+            kc_stages?: {
+                ini?: number;
+                mid?: number;
+                end?: number;
+            };
+            /** @enum {string} */
+            root_depth_class?: "shallow" | "medium" | "deep";
+            cover_crop?: boolean;
+            perennial?: boolean;
+            /** @enum {string} */
+            drought_tolerance?: "low" | "medium" | "high";
+            frost_tolerance_c?: number;
+            heat_limit_c?: number;
+            /** @enum {string} */
+            residue_class?: "low" | "medium" | "high";
+            forage_suitable?: boolean;
+            /** @enum {string} */
+            market_rating?: "high" | "medium" | "low";
+            market_dependent?: boolean;
+            needs_specialty_equipment?: boolean;
+            /** @description Field name to source, or `TODO(verify)`. */
+            trait_sources?: {
+                [key: string]: string;
+            };
+        };
+        GlossaryEntry: {
+            id: string;
+            /** @enum {string} */
+            kind: "term" | "crop_type";
+            term: string;
+            short: string;
+            long: string;
+            how_we_use_it?: string;
+            why_it_helps?: string;
+            limits?: string;
+            related_terms?: string[];
+            /** @description Reference, or `TODO(verify)`. */
+            source: string;
+        };
+        /**
+         * @description HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,
+         *     TERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,
+         *     SIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,
+         *     SITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,
+         *     SCENARIO_OUT_OF_RANGE 422 (v1.1).
+         * @enum {string}
+         */
+        ErrorCode: "INVALID_INPUT" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "TERRAIN_COVERAGE_MISSING" | "DATA_SOURCE_UNAVAILABLE" | "WEATHER_UNAVAILABLE" | "SIMULATION_TIMEOUT" | "NOT_FOUND" | "INTERNAL" | "SITE_NOT_FOUND" | "UNKNOWN_CROP" | "INVALID_WEIGHTS" | "NO_FEASIBLE_ALTERNATIVES" | "SCENARIO_OUT_OF_RANGE";
         ErrorBody: {
             code: components["schemas"]["ErrorCode"];
             message: string;
@@ -1050,7 +1628,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `NOT_FOUND` */
+        /** @description `NOT_FOUND` or `SITE_NOT_FOUND` */
         NotFound: {
             headers: {
                 [name: string]: unknown;
@@ -1059,7 +1637,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `INVALID_INPUT` or `TERRAIN_COVERAGE_MISSING` */
+        /** @description `INVALID_INPUT`, `TERRAIN_COVERAGE_MISSING`, `UNKNOWN_CROP`, `INVALID_WEIGHTS`, `NO_FEASIBLE_ALTERNATIVES` or `SCENARIO_OUT_OF_RANGE` */
         InvalidInput: {
             headers: {
                 [name: string]: unknown;
@@ -1103,6 +1681,7 @@ export interface components {
         TerrainIdQuery: components["schemas"]["TerrainId"];
         SimId: components["schemas"]["SimulationId"];
         RotationIdPath: components["schemas"]["RotationId"];
+        ScenarioQuery: components["schemas"]["Scenario"];
     };
     requestBodies: never;
     headers: {
@@ -1176,6 +1755,167 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getSiteFeatures: {
+        parameters: {
+            query?: {
+                scenario?: components["parameters"]["ScenarioQuery"];
+            };
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feature table. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureTable"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getHazardCalendar: {
+        parameters: {
+            query?: {
+                scenario?: components["parameters"]["ScenarioQuery"];
+            };
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Hazard calendar. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HazardCalendar"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getHazardCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Hazard catalog. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HazardCatalog"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getZones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Zones. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneCollection"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            default: components["responses"]["Error"];
+        };
+    };
+    compareRotations: {
+        parameters: {
+            query: {
+                /** @description Comma-separated rotation IDs, e.g. `rot_existing,rot_cover,rot_forage`. */
+                rotations: string;
+                scenario?: components["parameters"]["ScenarioQuery"];
+            };
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exposure comparison. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RotationComparison"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            default: components["responses"]["Error"];
+        };
+    };
+    analyzeRotations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RotationAnalysisRequest"];
+            };
+        };
+        responses: {
+            /** @description Relative comparison of the existing rotation and up to two alternatives. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RotationAnalysis"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["InvalidInput"];
+            503: components["responses"]["Unavailable"];
             default: components["responses"]["Error"];
         };
     };
@@ -1512,13 +2252,34 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Crop templates. */
+            /** @description Crop templates, with trait fields where curated (v1.1). */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CropTemplate"][];
+                    "application/json": components["schemas"]["CropTrait"][];
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    listGlossary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Glossary entries. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlossaryEntry"][];
                 };
             };
             default: components["responses"]["Error"];

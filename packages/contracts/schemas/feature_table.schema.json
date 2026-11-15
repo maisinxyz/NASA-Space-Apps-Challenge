@@ -1,0 +1,3472 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "urn:fieldtwin:FeatureTable",
+ "title": "FeatureTable",
+ "description": "Generated from packages/contracts/openapi.yaml by scripts/build_seed.py. Do not edit.",
+ "$ref": "#/$defs/FeatureTable",
+ "$defs": {
+  "SiteId": {
+   "type": "string",
+   "pattern": "^site_[A-Za-z0-9_-]+$",
+   "examples": [
+    "site_okanagan_01"
+   ]
+  },
+  "ScanId": {
+   "type": "string",
+   "pattern": "^scan_[A-Za-z0-9_-]+$",
+   "examples": [
+    "scan_abc"
+   ]
+  },
+  "TerrainId": {
+   "type": "string",
+   "pattern": "^terr_[A-Za-z0-9_-]+$",
+   "examples": [
+    "terr_demo_okanagan_01"
+   ]
+  },
+  "StormId": {
+   "type": "string",
+   "pattern": "^storm_[A-Za-z0-9_-]+$",
+   "examples": [
+    "storm_example_1"
+   ]
+  },
+  "CropId": {
+   "type": "string",
+   "pattern": "^crop_[A-Za-z0-9_-]+$",
+   "examples": [
+    "crop_rye_cover"
+   ]
+  },
+  "RotationId": {
+   "type": "string",
+   "pattern": "^rot_[A-Za-z0-9_-]+$",
+   "examples": [
+    "rot_existing"
+   ]
+  },
+  "SimulationId": {
+   "type": "string",
+   "pattern": "^sim_[A-Za-z0-9_-]+$",
+   "examples": [
+    "sim_123"
+   ]
+  },
+  "InsightId": {
+   "type": "string",
+   "pattern": "^ins_[A-Za-z0-9_-]+$",
+   "examples": [
+    "ins_001"
+   ]
+  },
+  "NoteId": {
+   "type": "string",
+   "pattern": "^note_[A-Za-z0-9_-]+$",
+   "examples": [
+    "note_001"
+   ]
+  },
+  "Basis": {
+   "type": "string",
+   "enum": [
+    "measured",
+    "derived",
+    "modeled",
+    "assumed"
+   ]
+  },
+  "BasisOrRelative": {
+   "type": "string",
+   "enum": [
+    "measured",
+    "derived",
+    "modeled",
+    "assumed",
+    "relative"
+   ]
+  },
+  "LonLat": {
+   "type": "array",
+   "description": "WGS84 `[lon, lat]`.",
+   "prefixItems": [
+    {
+     "type": "number",
+     "minimum": -180,
+     "maximum": 180
+    },
+    {
+     "type": "number",
+     "minimum": -90,
+     "maximum": 90
+    }
+   ],
+   "minItems": 2,
+   "maxItems": 2
+  },
+  "BBox": {
+   "type": "array",
+   "description": "WGS84 `[minLon, minLat, maxLon, maxLat]`.",
+   "items": {
+    "type": "number"
+   },
+   "minItems": 4,
+   "maxItems": 4,
+   "examples": [
+    [
+     -119.6,
+     49.1,
+     -119.58,
+     49.12
+    ]
+   ]
+  },
+  "Timestamp": {
+   "type": "string",
+   "format": "date-time",
+   "description": "ISO 8601 UTC."
+  },
+  "LayerName": {
+   "type": "string",
+   "description": "Clients render unknown values neutrally.",
+   "enum": [
+    "slope",
+    "flow_accumulation",
+    "depressions",
+    "cover_class",
+    "wetness_index",
+    "planting_suitability",
+    "soil_moisture_relative",
+    "irrigation_priority",
+    "water_received"
+   ]
+  },
+  "Health": {
+   "type": "object",
+   "required": [
+    "status",
+    "mode",
+    "version"
+   ],
+   "properties": {
+    "status": {
+     "type": "string",
+     "const": "ok"
+    },
+    "mode": {
+     "type": "string",
+     "enum": [
+      "offline",
+      "live"
+     ]
+    },
+    "version": {
+     "type": "string",
+     "description": "API (contract) version, e.g. `1.0.0`."
+    }
+   }
+  },
+  "Source": {
+   "type": "object",
+   "required": [
+    "name",
+    "role",
+    "license",
+    "basis"
+   ],
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "elevation",
+      "imagery",
+      "weather",
+      "soil",
+      "vegetation",
+      "soil_moisture",
+      "crop_traits"
+     ]
+    },
+    "resolution_m": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "license": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "attribution": {
+     "type": "string",
+     "description": "Credit line to show (v1.1)."
+    },
+    "retrieved_on": {
+     "type": "string",
+     "format": "date"
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    }
+   }
+  },
+  "TextureInfo": {
+   "type": "object",
+   "required": [
+    "bounds_wgs84",
+    "source",
+    "license",
+    "attribution"
+   ],
+   "properties": {
+    "bounds_wgs84": {
+     "$ref": "#/$defs/BBox"
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "user_upload",
+      "open_imagery",
+      "nasa_gibs"
+     ]
+    },
+    "resolution_m": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "license": {
+     "type": "string"
+    },
+    "attribution": {
+     "type": "string"
+    }
+   }
+  },
+  "QualityFlag": {
+   "type": "string",
+   "description": "Open set; known values: `coarse_elevation`, `dsm_includes_vegetation`,\n`texture_alignment_assumed`, `low_resolution_texture`.\n",
+   "examples": [
+    "coarse_elevation",
+    "dsm_includes_vegetation",
+    "texture_alignment_assumed",
+    "low_resolution_texture"
+   ]
+  },
+  "TerrainPackage": {
+   "type": "object",
+   "description": "The single object every capture adapter must produce.",
+   "required": [
+    "id",
+    "name",
+    "bbox_wgs84",
+    "crs",
+    "grid",
+    "elevation",
+    "assets",
+    "texture",
+    "sources",
+    "quality_flags",
+    "created_at"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "name": {
+     "type": "string"
+    },
+    "site_id": {
+     "description": "Set for curated sites; null for user scans.",
+     "oneOf": [
+      {
+       "$ref": "#/$defs/SiteId"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "bbox_wgs84": {
+     "$ref": "#/$defs/BBox"
+    },
+    "crs": {
+     "type": "string",
+     "description": "Local projected CRS, e.g. `EPSG:32611`.",
+     "examples": [
+      "EPSG:32611"
+     ]
+    },
+    "grid": {
+     "type": "object",
+     "required": [
+      "width",
+      "height",
+      "cell_size_m",
+      "nodata_fraction"
+     ],
+     "properties": {
+      "width": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "height": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "cell_size_m": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "nodata_fraction": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      }
+     }
+    },
+    "elevation": {
+     "type": "object",
+     "required": [
+      "min_m",
+      "max_m",
+      "model",
+      "vertical_datum"
+     ],
+     "properties": {
+      "min_m": {
+       "type": "number"
+      },
+      "max_m": {
+       "type": "number"
+      },
+      "model": {
+       "type": "string",
+       "enum": [
+        "DTM",
+        "DSM"
+       ]
+      },
+      "vertical_datum": {
+       "type": "string",
+       "examples": [
+        "to_verify"
+       ]
+      }
+     }
+    },
+    "assets": {
+     "type": "object",
+     "required": [
+      "heightmap",
+      "normal_map",
+      "texture",
+      "layers"
+     ],
+     "properties": {
+      "heightmap": {
+       "type": "string",
+       "description": "URL path to `heightmap.png`."
+      },
+      "normal_map": {
+       "type": "string",
+       "description": "URL path to `normal.png`."
+      },
+      "texture": {
+       "type": "string",
+       "description": "URL path to `texture.jpg`."
+      },
+      "layers": {
+       "type": "object",
+       "required": [
+        "slope",
+        "flow_accumulation",
+        "depressions",
+        "cover_class"
+       ],
+       "properties": {
+        "slope": {
+         "type": "string"
+        },
+        "flow_accumulation": {
+         "type": "string"
+        },
+        "depressions": {
+         "type": "string"
+        },
+        "cover_class": {
+         "type": "string"
+        }
+       },
+       "additionalProperties": false
+      }
+     }
+    },
+    "texture": {
+     "$ref": "#/$defs/TextureInfo"
+    },
+    "sources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Source"
+     }
+    },
+    "quality_flags": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/QualityFlag"
+     }
+    },
+    "created_at": {
+     "$ref": "#/$defs/Timestamp"
+    }
+   }
+  },
+  "Site": {
+   "type": "object",
+   "required": [
+    "id",
+    "name",
+    "region",
+    "summary",
+    "relief_m",
+    "area_ha",
+    "terrain_id",
+    "preview_image",
+    "pre_built",
+    "storm_ids",
+    "attribution"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "name": {
+     "type": "string"
+    },
+    "region": {
+     "type": "string",
+     "enum": [
+      "Okanagan",
+      "Fraser Valley",
+      "Metro Vancouver",
+      "other"
+     ]
+    },
+    "summary": {
+     "type": "string"
+    },
+    "relief_m": {
+     "type": "number",
+     "minimum": 0
+    },
+    "area_ha": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    },
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "preview_image": {
+     "type": "string",
+     "examples": [
+      "/assets/sites/okanagan_01.jpg"
+     ]
+    },
+    "pre_built": {
+     "type": "boolean",
+     "description": "Show the \"Pre-built\" badge when true."
+    },
+    "storm_ids": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/StormId"
+     }
+    },
+    "attribution": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "country": {
+     "type": "string"
+    },
+    "locality": {
+     "type": "string"
+    },
+    "owner": {
+     "type": "string"
+    },
+    "location": {
+     "$ref": "#/$defs/LonLat"
+    },
+    "coords_verified": {
+     "type": "boolean",
+     "description": "False shows \"Approximate location\"."
+    },
+    "source_url": {
+     "type": "string",
+     "format": "uri"
+    },
+    "tier": {
+     "type": "string",
+     "enum": [
+      "twin",
+      "explore"
+     ],
+     "description": "`twin` = curated full data (Pre-built); `explore` = Lite mode."
+    },
+    "sim_bbox": {
+     "$ref": "#/$defs/BBox"
+    },
+    "radius_m": {
+     "type": "number",
+     "exclusiveMinimum": 0
+    }
+   }
+  },
+  "Storm": {
+   "type": "object",
+   "required": [
+    "id",
+    "label",
+    "start",
+    "end",
+    "total_mm",
+    "peak_day_mm",
+    "antecedent_wetness",
+    "hyetograph",
+    "weather_source"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/StormId"
+    },
+    "label": {
+     "type": "string"
+    },
+    "start": {
+     "type": "string",
+     "format": "date"
+    },
+    "end": {
+     "type": "string",
+     "format": "date"
+    },
+    "total_mm": {
+     "type": "number",
+     "minimum": 0
+    },
+    "peak_day_mm": {
+     "type": "number",
+     "minimum": 0
+    },
+    "antecedent_wetness": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1,
+     "description": "Mean root-zone soil wetness over the prior days (0–1 fraction, NASA POWER). TODO(verify) parameter."
+    },
+    "hyetograph": {
+     "type": "object",
+     "required": [
+      "step_minutes",
+      "mm",
+      "synthetic",
+      "profile"
+     ],
+     "properties": {
+      "step_minutes": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "mm": {
+       "type": "array",
+       "description": "Rainfall per step, millimeters.",
+       "items": {
+        "type": "number",
+        "minimum": 0
+       }
+      },
+      "synthetic": {
+       "type": "boolean",
+       "description": "True when daily totals were spread over hours with an assumed profile."
+      },
+      "profile": {
+       "type": "string",
+       "examples": [
+        "design_storm_assumed"
+       ]
+      }
+     }
+    },
+    "weather_source": {
+     "type": "object",
+     "required": [
+      "name",
+      "resolution_km",
+      "basis"
+     ],
+     "properties": {
+      "name": {
+       "type": "string",
+       "examples": [
+        "NASA POWER"
+       ]
+      },
+      "resolution_km": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "basis": {
+       "$ref": "#/$defs/Basis"
+      }
+     }
+    },
+    "rank": {
+     "type": "integer",
+     "minimum": 1,
+     "description": "Rank among distinct storms by 1–3 day total, 1981 to present."
+    },
+    "rank_of": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "named_event": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "TODO(verify) dates."
+    }
+   }
+  },
+  "CropTemplate": {
+   "type": "object",
+   "required": [
+    "id",
+    "name",
+    "family",
+    "n_fixing",
+    "season_window",
+    "cover_curve",
+    "notes",
+    "source"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/CropId"
+    },
+    "name": {
+     "type": "string"
+    },
+    "family": {
+     "type": "string",
+     "examples": [
+      "Poaceae"
+     ]
+    },
+    "n_fixing": {
+     "type": "boolean"
+    },
+    "season_window": {
+     "type": "object",
+     "description": "Day-of-year window; `terminate_doy < plant_doy` means it overwinters.",
+     "required": [
+      "plant_doy",
+      "terminate_doy"
+     ],
+     "properties": {
+      "plant_doy": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 366
+      },
+      "terminate_doy": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 366
+      }
+     }
+    },
+    "cover_curve": {
+     "type": "array",
+     "description": "`[days_after_planting, cover_fraction]` points, ascending by day; fraction 0–1.",
+     "items": {
+      "type": "array",
+      "prefixItems": [
+       {
+        "type": "integer",
+        "minimum": 0
+       },
+       {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+       }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+     },
+     "minItems": 1
+    },
+    "notes": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string",
+     "description": "Reference for parameter values, or `to_verify`."
+    }
+   }
+  },
+  "RotationStep": {
+   "type": "object",
+   "required": [
+    "year",
+    "crop_id"
+   ],
+   "properties": {
+    "year": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "crop_id": {
+     "$ref": "#/$defs/CropId"
+    }
+   }
+  },
+  "CoverCalendar": {
+   "type": "object",
+   "required": [
+    "days_bare_per_year",
+    "monthly_cover"
+   ],
+   "properties": {
+    "days_bare_per_year": {
+     "type": "array",
+     "description": "One value per rotation year.",
+     "items": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 366
+     }
+    },
+    "monthly_cover": {
+     "type": "array",
+     "description": "One row per rotation year; each row has 12 monthly cover fractions (Jan–Dec, 0–1).",
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "minItems": 12,
+      "maxItems": 12
+     }
+    }
+   }
+  },
+  "Rotation": {
+   "type": "object",
+   "required": [
+    "id",
+    "name",
+    "is_existing",
+    "sequence",
+    "cover_calendar"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/RotationId"
+    },
+    "name": {
+     "type": "string"
+    },
+    "is_existing": {
+     "type": "boolean"
+    },
+    "sequence": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/RotationStep"
+     }
+    },
+    "cover_calendar": {
+     "$ref": "#/$defs/CoverCalendar"
+    }
+   }
+  },
+  "ValidateRequest": {
+   "type": "object",
+   "required": [
+    "terrain_id",
+    "rotation"
+   ],
+   "properties": {
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId",
+     "description": "Used for the location's season-window check."
+    },
+    "rotation": {
+     "type": "object",
+     "required": [
+      "name",
+      "sequence"
+     ],
+     "properties": {
+      "base_rotation_id": {
+       "$ref": "#/$defs/RotationId",
+       "description": "Preset the user edited, if any."
+      },
+      "name": {
+       "type": "string"
+      },
+      "sequence": {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "$ref": "#/$defs/RotationStep"
+       }
+      }
+     }
+    }
+   }
+  },
+  "ValidationWarning": {
+   "type": "object",
+   "required": [
+    "code",
+    "message"
+   ],
+   "properties": {
+    "code": {
+     "type": "string",
+     "enum": [
+      "same_family_consecutive",
+      "outside_season_window",
+      "unknown_crop"
+     ]
+    },
+    "message": {
+     "type": "string"
+    },
+    "year": {
+     "type": "integer",
+     "minimum": 1,
+     "description": "Rotation year the warning applies to."
+    }
+   }
+  },
+  "ValidateResult": {
+   "type": "object",
+   "required": [
+    "valid",
+    "warnings"
+   ],
+   "properties": {
+    "valid": {
+     "type": "boolean",
+     "description": "False only for blocking problems (e.g. `unknown_crop`)."
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ValidationWarning"
+     }
+    },
+    "rotation": {
+     "$ref": "#/$defs/Rotation",
+     "description": "Present when `valid`. The edited rotation with a stable content-hash ID\n(`rot_custom_…`) and computed cover calendar, usable in `SimulationRequest.rotation_ids`.\n"
+    }
+   }
+  },
+  "SimulationOptions": {
+   "type": "object",
+   "properties": {
+    "grid_max": {
+     "type": "integer",
+     "minimum": 16,
+     "default": 256
+    },
+    "frames": {
+     "type": "integer",
+     "minimum": 1,
+     "default": 60
+    },
+    "soil_group": {
+     "type": "string",
+     "enum": [
+      "A",
+      "B",
+      "C",
+      "D"
+     ],
+     "default": "B",
+     "description": "Hydrologic soil group."
+    },
+    "soil_group_basis": {
+     "$ref": "#/$defs/Basis",
+     "default": "assumed"
+    }
+   }
+  },
+  "SimulationRequest": {
+   "type": "object",
+   "required": [
+    "terrain_id",
+    "storm_id",
+    "rotation_ids"
+   ],
+   "properties": {
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "storm_id": {
+     "$ref": "#/$defs/StormId"
+    },
+    "rotation_ids": {
+     "type": "array",
+     "minItems": 1,
+     "maxItems": 3,
+     "uniqueItems": true,
+     "items": {
+      "$ref": "#/$defs/RotationId"
+     }
+    },
+    "options": {
+     "$ref": "#/$defs/SimulationOptions"
+    },
+    "scenario": {
+     "$ref": "#/$defs/Scenario"
+    }
+   }
+  },
+  "JobStatus": {
+   "type": "string",
+   "enum": [
+    "queued",
+    "running",
+    "done",
+    "failed"
+   ]
+  },
+  "RotationResult": {
+   "type": "object",
+   "required": [
+    "frames",
+    "risk",
+    "metrics",
+    "step_minutes",
+    "frame_times_min"
+   ],
+   "properties": {
+    "frames": {
+     "type": "string",
+     "description": "URL path to the FTW1 frame file."
+    },
+    "risk": {
+     "type": "string",
+     "description": "URL path to the risk PNG."
+    },
+    "metrics": {
+     "$ref": "#/$defs/Metrics"
+    },
+    "step_minutes": {
+     "type": "number",
+     "exclusiveMinimum": 0,
+     "description": "Minutes between frames."
+    },
+    "frame_times_min": {
+     "type": "array",
+     "description": "Time of each frame, minutes from storm start. Length = frame_count.",
+     "items": {
+      "type": "number",
+      "minimum": 0
+     }
+    }
+   }
+  },
+  "SimulationStatus": {
+   "type": "object",
+   "required": [
+    "id",
+    "status",
+    "progress",
+    "cached",
+    "results"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/SimulationId"
+    },
+    "status": {
+     "$ref": "#/$defs/JobStatus"
+    },
+    "progress": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 1,
+     "description": "Fraction complete (0–1)."
+    },
+    "cached": {
+     "type": "boolean"
+    },
+    "results": {
+     "type": "object",
+     "description": "Keyed by rotation ID. Only rotations that are fully done appear; empty until then.",
+     "propertyNames": {
+      "$ref": "#/$defs/RotationId"
+     },
+     "additionalProperties": {
+      "$ref": "#/$defs/RotationResult"
+     }
+    },
+    "error": {
+     "$ref": "#/$defs/ErrorBody",
+     "description": "Present when `status` is `failed`."
+    }
+   }
+  },
+  "Metrics": {
+   "type": "object",
+   "description": "Per rotation, per storm. Relative comparisons, not predictions.",
+   "required": [
+    "runoff_volume_m3",
+    "runoff_depth_mm_mean",
+    "ponded_area_ha",
+    "ponded_peak_depth_cm",
+    "erosion_index_mean",
+    "erosion_high_share_pct",
+    "bare_days_per_year",
+    "basis"
+   ],
+   "properties": {
+    "runoff_volume_m3": {
+     "type": "number",
+     "minimum": 0
+    },
+    "runoff_depth_mm_mean": {
+     "type": "number",
+     "minimum": 0
+    },
+    "ponded_area_ha": {
+     "type": "number",
+     "minimum": 0
+    },
+    "ponded_peak_depth_cm": {
+     "type": "number",
+     "minimum": 0
+    },
+    "erosion_index_mean": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100,
+     "description": "Relative index 0–100."
+    },
+    "erosion_high_share_pct": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "bare_days_per_year": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 366
+    },
+    "basis": {
+     "type": "object",
+     "required": [
+      "runoff",
+      "ponding",
+      "erosion_index"
+     ],
+     "properties": {
+      "runoff": {
+       "$ref": "#/$defs/BasisOrRelative"
+      },
+      "ponding": {
+       "$ref": "#/$defs/BasisOrRelative"
+      },
+      "erosion_index": {
+       "$ref": "#/$defs/BasisOrRelative"
+      }
+     }
+    }
+   }
+  },
+  "DiffStats": {
+   "type": "object",
+   "required": [
+    "a",
+    "b",
+    "quantity",
+    "unit",
+    "max_abs_diff_mm",
+    "mean_diff_mm",
+    "changed_area_ha",
+    "basis"
+   ],
+   "properties": {
+    "a": {
+     "$ref": "#/$defs/RotationId"
+    },
+    "b": {
+     "$ref": "#/$defs/RotationId"
+    },
+    "quantity": {
+     "type": "string",
+     "const": "peak_water_depth"
+    },
+    "unit": {
+     "type": "string",
+     "const": "mm"
+    },
+    "max_abs_diff_mm": {
+     "type": "number",
+     "minimum": 0,
+     "description": "Scale used to encode the diff PNG."
+    },
+    "mean_diff_mm": {
+     "type": "number",
+     "description": "Mean of `b − a` over unmasked cells."
+    },
+    "changed_area_ha": {
+     "type": "number",
+     "minimum": 0,
+     "description": "Area where `|b − a|` exceeds 1 mm."
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    }
+   }
+  },
+  "Insight": {
+   "type": "object",
+   "required": [
+    "id",
+    "kind",
+    "title",
+    "body",
+    "why_it_matters",
+    "tip",
+    "confidence",
+    "anchor",
+    "data_refs",
+    "severity"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/InsightId"
+    },
+    "kind": {
+     "type": "string",
+     "description": "Clients render unknown values neutrally.",
+     "enum": [
+      "terrain",
+      "cover",
+      "storm",
+      "rotation",
+      "data_quality",
+      "opportunity",
+      "protected",
+      "winter_wet",
+      "summer_dry"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "body": {
+     "type": "string"
+    },
+    "why_it_matters": {
+     "type": "string"
+    },
+    "tip": {
+     "type": "string"
+    },
+    "confidence": {
+     "type": "string",
+     "enum": [
+      "low",
+      "medium",
+      "high"
+     ]
+    },
+    "anchor": {
+     "type": "object",
+     "required": [
+      "lon",
+      "lat",
+      "at_time_min"
+     ],
+     "properties": {
+      "lon": {
+       "type": "number",
+       "minimum": -180,
+       "maximum": 180
+      },
+      "lat": {
+       "type": "number",
+       "minimum": -90,
+       "maximum": 90
+      },
+      "at_time_min": {
+       "type": [
+        "number",
+        "null"
+       ],
+       "minimum": 0,
+       "description": "Minutes from storm start for timed insights; null otherwise."
+      }
+     }
+    },
+    "data_refs": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "examples": [
+       "layers.slope"
+      ]
+     }
+    },
+    "severity": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 5,
+     "description": "1 = lowest, 5 = highest."
+    },
+    "action": {
+     "type": "string",
+     "description": "One sentence (v1.1)."
+    },
+    "zone_ids": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "active_weeks": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 51
+     },
+     "description": "Weeks 0–51, wraps."
+    },
+    "scenario": {
+     "$ref": "#/$defs/Scenario"
+    }
+   }
+  },
+  "EvidenceCard": {
+   "type": "object",
+   "required": [
+    "rotation_id",
+    "why_suggested",
+    "evidence",
+    "benefits",
+    "information_gaps",
+    "risks_for_local_review",
+    "support_not_replace"
+   ],
+   "properties": {
+    "rotation_id": {
+     "$ref": "#/$defs/RotationId"
+    },
+    "why_suggested": {
+     "type": "string"
+    },
+    "evidence": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "evidence_items": {
+     "type": "array",
+     "description": "Structured evidence with value, unit, basis and source (v1.1). `evidence` keeps the plain-text lines.",
+     "items": {
+      "$ref": "#/$defs/EvidenceItem"
+     }
+    },
+    "benefits": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "information_gaps": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "risks_for_local_review": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "support_not_replace": {
+     "type": "string",
+     "const": "This tool supports, and does not replace, local agronomic expertise."
+    }
+   }
+  },
+  "EvidenceBundle": {
+   "type": "object",
+   "required": [
+    "evidence_cards",
+    "insights"
+   ],
+   "properties": {
+    "evidence_cards": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/EvidenceCard"
+     }
+    },
+    "insights": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Insight"
+     }
+    }
+   }
+  },
+  "ScanCreateForm": {
+   "type": "object",
+   "required": [
+    "lat",
+    "lon"
+   ],
+   "properties": {
+    "images": {
+     "type": "array",
+     "description": "0–6 photos (JPEG, PNG, WEBP), sent as repeated `images` parts. Optional: with none,\nthe back-end uses an open-imagery fallback texture.\n",
+     "maxItems": 6,
+     "items": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream"
+     }
+    },
+    "lat": {
+     "type": "number",
+     "minimum": -90,
+     "maximum": 90
+    },
+    "lon": {
+     "type": "number",
+     "minimum": -180,
+     "maximum": 180
+    },
+    "bbox": {
+     "type": "string",
+     "description": "Optional `minLon,minLat,maxLon,maxLat` (comma-separated WGS84). Default is a server-chosen square around `lat`/`lon`.",
+     "pattern": "^-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?$"
+    },
+    "name": {
+     "type": "string",
+     "maxLength": 120
+    }
+   }
+  },
+  "ScanCreated": {
+   "type": "object",
+   "required": [
+    "scan_id"
+   ],
+   "properties": {
+    "scan_id": {
+     "$ref": "#/$defs/ScanId"
+    }
+   }
+  },
+  "ProgressStage": {
+   "type": "string",
+   "description": "In pipeline order.",
+   "enum": [
+    "queued",
+    "reading_inputs",
+    "locating",
+    "fetching_elevation",
+    "building_mesh",
+    "classifying_cover",
+    "analyzing_drainage",
+    "fetching_weather",
+    "packaging",
+    "ready",
+    "failed"
+   ]
+  },
+  "ScanStatus": {
+   "type": "object",
+   "required": [
+    "status",
+    "stage",
+    "pct"
+   ],
+   "properties": {
+    "status": {
+     "$ref": "#/$defs/JobStatus"
+    },
+    "stage": {
+     "$ref": "#/$defs/ProgressStage"
+    },
+    "pct": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId",
+     "description": "Present when `status` is `done`."
+    },
+    "error": {
+     "$ref": "#/$defs/ErrorBody",
+     "description": "Present when `status` is `failed`."
+    }
+   }
+  },
+  "ProgressEvent": {
+   "type": "object",
+   "description": "JSON `data` of an SSE `progress` event.",
+   "required": [
+    "scan_id",
+    "stage",
+    "pct",
+    "message",
+    "ts"
+   ],
+   "properties": {
+    "scan_id": {
+     "$ref": "#/$defs/ScanId"
+    },
+    "stage": {
+     "$ref": "#/$defs/ProgressStage"
+    },
+    "pct": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "message": {
+     "type": "string"
+    },
+    "ts": {
+     "$ref": "#/$defs/Timestamp"
+    },
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId",
+     "description": "Present on the `ready` event."
+    },
+    "error": {
+     "$ref": "#/$defs/ErrorBody",
+     "description": "Present on the `failed` event."
+    }
+   }
+  },
+  "LayerLegend": {
+   "type": "object",
+   "required": [
+    "name",
+    "title",
+    "kind",
+    "unit",
+    "value_range",
+    "color_ramp",
+    "nodata_value",
+    "url",
+    "basis"
+   ],
+   "properties": {
+    "name": {
+     "$ref": "#/$defs/LayerName"
+    },
+    "title": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "continuous",
+      "categorical"
+     ]
+    },
+    "unit": {
+     "type": "string",
+     "description": "e.g. `degrees`, `cells`, `m`; empty string for categorical."
+    },
+    "value_range": {
+     "type": "array",
+     "description": "Physical `[min, max]`. For continuous layers, `value = min + byte / 254 * (max − min)`\nfor bytes 0–254. For categorical layers, the class index range.\n",
+     "items": {
+      "type": "number"
+     },
+     "minItems": 2,
+     "maxItems": 2
+    },
+    "color_ramp": {
+     "type": "string",
+     "description": "Rendering hint, e.g. `viridis`, `blues`, `categorical`."
+    },
+    "nodata_value": {
+     "type": "integer",
+     "const": 255
+    },
+    "classes": {
+     "type": "array",
+     "description": "Categorical layers only.",
+     "items": {
+      "type": "object",
+      "required": [
+       "value",
+       "label"
+      ],
+      "properties": {
+       "value": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 254
+       },
+       "label": {
+        "type": "string"
+       },
+       "color": {
+        "type": "string",
+        "description": "Hex color hint, e.g. `#4caf50`."
+       }
+      }
+     }
+    },
+    "url": {
+     "type": "string",
+     "description": "URL path to the layer PNG."
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    }
+   }
+  },
+  "LayerCatalog": {
+   "type": "object",
+   "required": [
+    "terrain_id",
+    "layers"
+   ],
+   "properties": {
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "layers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/LayerLegend"
+     }
+    }
+   }
+  },
+  "ProvenanceDataset": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/Source"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "attribution": {
+       "type": "string"
+      },
+      "date_range": {
+       "type": "object",
+       "required": [
+        "start",
+        "end"
+       ],
+       "properties": {
+        "start": {
+         "type": "string",
+         "format": "date"
+        },
+        "end": {
+         "type": "string",
+         "format": "date"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  "Assumption": {
+   "type": "object",
+   "required": [
+    "statement",
+    "basis"
+   ],
+   "properties": {
+    "statement": {
+     "type": "string",
+     "examples": [
+      "Soil hydrologic group B assumed everywhere."
+     ]
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    }
+   }
+  },
+  "Provenance": {
+   "type": "object",
+   "required": [
+    "terrain_id",
+    "datasets",
+    "quality_flags",
+    "assumptions",
+    "limitations"
+   ],
+   "properties": {
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "datasets": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ProvenanceDataset"
+     }
+    },
+    "texture": {
+     "$ref": "#/$defs/TextureInfo"
+    },
+    "quality_flags": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/QualityFlag"
+     }
+    },
+    "assumptions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Assumption"
+     }
+    },
+    "limitations": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "TrendSeries": {
+   "type": "object",
+   "required": [
+    "id",
+    "label",
+    "unit",
+    "points",
+    "trend",
+    "summary",
+    "basis"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Known ids: `annual_precip_mm`, `heavy_rain_days`, `temp_mean_c`, `root_zone_wetness`.",
+     "examples": [
+      "annual_precip_mm"
+     ]
+    },
+    "label": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string",
+     "examples": [
+      "mm",
+      "days",
+      "degC",
+      "fraction"
+     ]
+    },
+    "points": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "year",
+       "value"
+      ],
+      "properties": {
+       "year": {
+        "type": "integer"
+       },
+       "value": {
+        "type": "number"
+       }
+      }
+     }
+    },
+    "trend": {
+     "type": "object",
+     "required": [
+      "method",
+      "slope_per_decade",
+      "ci_low",
+      "ci_high",
+      "ci_level"
+     ],
+     "properties": {
+      "method": {
+       "type": "string",
+       "const": "theil_sen"
+      },
+      "slope_per_decade": {
+       "type": "number",
+       "description": "Series unit per decade."
+      },
+      "ci_low": {
+       "type": "number"
+      },
+      "ci_high": {
+       "type": "number"
+      },
+      "ci_level": {
+       "type": "number",
+       "exclusiveMinimum": 0,
+       "exclusiveMaximum": 1,
+       "examples": [
+        0.95
+       ]
+      }
+     }
+    },
+    "summary": {
+     "type": "string",
+     "description": "Plain-language sentence."
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    }
+   }
+  },
+  "WeatherSummary": {
+   "type": "object",
+   "required": [
+    "lat",
+    "lon",
+    "period",
+    "source",
+    "cached",
+    "series"
+   ],
+   "properties": {
+    "lat": {
+     "type": "number"
+    },
+    "lon": {
+     "type": "number"
+    },
+    "period": {
+     "type": "object",
+     "required": [
+      "start",
+      "end"
+     ],
+     "properties": {
+      "start": {
+       "type": "string",
+       "format": "date"
+      },
+      "end": {
+       "type": "string",
+       "format": "date"
+      }
+     }
+    },
+    "source": {
+     "type": "object",
+     "required": [
+      "name",
+      "resolution_km",
+      "basis"
+     ],
+     "properties": {
+      "name": {
+       "type": "string",
+       "examples": [
+        "NASA POWER"
+       ]
+      },
+      "resolution_km": {
+       "type": "number",
+       "exclusiveMinimum": 0
+      },
+      "basis": {
+       "$ref": "#/$defs/Basis"
+      }
+     }
+    },
+    "cached": {
+     "type": "boolean",
+     "description": "True when served from the on-disk cache after an upstream failure."
+    },
+    "series": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/TrendSeries"
+     }
+    },
+    "climatology": {
+     "type": "object",
+     "required": [
+      "weeks",
+      "rain_mm_median",
+      "rain_mm_p90",
+      "tmin_c_median",
+      "tmax_c_median",
+      "basis",
+      "years"
+     ],
+     "properties": {
+      "weeks": {
+       "type": "integer",
+       "const": 52
+      },
+      "rain_mm_median": {
+       "$ref": "#/$defs/WeekValues"
+      },
+      "rain_mm_p90": {
+       "$ref": "#/$defs/WeekValues"
+      },
+      "tmin_c_median": {
+       "$ref": "#/$defs/WeekValues"
+      },
+      "tmax_c_median": {
+       "$ref": "#/$defs/WeekValues"
+      },
+      "growing_season": {
+       "type": "object",
+       "properties": {
+        "last_frost_doy_median": {
+         "type": [
+          "number",
+          "null"
+         ]
+        },
+        "first_frost_doy_median": {
+         "type": [
+          "number",
+          "null"
+         ]
+        },
+        "frost_free_days_median": {
+         "type": [
+          "number",
+          "null"
+         ]
+        },
+        "gdd_base_c": {
+         "type": "number",
+         "description": "Assumed base temperature."
+        },
+        "gdd_median": {
+         "type": "number"
+        }
+       }
+      },
+      "basis": {
+       "$ref": "#/$defs/Basis"
+      },
+      "years": {
+       "type": "object",
+       "required": [
+        "start",
+        "end"
+       ],
+       "properties": {
+        "start": {
+         "type": "string",
+         "format": "date"
+        },
+        "end": {
+         "type": "string",
+         "format": "date"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "NoteCreate": {
+   "type": "object",
+   "required": [
+    "terrain_id",
+    "anchor",
+    "body"
+   ],
+   "properties": {
+    "terrain_id": {
+     "$ref": "#/$defs/TerrainId"
+    },
+    "anchor": {
+     "$ref": "#/$defs/LonLat"
+    },
+    "body": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 2000
+    },
+    "parent_id": {
+     "$ref": "#/$defs/NoteId",
+     "description": "Set for replies in a thread."
+    },
+    "author": {
+     "type": "string",
+     "maxLength": 80,
+     "description": "Display name; no accounts."
+    }
+   }
+  },
+  "Note": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/NoteCreate"
+    },
+    {
+     "type": "object",
+     "required": [
+      "id",
+      "created_at"
+     ],
+     "properties": {
+      "id": {
+       "$ref": "#/$defs/NoteId"
+      },
+      "created_at": {
+       "$ref": "#/$defs/Timestamp"
+      }
+     }
+    }
+   ]
+  },
+  "Scenario": {
+   "type": "string",
+   "enum": [
+    "baseline",
+    "wetter_winters",
+    "drier_summers",
+    "both"
+   ],
+   "default": "baseline",
+   "description": "Preset that reweights observed years. Modeled scenario, not a forecast. Preset values are echoed in `ScenarioApplied`."
+  },
+  "ScenarioInput": {
+   "type": "object",
+   "description": "Preset plus optional custom values. Custom values override the preset. Allowed ranges are server config (assumed); outside them the API returns `SCENARIO_OUT_OF_RANGE`.",
+   "properties": {
+    "preset": {
+     "$ref": "#/$defs/Scenario"
+    },
+    "rain_scale_pct": {
+     "type": "number",
+     "description": "Percent change applied to every daily rain value, e.g. -20."
+    },
+    "temp_offset_c": {
+     "type": "number",
+     "description": "Degrees Celsius added to every daily temperature."
+    },
+    "rain_scale_by_season": {
+     "$ref": "#/$defs/SeasonalRainScale"
+    }
+   }
+  },
+  "SeasonalRainScale": {
+   "type": "object",
+   "description": "Percent rain change per meteorological season (winter = Dec–Feb in the northern hemisphere, Jun–Aug in the southern). Overrides `rain_scale_pct` for that season.",
+   "properties": {
+    "winter": {
+     "type": "number"
+    },
+    "spring": {
+     "type": "number"
+    },
+    "summer": {
+     "type": "number"
+    },
+    "fall": {
+     "type": "number"
+    }
+   }
+  },
+  "ScenarioApplied": {
+   "type": "object",
+   "required": [
+    "preset",
+    "rain_scale_pct",
+    "temp_offset_c",
+    "label"
+   ],
+   "properties": {
+    "preset": {
+     "$ref": "#/$defs/Scenario"
+    },
+    "rain_scale_pct": {
+     "type": "number"
+    },
+    "temp_offset_c": {
+     "type": "number"
+    },
+    "rain_scale_by_season": {
+     "$ref": "#/$defs/SeasonalRainScale"
+    },
+    "label": {
+     "type": "string",
+     "const": "modeled scenario, not a forecast"
+    },
+    "note": {
+     "type": "string",
+     "const": "built from observed years"
+    }
+   }
+  },
+  "DataMode": {
+   "type": "string",
+   "enum": [
+    "live",
+    "cached",
+    "seed",
+    "mock"
+   ],
+   "description": "Where the data came from. `mock` must never appear in the demo build."
+  },
+  "Confidence": {
+   "type": "string",
+   "enum": [
+    "high",
+    "medium",
+    "low"
+   ]
+  },
+  "WeekValues": {
+   "type": "array",
+   "description": "One value per week, index 0–51 (7-day blocks from 1 January; days 358–366 fold into index 51). `null` = missing.",
+   "minItems": 52,
+   "maxItems": 52,
+   "items": {
+    "type": [
+     "number",
+     "null"
+    ]
+   }
+  },
+  "FeatureSeries": {
+   "type": "object",
+   "required": [
+    "unit",
+    "basis",
+    "mean",
+    "std",
+    "median",
+    "p10",
+    "p90",
+    "by_year"
+   ],
+   "properties": {
+    "unit": {
+     "type": "string",
+     "examples": [
+      "mm",
+      "degC",
+      "sigma",
+      "fraction"
+     ]
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    },
+    "description": {
+     "type": "string"
+    },
+    "mean": {
+     "$ref": "#/$defs/WeekValues"
+    },
+    "std": {
+     "$ref": "#/$defs/WeekValues"
+    },
+    "median": {
+     "$ref": "#/$defs/WeekValues"
+    },
+    "p10": {
+     "$ref": "#/$defs/WeekValues"
+    },
+    "p90": {
+     "$ref": "#/$defs/WeekValues"
+    },
+    "by_year": {
+     "type": "object",
+     "description": "Year (e.g. `\"1991\"`) to 52 weekly values. Probability features (`*_prob`) hold 0/1 event flags per year.",
+     "additionalProperties": {
+      "$ref": "#/$defs/WeekValues"
+     }
+    },
+    "interpolated": {
+     "type": "boolean",
+     "description": "True when a coarser series was linearly interpolated to weekly."
+    }
+   }
+  },
+  "FeatureThresholds": {
+   "type": "object",
+   "description": "Every threshold is assumed (stated so reviewers can change it) except `extreme_rain_mm` and `wet_ground_value`, which are derived from the site's own baseline history.",
+   "required": [
+    "frost_c",
+    "heat_c",
+    "extreme_rain_percentile",
+    "extreme_rain_mm",
+    "wet_day_mm",
+    "dry_day_mm",
+    "dry_spell_days",
+    "wet_ground_percentile",
+    "wet_ground_value",
+    "vulnerable_prob"
+   ],
+   "properties": {
+    "frost_c": {
+     "type": "number"
+    },
+    "heat_c": {
+     "type": "number"
+    },
+    "extreme_rain_percentile": {
+     "type": "number"
+    },
+    "extreme_rain_mm": {
+     "type": "number"
+    },
+    "wet_day_mm": {
+     "type": "number"
+    },
+    "dry_day_mm": {
+     "type": "number"
+    },
+    "dry_spell_days": {
+     "type": "integer"
+    },
+    "wet_ground_percentile": {
+     "type": "number"
+    },
+    "wet_ground_value": {
+     "type": "number",
+     "description": "Top-soil wetness (0–1) at that percentile."
+    },
+    "vulnerable_prob": {
+     "type": "number"
+    }
+   }
+  },
+  "SourceUsed": {
+   "type": "object",
+   "required": [
+    "name",
+    "resolution_note"
+   ],
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "resolution_note": {
+     "type": "string"
+    }
+   }
+  },
+  "DataQuality": {
+   "type": "object",
+   "required": [
+    "years_available",
+    "missing_fraction",
+    "sources_used",
+    "sources_agree",
+    "resolution_note",
+    "interpolated_series",
+    "limited_data"
+   ],
+   "properties": {
+    "years_available": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "missing_fraction": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "sources_used": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/SourceUsed"
+     }
+    },
+    "sources_agree": {
+     "type": [
+      "boolean",
+      "null"
+     ],
+     "description": "POWER wetness vs SMAP anomaly signs match in at least the stated share of weeks; null when no SMAP seed."
+    },
+    "resolution_note": {
+     "type": "string"
+    },
+    "interpolated_series": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "limited_data": {
+     "type": "boolean",
+     "description": "True when no seeded satellite or soil data is available."
+    }
+   }
+  },
+  "SoilSummary": {
+   "type": "object",
+   "required": [
+    "texture_class",
+    "infiltration_class",
+    "basis",
+    "source"
+   ],
+   "properties": {
+    "clay_pct": {
+     "type": "number"
+    },
+    "sand_pct": {
+     "type": "number"
+    },
+    "silt_pct": {
+     "type": "number"
+    },
+    "soc_g_per_kg": {
+     "type": "number"
+    },
+    "ph": {
+     "type": "number"
+    },
+    "depth": {
+     "type": "string",
+     "examples": [
+      "0-30cm"
+     ]
+    },
+    "texture_class": {
+     "type": "string",
+     "examples": [
+      "loam"
+     ]
+    },
+    "infiltration_class": {
+     "type": "string",
+     "enum": [
+      "high",
+      "medium",
+      "low"
+     ]
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    },
+    "source": {
+     "type": "string"
+    }
+   }
+  },
+  "FeatureTable": {
+   "type": "object",
+   "required": [
+    "schema_version",
+    "pipeline_version",
+    "site_id",
+    "location",
+    "years",
+    "weeks",
+    "scenario",
+    "data_mode",
+    "features",
+    "thresholds",
+    "soil",
+    "quality",
+    "sources",
+    "caveats"
+   ],
+   "properties": {
+    "schema_version": {
+     "type": "string",
+     "const": "1.1.0"
+    },
+    "pipeline_version": {
+     "type": "string"
+    },
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "location": {
+     "$ref": "#/$defs/LonLat"
+    },
+    "years": {
+     "type": "object",
+     "required": [
+      "start",
+      "end"
+     ],
+     "properties": {
+      "start": {
+       "type": "string",
+       "format": "date"
+      },
+      "end": {
+       "type": "string",
+       "format": "date"
+      }
+     }
+    },
+    "weeks": {
+     "type": "integer",
+     "const": 52
+    },
+    "scenario": {
+     "$ref": "#/$defs/ScenarioApplied"
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "features": {
+     "type": "object",
+     "description": "Feature id to series. Ids: rain_mm, rain_max_day_mm, tmean_c, tmax_c, tmin_c, soil_wetness_root, soil_wetness_top, soil_moisture_anomaly, et0_mm, water_balance_mm, frost_prob, heat_prob, extreme_rain_prob, dry_spell_prob; plus ndvi, ndvi_anomaly, smap_anomaly where seeded.",
+     "additionalProperties": {
+      "$ref": "#/$defs/FeatureSeries"
+     }
+    },
+    "thresholds": {
+     "$ref": "#/$defs/FeatureThresholds"
+    },
+    "soil": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/SoilSummary"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "quality": {
+     "$ref": "#/$defs/DataQuality"
+    },
+    "sources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Source"
+     }
+    },
+    "caveats": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "HazardCalendar": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "scenario",
+    "years",
+    "j_wet",
+    "j_dry",
+    "thresholds",
+    "basis",
+    "sources"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "scenario": {
+     "$ref": "#/$defs/Scenario"
+    },
+    "scenario_applied": {
+     "$ref": "#/$defs/ScenarioApplied"
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "years": {
+     "type": "object",
+     "required": [
+      "start",
+      "end"
+     ],
+     "properties": {
+      "start": {
+       "type": "string",
+       "format": "date"
+      },
+      "end": {
+       "type": "string",
+       "format": "date"
+      }
+     }
+    },
+    "j_wet": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/WeekValues"
+      }
+     ],
+     "description": "0–1, share of years with heavy rain on wet ground in that week."
+    },
+    "j_dry": {
+     "allOf": [
+      {
+       "$ref": "#/$defs/WeekValues"
+      }
+     ],
+     "description": "0–1, share of years in a dry spell in that week."
+    },
+    "thresholds": {
+     "type": "object",
+     "required": [
+      "q_rain",
+      "q_wet",
+      "n_dry_days",
+      "q_dry"
+     ],
+     "properties": {
+      "q_rain": {
+       "type": "number",
+       "description": "Heavy-rain day threshold, mm (derived percentile)."
+      },
+      "q_wet": {
+       "type": "number",
+       "description": "Wet-ground threshold, top-soil wetness 0–1 (derived percentile)."
+      },
+      "n_dry_days": {
+       "type": "integer",
+       "description": "Consecutive dry days that make a dry spell (assumed)."
+      },
+      "q_dry": {
+       "type": "number",
+       "description": "A day below this rain (mm) counts as dry (assumed)."
+      }
+     }
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    },
+    "sources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Source"
+     }
+    },
+    "caveats": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "HazardKind": {
+   "type": "string",
+   "enum": [
+    "heavy_rain_wet_ground",
+    "multi_day_heavy_rain",
+    "dry_spell",
+    "heat_spell",
+    "late_frost"
+   ]
+  },
+  "HazardType": {
+   "type": "object",
+   "required": [
+    "id",
+    "kind",
+    "label",
+    "years_with_event",
+    "years_total",
+    "peak_weeks",
+    "basis",
+    "sources"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/HazardKind"
+    },
+    "label": {
+     "type": "string"
+    },
+    "definition": {
+     "type": "string",
+     "description": "Plain-language rule with its thresholds."
+    },
+    "years_with_event": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "years_total": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "peak_weeks": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 51
+     }
+    },
+    "worst_storm_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/StormId"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "basis": {
+     "$ref": "#/$defs/Basis"
+    },
+    "sources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Source"
+     }
+    }
+   }
+  },
+  "HazardCatalog": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "items"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/HazardType"
+     }
+    }
+   }
+  },
+  "GeoJsonPolygon": {
+   "type": "object",
+   "required": [
+    "type",
+    "coordinates"
+   ],
+   "properties": {
+    "type": {
+     "type": "string",
+     "const": "Polygon"
+    },
+    "coordinates": {
+     "type": "array",
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/$defs/LonLat"
+      }
+     }
+    }
+   }
+  },
+  "ZoneKind": {
+   "type": "string",
+   "enum": [
+    "erosion_risk",
+    "water_stress",
+    "frost_pocket"
+   ]
+  },
+  "Zone": {
+   "type": "object",
+   "required": [
+    "id",
+    "outline",
+    "icon_point",
+    "area_ha",
+    "terrain_factor",
+    "basis"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/ZoneKind"
+    },
+    "label": {
+     "type": "string",
+     "description": "Plain language."
+    },
+    "note": {
+     "type": "string",
+     "examples": [
+      "Derived from terrain and soil data, not field-measured."
+     ]
+    },
+    "outline": {
+     "$ref": "#/$defs/GeoJsonPolygon"
+    },
+    "icon_point": {
+     "$ref": "#/$defs/LonLat"
+    },
+    "area_ha": {
+     "type": "number",
+     "minimum": 0
+    },
+    "terrain_factor": {
+     "type": "number",
+     "description": "Relative, field mean = 1."
+    },
+    "field_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "crop": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "winter_exposure": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Relative."
+    },
+    "summer_exposure": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "Relative."
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    }
+   }
+  },
+  "ZoneCollection": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "zones"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "terrain_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/TerrainId"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "zones": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Zone"
+     }
+    },
+    "caveats": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "Exposure": {
+   "type": "object",
+   "required": [
+    "value",
+    "p10",
+    "p90"
+   ],
+   "properties": {
+    "value": {
+     "type": "number"
+    },
+    "p10": {
+     "type": "number"
+    },
+    "p90": {
+     "type": "number"
+    },
+    "basis": {
+     "type": "string",
+     "const": "relative"
+    }
+   }
+  },
+  "RotationComparison": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "scenario",
+    "rotations"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "scenario": {
+     "$ref": "#/$defs/Scenario"
+    },
+    "rotations": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "rotation_id",
+       "winter",
+       "summer",
+       "rank_stability",
+       "basis"
+      ],
+      "properties": {
+       "rotation_id": {
+        "$ref": "#/$defs/RotationId"
+       },
+       "winter": {
+        "$ref": "#/$defs/Exposure"
+       },
+       "summer": {
+        "$ref": "#/$defs/Exposure"
+       },
+       "rank_stability": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "basis": {
+        "type": "string",
+        "const": "relative"
+       }
+      }
+     }
+    }
+   }
+  },
+  "Criterion": {
+   "type": "string",
+   "enum": [
+    "nutrient_cycling",
+    "erosion_risk",
+    "organic_matter",
+    "pest_disruption",
+    "water_use",
+    "forage_potential",
+    "market_suitability"
+   ]
+  },
+  "Season": {
+   "type": "string",
+   "enum": [
+    "spring",
+    "summer",
+    "fall",
+    "winter"
+   ]
+  },
+  "RotationSlot": {
+   "type": "object",
+   "required": [
+    "year_index",
+    "season",
+    "crop_id"
+   ],
+   "properties": {
+    "year_index": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "season": {
+     "$ref": "#/$defs/Season"
+    },
+    "crop_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/CropId"
+      },
+      {
+       "type": "string",
+       "const": "fallow"
+      }
+     ]
+    }
+   }
+  },
+  "FarmerPriorities": {
+   "type": "object",
+   "properties": {
+    "criteria_selected": {
+     "type": "array",
+     "description": "Empty or missing means all seven.",
+     "uniqueItems": true,
+     "items": {
+      "$ref": "#/$defs/Criterion"
+     }
+    },
+    "weights": {
+     "type": "object",
+     "description": "Criterion to weight (>= 0). Normalized to sum 1; all zero gives `INVALID_WEIGHTS`.",
+     "propertyNames": {
+      "$ref": "#/$defs/Criterion"
+     },
+     "additionalProperties": {
+      "type": "number",
+      "minimum": 0
+     }
+    },
+    "weight_preset": {
+     "type": "string",
+     "enum": [
+      "water",
+      "income",
+      "soil_structure",
+      "erosion",
+      "forage"
+     ]
+    },
+    "constraints": {
+     "type": "object",
+     "properties": {
+      "low_water": {
+       "type": "boolean"
+      },
+      "no_specialty_equipment": {
+       "type": "boolean"
+      },
+      "no_local_market": {
+       "type": "boolean"
+      }
+     }
+    }
+   }
+  },
+  "RotationAnalysisRequest": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/FarmerPriorities"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "existing_rotation": {
+       "oneOf": [
+        {
+         "type": "string",
+         "const": "preset"
+        },
+        {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "$ref": "#/$defs/RotationSlot"
+         }
+        }
+       ]
+      },
+      "allowed_crops": {
+       "type": "array",
+       "items": {
+        "$ref": "#/$defs/CropId"
+       }
+      },
+      "scenario": {
+       "oneOf": [
+        {
+         "$ref": "#/$defs/Scenario"
+        },
+        {
+         "$ref": "#/$defs/ScenarioInput"
+        }
+       ]
+      },
+      "location": {
+       "$ref": "#/$defs/LonLat"
+      }
+     }
+    }
+   ]
+  },
+  "ScoreInput": {
+   "type": "object",
+   "required": [
+    "name",
+    "value",
+    "unit",
+    "basis"
+   ],
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "value": {
+     "type": [
+      "number",
+      "string",
+      "boolean"
+     ]
+    },
+    "unit": {
+     "type": "string"
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    }
+   }
+  },
+  "RotationScorecard": {
+   "type": "object",
+   "required": [
+    "criterion",
+    "score",
+    "unit",
+    "basis",
+    "confidence",
+    "needs_local_review",
+    "inputs"
+   ],
+   "properties": {
+    "criterion": {
+     "$ref": "#/$defs/Criterion"
+    },
+    "score": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100,
+     "description": "Relative index across the three rotations; higher is better."
+    },
+    "unit": {
+     "type": "string"
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    },
+    "range": {
+     "type": "object",
+     "description": "Only on climate-driven criteria (water use, erosion risk).",
+     "required": [
+      "p10",
+      "p90"
+     ],
+     "properties": {
+      "p10": {
+       "type": "number"
+      },
+      "p90": {
+       "type": "number"
+      }
+     }
+    },
+    "confidence": {
+     "$ref": "#/$defs/Confidence"
+    },
+    "needs_local_review": {
+     "type": "boolean"
+    },
+    "note": {
+     "type": "string"
+    },
+    "inputs": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/ScoreInput"
+     }
+    }
+   }
+  },
+  "EvidenceItem": {
+   "type": "object",
+   "required": [
+    "label",
+    "value",
+    "unit",
+    "basis",
+    "source"
+   ],
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "value": {
+     "type": [
+      "number",
+      "string"
+     ]
+    },
+    "unit": {
+     "type": "string"
+    },
+    "basis": {
+     "$ref": "#/$defs/BasisOrRelative"
+    },
+    "source": {
+     "type": "string"
+    }
+   }
+  },
+  "VulnerableSeason": {
+   "type": "object",
+   "required": [
+    "weeks",
+    "hazards"
+   ],
+   "properties": {
+    "weeks": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 51
+     }
+    },
+    "hazards": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "frost_prob",
+       "heat_prob",
+       "dry_spell_prob",
+       "extreme_rain_prob"
+      ]
+     }
+    }
+   }
+  },
+  "AnalyzedRotation": {
+   "type": "object",
+   "required": [
+    "rotation_id",
+    "is_existing",
+    "sequence",
+    "cover_calendar",
+    "scorecard",
+    "overall",
+    "rank",
+    "rank_stability",
+    "exposure",
+    "evidence_card"
+   ],
+   "properties": {
+    "rotation_id": {
+     "$ref": "#/$defs/RotationId"
+    },
+    "name": {
+     "type": "string"
+    },
+    "is_existing": {
+     "type": "boolean"
+    },
+    "sequence": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "$ref": "#/$defs/RotationSlot"
+     }
+    },
+    "cover_calendar": {
+     "$ref": "#/$defs/CoverCalendar"
+    },
+    "scorecard": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/RotationScorecard"
+     }
+    },
+    "overall": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "rank": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 3
+    },
+    "rank_stability": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "exposure": {
+     "type": "object",
+     "required": [
+      "winter",
+      "summer"
+     ],
+     "properties": {
+      "winter": {
+       "$ref": "#/$defs/Exposure"
+      },
+      "summer": {
+       "$ref": "#/$defs/Exposure"
+      }
+     }
+    },
+    "vulnerable_seasons": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/VulnerableSeason"
+     }
+    },
+    "evidence_card": {
+     "$ref": "#/$defs/EvidenceCard"
+    }
+   }
+  },
+  "AnalysisWarning": {
+   "type": "object",
+   "required": [
+    "code",
+    "level",
+    "message"
+   ],
+   "properties": {
+    "code": {
+     "type": "string",
+     "examples": [
+      "NO_FEASIBLE_ALTERNATIVES",
+      "IGNORED_WEIGHT"
+     ]
+    },
+    "level": {
+     "type": "string",
+     "enum": [
+      "info",
+      "warning",
+      "error"
+     ]
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "RotationAnalysis": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "engine_version",
+    "request_hash",
+    "request_echo",
+    "scenario",
+    "data_mode",
+    "limited_data",
+    "confidence",
+    "rotations",
+    "weights_applied",
+    "warnings",
+    "disclaimer"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "engine_version": {
+     "type": "string"
+    },
+    "request_hash": {
+     "type": "string"
+    },
+    "request_echo": {
+     "$ref": "#/$defs/RotationAnalysisRequest"
+    },
+    "scenario": {
+     "$ref": "#/$defs/ScenarioApplied"
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "limited_data": {
+     "type": "boolean"
+    },
+    "confidence": {
+     "$ref": "#/$defs/Confidence"
+    },
+    "rotations": {
+     "type": "array",
+     "minItems": 1,
+     "maxItems": 3,
+     "description": "Existing rotation first. Fewer than three only with a `NO_FEASIBLE_ALTERNATIVES` warning.",
+     "items": {
+      "$ref": "#/$defs/AnalyzedRotation"
+     }
+    },
+    "weights_applied": {
+     "type": "object",
+     "propertyNames": {
+      "$ref": "#/$defs/Criterion"
+     },
+     "additionalProperties": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+     }
+    },
+    "warnings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/AnalysisWarning"
+     }
+    },
+    "disclaimer": {
+     "type": "string",
+     "const": "This tool supports, and does not replace, local agronomic expertise."
+    }
+   }
+  },
+  "CropTrait": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/CropTemplate"
+    },
+    {
+     "type": "object",
+     "description": "Trait fields (v1.1). All are typical crop traits, not measured on a field.",
+     "properties": {
+      "water_need_class": {
+       "type": "string",
+       "enum": [
+        "low",
+        "medium",
+        "high"
+       ]
+      },
+      "kc_stages": {
+       "type": "object",
+       "properties": {
+        "ini": {
+         "type": "number"
+        },
+        "mid": {
+         "type": "number"
+        },
+        "end": {
+         "type": "number"
+        }
+       }
+      },
+      "root_depth_class": {
+       "type": "string",
+       "enum": [
+        "shallow",
+        "medium",
+        "deep"
+       ]
+      },
+      "cover_crop": {
+       "type": "boolean"
+      },
+      "perennial": {
+       "type": "boolean"
+      },
+      "drought_tolerance": {
+       "type": "string",
+       "enum": [
+        "low",
+        "medium",
+        "high"
+       ]
+      },
+      "frost_tolerance_c": {
+       "type": "number"
+      },
+      "heat_limit_c": {
+       "type": "number"
+      },
+      "residue_class": {
+       "type": "string",
+       "enum": [
+        "low",
+        "medium",
+        "high"
+       ]
+      },
+      "forage_suitable": {
+       "type": "boolean"
+      },
+      "market_rating": {
+       "type": "string",
+       "enum": [
+        "high",
+        "medium",
+        "low"
+       ]
+      },
+      "market_dependent": {
+       "type": "boolean"
+      },
+      "needs_specialty_equipment": {
+       "type": "boolean"
+      },
+      "trait_sources": {
+       "type": "object",
+       "description": "Field name to source, or `TODO(verify)`.",
+       "additionalProperties": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   ]
+  },
+  "GlossaryEntry": {
+   "type": "object",
+   "required": [
+    "id",
+    "kind",
+    "term",
+    "short",
+    "long",
+    "source"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "term",
+      "crop_type"
+     ]
+    },
+    "term": {
+     "type": "string"
+    },
+    "short": {
+     "type": "string"
+    },
+    "long": {
+     "type": "string"
+    },
+    "how_we_use_it": {
+     "type": "string"
+    },
+    "why_it_helps": {
+     "type": "string"
+    },
+    "limits": {
+     "type": "string"
+    },
+    "related_terms": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "source": {
+     "type": "string",
+     "description": "Reference, or `TODO(verify)`."
+    }
+   }
+  },
+  "ErrorCode": {
+   "type": "string",
+   "description": "HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,\nTERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,\nSIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,\nSITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,\nSCENARIO_OUT_OF_RANGE 422 (v1.1).\n",
+   "enum": [
+    "INVALID_INPUT",
+    "UNSUPPORTED_FILE",
+    "FILE_TOO_LARGE",
+    "TERRAIN_COVERAGE_MISSING",
+    "DATA_SOURCE_UNAVAILABLE",
+    "WEATHER_UNAVAILABLE",
+    "SIMULATION_TIMEOUT",
+    "NOT_FOUND",
+    "INTERNAL",
+    "SITE_NOT_FOUND",
+    "UNKNOWN_CROP",
+    "INVALID_WEIGHTS",
+    "NO_FEASIBLE_ALTERNATIVES",
+    "SCENARIO_OUT_OF_RANGE"
+   ]
+  },
+  "ErrorBody": {
+   "type": "object",
+   "required": [
+    "code",
+    "message",
+    "retryable"
+   ],
+   "properties": {
+    "code": {
+     "$ref": "#/$defs/ErrorCode"
+    },
+    "message": {
+     "type": "string"
+    },
+    "hint": {
+     "type": "string"
+    },
+    "retryable": {
+     "type": "boolean"
+    }
+   }
+  },
+  "Error": {
+   "type": "object",
+   "required": [
+    "error"
+   ],
+   "properties": {
+    "error": {
+     "$ref": "#/$defs/ErrorBody"
+    }
+   }
+  }
+ }
+}

@@ -20,6 +20,8 @@ SimIdPath = Annotated[str, Path(pattern=_id("sim"))]
 RotationIdPath = Annotated[str, Path(pattern=_id("rot"))]
 TerrainIdQuery = Annotated[str, Query(pattern=_id("terr"))]
 RotationIdQuery = Annotated[str, Query(pattern=_id("rot"))]
+Scenario = Literal["baseline", "wetter_winters", "drier_summers", "both"]
+ScenarioQuery = Annotated[Scenario, Query()]
 
 TerrainId = Annotated[str, Field(pattern=_id("terr"))]
 StormId = Annotated[str, Field(pattern=_id("storm"))]
