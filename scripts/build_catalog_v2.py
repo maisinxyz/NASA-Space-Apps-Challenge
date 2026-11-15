@@ -349,6 +349,74 @@ REGION_SOURCE = (
     f"This crop is on the BC vegetable production guide index ({BC_VEG}). "
     "Langley Township's Wikipedia intro does not state a Köppen class. TODO(verify) before treating oceanic as measured at KPU."
 )
+STATCAN_2010 = "https://www150.statcan.gc.ca/n1/pub/22-003-x/2010002/t024-eng.htm"
+FAO66 = "https://www.fao.org/4/i2800e/i2800e02.pdf"
+FAO33 = "https://posmet.ufv.br/wp-content/uploads/2017/04/MET-477-Doorenbos-e-Kassam-Yield-response.pdf"
+# Seasonal Ky, FAO Paper 66 Table 1, captioned as Paper 33. Confirmed 2026-11-15.
+# Lettuce, carrot, broccoli, spinach, cucumber, garlic, and Brussels sprouts are not in that table.
+KY = {
+    "crop_cabbage": 0.95,
+    "crop_bean_green": 1.15,
+    "crop_bean_dry": 1.15,
+    "crop_onion": 1.1,
+    "crop_pepper_bell": 1.1,
+    "crop_potato": 1.1,
+    "crop_tomato": 1.05,
+    "crop_wheat_spring": 1.15,
+}
+KY_SOURCE = (
+    "Seasonal Ky from FAO Irrigation and Drainage Paper 66, Table 1, captioned "
+    f"'Seasonal Ky values from FAO Irrigation and Drainage Paper No. 33' ({FAO66}, read 2026-11-15). "
+    f"Cabbage 0.95, beans 1.15, onion 1.1, pepper 1.1, potato 1.1, and tomato 1.05 were also legible as the last column of Paper 33 Table 24 ({FAO33}). "
+    "The Paper 33 scan's potato row did not show the seasonal cell; potato uses the Paper 66 reprint. "
+    "Crops absent from Table 1 stay null. Not a Fraser Valley measurement."
+)
+N_COLE = (
+    "Not stored as one rate. The BC cole-crop guide says broadcast 75 kg/ha N, plus a side-dress of 45 to 110 kg/ha N. "
+    "The higher side-dress is for broccoli and cauliflower; the lower is for Brussels sprouts and cabbage. "
+    f"({BC_COLE}). A range was not collapsed. TODO(verify)."
+)
+N_LETTUCE = (
+    "Not stored as one rate. The BC lettuce guide (last updated 22 April 2025) gives western iceberg on muck soils "
+    "50 to 80 kg/ha N early and 40 to 60 kg/ha N in the main season; on mineral soils 100 to 125 kg/ha N early and "
+    "75 to 100 kg/ha N in the main season; leaf and eastern iceberg types 100 to 150 kg/ha N. "
+    f"({BC_LETTUCE}). A range was not collapsed. TODO(verify)."
+)
+
+
+def _statcan_yield(tonnes: float, hectares: float, label: str, caution: str = "") -> tuple[dict, str]:
+    raw = tonnes / hectares
+    value = round(raw, 2)
+    sentence = (
+        f"Statistics Canada, Fruit and Vegetable Production, Table 3-10, British Columbia, 2010 ({STATCAN_2010}). "
+        f"{label}: total production {tonnes:g} metric tonnes / harvested area {hectares:g} hectares = {raw:.4f}, stored as {value} t/ha. "
+        "Basis derived. This is a provincial commercial average, not a yield from KPU or UBC Farm."
+    )
+    if caution:
+        sentence += " " + caution
+    return {
+        "value": value,
+        "unit": "t/ha",
+        "basis": "derived",
+        "confidence": "low" if caution else "medium",
+        "source": sentence,
+    }, sentence
+
+
+# (yield object, trait_sources sentence). Only rows with a published production and harvested area.
+YIELD = {
+    "crop_cabbage": _statcan_yield(5677, 266, "Cabbage", "Footnote 1: includes Chinese cabbage and regular cabbage."),
+    "crop_lettuce": _statcan_yield(9729, 307, "Lettuce", "Footnote 3: includes leaf lettuce and head lettuce."),
+    "crop_broccoli": _statcan_yield(1139, 253, "Broccoli", "Planted area is marked F. Harvested area and total production are published numbers."),
+    "crop_brussels_sprouts": _statcan_yield(3018, 255, "Brussels sprouts"),
+    "crop_carrot": _statcan_yield(3210, 210, "Carrots", "Footnote 2: includes baby carrots and regular carrots. Harvested area is marked E (use with caution)."),
+    "crop_cucumber": _statcan_yield(593, 64, "Cucumbers"),
+    "crop_garlic": _statcan_yield(66, 38, "Garlic"),
+    "crop_pepper_bell": _statcan_yield(2237, 101, "Peppers", "Total production and harvested area are marked E (use with caution)."),
+    "crop_spinach": _statcan_yield(869, 80, "Spinach", "Total production and harvested area are marked E (use with caution)."),
+    "crop_tomato": _statcan_yield(1604, 80, "Tomatoes"),
+}
+
 ROOT_NOTE = (
     "FAO-56 Table 22 maximum effective root depth is {span} m, read 2026-11-15 from the PDF at "
     + FAO_PDF
@@ -390,9 +458,19 @@ def new_crop(spec: tuple) -> dict:
         sources["region_fit"] = REGION_SOURCE
     if cid in ROOT_RANGE:
         sources["root_depth_m"] = ROOT_NOTE.format(span=ROOT_RANGE[cid])
+    if cid in {"crop_cabbage", "crop_broccoli", "crop_cauliflower", "crop_brussels_sprouts"}:
+        sources["typical_n_rate_kg_ha"] = N_COLE
+    elif cid == "crop_lettuce":
+        sources["typical_n_rate_kg_ha"] = N_LETTUCE
+    if cid in KY:
+        sources["yield_response_factor_ky"] = KY_SOURCE
     block = v2_block(n_fixing)
     if cid in BC_INDEX:
         block["region_fit"] = ["oceanic"]
+    if cid in YIELD:
+        block["reference_yield"], sources["reference_yield"] = YIELD[cid]
+    if cid in KY:
+        block["yield_response_factor_ky"] = KY[cid]
     return {
         "id": cid,
         "name": name,

@@ -140,3 +140,9 @@ FAO-56 Table 12 Kc values for the horticulture rows were copied from the column-
 Planting day-of-year is still null. The BC cole and lettuce guides and the WSU Snohomish fall-vegetable page state months or deadlines. Those were not turned into `plant_doy` / `terminate_doy`. `water._crop_daily` returns None without a window, so `yield_t_ha` will stay omitted for cabbage and lettuce until a window exists. Please do not invent the day.
 
 `region_fit` `oceanic` is stored for crops on the BC vegetable-guide index. `SITE_CLIMATE_CLASS` has `site_ubc_farm` only (Wikipedia: Vancouver is temperate oceanic, Köppen Cfb). Langley has no stored class. A site with no class is not filtered.
+
+## 2026-11-15 — Session C, EC4 yields
+
+`reference_yield` for ten horticulture rows is Statistics Canada Table 3-10, British Columbia, 2010, production divided by harvested hectares. Seasonal Ky for the crops in FAO Paper 66 Table 1 (Paper 33) is stored. Lettuce is not in that table, so its Ky stays null. BC nitrogen guides give ranges, so `typical_n_rate_kg_ha` stays null.
+
+`yield_t_ha` is still omitted for cabbage because `plant_doy` is null. `water.year_profile` says the season window is not set. That is the intended gate. Please do not invent the day. A test inside `tests/test_crop_catalog.py` shows that the same cabbage row returns 21.34 t/ha once a window is present.
