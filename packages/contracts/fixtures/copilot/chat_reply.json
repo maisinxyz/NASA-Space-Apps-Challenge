@@ -1,0 +1,10 @@
+{
+ "reply": "Contract fixture placeholder. Not an engine result and not for the demo.",
+ "referenced_layers": [
+  "soil_organic_index",
+  "water_demand_mm"
+ ],
+ "local_validation_tips": [
+  "Contract fixture placeholder. Not an engine result and not for the demo."
+ ]
+}

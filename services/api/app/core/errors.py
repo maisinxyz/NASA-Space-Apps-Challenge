@@ -28,6 +28,7 @@ ErrorCode = Literal[
     "SELECTION_TOO_SMALL",
     "INVALID_QUOTA",
     "HORIZON_OUT_OF_RANGE",
+    "RATE_LIMITED",
 ]
 
 STATUS: dict[str, int] = {
@@ -48,6 +49,7 @@ STATUS: dict[str, int] = {
     "SELECTION_TOO_SMALL": 422,
     "INVALID_QUOTA": 422,
     "HORIZON_OUT_OF_RANGE": 422,
+    "RATE_LIMITED": 429,
 }
 
 log = logging.getLogger("fieldtwin.errors")

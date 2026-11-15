@@ -4381,6 +4381,76 @@
     },
     "estimates": {
      "$ref": "#/$defs/StrategyEstimates"
+    },
+    "rotation_explanation": {
+     "$ref": "#/$defs/RotationExplanation"
+    }
+   }
+  },
+  "RotationExplanation": {
+   "type": "object",
+   "description": "v1.3. Rule explanations and crop-role badges. All text comes from the API.",
+   "required": [
+    "rules",
+    "crop_roles"
+   ],
+   "properties": {
+    "rules": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "rule_id",
+       "status",
+       "text"
+      ],
+      "properties": {
+       "rule_id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "met",
+         "broken",
+         "unknown"
+        ]
+       },
+       "text": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "crop_roles": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "crop_id",
+       "role",
+       "text"
+      ],
+      "properties": {
+       "crop_id": {
+        "$ref": "#/$defs/CropId"
+       },
+       "role": {
+        "type": "string",
+        "enum": [
+         "nitrogen_fixing",
+         "cover",
+         "deep_rooting",
+         "drought_tolerant",
+         "other"
+        ]
+       },
+       "text": {
+        "type": "string"
+       }
+      }
+     }
     }
    }
   },
@@ -5415,9 +5485,355 @@
     }
    }
   },
+  "OutlookKind": {
+   "type": "string",
+   "enum": [
+    "climatology",
+    "seasonal_forecast"
+   ],
+   "description": "`climatology` = typical year from the observed record. `seasonal_forecast` = a real seasonal forecast."
+  },
+  "OutlookMonth": {
+   "type": "object",
+   "required": [
+    "month",
+    "kind",
+    "temperature_mean_c",
+    "rain_mm",
+    "water_balance_mm",
+    "heat_risk",
+    "frost_risk"
+   ],
+   "properties": {
+    "month": {
+     "type": "string",
+     "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+    },
+    "kind": {
+     "$ref": "#/$defs/OutlookKind"
+    },
+    "temperature_mean_c": {
+     "$ref": "#/$defs/Number"
+    },
+    "rain_mm": {
+     "$ref": "#/$defs/Number"
+    },
+    "water_balance_mm": {
+     "$ref": "#/$defs/Number"
+    },
+    "heat_risk": {
+     "$ref": "#/$defs/Number"
+    },
+    "frost_risk": {
+     "$ref": "#/$defs/Number"
+    }
+   }
+  },
+  "Outlook": {
+   "type": "object",
+   "required": [
+    "site_id",
+    "start_month",
+    "kind",
+    "data_mode",
+    "months",
+    "sources",
+    "support_sentence"
+   ],
+   "properties": {
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "start_month": {
+     "type": "string",
+     "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+    },
+    "kind": {
+     "$ref": "#/$defs/OutlookKind"
+    },
+    "data_mode": {
+     "$ref": "#/$defs/DataMode"
+    },
+    "months": {
+     "type": "array",
+     "minItems": 1,
+     "maxItems": 12,
+     "items": {
+      "$ref": "#/$defs/OutlookMonth"
+     }
+    },
+    "sources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/Source"
+     }
+    },
+    "support_sentence": {
+     "type": "string",
+     "const": "This tool supports, and does not replace, local agronomic expertise."
+    }
+   }
+  },
+  "CopilotSelected": {
+   "type": "object",
+   "required": [
+    "kind",
+    "id"
+   ],
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "field",
+      "flag",
+      "strategy"
+     ]
+    },
+    "id": {
+     "type": "string",
+     "minLength": 1
+    }
+   }
+  },
+  "CopilotSnapshot": {
+   "type": "object",
+   "description": "Screen state. Holds ids and slider values only, never forecast numbers.",
+   "required": [
+    "farm_id",
+    "site_id",
+    "field_id",
+    "horizon",
+    "time_index",
+    "scenario",
+    "strategy_id",
+    "selected"
+   ],
+   "properties": {
+    "farm_id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "site_id": {
+     "$ref": "#/$defs/SiteId"
+    },
+    "field_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "horizon": {
+     "type": "string",
+     "enum": [
+      "years",
+      "months"
+     ]
+    },
+    "time_index": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "scenario": {
+     "$ref": "#/$defs/ScenarioInput"
+    },
+    "strategy_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/RotationId"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "selected": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/CopilotSelected"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   }
+  },
+  "CopilotMessage": {
+   "type": "object",
+   "required": [
+    "role",
+    "content"
+   ],
+   "properties": {
+    "role": {
+     "type": "string",
+     "enum": [
+      "user",
+      "assistant"
+     ]
+    },
+    "content": {
+     "type": "string"
+    }
+   }
+  },
+  "CopilotChatRequest": {
+   "type": "object",
+   "required": [
+    "message",
+    "snapshot"
+   ],
+   "properties": {
+    "message": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 1000
+    },
+    "snapshot": {
+     "$ref": "#/$defs/CopilotSnapshot"
+    },
+    "history": {
+     "type": "array",
+     "maxItems": 6,
+     "items": {
+      "$ref": "#/$defs/CopilotMessage"
+     }
+    }
+   }
+  },
+  "CopilotChatResponse": {
+   "type": "object",
+   "required": [
+    "reply",
+    "referenced_layers",
+    "local_validation_tips"
+   ],
+   "properties": {
+    "reply": {
+     "type": "string"
+    },
+    "referenced_layers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "local_validation_tips": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "FieldAnalyzeRequest": {
+   "type": "object",
+   "required": [
+    "polygon",
+    "rotation",
+    "scenario"
+   ],
+   "properties": {
+    "polygon": {
+     "description": "WGS84 `[lon, lat]`, one closed ring, at most 200 ha.",
+     "allOf": [
+      {
+       "$ref": "#/$defs/GeoJsonPolygon"
+      },
+      {
+       "type": "object",
+       "properties": {
+        "coordinates": {
+         "type": "array",
+         "minItems": 1,
+         "maxItems": 1
+        }
+       }
+      }
+     ]
+    },
+    "rotation": {
+     "oneOf": [
+      {
+       "type": "string",
+       "const": "preset"
+      },
+      {
+       "type": "array",
+       "minItems": 1,
+       "items": {
+        "$ref": "#/$defs/RotationSlot"
+       }
+      }
+     ]
+    },
+    "scenario": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/Scenario"
+      },
+      {
+       "$ref": "#/$defs/ScenarioInput"
+      }
+     ]
+    },
+    "selection": {
+     "$ref": "#/$defs/ForecastSelection"
+    }
+   }
+  },
+  "FieldAnalyzeResponse": {
+   "type": "object",
+   "required": [
+    "field_id",
+    "area_ha",
+    "location",
+    "forecast",
+    "resolution_notes"
+   ],
+   "properties": {
+    "field_id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "area_ha": {
+     "type": "number",
+     "exclusiveMinimum": 0,
+     "maximum": 200
+    },
+    "location": {
+     "type": "object",
+     "required": [
+      "lat",
+      "lon"
+     ],
+     "properties": {
+      "lat": {
+       "type": "number",
+       "minimum": -90,
+       "maximum": 90
+      },
+      "lon": {
+       "type": "number",
+       "minimum": -180,
+       "maximum": 180
+      }
+     }
+    },
+    "forecast": {
+     "$ref": "#/$defs/Forecast"
+    },
+    "resolution_notes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "ErrorCode": {
    "type": "string",
-   "description": "HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,\nTERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,\nSIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,\nSITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,\nSCENARIO_OUT_OF_RANGE 422 (v1.1),\nSELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2).\n",
+   "description": "HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,\nTERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,\nSIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,\nSITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,\nSCENARIO_OUT_OF_RANGE 422 (v1.1),\nSELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2),\nRATE_LIMITED 429, retryable true (v1.3).\n",
    "enum": [
     "INVALID_INPUT",
     "UNSUPPORTED_FILE",
@@ -5435,7 +5851,8 @@
     "SCENARIO_OUT_OF_RANGE",
     "SELECTION_TOO_SMALL",
     "INVALID_QUOTA",
-    "HORIZON_OUT_OF_RANGE"
+    "HORIZON_OUT_OF_RANGE",
+    "RATE_LIMITED"
    ]
   },
   "ErrorBody": {

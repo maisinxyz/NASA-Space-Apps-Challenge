@@ -3,6 +3,11 @@
 //   NEXT_PUBLIC_API_MODE=live: NEXT_PUBLIC_API_BASE (default http://localhost:8000/api/v1).
 import type {
   ClimateOutlook,
+  CopilotChatRequest,
+  CopilotChatResponse,
+  FieldAnalyzeRequest,
+  FieldAnalyzeResponse,
+  Outlook,
   CropCatalog,
   CropTemplate,
   DiffStats,
@@ -357,3 +362,22 @@ export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms = 250
   d.cancel = () => clearTimeout(t);
   return d;
 }
+
+// ---------------------------------------------------------------- v1.3 (outlook, co-pilot, custom field)
+// Mock mode serves the contract fixtures: one outlook per site (site_ubc_farm), one chat reply, one field analysis.
+export const getOutlook = (siteId: string, opts: { months?: number; scenario?: Scenario } = {}): Promise<Outlook> => {
+  if (isMock) return mock(`outlook/${siteId}_outlook.json`);
+  const params: Record<string, string | number> = {};
+  if (opts.months !== undefined) params.months = opts.months;
+  if (opts.scenario) params.scenario = opts.scenario;
+  return live(`/sites/${sid(siteId)}/outlook${Object.keys(params).length ? `?${q(params)}` : ""}`);
+};
+
+/** Not cached: replies are not deterministic. */
+export const postCopilotChat = (body: CopilotChatRequest): Promise<CopilotChatResponse> =>
+  isMock ? mock("copilot/chat_reply.json") : live("/copilot/chat", postJson(body));
+
+export const postFieldAnalyze = (body: FieldAnalyzeRequest): Promise<FieldAnalyzeResponse> =>
+  cached(`a:${JSON.stringify(body)}`, () =>
+    isMock ? mock<FieldAnalyzeResponse>("field/analyze_custom.json") : live<FieldAnalyzeResponse>("/field/analyze", postJson(body)),
+  );

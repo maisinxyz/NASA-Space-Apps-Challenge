@@ -1,4 +1,4 @@
-"""Contract v1.2.0: forecast fixtures match the schema and the honesty rules."""
+"""Contract v1.2.0 and v1.3.0: forecast fixtures match the schema and the honesty rules."""
 
 import json
 
@@ -7,7 +7,9 @@ import pytest
 from fixtures_lib import contract
 from fixtures_lib.forecast_fixtures import (
     V2_SOURCE_FIELDS,
+    copilot_request,
     documents,
+    field_analyze_request,
     request_body,
     request_hash,
 )
@@ -37,6 +39,11 @@ NEW_PATHS = [
     "/sites/{siteId}/forecast/sensitivity",
     "/crop-catalog",
 ]
+V13_PATHS = [
+    "/sites/{siteId}/outlook",
+    "/copilot/chat",
+    "/field/analyze",
+]
 
 
 def walk(obj):
@@ -51,15 +58,17 @@ def walk(obj):
 
 def test_version_and_paths_are_additive():
     spec = contract.openapi()
-    assert spec["info"]["version"] == "1.2.0"
-    for path in OLD_PATHS + NEW_PATHS:
+    assert spec["info"]["version"] == "1.3.0"
+    for path in OLD_PATHS + NEW_PATHS + V13_PATHS:
         assert path in spec["paths"]
     codes = spec["components"]["schemas"]["ErrorCode"]["enum"]
-    for code in ("SELECTION_TOO_SMALL", "INVALID_QUOTA", "HORIZON_OUT_OF_RANGE"):
+    for code in ("SELECTION_TOO_SMALL", "INVALID_QUOTA", "HORIZON_OUT_OF_RANGE", "RATE_LIMITED"):
         assert code in codes
     assert "limited_data" in spec["components"]["schemas"]["DataMode"]["enum"]
     # v1.1 feature tables stay on 1.1.0
     assert spec["components"]["schemas"]["FeatureTable"]["properties"]["schema_version"]["const"] == "1.1.0"
+    # the forecast body itself stays on 1.2.0 in v1.3.0
+    assert spec["components"]["schemas"]["Forecast"]["properties"]["schema_version"]["const"] == "1.2.0"
 
 
 def test_fixtures_match_the_generator_and_are_deterministic():
@@ -86,7 +95,7 @@ def test_every_number_has_unit_basis_and_confidence():
                 assert node["unit"]
                 assert node["basis"] in ("measured", "derived", "modeled", "assumed", "relative")
                 assert node["confidence"] in ("high", "medium", "low")
-        if rel.endswith(("crop_catalog.json", "exposure.json")):
+        if rel.endswith(("crop_catalog.json", "exposure.json", "chat_reply.json")):
             continue
         assert found > 0
 
@@ -143,7 +152,41 @@ def test_catalog_traits_are_sourced_and_unverified_numbers_are_null():
         assert set(crop["needs_equipment"]) <= equipment
 
 
-@pytest.mark.parametrize("code", ["SELECTION_TOO_SMALL", "INVALID_QUOTA", "HORIZON_OUT_OF_RANGE"])
+def test_v13_requests_validate():
+    contract.validate_schema(copilot_request(), "CopilotChatRequest")
+    contract.validate_schema(field_analyze_request(), "FieldAnalyzeRequest")
+
+
+def test_v13_request_limits_are_enforced():
+    import jsonschema
+
+    too_long = copilot_request() | {"message": "x" * 1001}
+    with pytest.raises(jsonschema.ValidationError):
+        contract.validate_schema(too_long, "CopilotChatRequest")
+    long_history = copilot_request() | {"history": [{"role": "user", "content": "hi"}] * 7}
+    with pytest.raises(jsonschema.ValidationError):
+        contract.validate_schema(long_history, "CopilotChatRequest")
+    two_rings = field_analyze_request()
+    two_rings["polygon"]["coordinates"] *= 2
+    with pytest.raises(jsonschema.ValidationError):
+        contract.validate_schema(two_rings, "FieldAnalyzeRequest")
+
+
+def test_outlook_ranges_widen_with_month_index():
+    outlook = json.loads((FIXTURES / "outlook/site_ubc_farm_outlook.json").read_text(encoding="utf-8"))
+    assert outlook["support_sentence"] == SUPPORT
+    widths = [m["rain_mm"]["p90"] - m["rain_mm"]["p10"] for m in outlook["months"]]
+    assert widths == sorted(widths) and widths[-1] > widths[0]
+    assert len(outlook["months"]) == 12
+
+
+def test_rotation_explanation_is_on_every_strategy():
+    forecast = json.loads((FIXTURES / "forecast/site_usda_barc_forecast.json").read_text(encoding="utf-8"))
+    for strategy in forecast["fields"][0]["strategies"]:
+        assert {"rules", "crop_roles"} <= strategy["rotation_explanation"].keys()
+
+
+@pytest.mark.parametrize("code", ["SELECTION_TOO_SMALL", "INVALID_QUOTA", "HORIZON_OUT_OF_RANGE", "RATE_LIMITED"])
 def test_new_error_codes_validate(code):
     body = json.loads((FIXTURES / "errors" / f"{code}.json").read_text(encoding="utf-8"))
     contract.validate_schema(body, "Error")

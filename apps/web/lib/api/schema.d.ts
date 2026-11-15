@@ -272,6 +272,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sites/{siteId}/outlook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Monthly outlook for up to 12 months (v1.3.0)
+         * @description Typical-year (`climatology`) monthly outlook from the observed weather record plus the
+         *     engine water balance. A month whose values come from a real seasonal forecast has
+         *     `kind: seasonal_forecast`; the top-level `kind` is `seasonal_forecast` when at least one
+         *     month does. Ranges widen with the month index.
+         */
+        get: operations["getOutlook"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/copilot/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Farm co-pilot reply (v1.3.0)
+         * @description Plain-language answer about the current screen. The server builds the numbers from the
+         *     snapshot; the client never sends forecast values. Replies are not deterministic and never
+         *     change a forecast number.
+         */
+        post: operations["postCopilotChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/field/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Custom polygon analysis, 2D view only (v1.3.0)
+         * @description Runs the forecast for one user-drawn field. The polygon is WGS84 `[lon, lat]`, one closed
+         *     ring, at most 200 ha; otherwise `INVALID_INPUT`. Lookups are cached by request hash.
+         */
+        post: operations["postFieldAnalyze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/scans": {
         parameters: {
             query?: never;
@@ -1939,6 +2005,22 @@ export interface components {
             farm_fit: components["schemas"]["FarmFit"];
             scorecard: components["schemas"]["RotationScorecard"][];
             estimates: components["schemas"]["StrategyEstimates"];
+            rotation_explanation?: components["schemas"]["RotationExplanation"];
+        };
+        /** @description v1.3. Rule explanations and crop-role badges. All text comes from the API. */
+        RotationExplanation: {
+            rules: {
+                rule_id: string;
+                /** @enum {string} */
+                status: "met" | "broken" | "unknown";
+                text: string;
+            }[];
+            crop_roles: {
+                crop_id: components["schemas"]["CropId"];
+                /** @enum {string} */
+                role: "nitrogen_fixing" | "cover" | "deep_rooting" | "drought_tolerant" | "other";
+                text: string;
+            }[];
         };
         ForecastStrategy: components["schemas"]["StrategyCore"] & {
             /** @enum {string} */
@@ -2193,15 +2275,91 @@ export interface components {
             climate_source: "cmip6_delta" | "history_resample";
         };
         /**
+         * @description `climatology` = typical year from the observed record. `seasonal_forecast` = a real seasonal forecast.
+         * @enum {string}
+         */
+        OutlookKind: "climatology" | "seasonal_forecast";
+        OutlookMonth: {
+            month: string;
+            kind: components["schemas"]["OutlookKind"];
+            temperature_mean_c: components["schemas"]["Number"];
+            rain_mm: components["schemas"]["Number"];
+            water_balance_mm: components["schemas"]["Number"];
+            heat_risk: components["schemas"]["Number"];
+            frost_risk: components["schemas"]["Number"];
+        };
+        Outlook: {
+            site_id: components["schemas"]["SiteId"];
+            start_month: string;
+            kind: components["schemas"]["OutlookKind"];
+            data_mode: components["schemas"]["DataMode"];
+            months: components["schemas"]["OutlookMonth"][];
+            sources: components["schemas"]["Source"][];
+            /** @constant */
+            support_sentence: "This tool supports, and does not replace, local agronomic expertise.";
+        };
+        CopilotSelected: {
+            /** @enum {string} */
+            kind: "field" | "flag" | "strategy";
+            id: string;
+        };
+        /** @description Screen state. Holds ids and slider values only, never forecast numbers. */
+        CopilotSnapshot: {
+            farm_id: string;
+            site_id: components["schemas"]["SiteId"];
+            field_id: string | null;
+            /** @enum {string} */
+            horizon: "years" | "months";
+            time_index: number;
+            scenario: components["schemas"]["ScenarioInput"];
+            strategy_id: components["schemas"]["RotationId"] | null;
+            selected: components["schemas"]["CopilotSelected"] | null;
+        };
+        CopilotMessage: {
+            /** @enum {string} */
+            role: "user" | "assistant";
+            content: string;
+        };
+        CopilotChatRequest: {
+            message: string;
+            snapshot: components["schemas"]["CopilotSnapshot"];
+            history?: components["schemas"]["CopilotMessage"][];
+        };
+        CopilotChatResponse: {
+            reply: string;
+            referenced_layers: string[];
+            local_validation_tips: string[];
+        };
+        FieldAnalyzeRequest: {
+            /** @description WGS84 `[lon, lat]`, one closed ring, at most 200 ha. */
+            polygon: components["schemas"]["GeoJsonPolygon"] & {
+                coordinates?: unknown[];
+            };
+            rotation: "preset" | components["schemas"]["RotationSlot"][];
+            scenario: components["schemas"]["Scenario"] | components["schemas"]["ScenarioInput"];
+            selection?: components["schemas"]["ForecastSelection"];
+        };
+        FieldAnalyzeResponse: {
+            field_id: string;
+            area_ha: number;
+            location: {
+                lat: number;
+                lon: number;
+            };
+            forecast: components["schemas"]["Forecast"];
+            resolution_notes: string[];
+        };
+        /**
          * @description HTTP status mapping: INVALID_INPUT 422, UNSUPPORTED_FILE 415, FILE_TOO_LARGE 413,
          *     TERRAIN_COVERAGE_MISSING 422, DATA_SOURCE_UNAVAILABLE 503, WEATHER_UNAVAILABLE 503,
          *     SIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,
          *     SITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,
          *     SCENARIO_OUT_OF_RANGE 422 (v1.1),
-         *     SELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2).
+         *     SELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2),
+         *     RATE_LIMITED 429, retryable true (v1.3).
          * @enum {string}
          */
-        ErrorCode: "INVALID_INPUT" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "TERRAIN_COVERAGE_MISSING" | "DATA_SOURCE_UNAVAILABLE" | "WEATHER_UNAVAILABLE" | "SIMULATION_TIMEOUT" | "NOT_FOUND" | "INTERNAL" | "SITE_NOT_FOUND" | "UNKNOWN_CROP" | "INVALID_WEIGHTS" | "NO_FEASIBLE_ALTERNATIVES" | "SCENARIO_OUT_OF_RANGE" | "SELECTION_TOO_SMALL" | "INVALID_QUOTA" | "HORIZON_OUT_OF_RANGE";
+        ErrorCode: "INVALID_INPUT" | "UNSUPPORTED_FILE" | "FILE_TOO_LARGE" | "TERRAIN_COVERAGE_MISSING" | "DATA_SOURCE_UNAVAILABLE" | "WEATHER_UNAVAILABLE" | "SIMULATION_TIMEOUT" | "NOT_FOUND" | "INTERNAL" | "SITE_NOT_FOUND" | "UNKNOWN_CROP" | "INVALID_WEIGHTS" | "NO_FEASIBLE_ALTERNATIVES" | "SCENARIO_OUT_OF_RANGE" | "SELECTION_TOO_SMALL" | "INVALID_QUOTA" | "HORIZON_OUT_OF_RANGE" | "RATE_LIMITED";
         ErrorBody: {
             code: components["schemas"]["ErrorCode"];
             message: string;
@@ -2260,6 +2418,15 @@ export interface components {
         };
         /** @description `DATA_SOURCE_UNAVAILABLE` or `WEATHER_UNAVAILABLE` */
         Unavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description `RATE_LIMITED` (retryable true) */
+        RateLimited: {
             headers: {
                 [name: string]: unknown;
             };
@@ -2657,6 +2824,90 @@ export interface operations {
                 };
             };
             422: components["responses"]["InvalidInput"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getOutlook: {
+        parameters: {
+            query?: {
+                months?: number;
+                scenario?: components["parameters"]["ScenarioQuery"];
+            };
+            header?: never;
+            path: {
+                siteId: components["parameters"]["SiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Monthly outlook. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Outlook"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["InvalidInput"];
+            default: components["responses"]["Error"];
+        };
+    };
+    postCopilotChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Co-pilot reply. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotChatResponse"];
+                };
+            };
+            422: components["responses"]["InvalidInput"];
+            429: components["responses"]["RateLimited"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Error"];
+        };
+    };
+    postFieldAnalyze: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldAnalyzeRequest"];
+            };
+        };
+        responses: {
+            /** @description Analysis for the drawn field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldAnalyzeResponse"];
+                };
+            };
+            422: components["responses"]["InvalidInput"];
+            429: components["responses"]["RateLimited"];
+            503: components["responses"]["Unavailable"];
             default: components["responses"]["Error"];
         };
     };

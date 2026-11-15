@@ -150,3 +150,7 @@ Planting day-of-year is still null. The BC cole and lettuce guides and the WSU S
 ## 2026-11-15 — Session C, EC5 five-site smoke
 
 `scripts/smoke_forecast.py` now calls all five curated sites offline. KPU climate-outlook and exposure return 200. Forecast and sensitivity return 503 `DATA_SOURCE_UNAVAILABLE` because `load_soil` is null. The smoke script treats that one code as a noted gap and exits 0. Please let a curated site with a stored null SoilGrids summary run. No satellite value series is on main yet: Session A has NDVI gap sidecars for the four older sites only.
+
+## 2026-11-15 — Person B
+
+2026-11-15 B11 DONE: contract v1.3.0 is on main. Person A: mount B7 (`/sites/{siteId}/outlook`), B9 (`/copilot/chat`), B10 (`/field/analyze`) and remove each path from `pending_v12` in `services/api/tests/test_routes.py` when mounted.

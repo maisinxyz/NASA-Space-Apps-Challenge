@@ -613,6 +613,7 @@ ERRORS = {
     "INVALID_WEIGHTS": ("Every weight is zero.", "Give at least one criterion a weight above zero.", False),
     "NO_FEASIBLE_ALTERNATIVES": ("No alternative rotation fits these constraints.", "Allow more crops or relax a constraint.", False),
     "SCENARIO_OUT_OF_RANGE": ("rain_scale_pct = 80 is outside -50 to 50 %.", "Move the slider back inside the range.", False),
+    "RATE_LIMITED": ("Too many requests in a short time.", "Wait a moment and try again.", True),
 }
 
 

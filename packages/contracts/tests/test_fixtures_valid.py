@@ -45,6 +45,10 @@ RESPONSES["forecast/site_usda_barc_climate_outlook.json"] = ("/sites/{siteId}/cl
 RESPONSES["forecast/site_usda_barc_exposure.json"] = ("/sites/{siteId}/exposure", "get", "200")
 RESPONSES["forecast/site_usda_barc_forecast.json"] = ("/sites/{siteId}/forecast", "post", "200")
 RESPONSES["forecast/site_usda_barc_sensitivity.json"] = ("/sites/{siteId}/forecast/sensitivity", "post", "200")
+# v1.3.0
+RESPONSES["outlook/site_ubc_farm_outlook.json"] = ("/sites/{siteId}/outlook", "get", "200")
+RESPONSES["copilot/chat_reply.json"] = ("/copilot/chat", "post", "200")
+RESPONSES["field/analyze_custom.json"] = ("/field/analyze", "post", "200")
 for _p in (FIXTURES / "simulations" / "sim_mock_001" / "diff").glob("*.json"):
     RESPONSES[_p.relative_to(FIXTURES).as_posix()] = ("/simulations/{simId}/diff", "get", "200")
 

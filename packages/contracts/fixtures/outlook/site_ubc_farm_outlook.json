@@ -1,0 +1,570 @@
+{
+ "site_id": "site_ubc_farm",
+ "start_month": "2026-12",
+ "kind": "climatology",
+ "data_mode": "mock",
+ "months": [
+  {
+   "month": "2026-12",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 2.4,
+    "p50": 4.1,
+    "p90": 5.8
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 120.0,
+    "p50": 210.0,
+    "p90": 300.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 95.0,
+    "p50": 190.0,
+    "p90": 285.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 2.0,
+    "p50": 6.0,
+    "p90": 10.0
+   }
+  },
+  {
+   "month": "2027-01",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 2.23,
+    "p50": 4.1,
+    "p90": 5.97
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 111.0,
+    "p50": 210.0,
+    "p90": 309.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 85.5,
+    "p50": 190.0,
+    "p90": 294.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.6,
+    "p50": 6.0,
+    "p90": 10.4
+   }
+  },
+  {
+   "month": "2027-02",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 2.06,
+    "p50": 4.1,
+    "p90": 6.14
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 102.0,
+    "p50": 210.0,
+    "p90": 318.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 76.0,
+    "p50": 190.0,
+    "p90": 304.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.2,
+    "p50": 6.0,
+    "p90": 10.8
+   }
+  },
+  {
+   "month": "2027-03",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.89,
+    "p50": 4.1,
+    "p90": 6.31
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 93.0,
+    "p50": 210.0,
+    "p90": 327.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 66.5,
+    "p50": 190.0,
+    "p90": 313.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.8,
+    "p50": 6.0,
+    "p90": 11.2
+   }
+  },
+  {
+   "month": "2027-04",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.72,
+    "p50": 4.1,
+    "p90": 6.48
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 84.0,
+    "p50": 210.0,
+    "p90": 336.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 57.0,
+    "p50": 190.0,
+    "p90": 323.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.4,
+    "p50": 6.0,
+    "p90": 11.6
+   }
+  },
+  {
+   "month": "2027-05",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.55,
+    "p50": 4.1,
+    "p90": 6.65
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 75.0,
+    "p50": 210.0,
+    "p90": 345.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 47.5,
+    "p50": 190.0,
+    "p90": 332.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.0,
+    "p50": 6.0,
+    "p90": 12.0
+   }
+  },
+  {
+   "month": "2027-06",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.38,
+    "p50": 4.1,
+    "p90": 6.82
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 66.0,
+    "p50": 210.0,
+    "p90": 354.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 38.0,
+    "p50": 190.0,
+    "p90": 342.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -0.4,
+    "p50": 6.0,
+    "p90": 12.4
+   }
+  },
+  {
+   "month": "2027-07",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.21,
+    "p50": 4.1,
+    "p90": 6.99
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 57.0,
+    "p50": 210.0,
+    "p90": 363.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 28.5,
+    "p50": 190.0,
+    "p90": 351.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -0.8,
+    "p50": 6.0,
+    "p90": 12.8
+   }
+  },
+  {
+   "month": "2027-08",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 1.04,
+    "p50": 4.1,
+    "p90": 7.16
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 48.0,
+    "p50": 210.0,
+    "p90": 372.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 19.0,
+    "p50": 190.0,
+    "p90": 361.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -1.2,
+    "p50": 6.0,
+    "p90": 13.2
+   }
+  },
+  {
+   "month": "2027-09",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.87,
+    "p50": 4.1,
+    "p90": 7.33
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 39.0,
+    "p50": 210.0,
+    "p90": 381.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 9.5,
+    "p50": 190.0,
+    "p90": 370.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -1.6,
+    "p50": 6.0,
+    "p90": 13.6
+   }
+  },
+  {
+   "month": "2027-10",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.7,
+    "p50": 4.1,
+    "p90": 7.5
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 30.0,
+    "p50": 210.0,
+    "p90": 390.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": 0.0,
+    "p50": 190.0,
+    "p90": 380.0
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -2.0,
+    "p50": 6.0,
+    "p90": 14.0
+   }
+  },
+  {
+   "month": "2027-11",
+   "kind": "climatology",
+   "temperature_mean_c": {
+    "value": 4.1,
+    "unit": "degC",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 0.53,
+    "p50": 4.1,
+    "p90": 7.67
+   },
+   "rain_mm": {
+    "value": 210.0,
+    "unit": "mm",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": 21.0,
+    "p50": 210.0,
+    "p90": 399.0
+   },
+   "water_balance_mm": {
+    "value": 190.0,
+    "unit": "mm",
+    "basis": "modeled",
+    "confidence": "low",
+    "p10": -9.5,
+    "p50": 190.0,
+    "p90": 389.5
+   },
+   "heat_risk": {
+    "value": 0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low"
+   },
+   "frost_risk": {
+    "value": 6.0,
+    "unit": "days",
+    "basis": "derived",
+    "confidence": "low",
+    "p10": -2.4,
+    "p50": 6.0,
+    "p90": 14.4
+   }
+  }
+ ],
+ "sources": [
+  {
+   "name": "FieldTwin contract fixture",
+   "role": "weather",
+   "license": "Mock data generated by FieldTwin fixtures. Not real.",
+   "attribution": "Shape example for contract v1.2.0. Not a dataset.",
+   "basis": "assumed"
+  }
+ ],
+ "support_sentence": "This tool supports, and does not replace, local agronomic expertise."
+}

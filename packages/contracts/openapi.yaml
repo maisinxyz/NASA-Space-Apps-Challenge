@@ -1,11 +1,16 @@
 openapi: 3.1.0
 info:
   title: FieldTwin API
-  version: "1.2.0"
+  version: "1.3.0"
   summary: Interface contract between the FieldTwin front-end and back-end (PRD §6).
   description: |
     Encodes `prd.md` §6. Endpoints, schemas, and formats are our own design.
     Decisions made where the PRD was loose are listed in `docs/progress/02.md` ("Decisions").
+
+    v1.3.0 (docs/fieldtwin-v4-prd.md Appendix A, additive) adds the monthly outlook,
+    the farm co-pilot chat, custom-field analysis (2D view only), an optional
+    `rotation_explanation` on each forecast strategy, and the `RATE_LIMITED` error code.
+    `Forecast.schema_version` stays `1.2.0`.
 
     v1.2.0 (forecast, docs/backend-forecast-prd.md) adds climate-outlook, exposure,
     crop-catalog, forecast, and forecast sensitivity. Those responses may include
@@ -51,6 +56,8 @@ tags:
     description: Storm replays per rotation, evidence, differences.
   - name: notes
     description: Field notes (P2).
+  - name: copilot
+    description: Farm co-pilot chat (contract v1.3.0).
   - name: forecast
     description: Ten-year scenario forecast (contract v1.2.0). Backend only; the web app is unchanged.
 
@@ -332,6 +339,82 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CropCatalog' }
         '422': { $ref: '#/components/responses/InvalidInput' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /sites/{siteId}/outlook:
+    get:
+      tags: [forecast]
+      operationId: getOutlook
+      summary: Monthly outlook for up to 12 months (v1.3.0)
+      description: |
+        Typical-year (`climatology`) monthly outlook from the observed weather record plus the
+        engine water balance. A month whose values come from a real seasonal forecast has
+        `kind: seasonal_forecast`; the top-level `kind` is `seasonal_forecast` when at least one
+        month does. Ranges widen with the month index.
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - name: months
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 12, default: 12 }
+        - $ref: '#/components/parameters/ScenarioQuery'
+      responses:
+        '200':
+          description: Monthly outlook.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Outlook' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /copilot/chat:
+    post:
+      tags: [copilot]
+      operationId: postCopilotChat
+      summary: Farm co-pilot reply (v1.3.0)
+      description: |
+        Plain-language answer about the current screen. The server builds the numbers from the
+        snapshot; the client never sends forecast values. Replies are not deterministic and never
+        change a forecast number.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CopilotChatRequest' }
+      responses:
+        '200':
+          description: Co-pilot reply.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CopilotChatResponse' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /field/analyze:
+    post:
+      tags: [forecast]
+      operationId: postFieldAnalyze
+      summary: Custom polygon analysis, 2D view only (v1.3.0)
+      description: |
+        Runs the forecast for one user-drawn field. The polygon is WGS84 `[lon, lat]`, one closed
+        ring, at most 200 ha; otherwise `INVALID_INPUT`. Lookups are cached by request hash.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FieldAnalyzeRequest' }
+      responses:
+        '200':
+          description: Analysis for the drawn field.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FieldAnalyzeResponse' }
+        '422': { $ref: '#/components/responses/InvalidInput' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
         default: { $ref: '#/components/responses/Error' }
 
   /scans:
@@ -955,6 +1038,11 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
     Unavailable:
       description: '`DATA_SOURCE_UNAVAILABLE` or `WEATHER_UNAVAILABLE`'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: '`RATE_LIMITED` (retryable true)'
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -2541,6 +2629,30 @@ components:
           type: array
           items: { $ref: '#/components/schemas/RotationScorecard' }
         estimates: { $ref: '#/components/schemas/StrategyEstimates' }
+        rotation_explanation: { $ref: '#/components/schemas/RotationExplanation' }
+    RotationExplanation:
+      type: object
+      description: 'v1.3. Rule explanations and crop-role badges. All text comes from the API.'
+      required: [rules, crop_roles]
+      properties:
+        rules:
+          type: array
+          items:
+            type: object
+            required: [rule_id, status, text]
+            properties:
+              rule_id: { type: string, minLength: 1 }
+              status: { type: string, enum: [met, broken, unknown] }
+              text: { type: string }
+        crop_roles:
+          type: array
+          items:
+            type: object
+            required: [crop_id, role, text]
+            properties:
+              crop_id: { $ref: '#/components/schemas/CropId' }
+              role: { type: string, enum: [nitrogen_fixing, cover, deep_rooting, drought_tolerant, other] }
+              text: { type: string }
     ForecastStrategy:
       allOf:
         - $ref: '#/components/schemas/StrategyCore'
@@ -2935,6 +3047,133 @@ components:
         horizon_years: { type: integer, minimum: 5, maximum: 10, default: 10 }
         climate_source: { type: string, enum: [cmip6_delta, history_resample], default: history_resample }
 
+    # ---------- v1.3.0: outlook, co-pilot, custom field ----------
+    OutlookKind:
+      type: string
+      enum: [climatology, seasonal_forecast]
+      description: '`climatology` = typical year from the observed record. `seasonal_forecast` = a real seasonal forecast.'
+    OutlookMonth:
+      type: object
+      required: [month, kind, temperature_mean_c, rain_mm, water_balance_mm, heat_risk, frost_risk]
+      properties:
+        month: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+        kind: { $ref: '#/components/schemas/OutlookKind' }
+        temperature_mean_c: { $ref: '#/components/schemas/Number' }
+        rain_mm: { $ref: '#/components/schemas/Number' }
+        water_balance_mm: { $ref: '#/components/schemas/Number' }
+        heat_risk: { $ref: '#/components/schemas/Number' }
+        frost_risk: { $ref: '#/components/schemas/Number' }
+    Outlook:
+      type: object
+      required: [site_id, start_month, kind, data_mode, months, sources, support_sentence]
+      properties:
+        site_id: { $ref: '#/components/schemas/SiteId' }
+        start_month: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+        kind: { $ref: '#/components/schemas/OutlookKind' }
+        data_mode: { $ref: '#/components/schemas/DataMode' }
+        months:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items: { $ref: '#/components/schemas/OutlookMonth' }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/Source' }
+        support_sentence:
+          type: string
+          const: This tool supports, and does not replace, local agronomic expertise.
+    CopilotSelected:
+      type: object
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [field, flag, strategy] }
+        id: { type: string, minLength: 1 }
+    CopilotSnapshot:
+      type: object
+      description: Screen state. Holds ids and slider values only, never forecast numbers.
+      required: [farm_id, site_id, field_id, horizon, time_index, scenario, strategy_id, selected]
+      properties:
+        farm_id: { type: string, minLength: 1 }
+        site_id: { $ref: '#/components/schemas/SiteId' }
+        field_id: { type: [string, 'null'] }
+        horizon: { type: string, enum: [years, months] }
+        time_index: { type: integer, minimum: 0 }
+        scenario: { $ref: '#/components/schemas/ScenarioInput' }
+        strategy_id:
+          oneOf:
+            - $ref: '#/components/schemas/RotationId'
+            - type: 'null'
+        selected:
+          oneOf:
+            - $ref: '#/components/schemas/CopilotSelected'
+            - type: 'null'
+    CopilotMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+    CopilotChatRequest:
+      type: object
+      required: [message, snapshot]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 1000 }
+        snapshot: { $ref: '#/components/schemas/CopilotSnapshot' }
+        history:
+          type: array
+          maxItems: 6
+          items: { $ref: '#/components/schemas/CopilotMessage' }
+    CopilotChatResponse:
+      type: object
+      required: [reply, referenced_layers, local_validation_tips]
+      properties:
+        reply: { type: string }
+        referenced_layers:
+          type: array
+          items: { type: string }
+        local_validation_tips:
+          type: array
+          items: { type: string }
+    FieldAnalyzeRequest:
+      type: object
+      required: [polygon, rotation, scenario]
+      properties:
+        polygon:
+          description: WGS84 `[lon, lat]`, one closed ring, at most 200 ha.
+          allOf:
+            - $ref: '#/components/schemas/GeoJsonPolygon'
+            - type: object
+              properties:
+                coordinates: { type: array, minItems: 1, maxItems: 1 }
+        rotation:
+          oneOf:
+            - type: string
+              const: preset
+            - type: array
+              minItems: 1
+              items: { $ref: '#/components/schemas/RotationSlot' }
+        scenario:
+          oneOf:
+            - $ref: '#/components/schemas/Scenario'
+            - $ref: '#/components/schemas/ScenarioInput'
+        selection: { $ref: '#/components/schemas/ForecastSelection' }
+    FieldAnalyzeResponse:
+      type: object
+      required: [field_id, area_ha, location, forecast, resolution_notes]
+      properties:
+        field_id: { type: string, minLength: 1 }
+        area_ha: { type: number, exclusiveMinimum: 0, maximum: 200 }
+        location:
+          type: object
+          required: [lat, lon]
+          properties:
+            lat: { type: number, minimum: -90, maximum: 90 }
+            lon: { type: number, minimum: -180, maximum: 180 }
+        forecast: { $ref: '#/components/schemas/Forecast' }
+        resolution_notes:
+          type: array
+          items: { type: string }
+
     # ---------- Errors ----------
     ErrorCode:
       type: string
@@ -2944,7 +3183,8 @@ components:
         SIMULATION_TIMEOUT 504, NOT_FOUND 404, INTERNAL 500,
         SITE_NOT_FOUND 404, UNKNOWN_CROP 422, INVALID_WEIGHTS 422, NO_FEASIBLE_ALTERNATIVES 422,
         SCENARIO_OUT_OF_RANGE 422 (v1.1),
-        SELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2).
+        SELECTION_TOO_SMALL 422, INVALID_QUOTA 422, HORIZON_OUT_OF_RANGE 422 (v1.2),
+        RATE_LIMITED 429, retryable true (v1.3).
       enum:
         - INVALID_INPUT
         - UNSUPPORTED_FILE
@@ -2963,6 +3203,7 @@ components:
         - SELECTION_TOO_SMALL
         - INVALID_QUOTA
         - HORIZON_OUT_OF_RANGE
+        - RATE_LIMITED
     ErrorBody:
       type: object
       required: [code, message, retryable]

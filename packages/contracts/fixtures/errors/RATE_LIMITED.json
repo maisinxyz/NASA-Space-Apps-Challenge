@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "Too many requests in a short time.",
+    "hint": "Wait a moment and try again.",
+    "retryable": true
+  }
+}

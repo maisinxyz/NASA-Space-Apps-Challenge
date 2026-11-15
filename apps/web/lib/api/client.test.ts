@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, assetUrl, debounce, getClimateOutlook, getCropCatalog, getForecast, getSensitivity, getSite, getSites, isMock, parseSse, runSimulation, subscribeScanEvents } from "./client";
+import { ApiError, assetUrl, debounce, getClimateOutlook, getCropCatalog, getForecast, getOutlook, getSensitivity, getSite, getSites, isMock, parseSse, postCopilotChat, postFieldAnalyze, runSimulation, subscribeScanEvents } from "./client";
 import type { ForecastRequest, ProgressEvent } from "./types";
 
 const FIXTURES = resolve(__dirname, "../../../../packages/contracts/fixtures");
@@ -130,5 +130,29 @@ describe("debounce", () => {
     vi.advanceTimersByTime(100);
     expect(fn).toHaveBeenCalledOnce();
     expect(fn).toHaveBeenCalledWith(2);
+  });
+});
+
+describe("v1.3 mock calls", () => {
+  it("reads the outlook, a co-pilot reply and a field analysis", async () => {
+    mockFetch();
+    const outlook = await getOutlook("site_ubc_farm");
+    expect(outlook.months).toHaveLength(12);
+    expect(["climatology", "seasonal_forecast"]).toContain(outlook.kind);
+    await expect(getOutlook("site_nope")).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const reply = await postCopilotChat({
+      message: "Why is this field flagged?",
+      snapshot: {
+        farm_id: "ubc-farm", site_id: "site_ubc_farm", field_id: null, horizon: "years", time_index: 5,
+        scenario: { preset: "baseline" }, strategy_id: null, selected: null,
+      },
+    });
+    expect(typeof reply.reply).toBe("string");
+
+    const ring: [number, number][] = [[-123.2375, 49.2498], [-123.2368, 49.2498], [-123.2368, 49.2503], [-123.2375, 49.2498]];
+    const field = await postFieldAnalyze({ polygon: { type: "Polygon", coordinates: [ring] }, rotation: "preset", scenario: "baseline" });
+    expect(field.forecast.fields).toHaveLength(1);
+    expect(field.forecast.fields[0].strategies[0].rotation_explanation?.rules.length).toBeGreaterThan(0);
   });
 });

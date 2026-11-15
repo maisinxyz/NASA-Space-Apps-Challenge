@@ -47,3 +47,18 @@ export type Forecast = S["Forecast"];
 export type ForecastFieldResult = S["ForecastFieldResult"];
 export type SensitivityGrid = S["SensitivityGrid"];
 export type YearSeries = S["YearSeries"];
+
+// v1.3 (docs/fieldtwin-v4-prd.md Appendix A)
+export type Outlook = S["Outlook"];
+export type OutlookMonth = S["OutlookMonth"];
+export type OutlookKind = S["OutlookKind"];
+export type CopilotChatRequest = S["CopilotChatRequest"];
+export type CopilotSnapshot = S["CopilotSnapshot"];
+export type CopilotChatResponse = S["CopilotChatResponse"];
+export type FieldAnalyzeRequest = S["FieldAnalyzeRequest"];
+export type FieldAnalyzeResponse = S["FieldAnalyzeResponse"];
+export type RotationExplanation = S["RotationExplanation"];
+export type ForecastStrategy = S["ForecastStrategy"];
+export type ReviewFlag = S["ReviewFlag"];
+export type RotationSlot = S["RotationSlot"];
+export type ContractNumber = S["Number"];

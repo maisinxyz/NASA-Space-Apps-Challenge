@@ -1,4 +1,4 @@
-"""Deterministic contract fixtures for v1.2.0 forecast responses.
+"""Deterministic contract fixtures for v1.2.0 forecast and v1.3.0 outlook, co-pilot and field responses.
 
 Forecast bodies are placeholders so the frontend can build against the shape.
 Their `data_mode` is `mock`. The crop catalog fixture is the seed catalog.
@@ -292,6 +292,18 @@ def _evidence(strategy_id: str) -> dict:
     }
 
 
+def _rotation_explanation(crop_id: str) -> dict:
+    """v1.3 shape example. Text is a placeholder, not an engine rule result."""
+    return {
+        "rules": [
+            {"rule_id": "contract_fixture_rule", "status": "unknown", "text": PLACEHOLDER},
+        ],
+        "crop_roles": [
+            {"crop_id": crop_id, "role": "other", "text": PLACEHOLDER},
+        ],
+    }
+
+
 def _strategy(strategy_id: str, role: str, crop_id: str) -> dict:
     plan = [{"year_index": year, "season": "summer", "crop_id": crop_id} for year in range(1, 11)]
     return {
@@ -306,6 +318,7 @@ def _strategy(strategy_id: str, role: str, crop_id: str) -> dict:
         "estimates": _estimates(),
         "vulnerable_seasons": [],
         "evidence_card": _evidence(strategy_id),
+        "rotation_explanation": _rotation_explanation(crop_id),
         "review_flags": [{
             "id": "flag_placeholder",
             "strategy_id": strategy_id,
@@ -396,8 +409,108 @@ def crop_catalog() -> dict:
     return json.loads(CATALOG.read_text(encoding="utf-8"))
 
 
+# ---------- v1.3.0 ----------
+OUTLOOK_START = (2026, 12)
+
+
+def _month(index: int) -> str:
+    year, month = OUTLOOK_START
+    month += index
+    year += (month - 1) // 12
+    month = (month - 1) % 12 + 1
+    return f"{year:04d}-{month:02d}"
+
+
+def _spread(value: float, unit: str, basis: str, half_width: float, index: int) -> dict:
+    """Range half-width grows 10 % per month so ranges widen with the month index."""
+    width = round(half_width * (1 + 0.1 * index), 2)
+    return {
+        "value": value, "unit": unit, "basis": basis, "confidence": "low",
+        "p10": round(value - width, 2), "p50": value, "p90": round(value + width, 2),
+    }
+
+
+def outlook() -> dict:
+    """Shape example for GET /sites/{siteId}/outlook. Values repeat the Appendix A example month."""
+    months = []
+    for i in range(12):
+        months.append({
+            "month": _month(i),
+            "kind": "climatology",
+            "temperature_mean_c": _spread(4.1, "degC", "derived", 1.7, i),
+            "rain_mm": _spread(210.0, "mm", "derived", 90.0, i),
+            "water_balance_mm": _spread(190.0, "mm", "modeled", 95.0, i),
+            "heat_risk": {"value": 0, "unit": "days", "basis": "derived", "confidence": "low"},
+            "frost_risk": _spread(6.0, "days", "derived", 4.0, i),
+        })
+    return {
+        "site_id": "site_ubc_farm",
+        "start_month": _month(0),
+        "kind": "climatology",
+        "data_mode": "mock",
+        "months": months,
+        "sources": [mock_source()],
+        "support_sentence": SUPPORT,
+    }
+
+
+def copilot_request() -> dict:
+    return {
+        "message": "Why is the Brassicas field flagged in year 5?",
+        "snapshot": {
+            "farm_id": "ubc-farm",
+            "site_id": "site_ubc_farm",
+            "field_id": "d3-brassicas",
+            "horizon": "years",
+            "time_index": 5,
+            "scenario": {"preset": "baseline", "rain_scale_pct": 0, "temp_offset_c": 0},
+            "strategy_id": "rot_alt_1",
+            "selected": {"kind": "flag", "id": "flag_placeholder"},
+        },
+        "history": [],
+    }
+
+
+def copilot_chat() -> dict:
+    return {
+        "reply": PLACEHOLDER,
+        "referenced_layers": ["soil_organic_index", "water_demand_mm"],
+        "local_validation_tips": [PLACEHOLDER],
+    }
+
+
+def field_analyze_request() -> dict:
+    ring = [[-123.2375, 49.2498], [-123.2368, 49.2498], [-123.2368, 49.2503], [-123.2375, 49.2503], [-123.2375, 49.2498]]
+    return {
+        "polygon": {"type": "Polygon", "coordinates": [ring]},
+        "rotation": "preset",
+        "scenario": {"preset": "baseline"},
+        "selection": {"crops": ["crop_maize", "crop_rye_cover"], "pinned": [], "excluded": []},
+    }
+
+
+def field_analyze() -> dict:
+    body = forecast()
+    body["site_id"] = "site_ubc_farm"
+    body["request_hash"] = request_hash(field_analyze_request())
+    body["fields"][0].update({"field_id": "custom_3f9a12", "name": "Custom field", "area_ha": 0.43})
+    return {
+        "field_id": "custom_3f9a12",
+        "area_ha": 0.43,
+        "location": {"lat": 49.25, "lon": -123.2372},
+        "forecast": body,
+        "resolution_notes": [
+            "Weather is a 55 km NASA POWER cell.",
+            "Soil is a 250 m SoilGrids pixel.",
+        ],
+    }
+
+
 def documents() -> dict[str, dict]:
     return {
+        "outlook/site_ubc_farm_outlook.json": outlook(),
+        "copilot/chat_reply.json": copilot_chat(),
+        "field/analyze_custom.json": field_analyze(),
         "forecast/site_usda_barc_climate_outlook.json": climate_outlook(),
         "forecast/site_usda_barc_exposure.json": exposure(),
         "forecast/site_usda_barc_forecast.json": forecast(),

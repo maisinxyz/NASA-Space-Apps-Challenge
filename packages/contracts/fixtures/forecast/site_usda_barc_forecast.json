@@ -1936,6 +1936,22 @@
       ],
       "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
      },
+     "rotation_explanation": {
+      "rules": [
+       {
+        "rule_id": "contract_fixture_rule",
+        "status": "unknown",
+        "text": "Contract fixture placeholder. Not an engine result and not for the demo."
+       }
+      ],
+      "crop_roles": [
+       {
+        "crop_id": "crop_maize",
+        "role": "other",
+        "text": "Contract fixture placeholder. Not an engine result and not for the demo."
+       }
+      ]
+     },
      "review_flags": [
       {
        "id": "flag_placeholder",
@@ -3334,6 +3350,22 @@
        "Contract fixture placeholder. Not an engine result and not for the demo."
       ],
       "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+     },
+     "rotation_explanation": {
+      "rules": [
+       {
+        "rule_id": "contract_fixture_rule",
+        "status": "unknown",
+        "text": "Contract fixture placeholder. Not an engine result and not for the demo."
+       }
+      ],
+      "crop_roles": [
+       {
+        "crop_id": "crop_rye_cover",
+        "role": "other",
+        "text": "Contract fixture placeholder. Not an engine result and not for the demo."
+       }
+      ]
      },
      "review_flags": [
       {
