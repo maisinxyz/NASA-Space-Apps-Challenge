@@ -1,11 +1,11 @@
 {
- "source_name": "HLS Operational Land Imager Vegetation Indices Daily Global 30 m V2.0",
- "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSL30_VI",
+ "source_name": "HLS Landsat Operational Land Imager Surface Reflectance and TOA Brightness Daily Global 30m v2.0",
+ "source_url": "https://doi.org/10.5067/HLS/HLSL30.002",
  "product_version": "2.0",
  "retrieved_on": "2026-11-15",
- "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
- "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
- "resolution_spatial": "not retrieved",
- "resolution_temporal": "not retrieved",
- "processing_notes": "CMR summaries call these vegetation-index collections. The NDVI band name was not in the summary text that was read. TODO(verify) the band list before computing an index. Cloud mask and scene counts were not retrieved. NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+ "license": "Public domain (CC0), as stated by LP DAAC for its products: https://forum.earthdata.nasa.gov/viewtopic.php?t=5421 (read 2026-11-15).",
+ "attribution": "NASA HLS v2.0 surface reflectance, LP DAAC. HLSL30 https://doi.org/10.5067/HLS/HLSL30.002 and HLSS30 https://doi.org/10.5067/HLS/HLSS30.002.",
+ "resolution_spatial": "30 m",
+ "resolution_temporal": "Daily scenes aggregated to 7-day blocks from 1 January",
+ "processing_notes": "NASA Earthdata rejected the request (HTTP 401) for host cmr.earthdata.nasa.gov. The token was not printed. No granule was stored. weekly is null. This file is a gap record, not a measurement."
 }

@@ -470,6 +470,40 @@ class EarthdataClient:
             return result
         raise EarthdataError(f"stopped after {self.max_redirects} redirects from {_hostname(url)}")
 
+    def resolve(self, url: str, *, cap: int = 4096) -> str:
+        """Follow redirects and return the URL that served the object.
+
+        A one-byte range is requested. If the final host ignores ``Range`` and
+        starts sending the object, reading stops after ``cap`` bytes and that
+        URL is still returned. The bearer token is attached only on Earthdata
+        hosts, including redirect hops, and it is never written into the result.
+        """
+        if cap < 1:
+            raise ValueError("cap must be at least 1")
+        current = url
+        for _hop in range(self.max_redirects + 1):
+            headers = request_headers(current, self._token, {"Range": "bytes=0-0"})
+            sink = _CapSink(cap)
+            try:
+                result = self._exchange(current, headers, sink)
+            except _BodyCap:
+                return current
+            if result.status in REDIRECT_STATUSES:
+                location = _header(result.headers, "Location")
+                if not location:
+                    raise EarthdataError(f"redirect from {_hostname(current)} had no Location header")
+                current = urljoin(current, location.strip())
+                continue
+            if result.status in AUTH_STATUSES:
+                raise EarthdataRejected(
+                    f"NASA Earthdata rejected the request (HTTP {result.status}) for host {_hostname(current)}. "
+                    "The token was not printed."
+                )
+            if result.status not in SUCCESS_STATUSES:
+                raise EarthdataError(f"NASA Earthdata returned HTTP {result.status} for host {_hostname(current)}")
+            return current
+        raise EarthdataError(f"stopped after {self.max_redirects} redirects from {_hostname(url)}")
+
     def get_bytes(self, url: str, *, extra: Mapping[str, str] | None = None) -> bytes:
         return self.request(url, extra=extra).body
 
@@ -573,6 +607,32 @@ def _rewind(sink: BinaryIO | None) -> None:
         return
     sink.seek(0)
     sink.truncate()
+
+
+class _BodyCap(Exception):
+    """The range body was larger than the resolve cap. Not an error message."""
+
+
+class _CapSink:
+    """Accept a short body. Raise ``_BodyCap`` once ``limit`` bytes are passed."""
+
+    def __init__(self, limit: int):
+        self.limit = limit
+        self.n = 0
+
+    def write(self, data: bytes) -> int:
+        self.n += len(data)
+        if self.n > self.limit:
+            raise _BodyCap()
+        return len(data)
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        self.n = 0
+        return 0
+
+    def truncate(self, size: int | None = None) -> int:
+        self.n = 0
+        return 0
 
 
 def _ensure_api_path() -> None:

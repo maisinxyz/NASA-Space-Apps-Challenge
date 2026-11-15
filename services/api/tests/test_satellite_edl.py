@@ -109,6 +109,19 @@ def test_authorization_only_on_https_earthdata_hosts():
     assert "Authorization" not in clear
 
 
+def test_resolve_stops_at_the_signed_url_and_caps_the_body():
+    scripted = Scripted([
+        (302, {"Location": S3}, b""),
+        (200, {}, b"x" * 5000),
+    ])
+    resolved = _client(scripted).resolve(EARTH, cap=64)
+    assert resolved == S3
+    assert scripted.seen[0][1]["Authorization"] == f"Bearer {TOKEN}"
+    assert scripted.seen[0][1]["Range"] == "bytes=0-0"
+    assert "Authorization" not in scripted.seen[1][1]
+    assert TOKEN not in resolved
+
+
 def test_redirect_readds_bearer_only_on_earthdata():
     scripted = Scripted([
         (302, {"Location": NSIDC}, b""),

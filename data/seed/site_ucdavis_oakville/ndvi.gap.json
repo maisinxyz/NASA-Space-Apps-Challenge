@@ -1,0 +1,23 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ucdavis_oakville",
+ "product": "ndvi",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "HLSL30",
+   "version": "2.0",
+   "title": "HLS Landsat Operational Land Imager Surface Reflectance and TOA Brightness Daily Global 30m v2.0",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSL30"
+  },
+  {
+   "short_name": "HLSS30",
+   "version": "2.0",
+   "title": "HLS Sentinel-2 Multi-spectral Instrument Surface Reflectance Daily Global 30m v2.0",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSS30"
+  }
+ ],
+ "reason": "NASA Earthdata rejected the request (HTTP 401) for host cmr.earthdata.nasa.gov. The token was not printed. No granule was stored. weekly is null. This file is a gap record, not a measurement."
+}
