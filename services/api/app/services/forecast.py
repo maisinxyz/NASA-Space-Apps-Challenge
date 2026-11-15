@@ -107,6 +107,13 @@ def prepare(site_id: str, body: dict) -> Prepared:
         raise ApiError("INVALID_INPUT", "Forecast body must be a JSON object.")
     req = _request(body)
     daily, power_mode, soil_summary, info = base(site_id)
+    # The KPU point is a SoilGrids no-data cell. A nearby mapped cell is an
+    # explicitly identified proxy, used only when a field has no soil test.
+    if soil_summary is None and site_id == "site_kpu_langley":
+        proxy = seeds.SEED_DIR / site_id / "soil_nearby_proxy.json"
+        if proxy.is_file():
+            soil_summary = json.loads(proxy.read_text(encoding="utf-8"))["summary"]
+            soil_summary = {**soil_summary, "nearby_proxy": True}
     catalog = load_catalog()
     scenario = _scenario(req)
     weather = _historical_weather(daily)
@@ -164,7 +171,17 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
                     planted.append(slot.crop_id)
     outlook = build_climate_outlook(prepared.info.get("id", _site_id(prepared)), prepared.scenario.preset)
     exposure = exposure_report(_site_id(prepared), ",".join(planted) if planted else None)
-    limited = any(fn(_site_id(prepared)) is None for fn in (
+    proxy_used = bool(prepared.soil_summary and prepared.soil_summary.get("nearby_proxy")) and any(
+        item.field.soil_override is None for item in prepared.fields
+    )
+    if proxy_used:
+        # Soil-driven model outputs depend on an assumed transfer from a nearby
+        # cell. Do not present those strategy numbers as local measurements.
+        for field_doc, field_run in zip(field_docs, prepared.fields):
+            if field_run.field.soil_override is None:
+                _mark_proxy_assumptions(field_doc)
+        _mark_proxy_assumptions(rollup)
+    limited = proxy_used or any(fn(_site_id(prepared)) is None for fn in (
         seeds.load_ndvi, seeds.load_smap, seeds.load_ecostress, seeds.load_grace, seeds.load_dem,
     ))
     return {
@@ -200,6 +217,17 @@ def _site_id(prepared: Prepared) -> str:
     return prepared.site_id
 
 
+def _mark_proxy_assumptions(value) -> None:
+    if isinstance(value, dict):
+        if value.get("basis") in ("modeled", "derived") and "unit" in value:
+            value["basis"] = "assumed"
+        for child in value.values():
+            _mark_proxy_assumptions(child)
+    elif isinstance(value, list):
+        for child in value:
+            _mark_proxy_assumptions(child)
+
+
 def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> dict:
     req = prepared.req
     fits = [farm_fit(plan, sim, _req_for_field(req, field_run.field), prepared.catalog) for plan, sim in zip(field_run.plans, simulations)]
@@ -215,6 +243,14 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
         flags = strategy_flags(
             plan.strategy_id, plan, sim, req, prepared.catalog, _site_id(prepared),
         )
+        if prepared.soil_summary and prepared.soil_summary.get("nearby_proxy") and field_run.field.soil_override is None:
+            flags.append({
+                "id": f"{plan.strategy_id}_soil_proxy",
+                "strategy_id": plan.strategy_id,
+                "severity": "verify",
+                "text": "Soil inputs use a nearby SoilGrids cell, not a field measurement; check a local soil test.",
+                "trigger": {"layer": "soil", "rule": "nearby_soil_proxy"},
+            })
         if income is None and not any(flag["trigger"]["rule"] == "missing_price" for flag in flags):
             flags.append({
                 "id": f"{plan.strategy_id}_income_missing",
@@ -480,6 +516,14 @@ def _assumptions(prepared: Prepared) -> list[str]:
         "Farm rollup series are area-weighted averages of the field percentiles, not a new ensemble.",
         "Sensitivity cells use the rain and temperature axis alone. Seasonal rain from the request is not added on that grid.",
     ]
+    if prepared.soil_summary and prepared.soil_summary.get("nearby_proxy") and any(
+        field.field.soil_override is None for field in prepared.fields
+    ):
+        lines.append(
+            "KPU's SoilGrids point has no values. Fields without a soil test use an assumed "
+            "nearby SoilGrids proxy at 49.109, -122.639, about 470 m away; this is not a "
+            "field measurement. Check it with a local soil test."
+        )
     preset = SITE_PRESETS.get(_site_id(prepared))
     if preset is not None:
         lines.append(

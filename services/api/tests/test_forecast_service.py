@@ -120,3 +120,25 @@ def test_cache_round_trip_keeps_bytes():
     doc = forecast("site_usda_barc", BODY, members=2)
     raw = json.dumps(doc, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
     assert json.loads(raw)["site_id"] == "site_usda_barc"
+
+
+@pytest.mark.parametrize("site_id,request_name", [
+    ("site_ubc_farm", "ubc-request.json"),
+    ("site_kpu_langley", "kpu-request.json"),
+])
+def test_demo_site_forecasts_use_three_strategies(site_id, request_name, monkeypatch):
+    from pathlib import Path
+
+    monkeypatch.setenv("OFFLINE", "1")
+    root = Path(__file__).resolve().parents[3]
+    body = json.loads((root / "apps/web/lib/forecast" / request_name).read_text())
+    clear_forecast_cache()
+    doc = forecast(site_id, body, members=1)
+    assert all(len(field["strategies"]) == 3 for field in doc["fields"])
+    if site_id == "site_kpu_langley":
+        assert doc["data_mode"] == "limited_data"
+        assert any("nearby SoilGrids proxy" in note for note in doc["assumptions"])
+        for field in doc["fields"]:
+            for strategy in field["strategies"]:
+                assert any(flag["trigger"]["rule"] == "nearby_soil_proxy" for flag in strategy["review_flags"])
+                assert strategy["trajectories"]["water_demand_mm"]["basis"] == "assumed"
