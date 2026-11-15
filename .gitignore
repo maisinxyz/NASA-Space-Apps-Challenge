@@ -38,3 +38,6 @@ data/uploads/
 # Local agent tooling (Claude Code worktrees; Munder Difflin per-agent hooks, see docs/munder-difflin.md)
 .claude/worktrees/
 .claude/settings.local.json
+
+# Earthdata token file dropped in the repo root: never commit
+EarthDataToken*
