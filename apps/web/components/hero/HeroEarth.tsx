@@ -1023,14 +1023,15 @@ export function HeroEarth(props: Props) {
         </Suspense>
       </Canvas>
       {props.zoomEnabled && (
-        <div data-camera-controls className="absolute right-6 bottom-16 z-[120] max-w-[21rem] rounded-xl border border-white/20 bg-black/85 p-3 text-xs text-white" role="group" aria-label="Earth camera controls">
-          <p className="mb-2">Arrow keys rotate · + / − zoom</p>
+        <details data-camera-controls className="absolute right-6 bottom-[140px] z-[120] max-w-[21rem] rounded-xl border border-white/20 bg-black/85 p-3 text-xs text-white">
+          <summary className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">Earth camera controls</summary>
+          <p className="mt-2 mb-2">Arrow keys rotate · + / − zoom</p>
           <div className="flex flex-wrap gap-1">
             {([ ["pan-left", "Rotate left"], ["pan-right", "Rotate right"], ["pan-up", "Rotate up"], ["pan-down", "Rotate down"], ["zoom-in", "Zoom in"], ["zoom-out", "Zoom out"] ] as const).map(([action, label]) => (
               <button key={action} type="button" onClick={() => moveCamera(action)} className="rounded border border-white/25 px-2 py-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{label}</button>
             ))}
           </div>
-        </div>
+        </details>
       )}
       {/* Vignette: darkens the frame edges so the Earth holds the centre. */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.32) 100%)" }} aria-hidden />

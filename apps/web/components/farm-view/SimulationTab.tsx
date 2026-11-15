@@ -9,7 +9,7 @@ import { CompareTray } from "@/components/farm/CompareTray";
 import { EvidenceBody, FieldCard } from "@/components/farm/Inspector";
 import { ScenarioClock, SimulateBody } from "@/components/farm/ScenarioPanel";
 import { setMode, MapSettings } from "@/components/farm/TwinPanel";
-import { useTwin } from "@/components/farm/shared";
+import { twinConfig } from "@/lib/farms";
 import type { CameraState, CropLook, Farm, FarmField } from "@/components/globe/types";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { encodeShare } from "@/lib/share";
@@ -77,7 +77,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
   const scenarioId = useAppStore((s) => s.scenarioId);
   const playing = useAppStore((s) => s.scenarioPlaying);
   const fieldId = useAppStore((s) => s.twinFieldId);
-  const twin = useTwin();
+  const twin = twinConfig(farm?.id ?? null);
   const def = scenarioById(scenarioId);
   const pill = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -224,7 +224,7 @@ export function SimulationTab({ props, sim, setSim, embedded = false }: { props:
                   <dt className="text-ink-muted">Fields</dt>
                   <dd>{fields.length} shown</dd>
                   <dt className="text-ink-muted">Model area</dt>
-                  <dd>{twin.simAreaLabel}; the thin outline on the map marks where simulation layers apply.</dd>
+                  <dd>{twin?.simAreaLabel ?? "Model area"}; the thin outline on the map marks where simulation layers apply.</dd>
                 </dl>
               </div>
             )}

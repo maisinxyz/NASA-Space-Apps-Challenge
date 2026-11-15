@@ -107,6 +107,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
   const pointer = useRef<HTMLSpanElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const focused = useRef(false);
+  const focusFrame = useRef<number | null>(null);
   const last = useRef<{ x: number; y: number } | null>(null);
 
   // Follow this farm's pin (not another's: a replaced card keeps its last spot while it leaves).
@@ -120,8 +121,15 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       // Hidden while the pin is round the back of the Earth.
       el.style.visibility = p && t?.id === farm.id ? "visible" : "hidden";
       if (p && t?.id === farm.id && !focused.current) {
-        focused.current = true;
-        closeButton.current?.focus();
+        if (focusFrame.current === null) {
+          focusFrame.current = requestAnimationFrame(() => {
+            focusFrame.current = null;
+            const button = closeButton.current;
+            if (!button || button.closest("[inert]")) return;
+            button.focus({ preventScroll: true });
+            focused.current = document.activeElement === button;
+          });
+        }
       }
       if (!p) return;
       // The card and its button move as one unit; `h` is the whole unit.
@@ -150,7 +158,11 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       el.style.setProperty("--oy", above ? "100%" : "0%");
     };
     place();
-    return trackBus.subscribe(place);
+    const unsubscribe = trackBus.subscribe(place);
+    return () => {
+      unsubscribe();
+      if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+    };
   }, [farm.id]);
 
   // Escape or a press anywhere outside the card (and outside a pin, which swaps the card) closes it.
@@ -160,12 +172,17 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       if (!el || box.current?.contains(el) || el.closest("[data-pin]")) return;
       onClose();
     };
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    };
     window.addEventListener("pointerdown", down, true);
-    window.addEventListener("keydown", key);
+    document.addEventListener("keydown", key, true);
     return () => {
       window.removeEventListener("pointerdown", down, true);
-      window.removeEventListener("keydown", key);
+      document.removeEventListener("keydown", key, true);
     };
   }, [onClose]);
 

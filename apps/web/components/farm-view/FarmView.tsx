@@ -36,13 +36,16 @@ export type FarmViewProps = {
   sim?: SimProps;
   zoneControl?: ReactNode;
   onCamera?(action: CameraAction): void;
+  initialReportOpen?: boolean;
 };
 const WORKSPACE_CSS = `
 .fv-root.fv-workspace{position:absolute;inset:0;z-index:20;padding:16px;pointer-events:none;color:#f2ebdd;font-size:14px;}
+.fv-workspace .fv-panels{display:contents}.fv-workspace .fv-panels[hidden],.fv-workspace .fv-toolbar[hidden]{display:none}
+.fv-workspace .fv-toolbar-shell{min-width:0;pointer-events:auto;display:grid;gap:6px;justify-items:start;}
 .fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:20px;align-items:start;}
 .fv-workspace .fv-title-block{min-width:0;max-width:720px;background:rgba(16,20,18,.86);padding:12px 16px;border-radius:14px;pointer-events:auto;}
 .fv-workspace .fv-title{font-size:clamp(24px,2.4vw,36px);line-height:1.15;overflow-wrap:anywhere;}
-.fv-workspace .fv-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;align-content:start;pointer-events:auto;max-height:calc(100dvh - 240px);overflow:auto;padding:2px;}
+.fv-workspace .fv-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;align-content:start;pointer-events:auto;max-height:calc(100dvh - 280px);overflow:auto;padding:2px;}
 .fv-workspace .fv-bar{height:auto;min-height:40px;flex-wrap:wrap;border-radius:12px;}
 .fv-workspace .fv-observations{width:100%;padding:10px 12px;border-radius:12px;font-size:13px;}
 .fv-workspace .fv-observations dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
@@ -73,9 +76,11 @@ export function FarmView({
   sim: simProps,
   zoneControl,
   onCamera,
+  initialReportOpen = false,
 }: FarmViewProps) {
   const reduced = !!useReducedMotion();
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(initialReportOpen);
+  const [toolbarOpen, setToolbarOpen] = useState(true);
   const [sim, setSimState] = useState<SimState>(() => {
     const hash = typeof window === "undefined" ? "" : window.location.hash;
     return decodeShare(hash)?.farm === useAppStore.getState().farmId
@@ -84,6 +89,15 @@ export function FarmView({
   });
   const reportBefore = useRef(false);
   const panelsHidden = useAppStore((s) => s.panelsHidden);
+  const restorePanels = useRef<HTMLButtonElement>(null);
+  const hidePanels = useRef<HTMLButtonElement>(null);
+  const previousPanelsHidden = useRef(panelsHidden);
+  useEffect(() => {
+    if (previousPanelsHidden.current !== panelsHidden) {
+      (panelsHidden ? restorePanels : hidePanels).current?.focus();
+      previousPanelsHidden.current = panelsHidden;
+    }
+  }, [panelsHidden]);
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const farmId = useAppStore((s) => s.farmId);
   // Preserve upstream explore-only entry fix: absence of a twin is supported here.
@@ -123,15 +137,16 @@ export function FarmView({
   return (
     <div className="fv-root fv-workspace" data-testid="farm-view">
       <style>{FV_CSS + WORKSPACE_CSS}</style>
-      {panelsHidden ? (
+      {panelsHidden && (
         <FvButton
+          ref={restorePanels}
           className="fv-glass fv-restore"
           onClick={() => useAppStore.setState({ panelsHidden: false })}
         >
           Show panels
         </FvButton>
-      ) : (
-        <>
+      )}
+      <div className="fv-panels" hidden={panelsHidden}>
           <div className="fv-heading">
             <div className="fv-title-block">
               <FvButton
@@ -142,6 +157,7 @@ export function FarmView({
               >
                 ← Globe
               </FvButton>
+              <FvButton ref={hidePanels} className="fv-glass fv-seg" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>
               <h1 className="fv-title">{farmName}</h1>
               <p className="fv-sub">
                 {place}
@@ -158,7 +174,9 @@ export function FarmView({
                 <SimulationTab props={simProps} sim={sim} setSim={setSim} />
               )}
             </div>
-            <div className="fv-toolbar">
+            <div className="fv-toolbar-shell">
+              <FvButton className="fv-glass fv-seg" aria-expanded={toolbarOpen} aria-controls="farm-controls" onClick={() => setToolbarOpen(!toolbarOpen)}>{toolbarOpen ? "Hide farm controls" : "Show farm controls"}</FvButton>
+            <div id="farm-controls" className="fv-toolbar" hidden={!toolbarOpen}>
               <div
                 className="fv-glass fv-bar"
                 role="radiogroup"
@@ -246,6 +264,7 @@ export function FarmView({
                   {zoneControl}
                 </div>
               )}
+            </div>
             </div>
           </div>
           {!sim.open && (
@@ -372,8 +391,7 @@ export function FarmView({
             )}
             <InvestigationControls simulationAvailable={!!simProps} />
           </div>
-        </>
-      )}
+      </div>
       <p className="sr-only">
         {reduced ? "Reduced motion enabled." : ""}This tool supports, and does
         not replace, local agronomic expertise.

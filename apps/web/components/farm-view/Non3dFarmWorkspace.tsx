@@ -58,8 +58,11 @@ export function Non3dFarmWorkspace({
           Show panels
         </button>
       ) : (
-        <SimulationTab props={sim} sim={state} setSim={setState} embedded />
+        <button type="button" className="mb-3 rounded border px-4 py-2" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</button>
       )}
+      <div hidden={hidden}>
+        <SimulationTab props={sim} sim={state} setSim={setState} embedded />
+      </div>
       <div className="mt-4">
         <InvestigationControls />
       </div>

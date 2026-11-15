@@ -2,15 +2,34 @@
 import { type ReactNode, useId } from "react";
 
 import type { CropLook } from "@/components/globe/types";
-import { type TwinConfig, twinConfig } from "@/lib/farms";
+import { farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { useAppStore } from "@/lib/store";
 import { CROP_LABELS, MONTHS } from "@/lib/twin/rotations";
 
-/** The current farm's twin. Only call inside the twin workspace (GlobeHome renders it only for twin farms). */
+/** The current farm's twin. Returns the twin config if configured, or a safe stub for explore-only farms. */
 export function useTwin(): TwinConfig {
   const farmId = useAppStore((s) => s.farmId);
   const twin = twinConfig(farmId);
-  if (!twin) throw new Error(`No twin config for farm "${farmId}"`);
+  if (!twin) {
+    const explore = farmId ? farmById(farmId) : null;
+    if (explore) {
+      return {
+        fields: [],
+        phases: {},
+        rotations: [],
+        simBbox: [0, 0, 0, 0],
+        simAreaLabel: explore.name,
+        labels: [explore.owner],
+        attribution: [explore.country],
+        cropLabels: CROP_LABELS,
+        outlineSource: "osm",
+        outlineDate: "",
+        overlayMask: [],
+        rotationSet: "ny-dairy",
+      };
+    }
+    throw new Error(`No twin config for farm "${farmId}"`);
+  }
   return twin;
 }
 

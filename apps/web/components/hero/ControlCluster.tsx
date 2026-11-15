@@ -3,7 +3,6 @@
 // hover or focus. Maps, Layers and Settings open one shared popover that morphs between panels (same place, same
 // frame, content crossfades); it grows out of its trigger with a mask reveal and goes back into it on close.
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import type { Farm } from "@/components/globe/types";
@@ -142,7 +141,6 @@ export function ControlCluster({
   settings: HeroSettings;
   onSettings(next: HeroSettings): void;
 }) {
-  const router = useRouter();
   const reduced = useReducedMotion();
   const [open, setOpen] = useState<Panel | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -150,7 +148,7 @@ export function ControlCluster({
   const triggers = useRef<Partial<Record<Panel, HTMLElement | null>>>({});
 
   useEffect(() => {
-    if (open) panel.current?.focus();
+    if (open) panel.current?.focus({ preventScroll: true });
   }, [open]);
 
   // Escape and outside clicks close; Escape returns focus to the trigger.
@@ -182,9 +180,12 @@ export function ControlCluster({
     <div ref={root} className="relative flex flex-col" style={{ gap: GAP }}>
       {ORDER.map((p) =>
         p === "scan" ? (
-          <IconButton key={p} label="Scan a farm" onClick={() => router.push("/scan")}>
-            <ScanIcon />
-          </IconButton>
+          <div key={p} className="relative">
+            <button type="button" disabled aria-label="Scan a farm — coming soon" className="grid h-10 w-10 place-items-center rounded-[10px] text-white/40">
+              <ScanIcon />
+            </button>
+            {!open && <span className="pointer-events-none absolute top-1/2 right-[calc(100%+8px)] -translate-y-1/2 whitespace-nowrap text-[12px] text-white/70">Scan a farm — coming soon</span>}
+          </div>
         ) : (
           <div key={p} ref={(el) => void (triggers.current[p] = el)}>
             <IconButton label={TITLES[p]} active={open === p} aria-expanded={open === p} aria-controls="hero-popover" onClick={() => toggle(p)}>
@@ -203,8 +204,8 @@ export function ControlCluster({
             role="dialog"
             aria-label={TITLES[open]}
             layout={!reduced}
-            className="absolute top-0 right-[calc(100%+10px)] w-[19rem] overflow-hidden rounded-[14px] border border-white/[0.1] bg-[#05060a]/90"
-            style={{ transformOrigin: `100% ${originY}px` }}
+            className="absolute right-[calc(100%+10px)] w-[19rem] overflow-x-hidden overflow-y-auto rounded-[14px] border border-white/[0.1] bg-[#05060a]/90"
+            style={{ top: open === "maps" ? "calc(50% - min(40vh, 320px))" : 0, maxHeight: "min(80vh, 640px)", transformOrigin: `100% ${originY}px` }}
             initial={{ opacity: 0, scale: popover.fromScale, clipPath: "inset(0 0 0 100% round 14px)" }}
             animate={{ opacity: 1, scale: 1, clipPath: "inset(0 0 0 0% round 14px)", transition: { duration: popover.openMs / 1000, ease: ease.inOut } }}
             exit={{ opacity: 0, scale: popover.fromScale, clipPath: "inset(0 0 0 100% round 14px)", transition: { duration: popover.closeMs / 1000, ease: ease.out } }}

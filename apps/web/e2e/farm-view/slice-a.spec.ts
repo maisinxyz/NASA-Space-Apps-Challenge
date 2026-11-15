@@ -177,3 +177,22 @@ test(`expanded preview stays above bottom tools in compare mode: ${compare}`, as
   await page.screenshot({ path: `/tmp/fieldtwin-merge-shots/farm-expanded-1280x720-${compare}.png` });
 });
 }
+
+
+test("hidden farm controls and panels restore their open state", async ({ page }) => {
+  await openFarm(page);
+  await tid(page, "condition-pill-rainfall").click();
+  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+  await page.getByRole("button", { name: "Hide farm controls", exact: true }).click();
+  await expect(tid(page, "condition-card-rainfall")).toBeHidden();
+  await page.getByRole("button", { name: "Show farm controls", exact: true }).click();
+  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+  await tid(page, "twin-button").click();
+  const input = page.getByRole("textbox", { name: "Ask the synthetic preview" });
+  await input.fill("Keep this question");
+  await page.getByRole("button", { name: "Hide panels", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Show panels", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Show panels", exact: true }).click();
+  await expect(input).toHaveValue("Keep this question");
+  await expect(tid(page, "condition-card-rainfall")).toBeVisible();
+});

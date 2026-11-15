@@ -33,6 +33,7 @@ import { GlobeChrome } from "@/components/hero/GlobeChrome";
 import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
@@ -750,6 +751,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           animate={{ opacity: 1 }}
           transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
         >
+          <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
           <FarmView
             key={farm.id}
             farmName={farm.name}
@@ -760,6 +762,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
             zoneControl={inTwin ? <ZoneToggle /> : undefined}
             sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
           />
+          </ErrorBoundary>
         </motion.div>
       )}
 

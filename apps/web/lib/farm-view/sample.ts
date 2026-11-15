@@ -19,11 +19,11 @@ export const underStress = (f: SampleField) => f.moisture < STRESS_LINE;
 export const reportSummary = () => `${SAMPLE_FIELDS.filter(underStress).length} of ${SAMPLE_FIELDS.length} fields are under the ${STRESS_LINE}% stress line.`;
 
 export type ConditionId = "rainfall" | "moisture" | "vigor" | "heat";
-export const CONDITIONS: readonly { id: ConditionId; label: string; value: string }[] = [
-  { id: "rainfall", label: "Rainfall", value: "64 mm" },
-  { id: "moisture", label: "Soil moisture", value: "41%" },
-  { id: "vigor", label: "Crop vigor", value: "0.48" },
-  { id: "heat", label: "Heat & frost", value: "9 days" },
+export const CONDITIONS: readonly { id: ConditionId; label: string; value: string; period: string }[] = [
+  { id: "rainfall", label: "Rainfall", value: "64 mm", period: "Past 30 days" },
+  { id: "moisture", label: "Soil moisture", value: "41%", period: "Past 30 days" },
+  { id: "vigor", label: "Crop vigor", value: "0.48", period: "Past 30 days" },
+  { id: "heat", label: "Heat & frost", value: "9 days", period: "Past 30 days" },
 ];
 
 /** Condition card copy (design-spec §2.4). Charts are not drawn yet; every card carries "Sample data". */
