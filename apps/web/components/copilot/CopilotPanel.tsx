@@ -17,7 +17,7 @@ import { CopilotComposer, type PlaceNavigation } from "./CopilotComposer";
 
 const SLOW_MS = 8000;
 // Light tint so the photo shows; message bubbles carry their own dark fill for contrast.
-const GUS_BG = "linear-gradient(rgba(17,26,32,.35), rgba(17,26,32,.35)), url(/gus/chat-bg.jpg) center / cover";
+const GUS_BG = "linear-gradient(rgba(17,26,32,.35), rgba(17,26,32,.35)), url(/gus/chat-bg.jpg) 25% center / cover"; // 25%: the farmer sits left of the photo's centre
 
 export function useScreenState(): ScreenState | null {
   const farmId = useAppStore((s) => s.farmId);
@@ -76,7 +76,7 @@ export function CopilotPanel({ navigation, inline = false }: {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img src="/gus/avatar.jpg" alt="Gus" width={64} height={64} style={{ borderRadius: "50%", objectFit: "cover", objectPosition: "62% 30%", border: "2px solid rgba(255,255,255,.7)", flex: "none" }} />
-          <h2 className="fv-rtitle" style={{ margin: 0, textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 700, color: "#8B1A1A", textShadow: "0 0 6px rgba(255,255,255,.7)" }}>Advice from Gus</h2>
+          <h2 className="fv-rtitle" style={{ margin: 0, textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 700, color: "#FFD84D", WebkitTextStroke: "1px #000", textShadow: "0 2px 4px rgba(0,0,0,.9)" }}>Advice from Gus</h2>
         </div>
         <FvButton className="ff-link" onClick={close} data-testid="copilot-close">Minimize</FvButton>
       </div>
