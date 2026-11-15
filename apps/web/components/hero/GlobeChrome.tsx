@@ -23,8 +23,8 @@ export function GlobeAssistant({ navigation, onAsk }: {
     }
   };
   return (
-    <section aria-label="FieldTwin assistant" className="rounded-2xl border border-white/20 bg-[#111a20]/95 p-3 text-white shadow-xl">
-      <h2 className="mb-2 px-1 text-sm font-semibold">FieldTwin assistant</h2>
+    <section aria-label="Stardew Earth assistant" className="rounded-2xl border border-white/20 bg-[#111a20]/95 p-3 text-white shadow-xl">
+      <h2 className="mb-2 px-1 text-sm font-semibold">Stardew Earth assistant</h2>
       {question && <div className="mb-3 px-1 text-sm" aria-live="polite">
         <p className="mb-2">Which farm should I use to answer “{question}”?</p>
         <div className="flex gap-2">
@@ -53,7 +53,7 @@ export function GlobeChrome({ navigation, onAsk, controls }: {
 }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
-      <h1 className="sr-only">FieldTwin</h1>
+      <h1 className="sr-only">Stardew Earth</h1>
       <details className="pointer-events-auto absolute left-4 top-4 max-w-[calc(100%-32px)] text-white">
         <summary className="w-fit cursor-pointer list-none rounded-full border border-white/25 bg-[#111a20]/95 px-4 py-2 text-sm" aria-label="Globe menu">☰ Menu</summary>
         <div className="mt-2 w-fit rounded-xl border border-white/20 bg-[#111a20]/95 p-3">{controls}</div>

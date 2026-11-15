@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fieldtwin
+    name: stardew-earth
     runtime: docker
     plan: free
     healthCheckPath: /api/v1/health
