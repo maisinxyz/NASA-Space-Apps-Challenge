@@ -1,0 +1,6012 @@
+{
+ "site_id": "site_usda_barc",
+ "schema_version": "1.2.0",
+ "pipeline_version": "contract-fixture",
+ "request_hash": "25e2f2002405700ffc1ecf6194e31b9019069674edabfb4d8c5351b6977cc4ca",
+ "horizon_years": 10,
+ "scenario": {
+  "preset": "baseline",
+  "rain_scale_pct": 0.0,
+  "temp_offset_c": 0.0,
+  "rain_scale_by_season": {},
+  "label": "modeled scenario, not a forecast",
+  "note": "built from observed years",
+  "ramp": {
+   "shape": "linear",
+   "years": 10,
+   "basis": "assumed"
+  }
+ },
+ "data_mode": "mock",
+ "disclaimer": "This tool supports, and does not replace, local agronomic expertise.",
+ "support_sentence": "This tool supports, and does not replace, local agronomic expertise.",
+ "climate_outlook": {
+  "site_id": "site_usda_barc",
+  "scenario": {
+   "preset": "baseline",
+   "rain_scale_pct": 0.0,
+   "temp_offset_c": 0.0,
+   "rain_scale_by_season": {},
+   "label": "modeled scenario, not a forecast",
+   "note": "built from observed years",
+   "ramp": {
+    "shape": "linear",
+    "years": 10,
+    "basis": "assumed"
+   }
+  },
+  "data_mode": "mock",
+  "seasonal_temperature": {
+   "significance_alpha": {
+    "value": 0.05,
+    "unit": "1",
+    "basis": "assumed",
+    "confidence": "low"
+   },
+   "winter": {
+    "observed": {
+     "slope": {
+      "value": 0.0,
+      "unit": "degC/year",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "mk_p_value": {
+      "value": 1.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "significant": false
+    },
+    "scenario_mean": {
+     "value": 0.0,
+     "unit": "degC",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "spring": {
+    "observed": {
+     "slope": {
+      "value": 0.0,
+      "unit": "degC/year",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "mk_p_value": {
+      "value": 1.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "significant": false
+    },
+    "scenario_mean": {
+     "value": 0.0,
+     "unit": "degC",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "summer": {
+    "observed": {
+     "slope": {
+      "value": 0.0,
+      "unit": "degC/year",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "mk_p_value": {
+      "value": 1.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "significant": false
+    },
+    "scenario_mean": {
+     "value": 0.0,
+     "unit": "degC",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "fall": {
+    "observed": {
+     "slope": {
+      "value": 0.0,
+      "unit": "degC/year",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "mk_p_value": {
+      "value": 1.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "significant": false
+    },
+    "scenario_mean": {
+     "value": 0.0,
+     "unit": "degC",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   }
+  },
+  "heat_stress_days": [
+   {
+    "crop_id": "crop_maize",
+    "heat_limit_c": {
+     "value": 35.0,
+     "unit": "degC",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "days": {
+     "metric": "heat_stress_days",
+     "unit": "days",
+     "basis": "assumed",
+     "confidence": "low",
+     "needs_local_review": true,
+     "points": [
+      {
+       "year": 1,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 2,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 3,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 4,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 5,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 6,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 7,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 8,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 9,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      },
+      {
+       "year": 10,
+       "p50": 0.0,
+       "p10": 0.0,
+       "p90": 0.0
+      }
+     ]
+    }
+   }
+  ],
+  "frost_windows": {
+   "last_spring_frost": {
+    "baseline_doy": {
+     "value": 0.0,
+     "unit": "doy",
+     "basis": "assumed",
+     "confidence": "low",
+     "p10": 0.0,
+     "p50": 0.0,
+     "p90": 0.0
+    },
+    "scenario_shift_days": {
+     "value": 0.0,
+     "unit": "days",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "first_fall_frost": {
+    "baseline_doy": {
+     "value": 0.0,
+     "unit": "doy",
+     "basis": "assumed",
+     "confidence": "low",
+     "p10": 0.0,
+     "p50": 0.0,
+     "p90": 0.0
+    },
+    "scenario_shift_days": {
+     "value": 0.0,
+     "unit": "days",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "frost_free_season_days": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "days",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "days",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   }
+  },
+  "rainfall": {
+   "seasonal_totals": {
+    "winter": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "spring": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "summer": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "fall": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    }
+   },
+   "extreme_rain_days": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "days/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "days/year",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   },
+   "multi_day_events": {
+    "baseline": {
+     "value": 0.0,
+     "unit": "events/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "scenario": {
+     "value": 0.0,
+     "unit": "events/year",
+     "basis": "assumed",
+     "confidence": "low"
+    }
+   }
+  },
+  "et_and_soil_moisture": {
+   "et0_trend": {
+    "slope": {
+     "value": 0.0,
+     "unit": "mm/year",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "mk_p_value": {
+     "value": 1.0,
+     "unit": "1",
+     "basis": "assumed",
+     "confidence": "low"
+    },
+    "significant": false
+   },
+   "smap_root_zone_anomaly": {
+    "available": false,
+    "resolution_note": "No SMAP seed in this fixture. Not filled with a stand-in.",
+    "weekly": null
+   },
+   "ecostress_et": {
+    "available": false,
+    "resolution_note": "No ECOSTRESS seed in this fixture. Not filled with a stand-in.",
+    "value": null
+   }
+  },
+  "water_balance": {
+   "unit": "mm",
+   "basis": "assumed",
+   "confidence": "low",
+   "weekly_mm": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "seasonal": {
+    "winter": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "spring": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "summer": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "fall": {
+     "baseline": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     },
+     "scenario": {
+      "value": 0.0,
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  "groundwater": {
+   "available": false,
+   "scored": false,
+   "resolution_note": "No GRACE seed in this fixture. Groundwater is regional context and is never scored.",
+   "trend": null
+  },
+  "sources": [
+   {
+    "name": "FieldTwin contract fixture",
+    "role": "weather",
+    "license": "Mock data generated by FieldTwin fixtures. Not real.",
+    "attribution": "Shape example for contract v1.2.0. Not a dataset.",
+    "basis": "assumed"
+   }
+  ]
+ },
+ "exposure": {
+  "site_id": "site_usda_barc",
+  "data_mode": "mock",
+  "crops": [
+   "crop_maize"
+  ],
+  "vulnerable_seasons": [
+   {
+    "crop_id": "crop_maize",
+    "growth_stage": "mid",
+    "weeks": [],
+    "hazards": []
+   }
+  ],
+  "bare_field_windows": [
+   {
+    "weeks": [],
+    "source": "rotation_plan",
+    "note": "Contract fixture placeholder. Not an engine result and not for the demo."
+   }
+  ],
+  "zones": [],
+  "resolution_notes": [
+   "No terrain package in this fixture, so no zone polygons were invented."
+  ],
+  "caveats": [
+   "Contract fixture placeholder. Not an engine result and not for the demo.",
+   "Zones are empty because this fixture has no terrain."
+  ]
+ },
+ "fields": [
+  {
+   "field_id": "field_1",
+   "name": "Contract fixture field",
+   "area_ha": 1.0,
+   "strategies": [
+    {
+     "id": "rot_existing",
+     "role": "existing",
+     "label": "Existing rotation",
+     "cycle_years": 1,
+     "plan": [
+      {
+       "year_index": 1,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 2,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 3,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 4,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 5,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 6,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 7,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 8,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 9,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      },
+      {
+       "year_index": 10,
+       "season": "summer",
+       "crop_id": "crop_maize"
+      }
+     ],
+     "trajectories": {
+      "soil_organic_index": {
+       "metric": "soil_organic_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "n_balance": {
+       "metric": "n_balance",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "n_balance_kg_ha": {
+       "metric": "n_balance_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fixed_share": {
+       "metric": "n_fixed_share",
+       "unit": "1",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "infiltration_index": {
+       "metric": "infiltration_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "runoff_index": {
+       "metric": "runoff_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "pest_pressure_index": {
+       "metric": "pest_pressure_index",
+       "unit": "index",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "bare_weeks": {
+       "metric": "bare_weeks",
+       "unit": "weeks/yr",
+       "basis": "derived",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "water_demand_mm": {
+       "metric": "water_demand_mm",
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "irrigation_need_mm": {
+       "metric": "irrigation_need_mm",
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      }
+     },
+     "farm_fit": {
+      "water_vs_quota": {
+       "irrigation_need_p50": {
+        "value": 0.0,
+        "unit": "mm",
+        "basis": "assumed",
+        "confidence": "low",
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0
+       },
+       "irrigation_need_p90": {
+        "value": 0.0,
+        "unit": "mm",
+        "basis": "assumed",
+        "confidence": "low",
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0
+       },
+       "quota_mm_per_season": 100,
+       "status": "within"
+      },
+      "forage_suitability": {
+       "value": 0.0,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low"
+      },
+      "operational_fit": {
+       "value": 0.0,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low"
+      },
+      "market_fit": {
+       "value": 3.0,
+       "unit": "1",
+       "basis": "assumed",
+       "confidence": "low"
+      }
+     },
+     "scorecard": [
+      {
+       "criterion": "nutrient_cycling",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "erosion_risk",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "organic_matter",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "pest_disruption",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "water_use",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "forage_potential",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "market_suitability",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      }
+     ],
+     "estimates": {
+      "yield_t_ha": [
+       {
+        "crop_id": "crop_maize",
+        "series": {
+         "metric": "yield_t_ha",
+         "unit": "t/ha",
+         "basis": "assumed",
+         "confidence": "low",
+         "needs_local_review": true,
+         "points": [
+          {
+           "year": 0,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 1,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 2,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 3,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 4,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 5,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 6,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 7,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 8,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 9,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 10,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          }
+         ]
+        }
+       }
+      ],
+      "forage_yield_t_ha": {
+       "metric": "forage_yield_t_ha",
+       "unit": "t/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "soil_loss_t_ha_yr": {
+       "metric": "soil_loss_t_ha_yr",
+       "unit": "t/ha/yr",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fertilizer_need_kg_ha": {
+       "metric": "n_fertilizer_need_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fertilizer_saved_kg_ha": {
+       "metric": "n_fertilizer_saved_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "income_estimate": {
+       "value": 0.0,
+       "unit": "CAD",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      }
+     },
+     "vulnerable_seasons": [],
+     "evidence_card": {
+      "rotation_id": "rot_existing",
+      "why_suggested": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "evidence": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "evidence_items": [
+       {
+        "label": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed",
+        "source": "contract fixture"
+       }
+      ],
+      "benefits": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "information_gaps": [
+       "Engine output is not in this fixture."
+      ],
+      "risks_for_local_review": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+     },
+     "review_flags": [
+      {
+       "id": "flag_placeholder",
+       "strategy_id": "rot_existing",
+       "severity": "info",
+       "text": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "trigger": {
+        "layer": "contract_fixture",
+        "rule": "placeholder"
+       }
+      }
+     ]
+    },
+    {
+     "id": "rot_alt_1",
+     "role": "alternative",
+     "label": "Alternative",
+     "cycle_years": 1,
+     "plan": [
+      {
+       "year_index": 1,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 2,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 3,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 4,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 5,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 6,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 7,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 8,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 9,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      },
+      {
+       "year_index": 10,
+       "season": "summer",
+       "crop_id": "crop_rye_cover"
+      }
+     ],
+     "trajectories": {
+      "soil_organic_index": {
+       "metric": "soil_organic_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "n_balance": {
+       "metric": "n_balance",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "n_balance_kg_ha": {
+       "metric": "n_balance_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fixed_share": {
+       "metric": "n_fixed_share",
+       "unit": "1",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "infiltration_index": {
+       "metric": "infiltration_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "runoff_index": {
+       "metric": "runoff_index",
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 100.0
+        },
+        {
+         "year": 1,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 2,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 3,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 4,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 5,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 6,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 7,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 8,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 9,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        },
+        {
+         "year": 10,
+         "p50": 100.0,
+         "p10": 100.0,
+         "p90": 100.0
+        }
+       ]
+      },
+      "pest_pressure_index": {
+       "metric": "pest_pressure_index",
+       "unit": "index",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "bare_weeks": {
+       "metric": "bare_weeks",
+       "unit": "weeks/yr",
+       "basis": "derived",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "water_demand_mm": {
+       "metric": "water_demand_mm",
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "irrigation_need_mm": {
+       "metric": "irrigation_need_mm",
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      }
+     },
+     "farm_fit": {
+      "water_vs_quota": {
+       "irrigation_need_p50": {
+        "value": 0.0,
+        "unit": "mm",
+        "basis": "assumed",
+        "confidence": "low",
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0
+       },
+       "irrigation_need_p90": {
+        "value": 0.0,
+        "unit": "mm",
+        "basis": "assumed",
+        "confidence": "low",
+        "p10": 0.0,
+        "p50": 0.0,
+        "p90": 0.0
+       },
+       "quota_mm_per_season": 100,
+       "status": "within"
+      },
+      "forage_suitability": {
+       "value": 0.0,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low"
+      },
+      "operational_fit": {
+       "value": 0.0,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low"
+      },
+      "market_fit": {
+       "value": 3.0,
+       "unit": "1",
+       "basis": "assumed",
+       "confidence": "low"
+      }
+     },
+     "scorecard": [
+      {
+       "criterion": "nutrient_cycling",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "erosion_risk",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "organic_matter",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "pest_disruption",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "water_use",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "forage_potential",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      },
+      {
+       "criterion": "market_suitability",
+       "score": 50,
+       "unit": "index",
+       "basis": "relative",
+       "confidence": "low",
+       "needs_local_review": true,
+       "year10_value": 0,
+       "mean_value": 0,
+       "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "inputs": [
+        {
+         "name": "fixture",
+         "value": 0,
+         "unit": "1",
+         "basis": "assumed"
+        }
+       ]
+      }
+     ],
+     "estimates": {
+      "yield_t_ha": [
+       {
+        "crop_id": "crop_maize",
+        "series": {
+         "metric": "yield_t_ha",
+         "unit": "t/ha",
+         "basis": "assumed",
+         "confidence": "low",
+         "needs_local_review": true,
+         "points": [
+          {
+           "year": 0,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 1,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 2,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 3,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 4,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 5,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 6,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 7,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 8,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 9,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          },
+          {
+           "year": 10,
+           "p50": 0.0,
+           "p10": 0.0,
+           "p90": 0.0
+          }
+         ]
+        }
+       }
+      ],
+      "forage_yield_t_ha": {
+       "metric": "forage_yield_t_ha",
+       "unit": "t/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "soil_loss_t_ha_yr": {
+       "metric": "soil_loss_t_ha_yr",
+       "unit": "t/ha/yr",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fertilizer_need_kg_ha": {
+       "metric": "n_fertilizer_need_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "n_fertilizer_saved_kg_ha": {
+       "metric": "n_fertilizer_saved_kg_ha",
+       "unit": "kg N/ha",
+       "basis": "assumed",
+       "confidence": "low",
+       "needs_local_review": true,
+       "points": [
+        {
+         "year": 0,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 1,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 2,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 3,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 4,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 5,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 6,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 7,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 8,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 9,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        },
+        {
+         "year": 10,
+         "p50": 0.0,
+         "p10": 0.0,
+         "p90": 0.0
+        }
+       ]
+      },
+      "income_estimate": {
+       "value": 0.0,
+       "unit": "CAD",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      }
+     },
+     "vulnerable_seasons": [],
+     "evidence_card": {
+      "rotation_id": "rot_alt_1",
+      "why_suggested": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "evidence": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "evidence_items": [
+       {
+        "label": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed",
+        "source": "contract fixture"
+       }
+      ],
+      "benefits": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "information_gaps": [
+       "Engine output is not in this fixture."
+      ],
+      "risks_for_local_review": [
+       "Contract fixture placeholder. Not an engine result and not for the demo."
+      ],
+      "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+     },
+     "review_flags": [
+      {
+       "id": "flag_placeholder",
+       "strategy_id": "rot_alt_1",
+       "severity": "info",
+       "text": "Contract fixture placeholder. Not an engine result and not for the demo.",
+       "trigger": {
+        "layer": "contract_fixture",
+        "rule": "placeholder"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "farm_rollup": {
+  "strategies": [
+   {
+    "id": "rot_existing",
+    "trajectories": {
+     "soil_organic_index": {
+      "metric": "soil_organic_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "n_balance": {
+      "metric": "n_balance",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "n_balance_kg_ha": {
+      "metric": "n_balance_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fixed_share": {
+      "metric": "n_fixed_share",
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "infiltration_index": {
+      "metric": "infiltration_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "runoff_index": {
+      "metric": "runoff_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "pest_pressure_index": {
+      "metric": "pest_pressure_index",
+      "unit": "index",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "bare_weeks": {
+      "metric": "bare_weeks",
+      "unit": "weeks/yr",
+      "basis": "derived",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "water_demand_mm": {
+      "metric": "water_demand_mm",
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "irrigation_need_mm": {
+      "metric": "irrigation_need_mm",
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     }
+    },
+    "farm_fit": {
+     "water_vs_quota": {
+      "irrigation_need_p50": {
+       "value": 0.0,
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      },
+      "irrigation_need_p90": {
+       "value": 0.0,
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      },
+      "quota_mm_per_season": 100,
+      "status": "within"
+     },
+     "forage_suitability": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     },
+     "operational_fit": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     },
+     "market_fit": {
+      "value": 3.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "scorecard": [
+     {
+      "criterion": "nutrient_cycling",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "erosion_risk",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "organic_matter",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "pest_disruption",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "water_use",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "forage_potential",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "market_suitability",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     }
+    ],
+    "estimates": {
+     "yield_t_ha": [
+      {
+       "crop_id": "crop_maize",
+       "series": {
+        "metric": "yield_t_ha",
+        "unit": "t/ha",
+        "basis": "assumed",
+        "confidence": "low",
+        "needs_local_review": true,
+        "points": [
+         {
+          "year": 0,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 1,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 2,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 3,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 4,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 5,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 6,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 7,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 8,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 9,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 10,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         }
+        ]
+       }
+      }
+     ],
+     "forage_yield_t_ha": {
+      "metric": "forage_yield_t_ha",
+      "unit": "t/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "soil_loss_t_ha_yr": {
+      "metric": "soil_loss_t_ha_yr",
+      "unit": "t/ha/yr",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fertilizer_need_kg_ha": {
+      "metric": "n_fertilizer_need_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fertilizer_saved_kg_ha": {
+      "metric": "n_fertilizer_saved_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "income_estimate": {
+      "value": 0.0,
+      "unit": "CAD",
+      "basis": "assumed",
+      "confidence": "low",
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.0
+     }
+    }
+   },
+   {
+    "id": "rot_alt_1",
+    "trajectories": {
+     "soil_organic_index": {
+      "metric": "soil_organic_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "n_balance": {
+      "metric": "n_balance",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "n_balance_kg_ha": {
+      "metric": "n_balance_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fixed_share": {
+      "metric": "n_fixed_share",
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "infiltration_index": {
+      "metric": "infiltration_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "runoff_index": {
+      "metric": "runoff_index",
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 100.0
+       },
+       {
+        "year": 1,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 2,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 3,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 4,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 5,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 6,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 7,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 8,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 9,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       },
+       {
+        "year": 10,
+        "p50": 100.0,
+        "p10": 100.0,
+        "p90": 100.0
+       }
+      ]
+     },
+     "pest_pressure_index": {
+      "metric": "pest_pressure_index",
+      "unit": "index",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "bare_weeks": {
+      "metric": "bare_weeks",
+      "unit": "weeks/yr",
+      "basis": "derived",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "water_demand_mm": {
+      "metric": "water_demand_mm",
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "irrigation_need_mm": {
+      "metric": "irrigation_need_mm",
+      "unit": "mm",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     }
+    },
+    "farm_fit": {
+     "water_vs_quota": {
+      "irrigation_need_p50": {
+       "value": 0.0,
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      },
+      "irrigation_need_p90": {
+       "value": 0.0,
+       "unit": "mm",
+       "basis": "assumed",
+       "confidence": "low",
+       "p10": 0.0,
+       "p50": 0.0,
+       "p90": 0.0
+      },
+      "quota_mm_per_season": 100,
+      "status": "within"
+     },
+     "forage_suitability": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     },
+     "operational_fit": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     },
+     "market_fit": {
+      "value": 3.0,
+      "unit": "1",
+      "basis": "assumed",
+      "confidence": "low"
+     }
+    },
+    "scorecard": [
+     {
+      "criterion": "nutrient_cycling",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "erosion_risk",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "organic_matter",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "pest_disruption",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "water_use",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "forage_potential",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     },
+     {
+      "criterion": "market_suitability",
+      "score": 50,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low",
+      "needs_local_review": true,
+      "year10_value": 0,
+      "mean_value": 0,
+      "note": "Contract fixture placeholder. Not an engine result and not for the demo.",
+      "inputs": [
+       {
+        "name": "fixture",
+        "value": 0,
+        "unit": "1",
+        "basis": "assumed"
+       }
+      ]
+     }
+    ],
+    "estimates": {
+     "yield_t_ha": [
+      {
+       "crop_id": "crop_maize",
+       "series": {
+        "metric": "yield_t_ha",
+        "unit": "t/ha",
+        "basis": "assumed",
+        "confidence": "low",
+        "needs_local_review": true,
+        "points": [
+         {
+          "year": 0,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 1,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 2,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 3,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 4,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 5,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 6,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 7,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 8,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 9,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         },
+         {
+          "year": 10,
+          "p50": 0.0,
+          "p10": 0.0,
+          "p90": 0.0
+         }
+        ]
+       }
+      }
+     ],
+     "forage_yield_t_ha": {
+      "metric": "forage_yield_t_ha",
+      "unit": "t/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "soil_loss_t_ha_yr": {
+      "metric": "soil_loss_t_ha_yr",
+      "unit": "t/ha/yr",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fertilizer_need_kg_ha": {
+      "metric": "n_fertilizer_need_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "n_fertilizer_saved_kg_ha": {
+      "metric": "n_fertilizer_saved_kg_ha",
+      "unit": "kg N/ha",
+      "basis": "assumed",
+      "confidence": "low",
+      "needs_local_review": true,
+      "points": [
+       {
+        "year": 0,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 1,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 2,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 3,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 4,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 5,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 6,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 7,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 8,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 9,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       },
+       {
+        "year": 10,
+        "p50": 0.0,
+        "p10": 0.0,
+        "p90": 0.0
+       }
+      ]
+     },
+     "income_estimate": {
+      "value": 0.0,
+      "unit": "CAD",
+      "basis": "assumed",
+      "confidence": "low",
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.0
+     }
+    }
+   }
+  ]
+ },
+ "comparison": {
+  "rank_by_priority": [
+   "rot_existing",
+   "rot_alt_1"
+  ],
+  "rank_stability": "Contract fixture placeholder. Not an engine result and not for the demo.",
+  "deltas_vs_existing_year10": {
+   "soil_organic_index": {
+    "value": 0.0,
+    "unit": "index",
+    "basis": "relative",
+    "confidence": "low"
+   }
+  }
+ },
+ "uncertainty": {
+  "layers": [
+   {
+    "layer": "contract_fixture",
+    "native_resolution_m": 55000,
+    "record_years": "none",
+    "confidence": "low",
+    "resolution_note": "Placeholder layer row. Resolution 55000 m is the existing POWER grid size, not a measurement from this fixture.",
+    "needs_local_validation": true
+   }
+  ],
+  "station_bias": null
+ },
+ "warnings": [],
+ "sources": [
+  {
+   "name": "FieldTwin contract fixture",
+   "role": "weather",
+   "license": "Mock data generated by FieldTwin fixtures. Not real.",
+   "attribution": "Shape example for contract v1.2.0. Not a dataset.",
+   "basis": "assumed"
+  }
+ ],
+ "assumptions": [
+  "Contract fixture placeholder. Not an engine result and not for the demo.",
+  "Ramp shape is linear from year 0 to year 10. That shape is assumed.",
+  "Placeholder trajectory values are 0, or 100 where the unit is an index with year 0 = 100. p10 equals p90 because no ensemble was run.",
+  "Income uses the currency and price in the fixture request. Those are stand-in farmer entries, not a price survey."
+ ]
+}

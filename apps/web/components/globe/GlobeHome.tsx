@@ -52,7 +52,10 @@ type HeroState = "hero" | "dragging" | "centred" | "ui";
 // It is moved into its own slot above every overlay and set in the accent colour; the logo is tinted with a CSS
 // filter, nothing is hidden.
 const CREDITS_CSS = `
-.hero-root .ft-credits { color: ${color.accent} !important; font-size: 11px; white-space: nowrap; display: flex !important; align-items: center; }
+.hero-root .ft-credits { color: ${color.accent} !important; font-size: 11px; display: flex !important; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 0.9em; row-gap: 0.2em; width: max-content; max-width: 94vw; line-height: 1.3; }
+.hero-root .ft-credits .cesium-credit-logoContainer, .hero-root .ft-credits .cesium-credit-textContainer { display: inline-flex !important; align-items: center; flex-wrap: wrap; justify-content: center; gap: 0.9em; margin: 0 !important; }
+.hero-root .ft-credits .cesium-credit-delimiter { margin: 0 0.4em; }
+.hero-root .cesium-credit-logoContainer img { max-height: 20px; width: auto; vertical-align: middle; }
 .hero-root .ft-credits a, .hero-root .cesium-credit-textContainer, .hero-root .cesium-credit-textContainer * { color: ${color.accent} !important; }
 .hero-root .cesium-credit-logoContainer img { filter: brightness(0) saturate(100%) invert(80%) sepia(14%) saturate(900%) hue-rotate(185deg) brightness(98%); opacity: 0.9; }
 `;
@@ -688,7 +691,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           <ZoneToggle />
         </div>
       )}
-      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.25rem", display: onGlobe ? "none" : undefined }} />
+      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
 
       {/* Dive film: above the globe, below the attribution, the title and the panels. */}
       {ready &&

@@ -1,0 +1,11 @@
+{
+ "source_name": "NASADEM Merged DEM Global 1 arc second V001",
+ "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=NASADEM_HGT",
+ "product_version": "001",
+ "retrieved_on": "2026-11-15",
+ "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
+ "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
+ "resolution_spatial": "not retrieved",
+ "resolution_temporal": "not retrieved",
+ "processing_notes": "NASADEM_HGT is a 1 arc second elevation model. The CMR summary that was read does not say it is bare earth. The user guide was not opened: https://lpdaac.usgs.gov/documents/2237/NASADEM_User_Guide_V13.pdf DOI https://doi.org/10.5067/MEASURES/NASADEM/NASADEM_HGT.001 NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

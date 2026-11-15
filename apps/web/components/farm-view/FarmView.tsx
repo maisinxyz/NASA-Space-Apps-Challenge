@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { CONDITIONS, LAYERS, SAMPLE_FIELDS, EXPLORE_SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
 import { color, layout, motion as m, zIndex, type LayerId } from "@/lib/farm-view/tokens";
 import { DividerHandle } from "@/components/farm/CompareTray";
-import { useTwin } from "@/components/farm/shared";
+import { twinConfig } from "@/lib/farms";
 import { useAppStore } from "@/lib/store";
 import { sound } from "@/lib/ui/sound";
 
@@ -42,7 +42,8 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
   const reportBefore = useRef(false);
   const panelsHidden = useAppStore((s) => s.panelsHidden);
   const comparing = useAppStore((s) => s.twinMode === "compare");
-  const twin = useTwin();
+  const farmId = useAppStore((s) => s.farmId);
+  const twin = twinConfig(farmId);
   // The Simulation tab shares the left column: opening it folds the report away, closing restores it.
   const setSim = (next: SimState) => {
     if (next.open && !sim.open) { reportBefore.current = reportOpen; setReportOpen(false); }
@@ -93,7 +94,7 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
         </FvButton>
         <h1 className="fv-title">{farmName}</h1>
         <p className="fv-sub">{place ? `${place} · ` : ""}{simProps ? "Simulation available" : EXPLORE_SUBTITLE}</p>
-        {simProps && (
+        {simProps && twin && (
           <div className="fv-cap fv-onmap" style={{ marginTop: 6, color: color.ink, display: "grid", gap: 2 }}>
             <span>{[...twin.labels, ...twin.attribution].join(" · ")}</span>
             {simProps.pending > 0 && <span role="status">Loading 3D detail…</span>}

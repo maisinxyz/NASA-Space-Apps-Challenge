@@ -1,0 +1,30 @@
+{
+ "site_id": "site_usda_barc",
+ "data_mode": "mock",
+ "crops": [
+  "crop_maize"
+ ],
+ "vulnerable_seasons": [
+  {
+   "crop_id": "crop_maize",
+   "growth_stage": "mid",
+   "weeks": [],
+   "hazards": []
+  }
+ ],
+ "bare_field_windows": [
+  {
+   "weeks": [],
+   "source": "rotation_plan",
+   "note": "Contract fixture placeholder. Not an engine result and not for the demo."
+  }
+ ],
+ "zones": [],
+ "resolution_notes": [
+  "No terrain package in this fixture, so no zone polygons were invented."
+ ],
+ "caveats": [
+  "Contract fixture placeholder. Not an engine result and not for the demo.",
+  "Zones are empty because this fixture has no terrain."
+ ]
+}

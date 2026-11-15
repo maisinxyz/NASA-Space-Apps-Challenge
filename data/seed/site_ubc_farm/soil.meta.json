@@ -1,0 +1,11 @@
+{
+ "source_name": "SoilGrids 2.0 REST point query (ISRIC)",
+ "source_url": "https://rest.isric.org/soilgrids/v2.0/properties/query",
+ "product_version": "SoilGrids 2.0",
+ "retrieved_on": "2026-11-15",
+ "license": "CC BY 4.0",
+ "attribution": "SoilGrids 2.0, ISRIC - World Soil Information (Poggio et al. 2021, SOIL 7, 217-240).",
+ "resolution_spatial": "250 m",
+ "resolution_temporal": "static",
+ "processing_notes": "Mean of clay, sand, silt, soc, phh2o at 0-5, 5-15, 15-30 cm; depth-weighted to 0-30 cm and divided by the response d_factor. USDA texture class; infiltration class mapping assumed (TODO(verify))."
+}

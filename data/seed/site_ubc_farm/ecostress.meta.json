@@ -1,0 +1,11 @@
+{
+ "source_name": "ECOSTRESS Tiled Evapotranspiration PT-JPL Instantaneous and Daytime L3 Global 70 m v003",
+ "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=ECO_L3T_JET",
+ "product_version": "003",
+ "retrieved_on": "2026-11-15",
+ "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
+ "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
+ "resolution_spatial": "not retrieved",
+ "resolution_temporal": "not retrieved",
+ "processing_notes": "Three ET collections were listed, including a CONUS disALEXI product. None was retrieved. UBC Farm is outside CONUS, so the CONUS product may not cover it. TODO(verify) coverage. NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

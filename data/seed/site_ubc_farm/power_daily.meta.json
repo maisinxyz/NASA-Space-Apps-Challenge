@@ -1,0 +1,11 @@
+{
+ "source_name": "NASA POWER daily point API, community AG",
+ "source_url": "https://power.larc.nasa.gov/docs/services/api/",
+ "product_version": "POWER Daily API v2.10.3",
+ "retrieved_on": "2026-11-15",
+ "license": "No restrictions on use; citation requested by the NASA POWER Project",
+ "attribution": "Data from the NASA Langley Research Center POWER Project, funded through the NASA Earth Science Directorate Applied Science Program.",
+ "resolution_spatial": "0.5 x 0.625 degree (MERRA-2 meteorology)",
+ "resolution_temporal": "daily",
+ "processing_notes": "Unmodified API response for 49.252, -123.238, 1991-01-01 to 2024-12-31; parameters PRECTOTCORR, T2M, T2M_MAX, T2M_MIN, GWETROOT, GWETTOP. Fill value -999 becomes missing. Point is the BC address-geocoder access point for 3461 Ross Drive, not a surveyed field centroid (see app/features/config.py)."
+}

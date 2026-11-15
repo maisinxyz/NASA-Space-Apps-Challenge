@@ -213,10 +213,20 @@ def test_routes_match_openapi_exactly(client):
     def norm(p):
         return re.sub(r"\{[^}]+\}", "{}", p)
 
+    # v1.2 paths are in the contract. W9 registers them in app/main.py.
+    # Remove a path from this set in the same commit that mounts it.
+    pending_v12 = {
+        ("GET", "/crop-catalog"),
+        ("GET", "/sites/{}/climate-outlook"),
+        ("GET", "/sites/{}/exposure"),
+        ("POST", "/sites/{}/forecast"),
+        ("POST", "/sites/{}/forecast/sensitivity"),
+    }
     spec = {(m.upper(), norm(p)) for p, ops in contract.openapi()["paths"].items() for m in ops if m in ("get", "post")}
     app_routes = {
         (m.upper(), norm(path.removeprefix(API)))
         for path, ops in client.app.openapi()["paths"].items()
         for m in ops
     }
-    assert app_routes == spec
+    assert app_routes.isdisjoint(pending_v12)
+    assert app_routes | pending_v12 == spec

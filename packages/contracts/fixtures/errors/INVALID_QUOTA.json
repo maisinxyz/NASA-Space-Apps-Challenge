@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "INVALID_QUOTA",
+    "message": "Water quota must be zero or greater.",
+    "hint": "Enter the seasonal quota in millimetres, or leave it out.",
+    "retryable": false
+  }
+}

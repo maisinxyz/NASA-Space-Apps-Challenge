@@ -2,7 +2,7 @@
 
 The shared contract between `apps/web` and `services/api`.
 
-- `openapi.yaml`: OpenAPI 3.1, version **1.0.0**. Encodes `prd.md` §6. Base path `/api/v1`.
+- `openapi.yaml`: OpenAPI 3.1, version **1.2.0**. Encodes `prd.md` §6 plus the forecast endpoints in `docs/backend-forecast-prd.md` §6. Base path `/api/v1`.
 - `fixtures/`: mock data (added by a later prompt, PRD §6.8).
 
 Changing the contract after the freeze: message the team, bump `info.version`, update fixtures (see the root README).

@@ -1,0 +1,11 @@
+{
+ "source_name": "HLS Operational Land Imager Vegetation Indices Daily Global 30 m V2.0",
+ "source_url": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=HLSL30_VI",
+ "product_version": "2.0",
+ "retrieved_on": "2026-11-15",
+ "license": "Not retrieved. No licence text was copied. TODO(verify) the collection licence before any download.",
+ "attribution": "Collection title from a public CMR search. No granules, so no data attribution applies yet.",
+ "resolution_spatial": "not retrieved",
+ "resolution_temporal": "not retrieved",
+ "processing_notes": "CMR summaries call these vegetation-index collections. The NDVI band name was not in the summary text that was read. TODO(verify) the band list before computing an index. Cloud mask and scene counts were not retrieved. NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

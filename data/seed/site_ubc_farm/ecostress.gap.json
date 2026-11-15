@@ -1,0 +1,29 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ubc_farm",
+ "product": "ecostress",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "ECO_L3T_JET",
+   "version": "003",
+   "title": "ECOSTRESS Tiled Evapotranspiration PT-JPL Instantaneous and Daytime L3 Global 70 m v003",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=ECO_L3T_JET"
+  },
+  {
+   "short_name": "ECO_L3G_JET",
+   "version": "002",
+   "title": "ECOSTRESS Gridded Evapotranspiration Instantaneous and Daytime L3 Global 70 m V002",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=ECO_L3G_JET"
+  },
+  {
+   "short_name": "ECO_L3T_ET_ALEXI",
+   "version": "002",
+   "title": "ECOSTRESS Tiled Evapotranspiration disALEXI 24-Hour L3 CONUS 70 m V002",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=ECO_L3T_ET_ALEXI"
+  }
+ ],
+ "reason": "NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

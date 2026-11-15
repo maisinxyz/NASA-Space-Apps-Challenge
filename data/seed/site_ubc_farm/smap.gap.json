@@ -1,0 +1,23 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_ubc_farm",
+ "product": "smap",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "SPL4SMGP",
+   "version": "008",
+   "title": "SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data V008",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=SPL4SMGP"
+  },
+  {
+   "short_name": "SPL3SMP",
+   "version": "009",
+   "title": "SMAP L3 Radiometer Global Daily 36 km EASE-Grid Soil Moisture V009",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=SPL3SMP"
+  }
+ ],
+ "reason": "NASA Earthdata credentials were not in the environment (EARTHDATA_USERNAME, EARTHDATA_PASSWORD, EARTHDATA_TOKEN; no .env file). No granule was downloaded. weekly is null. This file is a gap record, not a measurement."
+}

@@ -1,0 +1,354 @@
+{
+ "axes": {
+  "rain_scale_pct": [
+   -30,
+   -15,
+   0,
+   15,
+   30
+  ],
+  "temp_offset_c": [
+   0,
+   1.5,
+   3
+  ]
+ },
+ "cells": [
+  {
+   "rain_scale_pct": -30,
+   "temp_offset_c": 0,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": -30,
+   "temp_offset_c": 1.5,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": -30,
+   "temp_offset_c": 3,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": -15,
+   "temp_offset_c": 0,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": -15,
+   "temp_offset_c": 1.5,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": -15,
+   "temp_offset_c": 3,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 0,
+   "temp_offset_c": 0,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 0,
+   "temp_offset_c": 1.5,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 0,
+   "temp_offset_c": 3,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 15,
+   "temp_offset_c": 0,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 15,
+   "temp_offset_c": 1.5,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 15,
+   "temp_offset_c": 3,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 30,
+   "temp_offset_c": 0,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 30,
+   "temp_offset_c": 1.5,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  },
+  {
+   "rain_scale_pct": 30,
+   "temp_offset_c": 3,
+   "per_strategy": {
+    "rot_existing": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    },
+    "rot_alt_1": {
+     "soil_organic_index": {
+      "value": 0.0,
+      "unit": "index",
+      "basis": "relative",
+      "confidence": "low"
+     }
+    }
+   }
+  }
+ ],
+ "rank_stability": {
+  "share_first_by_strategy": {
+   "rot_existing": 1.0,
+   "rot_alt_1": 0.0
+  }
+ }
+}

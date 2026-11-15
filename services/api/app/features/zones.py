@@ -63,6 +63,18 @@ def _components(mask: np.ndarray, tf: np.ndarray, transform: Affine, cell_m: flo
     return zones[:MAX_PER_KIND]
 
 
+def spatial_limits(*, dem_present: bool, moisture_present: bool) -> list[str]:
+    """Notes for layers that are missing or coarser than a field. No polygons are built here."""
+    notes = []
+    if not dem_present:
+        notes.append("No elevation grid is stored. Erosion zones and frost pockets were not drawn.")
+    if not moisture_present:
+        notes.append(
+            "No SMAP or ECOSTRESS grid is stored. No water-stress value was produced, including at farm scale."
+        )
+    return notes
+
+
 def zones_for_terrain(tid: str) -> list[dict]:
     pkg = terrain_svc.get_terrain(tid)
     w, s, e, n = pkg["bbox_wgs84"]
