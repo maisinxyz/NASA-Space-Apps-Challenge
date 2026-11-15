@@ -34,6 +34,11 @@ import { MapEffects } from "@/components/farm-future/MapEffects";
 import { StrategyBar } from "@/components/farm-future/SoilHealth";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer, X } from "./icons";
+import dynamic from "next/dynamic";
+import { imageryFor } from "@/lib/map2d/imagery";
+
+// MapLibre is large and needs the browser: load the 2D map only when it is opened.
+const Map2D = dynamic(() => import("@/components/map2d/Map2D").then((m) => m.Map2D), { ssr: false });
 
 const PILL_ICON: Record<ConditionId, typeof Droplet> = { rainfall: Droplet, moisture: Droplet, vigor: Leaf, heat: Thermometer };
 
@@ -158,6 +163,7 @@ export function FarmView({
   const isKpu = farmId === "kpu-langley" || farmName.toLowerCase().includes("kpu");
   // Preserve upstream explore-only entry fix: absence of a twin is supported here.
   const twin = twinConfig(farmId);
+  const map2d = useAppStore((s) => s.map2d) && !!imageryFor(farmId ?? null);
   const [card, setCard] = useState<ConditionId | null>(null);
   useEffect(() => {
     if (!card) return;
@@ -208,7 +214,8 @@ export function FarmView({
   return (
     <div className="fv-root fv-workspace" data-testid="farm-view">
       <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS}</style>
-      <MapEffects />
+      {map2d && <Map2D />}
+      {!map2d && <MapEffects />}
       {panelsHidden && (
         <FvButton
           ref={restorePanels}
@@ -257,6 +264,16 @@ export function FarmView({
                     onClick={() => toggle("campus")}
                   >
                     {active === "campus" ? "Close campus info" : "Explore campus"}
+                  </FvButton>
+                )}
+                {imageryFor(farmId ?? null) && (
+                  <FvButton
+                    className="fv-glass fv-seg"
+                    data-testid="action-map2d"
+                    aria-pressed={map2d}
+                    onClick={() => useAppStore.setState({ map2d: !map2d })}
+                  >
+                    {map2d ? "3D Explore" : "2D Map"}
                   </FvButton>
                 )}
                 <FvButton

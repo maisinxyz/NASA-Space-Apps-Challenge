@@ -1110,6 +1110,15 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     if (r) repaintFields(r, live.current);
   }, [fields, surface, cropByField, selectedFieldId, comparing, showCropFills]);
 
+  // Paused while the 2D map is open: no frames are drawn; the scene and camera stay as they were.
+  const { paused } = props;
+  useEffect(() => {
+    const r = rt.current;
+    if (!r || r.viewer.isDestroyed()) return;
+    r.viewer.useDefaultRenderLoop = !paused;
+    if (!paused) r.viewer.scene.requestRender();
+  }, [paused]);
+
   // Camera: fly in / out / to the selected pin's region.
   useEffect(() => {
     const r = rt.current;

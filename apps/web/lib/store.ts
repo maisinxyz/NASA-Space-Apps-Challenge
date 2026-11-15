@@ -49,6 +49,8 @@ export interface AppState {
   scenarioRotation: string;
   /** Effects/render detail for the 3D farm. */
   detail: DetailLevel;
+  /** Farm view shows the 2D bird's-eye map (MapLibre); the Cesium render loop is paused meanwhile (F3). */
+  map2d: boolean;
 }
 
 export const initialState: AppState = {
@@ -76,6 +78,7 @@ export const initialState: AppState = {
   scenarioSpeed: 1,
   scenarioRotation: "rot_existing",
   detail: "medium",
+  map2d: false,
 };
 
 export const useAppStore = create<AppState & { reset(): void }>()((set) => ({
@@ -84,7 +87,7 @@ export const useAppStore = create<AppState & { reset(): void }>()((set) => ({
 }));
 
 /** Twin state that belongs to one farm (field ids, rotation ids): reset whenever another farm is chosen. */
-const perFarm = (({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation }: AppState) => ({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation }))(initialState);
+const perFarm = (({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation, map2d }: AppState) => ({ twinMode, twinFieldId, compareA, compareB, divider, twinYear, twinMonth, showCropFills, leftOpen, rightOpen, scenarioId, scenarioProgress, scenarioPlaying, scenarioRotation, map2d }))(initialState);
 
 /** Pick a farm (null = none, back to the whole globe). A different farm starts from the default twin state. */
 export function selectFarm(id: string | null) {

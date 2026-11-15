@@ -421,8 +421,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const zoneOverlays = useZoneOverlays(inTwin && showGlobe ? (farm?.id ?? null) : null);
   const fieldOverlays = useFieldColourOverlays();
   const overlays = useMemo(() => (inTwin ? [...zoneOverlays, ...fieldOverlays] : zoneOverlays), [inTwin, zoneOverlays, fieldOverlays]);
-  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail } = useAppStore(
-    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail })),
+  const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail, map2d } = useAppStore(
+    useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail, map2d: s.map2d })),
   );
   // Compare paints rotation A (left of the split) and B (right) for the chosen season; other modes show current crops.
   const comparing = inTwin && twinMode === "compare";
@@ -671,6 +671,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               weather={frame?.atmosphere}
               groundLayers={frame?.ground}
               detail={detail}
+              paused={inFarm && map2d}
             />
           </div>
           {/* Hero Earth: the globe view. Fades out as Cesium takes over the dive, back in on return. */}

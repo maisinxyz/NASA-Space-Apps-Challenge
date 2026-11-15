@@ -123,6 +123,8 @@ export type FarmTwinProps = {
   groundLayers?: GroundLayerSpec[];
   /** Effects/render detail. "low" also lowers tile detail and resolution to protect frame rate. Default "medium". */
   detail?: DetailLevel;
+  /** Stop the render loop (the 2D map covers the globe). The camera and scene are kept, so un-pausing resumes in place. */
+  paused?: boolean;
 };
 
 export type DetailLevel = "high" | "medium" | "low";
