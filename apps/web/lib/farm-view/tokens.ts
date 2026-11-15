@@ -105,8 +105,8 @@ export const layout = {
   report: { left: 40, bottom: 186, width: 380, padX: 16, padTop: 14, padBottom: 12, rowHeight: 30 },
   reportTab: { left: 0, bottom: 220, width: 40, height: 160 },
   legend: { right: 40, bottom: 172, width: 248, pad: 14, barHeight: 8 },
-  twinButton: { size: 60, bottom: 108, icon: 26 }, // centred: left 50%, translateX(-50%)
-  twinPill: { width: 460, height: 60, bottom: 108, pad: 8, send: 44, icon: 26 },
+  twinButton: { size: 48, bottom: 108, icon: 21 }, // centred: left 50%, translateX(-50%); 60/26 in the shots, shrunk on request
+  twinPill: { width: 460, height: 48, bottom: 108, pad: 6, send: 36, icon: 21 },
   twinAnswer: { width: 460, gapAbove: 10, pad: 16, maxHeight: 320 },
   fieldTag: { height: 28, padX: 10, swatch: 10, gap: 6 },
   popover: { width: 220, pad: 14, offset: 12 },

@@ -13,11 +13,13 @@ import { twinConfig } from "@/lib/farms";
 import { useAppStore } from "@/lib/store";
 import { sound } from "@/lib/ui/sound";
 
+import { ConditionCard, LayerLegend } from "./Cards";
 import { FvButton } from "./FvButton";
-import { ChevronLeft, ChevronRight, Droplet, Leaf, Logo, PanelLeft, RotateCcw, Thermometer, Volume2, VolumeX } from "./icons";
+import { ChevronLeft, ChevronRight, Droplet, Leaf, PanelLeft, RotateCcw, Thermometer, Volume2, VolumeX } from "./icons";
 import { SimulationTab, useSimKeys, type SimProps, type SimState } from "./SimulationTab";
 import { FV_CSS } from "./styles";
 import { Timeline } from "./Timeline";
+import { Twin } from "./Twin";
 
 // tokens.ease.out as a cubic-bezier tuple for framer-motion.
 const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
@@ -51,6 +53,23 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
     setSimState(next);
   };
   useSimKeys(sim, setSim, !!simProps);
+  // One condition card at a time; its pill toggles it, Esc closes it.
+  const [card, setCard] = useState<ConditionId | null>(null);
+  const toggleCard = (id: ConditionId) => {
+    if (card === id) return closeCard();
+    setCard(id);
+    sound.tickWeek();
+  };
+  const closeCard = () => {
+    setCard(null);
+    sound.close();
+  };
+  useEffect(() => {
+    if (!card) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeCard();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
   const [muted, setMuted] = useState(() => sound.isMuted());
 
   useEffect(() => sound.installUnlock(), []);
@@ -140,13 +159,13 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
         </FvButton>
       </div>
 
-      {/* Condition pills (cards arrive in Slice B) */}
+      {/* Condition pills: each opens its card below the row */}
       <LayoutGroup>
         <div style={{ position: "absolute", right: layout.pillRow.right, top: layout.pillRow.top, display: "flex", gap: layout.pillRow.gap }}>
           {CONDITIONS.map((c) => {
             const Icon = PILL_ICON[c.id];
             return (
-              <FvButton key={c.id} layout className="fv-glass fv-pill fv-auto" aria-expanded={false} data-testid={`condition-pill-${c.id}`} onClick={() => sound.tickWeek()}>
+              <FvButton key={c.id} layout className="fv-glass fv-pill fv-auto" aria-expanded={card === c.id} aria-controls={`condition-card-${c.id}`} data-testid={`condition-pill-${c.id}`} onClick={() => toggleCard(c.id)}>
                 <Icon size={layout.pillRow.icon} />
                 <span className="l">{c.label}</span>
                 <span className="v">{c.value}</span>
@@ -155,6 +174,8 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
           })}
         </div>
       </LayoutGroup>
+      <AnimatePresence>{card && <ConditionCard key={card} id={card} onClose={closeCard} />}</AnimatePresence>
+      <AnimatePresence>{layer !== "satellite" && <LayerLegend key={layer} layer={layer} />}</AnimatePresence>
 
       {/* Field report: open card, or a 40 px tab on the left edge */}
       <AnimatePresence initial={false}>
@@ -222,12 +243,8 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: Fa
 
       <Timeline reduced={reduced} />
 
-      {/* Twin: round button, logo only (the pill and answers arrive in Slice C) */}
-      <div style={{ position: "absolute", left: "50%", bottom: layout.twinButton.bottom, transform: "translateX(-50%)", zIndex: zIndex.twin }}>
-        <FvButton className="fv-glass fv-twin fv-auto" aria-label="Ask Twin" aria-expanded={false} data-testid="twin-button" style={{ color: color.ink }}>
-          <Logo size={layout.twinButton.icon} />
-        </FvButton>
-      </div>
+      {/* Twin: round logo button that opens the ask pill and answer card */}
+      <Twin />
 
       </>)}
 

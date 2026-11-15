@@ -54,11 +54,11 @@ test.describe("Slice A", () => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await tid(page, "field-report-toggle").click(); await page.waitForTimeout(400);
     expect(Math.round((await box(page, "field-report")).width)).toBe(380);
-    expect(Math.round((await box(page, "twin-button")).width)).toBe(60);
+    expect(Math.round((await box(page, "twin-button")).width)).toBe(48);
   });
-  test("Twin button: 60px round, logo only (no gold sparkle), centred", async ({ page }) => {
+  test("Twin button: 48px round, logo only (no gold sparkle), centred", async ({ page }) => {
     const b = await box(page, "twin-button");
-    expect([Math.round(b.width), Math.round(b.height)]).toEqual([60, 60]);
+    expect([Math.round(b.width), Math.round(b.height)]).toEqual([48, 48]);
     expect(Math.abs(b.x + b.width / 2 - 720)).toBeLessThanOrEqual(1);
     expect(await tid(page, "twin-button").locator('[fill="#E2B866"]').count()).toBe(0);
   });

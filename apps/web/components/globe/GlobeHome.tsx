@@ -82,6 +82,8 @@ const CLOUD_SLOW_MS = 12000;
 const CLOUD_SLOW_NOTE_MS = 1800;
 /** Release the prewarmed farm scene this long after nothing points at a farm any more. */
 const PREWARM_RELEASE_MS = 6000;
+/** After the arrival title has gone: this long with only the farm on screen before any control shows. */
+const UI_AFTER_TITLE_MS = 500;
 /** The hero Earth's push-in, when it has one (components/hero/HeroEarth.tsx). */
 type PushIn = { diveTo?(farmId: string, durationMs: number, onDone: () => void): void; cancelDive?(): void };
 const SPACE_BG = "bg-[radial-gradient(ellipse_at_center,#0c1428_0%,#03050a_75%)]";
@@ -314,6 +316,13 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     setTitleLeaving(false);
     setTitleOn(false);
   }, []);
+  // The beat after the title: false while the title is up, true UI_AFTER_TITLE_MS after it has gone.
+  const [uiBeatDone, setUiBeatDone] = useState(false);
+  useEffect(() => {
+    if (titleOn) return setUiBeatDone(false);
+    const t = setTimeout(() => setUiBeatDone(true), UI_AFTER_TITLE_MS);
+    return () => clearTimeout(t);
+  }, [titleOn]);
   /** Dive over: camera input and panels live, the arrival title plays over the farm. */
   const toExplore = () => {
     setPhase("explore");
@@ -542,8 +551,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     heroEarth.current?.face(id);
   };
   const onGlobe = view === "globe";
-  // Farm controls appear only after the arrival title has completely left (Part 5 ordering).
-  const panels = phase === "explore";
+  // Farm controls appear only after the arrival title has completely left, plus a beat with just the farm on screen.
+  const panels = phase === "explore" && !titleOn && uiBeatDone;
   // Hero visuals wait for the hero Earth only; Cesium is needed from the dive on.
   const ready = earthReady;
   const heroShown = onGlobe && hs === "hero";
@@ -686,7 +695,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
       )}
-      {inTwin && (
+      {inTwin && panels && (
         <div className="absolute top-14 left-1/2 z-10 -translate-x-1/2">
           <ZoneToggle />
         </div>

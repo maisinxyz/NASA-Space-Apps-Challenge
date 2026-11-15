@@ -50,6 +50,37 @@ export const FV_CSS = `
 .fv-tab .t { ${t("pillLabel")} writing-mode: vertical-rl; transform: rotate(180deg); color: ${color.ink}; }
 .fv-twin { width: ${layout.twinButton.size}px; height: ${layout.twinButton.size}px; border-radius: 50%; display: grid; place-items: center; color: ${color.ink}; transition: border-color 120ms; }
 .fv-twin:hover { border-color: rgba(242,235,221,.24); }
+.fv-pill[aria-expanded="true"] { border-color: rgba(242,235,221,.24); background: ${color.fillActive}; }
+.fv-pill[aria-expanded="true"] .l { color: ${color.ink}; }
+.fv-card { width: ${layout.card.width}px; padding: ${layout.card.pad}px; border-radius: ${radius.card}px; }
+.fv-chead { display: flex; align-items: center; gap: 8px; height: 28px; color: ${color.inkSecondary}; }
+.fv-chead h2 { ${t("cardTitle")} color: ${color.ink}; margin: 0; }
+.fv-big { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 0; }
+.fv-big .b { ${t("cardBig")} color: ${color.ink}; }
+.fv-big .u { ${t("cardUnit")} color: ${color.inkSecondary}; }
+.fv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.fv-grid > div { display: grid; gap: 2px; }
+.fv-grid .v { font: 500 18px/22px ${font.sans}; color: ${color.ink}; }
+.fv-grid .n { ${t("caption")} font-size: 12px; color: ${color.inkSecondary}; }
+.fv-legend { width: ${layout.legend.width}px; padding: ${layout.legend.pad}px; border-radius: ${radius.card}px; }
+.fv-legend h2 { ${t("cardTitle")} color: ${color.ink}; margin: 0; }
+.fv-legend .bar { height: ${layout.legend.barHeight}px; border-radius: ${radius.legendBar}px; margin-top: 10px; }
+.fv-legend .ends { display: flex; justify-content: space-between; margin-top: 4px; }
+.fv-twinpill { display: flex; align-items: center; gap: 12px; }
+.fv-twinpill .logo { display: grid; place-items: center; border-radius: 50%; color: ${color.ink}; flex: none; }
+.fv-twinpill input { ${t("twinInput")} flex: 1; min-width: 0; background: none; border: 0; outline: none; color: ${color.ink}; }
+.fv-twinpill input::placeholder { color: ${color.inkSecondary}; }
+.fv-twinpill .send { display: grid; place-items: center; border-radius: 50%; flex: none; }
+.fv-twinpill .send:disabled { cursor: default; }
+.fv-twinpill .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${color.accentInk}; border-right-color: transparent; animation: fv-spin 700ms linear infinite; }
+.fv-answer { width: ${layout.twinAnswer.width}px; max-height: ${layout.twinAnswer.maxHeight}px; overflow-y: auto; padding: ${layout.twinAnswer.pad}px; border-radius: ${radius.card}px; }
+.fv-answer .q { ${t("twinBubble")} margin: 12px 0 0 auto; width: fit-content; max-width: 80%; padding: 8px 12px; border-radius: ${radius.bubble}px; background: ${color.bubble}; border: 1px solid ${color.bubbleBorder}; }
+.fv-answer .a { ${t("twinAnswer")} margin: 14px 0 0; color: ${color.ink}; }
+.fv-answer .caret { display: inline-block; width: 2px; height: 16px; margin-left: 3px; vertical-align: -2px; background: ${color.ink}; animation: fv-blink 1s steps(1) infinite; }
+.fv-answer .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fv-answer .chip { ${t("twinChip")} height: 28px; padding: 0 12px; border-radius: ${radius.chip}px; border: 1px solid ${color.bubbleBorder}; transition: background-color 120ms; }
+.fv-answer .chip:hover { background: ${color.fillHover}; }
+@keyframes fv-blink { 50% { opacity: 0; } }
 .fv-month { ${t("monthLabel")} font-family: ${font.display}; color: ${color.ink}; }
 .fv-meta { ${t("dateMeta")} color: ${color.ink}; opacity: .9; }
 .fv-mtick { ${t("monthTick")} position: absolute; transform: translateX(-50%); color: ${color.inkSecondary}; white-space: nowrap; }

@@ -12,6 +12,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.toggleAttribute("data-presenter", presenter);
   }, [presenter]);
+  // No copying page text (globals.css also blocks selection); typing fields keep copy/cut/paste.
+  useEffect(() => {
+    const block = (e: ClipboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.("input, textarea, [contenteditable='true']")) return;
+      e.preventDefault();
+    };
+    document.addEventListener("copy", block);
+    document.addEventListener("cut", block);
+    return () => {
+      document.removeEventListener("copy", block);
+      document.removeEventListener("cut", block);
+    };
+  }, []);
 
   return (
     <MotionConfig reducedMotion="user">
