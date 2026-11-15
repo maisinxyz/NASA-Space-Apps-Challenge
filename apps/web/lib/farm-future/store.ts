@@ -10,7 +10,7 @@ export type FutureMode = "now" | "future" | "compare";
 export type LensId = "heat" | "rain" | "frost" | "water" | "stress" | "erosion" | "bare" | "uncertainty" | "soiltest";
 export type Zoom = "10y" | "1y";
 /** At most one panel is open; opening one closes the other. */
-export type FuturePanel = "lens" | "whatif" | "soil" | "review" | null;
+export type FuturePanel = "lens" | "whatif" | "soil" | "review" | "forecast" | null;
 
 export type FutureState = {
   mode: FutureMode;

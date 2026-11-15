@@ -1,0 +1,346 @@
+{
+  "fields": [
+    {
+      "field_id": "d3-brassicas",
+      "name": "D3-1 Brassicas",
+      "area_ha": 0.227,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.239169,
+              49.249945
+            ],
+            [
+              -123.239055,
+              49.2501
+            ],
+            [
+              -123.237607,
+              49.249586
+            ],
+            [
+              -123.237749,
+              49.249437
+            ],
+            [
+              -123.239169,
+              49.249945
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    },
+    {
+      "field_id": "d4-goosefoots",
+      "name": "D4-1 Goosefoots",
+      "area_ha": 0.23,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.237732,
+              49.249199
+            ],
+            [
+              -123.238914,
+              49.249596
+            ],
+            [
+              -123.239059,
+              49.249404
+            ],
+            [
+              -123.237902,
+              49.249007
+            ],
+            [
+              -123.237732,
+              49.249199
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    },
+    {
+      "field_id": "d6-nightshades",
+      "name": "D6-2 Nightshades and Garlic",
+      "area_ha": 0.251,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.237254,
+              49.249383
+            ],
+            [
+              -123.237377,
+              49.249217
+            ],
+            [
+              -123.235936,
+              49.248732
+            ],
+            [
+              -123.235814,
+              49.248919
+            ],
+            [
+              -123.237254,
+              49.249383
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    },
+    {
+      "field_id": "d6-alliums",
+      "name": "D6-1 Alliums and Legumes",
+      "area_ha": 0.178,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.23716,
+              49.249507
+            ],
+            [
+              -123.23572,
+              49.249043
+            ],
+            [
+              -123.235814,
+              49.248919
+            ],
+            [
+              -123.237254,
+              49.249383
+            ],
+            [
+              -123.23716,
+              49.249507
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    },
+    {
+      "field_id": "d7-cucurbits",
+      "name": "D7-2 Early Cucurbits",
+      "area_ha": 0.201,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.237523,
+              49.249007
+            ],
+            [
+              -123.237638,
+              49.248867
+            ],
+            [
+              -123.236249,
+              49.248382
+            ],
+            [
+              -123.236135,
+              49.248522
+            ],
+            [
+              -123.237523,
+              49.249007
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    },
+    {
+      "field_id": "d5-maya",
+      "name": "D5-3 Maya Garden",
+      "area_ha": 0.163,
+      "slope_class": "flat",
+      "irrigation": {
+        "available": true
+      },
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.23661,
+              49.250142
+            ],
+            [
+              -123.236772,
+              49.249942
+            ],
+            [
+              -123.235978,
+              49.24967
+            ],
+            [
+              -123.23582,
+              49.249873
+            ],
+            [
+              -123.23661,
+              49.250142
+            ]
+          ]
+        ]
+      },
+      "existing_rotation": [
+        {
+          "year_index": 1,
+          "season": "spring",
+          "crop_id": "crop_barley"
+        },
+        {
+          "year_index": 2,
+          "season": "spring",
+          "crop_id": "crop_pea_field"
+        },
+        {
+          "year_index": 3,
+          "season": "winter",
+          "crop_id": "crop_wheat_winter"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "crops": [
+      "crop_wheat_winter",
+      "crop_barley",
+      "crop_pea_field",
+      "crop_red_clover",
+      "crop_rye_cover",
+      "crop_canola",
+      "crop_soybean"
+    ],
+    "pinned": [],
+    "excluded": []
+  },
+  "constraints": {
+    "equipment": [],
+    "max_cycle_years": 4,
+    "no_till": false,
+    "labour_level": "medium",
+    "livestock_on_farm": false
+  },
+  "strategy_count": 3,
+  "scenario": "baseline",
+  "horizon_years": 10,
+  "climate_source": "history_resample"
+}

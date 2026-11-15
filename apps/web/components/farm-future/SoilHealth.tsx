@@ -7,6 +7,8 @@ import { REVIEW_FLAGS, STRATEGIES, YEARS } from "@/lib/farm-future/fixtures";
 import { dateAt, soilHealthAt, strategyById } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { color } from "@/lib/farm-view/tokens";
+import { siteForFarm } from "@/lib/forecast/sites";
+import { useAppStore } from "@/lib/store";
 import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "@/components/farm-view/FvButton";
@@ -15,6 +17,7 @@ import { Basis, CardHead, HAIR, Headline, Label, MUTED_RED, Num, PopCard, Row, S
 
 export function StrategyBar() {
   const strategyId = useFutureStore((s) => s.strategyId);
+  const farmId = useAppStore((s) => s.farmId);
   const panel = useFutureStore((s) => s.panel);
   const { setStrategy, openPanel, openReview } = useFutureStore.getState();
   const [open, setOpen] = useState(false);
@@ -46,6 +49,12 @@ export function StrategyBar() {
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={color.stress} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
         <span className="l" style={{ color: color.ink }}>{flags} {flags === 1 ? "flag" : "flags"}</span>
       </FvButton>
+      {siteForFarm(farmId) && (
+        <FvButton className="fv-glass fv-pill fv-auto" aria-expanded={panel === "forecast"} data-testid="forecast-toggle" onClick={() => openPanel("forecast")}>
+          <span className="l" style={{ color: color.ink }}>Forecast</span>
+          {panel === "forecast" ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+        </FvButton>
+      )}
       <FvButton className="fv-glass fv-pill fv-auto" aria-expanded={panel === "soil"} data-testid="soil-toggle" onClick={() => openPanel("soil")}>
         <span className="l" style={{ color: color.ink }}>Soil health</span>
         {panel === "soil" ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
