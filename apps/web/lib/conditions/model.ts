@@ -137,7 +137,7 @@ function raw(c: CondId, f: PlotFeat, y: number, ctx: Ctx): number {
     case "groundwater": return 1.1 * y + 3 * f.low + wob;
     case "vulnSeason": {
       const weeks = (ex.vulnerable_seasons as Loose[] | undefined)?.reduce((a, s) => a + (s.weeks?.length ?? 0), 0) ?? 20;
-      return weeks * (0.75 + 0.25 * f.phase) + 1.6 * y + wob;
+      return Math.min(26, weeks) * (0.75 + 0.25 * f.phase) + 1.6 * y + wob; // weeks per year, capped below 52
     }
     case "bare": return trajectory(ctx, "bare_weeks", f, y, 30) + 0.2 * y + 2 * f.slope;
     case "erosion": return 8 * f.slope + 0.35 * trajectory(ctx, "bare_weeks", f, y, 30) + 0.45 * y + wob;
@@ -175,10 +175,16 @@ export function conditionView(cond: Cond, feats: PlotFeat[], ctx: Ctx, year: num
   const years = Array.from({ length: 10 }, (_, i) => i + 1);
   const grid = feats.map((f) => years.map((y) => raw(cond.id, f, y, ctx)));
   const flat = grid.flat();
-  const min = Math.min(...flat), max = Math.max(...flat), span = max - min || 1;
-  const sev = (v: number) => (cond.invert ? (max - v) / span : (v - min) / span);
+  const min = Math.min(...flat), max = Math.max(...flat);
+  // Blend of the farm-wide scale (plots compare) and each plot's own 10-year scale (every plot visibly changes per year,
+  // even when one outlier field stretches the farm-wide range).
+  const norm = (v: number, lo: number, hi: number) => { const k = (v - lo) / (hi - lo || 1); return cond.invert ? 1 - k : k; };
+  const sevAt = (i: number, yi: number) => {
+    const row = grid[i];
+    return 0.35 * norm(row[yi], min, max) + 0.65 * norm(row[yi], Math.min(...row), Math.max(...row));
+  };
   const yi = Math.min(10, Math.max(1, year)) - 1;
-  const plots = feats.map((f, i) => ({ fieldId: f.id, value: grid[i][yi], sev: sev(grid[i][yi]), colour: tint(cond, sev(grid[i][yi])) }));
+  const plots = feats.map((f, i) => ({ fieldId: f.id, value: grid[i][yi], sev: sevAt(i, yi), colour: tint(cond, sevAt(i, yi)) }));
   const series = years.map((_, k) => grid.reduce((a, g) => a + g[k], 0) / (grid.length || 1));
   const zones = cond.zones ? plots.filter((p) => p.sev >= 0.2).map((p) => ({ fieldId: p.fieldId, ring: zoneRing(feats.find((f) => f.id === p.fieldId)!, cond.id), colour: tint(cond, Math.min(1, p.sev + 0.15)), sev: p.sev })) : [];
   return { cond, year: yi + 1, plots, min, max, series, zones };

@@ -17,6 +17,11 @@ describe("condition layers", () => {
       for (const c of CONDITIONS) {
         const years = Array.from({ length: 10 }, (_, i) => conditionView(c, feats, ctx, i + 1));
         const [y1, y10] = [years[0], years[9]];
+        // every plot sweeps most of its light-to-dark range over the 10 years
+        for (const f of feats) {
+          const sevs = years.map((v) => v.plots.find((p) => p.fieldId === f.id)!.sev);
+          expect(Math.max(...sevs) - Math.min(...sevs), `${c.id} ${f.id}`).toBeGreaterThan(0.6);
+        }
         // every step of the scrubber changes at least one plot's colour
         for (let i = 1; i < 10; i++) expect(years[i].plots.map((p) => p.colour), `${c.id} year ${i + 1}`).not.toEqual(years[i - 1].plots.map((p) => p.colour));
         expect(y1.plots).toHaveLength(feats.length);
