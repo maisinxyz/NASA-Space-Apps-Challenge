@@ -20,7 +20,7 @@ Status: 2026-11-15. You are **Session A** of three parallel sessions. Your job: 
 - It is in the repo-root `.env` as `EARTHDATA_TOKEN` (git-ignored). Read it from the environment (`os.environ`, or load `.env` in the script). Send it only to NASA Earthdata hosts as `Authorization: Bearer <token>`, and re-add the header when a download redirects.
 - **Never print, log, commit, or write the token** into any file, sidecar, fixture, progress note or test output. Do not commit `.env` or the `EarthDataToken*.txt` file in the repo root (both git-ignored; `git add` only explicit paths you own, never `git add -A` or `git add .`).
 - Token expiry: 2027-01-14.
-- Access verified on 2026-11-15 by a 256-byte ranged download of the newest granule over UBC Farm (HTTP 206). This proves access only; no data values were read:
+- Access verified on 2026-11-15 by a 256-byte ranged download of the newest granule (HTTP 206). This proves access only; no data values were read:
 
 | Product (CMR short name, version) | Host | Result |
 | --- | --- | --- |
@@ -29,7 +29,8 @@ Status: 2026-11-15. You are **Session A** of three parallel sessions. Your job: 
 | `ECO_L3T_JET` 003, `ECO_L2T_LSTE` 002 (tile `10UDV`) | data.lpdaac.earthdatacloud.nasa.gov | OK |
 | `NASADEM_HGT` 001 (`n49w124`) | data.lpdaac.earthdatacloud.nasa.gov | OK |
 | `SPL4SMGP` 008, `SPL3SMP_E` | data.nsidc.earthdatacloud.nasa.gov | OK |
-| `GPM_3IMERGDF` 07, `GRACEDADM_CLSM0125US_7D` | data.gesdisc.earthdata.nasa.gov | **403**: the Earthdata account has not authorized the GES DISC application yet (team-lead action, `TODO(verify)` the exact step on the GES DISC data-access page). Until then: gap records. |
+| `GPM_3IMERGDF` 07, `GRACEDADM_CLSM0125US_7D` | data.gesdisc.earthdata.nasa.gov | OK (was 403 until the team lead authorized the GES DISC application; re-tested OK 2026-11-15) |
+| `TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4` | archive.podaac.earthdata.nasa.gov | OK |
 
 **Seed file contract shared by Session A (writes) and Session B (reads).** Existing loaders in `services/api/app/features/seeds.py` stay compatible:
 - Weekly layers: `data/seed/<site_id>/<layer>.json.gz` where `<layer>` is `ndvi`, `smap`, `ecostress`, `grace` (and `imerg` if added). JSON object with: `site_id`, `layer`, `variable`, `unit`, `basis`, `product` (`short_name`, `version`), `native_resolution_m`, `spatial_method` (for example "mean of valid 30 m pixels within 150 m of the site point"), `retrieved_on`, and `weekly`: a list of `{ "year": int, "values": [52 numbers or null], "n_obs": [52 ints] }`. Weeks are 7-day blocks from 1 January; days 358-366 fold into week 51 (existing pipeline convention). A week with no valid observation is `null` with `n_obs` 0. Nothing is gap-filled.
@@ -73,16 +74,19 @@ After **each workstream**: run your tests (`cd services/api && uv run pytest -q`
 ### EA5: Elevation
 - Source: `NASADEM_HGT` 001 (1 arc-second). Clip a grid about 1 km around each site point, write `dem.json.gz` with `bare_earth: false` (NASADEM is a surface model that can include canopy and buildings; say so in the sidecar). Optional, if you can verify access and licence: Natural Resources Canada HRDEM (CanElevation, 1 m lidar-derived, AWS `ca-central-1`) for the two BC sites as `dem_hrdem.json.gz` with `bare_earth: true`, plus a note for Session B. Do not mix the two in one file.
 
-### EA6: GES DISC products and regional groundwater (attempt, then gap)
-- Try `GPM_3IMERGDF` 07 (daily rain) and a GRACE or GRACE-FO groundwater/terrestrial water storage product. If the host still answers 403, write `imerg.gap.json` / keep `grace.gap.json` with the reason "GES DISC application not authorized for this Earthdata account" and print a `BLOCKED` question **only after EA1 to EA5 and EA7 are done**. If access works, build weekly series per the contract (GRACE is monthly and coarse: store it at its native step in `weekly` only if it is honest to do so; otherwise add a `monthly` list and document it).
+### EA6: IMERG rainfall and GRACE groundwater (access now authorized)
+- Access to GES DISC (`GPM_3IMERGDF` 07, `GRACEDADM_CLSM0125US_7D`) and PO.DAAC (`TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4`) was verified on 2026-11-15, so build these layers like the others; if a download still returns 403, write the gap record and ask only after EA1 to EA5 and EA7 are done.
+- `imerg.json.gz`: IMERG Final daily precipitation (0.1 degree), weekly totals (sum of daily mm) with `n_obs` days; confirm the variable name (expected `precipitation`; verify in the product guide), units and the Final-run latency (`TODO(verify)`). It serves as an independent rainfall cross-check for POWER at each site (Session B reads it for uncertainty).
+- `grace.json.gz`: pick the groundwater or terrestrial-water-storage variable you can verify (the data-assimilation product `GRACEDADM_CLSM0125US_7D` is weekly but its name says US coverage, so confirm it covers the Canadian sites before use; otherwise use the PO.DAAC mascon grid, which is monthly: store it in a `monthly` list and document that it is not weekly). `native_resolution_m` must reflect the true effective resolution (coarse; regional context only).
+- Both layers appear as honest regional context; Session B must not score with them.
 
 ### EA7: Run, document, hand over
-- Run EA2 to EA5 for every registered site. Pull at the start of EA7; if Session C has registered `site_kpu_langley`, include it; if not, finish the other four and leave a one-line command in your progress note so the run can be repeated.
+- Run EA2 to EA6 for every registered site. Pull at the start of EA7; if Session C has registered `site_kpu_langley`, include it; if not, finish the other four and leave a one-line command in your progress note so the run can be repeated.
 - Sidecars complete (existing `sidecar_problems` test must pass); gap records removed where data now exists; `.env.example` gets the name `EARTHDATA_TOKEN=` (no value).
 - Progress note includes, per site and layer: years covered, weeks with data, cloud-free scene counts, native resolution, and every `TODO(verify)`.
 
 ## Done when
-- `load_ndvi`, `load_smap`, `load_ecostress`, `load_dem` return data for UBC Farm and the three US sites (and KPU Langley if registered), or a gap record that says exactly why not.
+- `load_ndvi`, `load_smap`, `load_ecostress`, `load_grace`, `load_dem` return data (plus `imerg.json.gz`) for UBC Farm and the three US sites (and KPU Langley if registered), or a gap record that says exactly why not.
 - Every file is reproducible from the scripts with the token, and `OFFLINE=1` tests pass without the network.
 - No token anywhere in git (`git log -p` and `git grep` for `eyJ` return nothing new).
 
