@@ -30,7 +30,7 @@ import { RotationComparison } from "@/components/farm-future/RotationComparison"
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
 import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
-import { MapEffects } from "@/components/farm-future/MapEffects";
+import { EventSky, MapEffects } from "@/components/farm-future/MapEffects";
 import { StrategyBar } from "@/components/farm-future/SoilHealth";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { Droplet, Leaf, Thermometer, X } from "./icons";
@@ -284,6 +284,7 @@ export function FarmView({
       <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS + DESKTOP_WORKSPACE_CSS + WINDOW_CSS + DOCK_CSS}</style>
       {map2d && <Map2D toolsOpen={active === "view" && !panelsHidden} onExit={() => useAppStore.setState({ map2d: false })} />}
       {!map2d && <MapEffects />}
+      {map2d && <EventSky />}
       {panelsHidden && (
         <FvButton
           ref={restorePanels}

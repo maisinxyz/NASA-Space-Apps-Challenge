@@ -175,7 +175,7 @@ export function WhatIf({ raised = false }: { raised?: boolean }) {
         What-if
         <span style={{ color: color.inkSecondary, fontVariantNumeric: "tabular-nums" }}>Rain {fmtRain} · {fmtTemp}</span>
       </FvButton>
-      <PopCard open={open} origin="bottom right" label="What-if" testId="whatif-card" style={{ right: 40, bottom: pillBottom + 48, width: 340 }}>
+      <PopCard open={open} origin="bottom right" label="What-if" testId="whatif-card" style={{ right: 40, bottom: pillBottom + 48, width: 340, maxHeight: `calc(100vh - ${pillBottom + 120}px)`, overflowY: "auto" }}>
         <CardHead title="What-if" onMinimize={() => openPanel(null)} extra={active ? <FvButton className="ff-link" onClick={resetWhatIf}>Reset</FvButton> : undefined} />
         <Slider label="Rainfall" value={w.rainPct} {...WHAT_IF_LIMITS.rainPct} fmt={(v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}%`} onChange={(v) => setWhatIf({ rainPct: v })} centered />
         <Slider label="Temperature" value={w.tempC} {...WHAT_IF_LIMITS.tempC} fmt={(v) => `+${v.toFixed(1)} °C`} onChange={(v) => setWhatIf({ tempC: Math.round(v * 10) / 10 })} />

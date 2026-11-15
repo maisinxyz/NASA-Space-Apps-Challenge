@@ -5,6 +5,7 @@ import { create } from "zustand";
 import type { DetailLevel, FarmSurface, GlobeView, LookFilter } from "@/components/globe/types";
 import type { ScenarioSpeed } from "@/lib/twin/scenarios/clock";
 import type { ScenarioId } from "@/lib/twin/scenario";
+import { eventsFor } from "@/lib/farm-future/events";
 import { DEFAULT_WEIGHTS, type Weights } from "@/lib/twin/rotations";
 
 export type TwinMode = "explore" | "simulate" | "compare" | "evidence";
@@ -103,5 +104,8 @@ export const useChrome = create<{ twinFarm: string | null }>()(() => ({ twinFarm
 
 /** Selecting a scenario also activates its simulation, even on the first run. */
 export function activateScenario(id: ScenarioId | null) {
-  useAppStore.setState({ ...(id && { twinMode: "simulate" as const }), scenarioId: id, scenarioProgress: 0, scenarioPlaying: false });
+  // BC what-if farms start a weather event from its preset inputs (lib/farm-future/events.ts) unless the user set some.
+  const s = useAppStore.getState();
+  const preset = id && !s.scenarioInputs[id] ? eventsFor(s.farmId).find((e) => e.id === id)?.inputs : undefined;
+  useAppStore.setState({ ...(id && { twinMode: "simulate" as const }), scenarioId: id, scenarioProgress: 0, scenarioPlaying: false, ...(preset && id && { scenarioInputs: { ...s.scenarioInputs, [id]: preset } }) });
 }
