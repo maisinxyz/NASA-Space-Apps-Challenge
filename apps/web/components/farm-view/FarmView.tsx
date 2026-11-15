@@ -26,7 +26,7 @@ import { FV_CSS } from "./styles";
 import { ComparisonTimeline } from "./Timeline";
 import { ConditionCard, LayerLegend } from "./Cards";
 import { Twin } from "./Twin";
-import { UBCComparison } from "./UBCComparison";
+import { RotationComparison } from "@/components/farm-future/RotationComparison";
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
 import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
@@ -349,7 +349,7 @@ export function FarmView({
 
             {active === "rotations" && (
               <div className="fv-drawer-body" data-testid="ubc-comparison-panel">
-                <UBCComparison />
+                <RotationComparison layout="stack" />
               </div>
             )}
 

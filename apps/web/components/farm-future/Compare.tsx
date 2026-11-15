@@ -9,6 +9,7 @@ import { leaderboard, scoreAt, waterQuotaAt } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
 import { AskCopilot } from "@/components/copilot/AskCopilot";
+import { RotationComparison } from "./RotationComparison";
 import { color } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
 
@@ -27,6 +28,22 @@ export function CompareView() {
   const reduced = useReducedMotion();
   const rightGap = reviewFor ? DRAWER : 0;
   const board = leaderboard(t, w);
+  const { forecast } = useFutureData();
+
+  // Engine forecast: one comparison of A, B and C (F4). The synthetic leaderboard below is the fallback only.
+  if (forecast) {
+    return (
+      <div data-testid="compare-view" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <FvButton className="fv-back fv-onmap fv-auto" style={{ position: "absolute", left: 40, top: 30 }} data-testid="compare-exit" onClick={() => { setMode("future"); sound.close(); }}>
+          <ChevronLeft size={14} />Single view
+        </FvButton>
+        <section aria-label="Compare strategies" className="fv-glass fv-auto ff-card" style={{ left: 40, right: 40 + rightGap, top: 76, maxHeight: "calc(100% - 300px)", overflowY: "auto" }}>
+          <RotationComparison />
+        </section>
+        <ReviewDrawer />
+      </div>
+    );
+  }
 
   return (
     <div data-testid="compare-view" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>

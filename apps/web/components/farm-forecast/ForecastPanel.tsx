@@ -32,7 +32,7 @@ export function useFarmForecast() {
   const siteId = siteForFarm(farmId);
   const { rainPct, tempC } = whatIf;
   useEffect(() => {
-    if (!siteId || mode === "now") return;
+    if (!siteId) return; // also in Now mode: the "Compare rotations" drawer reads the same forecast
     const timer = setTimeout(() => void useForecastStore.getState().load(siteId, { rainPct, tempC }), 350); // debounce slider drags
     return () => clearTimeout(timer);
   }, [siteId, mode, rainPct, tempC]);
