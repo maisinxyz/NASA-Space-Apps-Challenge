@@ -4,7 +4,7 @@ import { useId } from "react";
 
 import { formatValue, metaLines, sourceLine, type SourceId, type UiBasis, type ValueMeta } from "@/lib/provenance";
 
-import { BasisChip as ContractBasisChip, isBasis } from "./BasisChip";
+import { BasisChip as ContractBasisChip } from "./BasisChip";
 
 export type { ValueMeta } from "@/lib/provenance";
 
@@ -12,8 +12,8 @@ export const SYNTHETIC_DESCRIPTION = "Made-up demo data, shown so the screen can
 
 /** Basis chip for any UI basis: the contract enum (ui/BasisChip) plus "synthetic". */
 export function BasisChip({ basis }: { basis: UiBasis }) {
-  if (isBasis(basis)) return <ContractBasisChip basis={basis} />;
-  if (basis !== "synthetic") throw new Error(`BasisChip: unknown basis "${String(basis)}"`);
+  // Unknown values fall through to the contract chip, which renders them neutrally (contract v1.1 rule).
+  if (basis !== "synthetic") return <ContractBasisChip basis={basis as Parameters<typeof ContractBasisChip>[0]["basis"]} />;
   return (
     <span data-basis="synthetic" title={SYNTHETIC_DESCRIPTION} className="inline-flex items-center gap-1 rounded-full border border-dashed border-mock px-1.5 py-px align-middle text-[0.7rem] leading-4 font-medium text-ink-muted lowercase">
       <span aria-hidden className="size-1.5 rounded-full bg-mock" />

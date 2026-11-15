@@ -60,9 +60,10 @@ function Section({ id, title, children }: { id: string; title: string; children:
  * Sources of the farm twin (3D surface, field outlines, weather). Static: these are not in the per-terrain provenance
  * API. Unknown licence details say "not yet verified" on screen and carry a TODO(verify) here.
  */
-const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licence: string; attribution: string; url?: string; note: string }[] = [
+const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licence: string; attribution: string; url?: string; resolution: string; note: string }[] = [
   {
     name: "Google Photorealistic 3D Tiles, streamed through Cesium ion",
+    resolution: "not yet verified", // TODO(verify): original resolution from the provider docs.
     role: "farm view, photoreal 3D",
     basis: "measured",
     // TODO(verify): exact Google Map Tiles API terms and the Cesium ion plan terms for this use; link to both.
@@ -72,6 +73,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "Bing Maps Aerial, streamed through Cesium ion",
+    resolution: "not yet verified", // TODO(verify): original resolution from the provider docs.
     role: "farm view, terrain-only surface imagery",
     basis: "measured",
     // TODO(verify): Bing Maps imagery terms as provided through Cesium ion.
@@ -81,6 +83,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "Cesium World Terrain",
+    resolution: "not yet verified", // TODO(verify): original resolution from the provider docs.
     role: "farm view, ground elevation",
     basis: "measured",
     // TODO(verify): Cesium World Terrain licence/attribution text from the Cesium ion asset page.
@@ -90,6 +93,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "OpenStreetMap",
+    resolution: "Vector data (no pixel resolution)",
     role: "field outlines (Beltsville), approximate Cornell pin",
     basis: "measured",
     licence: "Open Database License (ODbL) 1.0",
@@ -99,6 +103,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "FieldTwin traced field outlines",
+    resolution: "Vector data (no pixel resolution)",
     role: "field outlines (Cornell)",
     basis: "assumed",
     licence: "Made by the FieldTwin team",
@@ -107,6 +112,7 @@ const TWIN_SOURCES: { name: string; role: string; basis: BasisOrRelative; licenc
   },
   {
     name: "NASA POWER",
+    resolution: "About 0.5° (roughly 55 km)",
     role: "weather for storm replay (coming)",
     basis: "measured",
     // TODO(verify): NASA POWER data-use / citation policy wording.
@@ -206,15 +212,11 @@ export default function MethodsPage() {
                     <dd>
                       <SourceLink url={d.url} />
                     </dd>
-                    {d.resolution_m !== undefined && (
-                      <>
-                        <dt className="text-ink-muted">Resolution</dt>
-                        <dd>
-                          {/* The contract gives no basis for resolution; it is a property of this dataset, so it carries the dataset's basis. */}
-                          <MetricValue value={d.resolution_m} unit="m" basis={d.basis} />
-                        </dd>
-                      </>
-                    )}
+                    <dt className="text-ink-muted">Original resolution</dt>
+                    <dd>
+                      {/* The contract gives no basis for resolution; it is a property of this dataset, so it carries the dataset's basis. */}
+                      {d.resolution_m !== undefined ? <MetricValue value={d.resolution_m} unit="m" basis={d.basis} /> : <Text>not yet verified</Text>}
+                    </dd>
                     {d.date_range && (
                       <>
                         <dt className="text-ink-muted">Date range</dt>
@@ -244,15 +246,11 @@ export default function MethodsPage() {
                     <dd>
                       <Text>{state.prov.texture.attribution}</Text>
                     </dd>
-                    {state.prov.texture.resolution_m !== undefined && (
-                      <>
-                        <dt className="text-ink-muted">Resolution</dt>
-                        <dd>
-                          {/* TextureInfo has no basis; pixel size follows from image size over its bounds, so "derived". */}
-                          <MetricValue value={state.prov.texture.resolution_m} unit="m" basis="derived" />
-                        </dd>
-                      </>
-                    )}
+                    <dt className="text-ink-muted">Original resolution</dt>
+                    <dd>
+                      {/* TextureInfo has no basis; pixel size follows from image size over its bounds, so "derived". */}
+                      {state.prov.texture.resolution_m !== undefined ? <MetricValue value={state.prov.texture.resolution_m} unit="m" basis="derived" /> : <Text>not yet verified</Text>}
+                    </dd>
                   </dl>
                 </Card>
               )}
@@ -292,6 +290,10 @@ export default function MethodsPage() {
                 <dd>
                   <SourceLink url={d.url} />
                 </dd>
+                <dt className="text-ink-muted">Original resolution</dt>
+                <dd>
+                  <Text>{d.resolution}</Text>
+                </dd>
                 <dt className="text-ink-muted">Limitation</dt>
                 <dd>{d.note}</dd>
               </dl>
@@ -316,6 +318,10 @@ export default function MethodsPage() {
                   <dt className="text-ink-muted">Source</dt>
                   <dd>
                     <SourceLink url={d.url} />
+                  </dd>
+                  <dt className="text-ink-muted">Original resolution</dt>
+                  <dd>
+                    <Text>not yet verified</Text>
                   </dd>
                 </dl>
               </Card>

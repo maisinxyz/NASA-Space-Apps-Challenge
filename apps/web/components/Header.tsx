@@ -15,6 +15,7 @@ import { AboutPanel } from "./globe/AboutPanel";
 
 export function Header() {
   const onMethods = usePathname().startsWith("/methods");
+  const onLearn = usePathname().startsWith("/learn");
   const presenter = usePresenter((s) => s.presenter);
   const twinFarm = useChrome((s) => s.twinFarm);
   const slim = !!twinFarm && !onMethods;
@@ -54,6 +55,9 @@ export function Header() {
             <Link href="/methods" className="text-ink-muted hover:text-ink">
               Methods &amp; data
             </Link>
+            <Link href="/learn" className="ml-4 text-ink-muted hover:text-ink">
+              Learn
+            </Link>
           </nav>
           <AboutPanel />
           {presenterBtn("rounded-md border border-white/15 px-2 py-0.5 text-xs hover:bg-white/10")}
@@ -71,6 +75,9 @@ export function Header() {
         <nav aria-label="Main" className="flex flex-1 flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link href="/methods" aria-current={onMethods ? "page" : undefined} className={`border-b-2 py-0.5 ${onMethods ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
             Methods &amp; data
+          </Link>
+          <Link href="/learn" aria-current={onLearn ? "page" : undefined} className={`border-b-2 py-0.5 ${onLearn ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
+            Learn
           </Link>
         </nav>
         <div className="flex flex-wrap items-center gap-2 text-sm">
