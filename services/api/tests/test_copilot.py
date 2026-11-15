@@ -95,6 +95,22 @@ def test_offline_never_calls_provider(client, monkeypatch):
     assert result.json()["error"]["code"] == "DATA_SOURCE_UNAVAILABLE"
 
 
+def test_sunflower_question_runs_the_forecast_without_a_provider(client, monkeypatch):
+    monkeypatch.setenv("OFFLINE", "1")
+    monkeypatch.setattr(copilot, "_provider", lambda *args: pytest.fail("planting comparison called the provider"))
+    body = request()
+    body["message"] = "What outcome would planting sunflower have in the future?"
+    response = client.post("/api/v1/copilot/chat", json=body)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    contract.validate_response(result, "/copilot/chat", "post", "200")
+    assert "Spring barley with Sunflower once in year 1" in result["reply"]
+    assert "Historical weather" in result["reply"]
+    assert "Drier summers" in result["reply"]
+    assert set(result["referenced_layers"]) == {"irrigation_need_mm", "soil_organic_index"}
+    assert "36%" not in result["reply"]
+
+
 def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
     calls = []
     monkeypatch.setattr(copilot, "_provider", lambda payload, key: calls.append(payload) or {

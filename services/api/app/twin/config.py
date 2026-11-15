@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.2.2"  # Adds the first-year planting comparison
+ENGINE_VERSION = "1.2.3"  # Includes the coastal BC bare-earth terrain layers
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

@@ -13,13 +13,14 @@ def _week(year: int, values: list[float], n_obs: list[int] | None = None) -> dic
     return {"year": year, "values": values, "n_obs": n_obs if n_obs is not None else [1] * 52}
 
 
-def test_uncertainty_layers_from_synthetic_seeds_keep_the_absent_path(monkeypatch):
+def test_uncertainty_layers_from_synthetic_seeds_keep_the_absent_path(monkeypatch, tmp_path):
     """Present, coarse, sparse, and non-bare-earth cases. Nothing is written under data/seed."""
     from app.features import seeds
     from app.features.pipeline import resolve_scenario
     from app.services.features import computed
     from app.twin.explain import uncertainty as U
 
+    monkeypatch.setattr(seeds, "SEED_DIR", tmp_path)
     plain = {row["layer"] for row in U.uncertainty_layers("site_ubc_farm")}
     assert "smap" not in plain and "dem" not in plain
 

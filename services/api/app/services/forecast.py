@@ -16,6 +16,7 @@ from app.core.config import REPO_ROOT
 from app.core.errors import ApiError
 from app.features import pipeline as P
 from app.features import seeds
+from app.features.zones import read_elevation
 from app.rotation.config import SITE_PRESETS
 from app.services.features import base, sources
 from app.twin import config as TC
@@ -210,8 +211,9 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
             if field_run.field.soil_override is None:
                 _mark_proxy_assumptions(field_doc)
         _mark_proxy_assumptions(rollup)
-    limited = proxy_used or any(fn(_site_id(prepared)) is None for fn in (
-        seeds.load_ndvi, seeds.load_smap, seeds.load_ecostress, seeds.load_grace, seeds.load_dem,
+    site_id = _site_id(prepared)
+    limited = proxy_used or read_elevation(site_id)[0] is None or any(fn(site_id) is None for fn in (
+        seeds.load_ndvi, seeds.load_smap, seeds.load_ecostress, seeds.load_grace,
     ))
     return {
         "site_id": _site_id(prepared),

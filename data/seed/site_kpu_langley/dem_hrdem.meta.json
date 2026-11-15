@@ -1,0 +1,11 @@
+{
+ "source_name": "Natural Resources Canada HRDEM Mosaic Digital Terrain Model",
+ "source_url": "https://datacube.services.geo.ca/wrapper/ogc/elevation-hrdem-mosaic",
+ "product_version": "WCS 1.1.1",
+ "retrieved_on": "2026-11-15",
+ "license": "Open Government Licence \u2013 Canada",
+ "attribution": "Natural Resources Canada / CanElevation",
+ "resolution_spatial": "10 m analysis grid from HRDEM DTM",
+ "resolution_temporal": "Static mosaic of elevation surveys",
+ "processing_notes": "Requested a 10 m bare-earth coverage and resampled to a locally metric WGS84 grid. Elevations in metres, CGVD2013. Holes stay null."
+}

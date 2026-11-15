@@ -449,15 +449,18 @@ def station_source(site_id: str) -> dict | None:
 def gap_notes(site_id: str) -> list[str]:
     """One sentence per satellite product whose loader returns None."""
 
+    from app.features.zones import read_elevation
+
     named = (
         ("ndvi", seeds.load_ndvi, "No NDVI seed is stored."),
         ("smap", seeds.load_smap, "No SMAP seed is stored. A field moisture map was not produced."),
         ("ecostress", seeds.load_ecostress, "No ECOSTRESS seed is stored."),
         ("grace", seeds.load_grace, "No GRACE-FO seed is stored."),
-        ("dem", seeds.load_dem, "No DEM seed is stored. Zones are not drawn from an elevation grid."),
     )
     notes = []
     for _name, loader, sentence in named:
         if loader(site_id) is None:
             notes.append(sentence)
+    if read_elevation(site_id)[0] is None:
+        notes.append("No DEM seed is stored. Zones are not drawn from an elevation grid.")
     return notes

@@ -16,7 +16,7 @@ def test_spatial_limits_do_not_invent_a_value():
     assert spatial_limits(dem_present=True, moisture_present=True) == []
 
 
-def test_ubc_exposure_is_limited_and_has_no_zones():
+def test_ubc_exposure_reports_available_sources():
     from app.features import seeds
     from app.features.zones import read_elevation
 
@@ -109,11 +109,24 @@ def test_bare_earth_true_has_no_canopy_caveat():
     assert not any(zone["kind"] == "water_stress" for zone in _zones)
 
 
-def test_ndvi_cross_check_counts_cloud_free_scenes(monkeypatch):
+def test_demo_sites_return_bare_earth_screening_zones():
+    from app.services.features import zones
+    from app.twin.explain.uncertainty import gap_notes
+
+    for site_id in ("site_ubc_farm", "site_kpu_langley"):
+        body = zones(site_id)
+        contract.validate_schema(body, "ZoneCollection")
+        assert {"erosion_risk", "frost_pocket"} <= {zone["kind"] for zone in body["zones"]}
+        assert any("HRDEM" in line and "10 m" in line for line in body["caveats"])
+        assert not any("No DEM seed" in line for line in gap_notes(site_id))
+
+
+def test_ndvi_cross_check_counts_cloud_free_scenes(monkeypatch, tmp_path):
     from app.features import seeds
 
     values = [0.1 if week < 10 else 0.8 for week in range(52)]
     ndvi = {"unit": "1", "weekly": [{"year": 2020, "values": values, "n_obs": [2] * 52}]}
+    monkeypatch.setattr(seeds, "SEED_DIR", tmp_path)
     monkeypatch.setattr(seeds, "load_ndvi", lambda _site: ndvi)
     doc = exposure_report("site_ubc_farm")
     contract.validate_schema(doc, "ForecastExposure")
@@ -125,9 +138,10 @@ def test_ndvi_cross_check_counts_cloud_free_scenes(monkeypatch):
     assert doc["zones"] == []
 
 
-def test_smap_dryness_is_supporting_evidence_only(monkeypatch):
+def test_smap_dryness_is_supporting_evidence_only(monkeypatch, tmp_path):
     from app.features import seeds
 
+    monkeypatch.setattr(seeds, "SEED_DIR", tmp_path)
     monkeypatch.setattr(seeds, "load_smap", lambda _site: _weekly(8, 0.05, 0.4))
     doc = exposure_report("site_ubc_farm")
     assert doc["vulnerable_seasons"]

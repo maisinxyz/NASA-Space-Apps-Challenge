@@ -130,6 +130,11 @@ def zones_from_elevation(doc: dict, smap: dict | None = None) -> tuple[list[dict
         return [], caveats + ["The elevation cell size was not a positive number of metres, so no zones were drawn."]
 
     dlon, dlat = _metres_to_degrees(lat0, res_m)
+    spacing = doc.get("pixel_size_deg")
+    if isinstance(spacing, list) and len(spacing) == 2 and all(
+        type(value) in (int, float) and 0 < value < 1 for value in spacing
+    ):
+        dlon, dlat = spacing
     transform = Affine(dlon, 0, lon0 - dlon / 2, 0, -dlat, lat0 + dlat / 2)
     finite = np.isfinite(elev)
     gy, gx = np.gradient(np.where(finite, elev, np.nanmean(elev[finite])), res_m, res_m)
@@ -195,10 +200,13 @@ def zones_from_elevation(doc: dict, smap: dict | None = None) -> tuple[list[dict
 def zones_from_seed(site_id: str, smap: dict | None = None) -> tuple[list[dict], list[str]] | None:
     """Zones from a stored elevation file. None when no file is stored."""
 
-    doc, _which = read_elevation(site_id)
+    doc, product = read_elevation(site_id)
     if doc is None:
         return None
-    return zones_from_elevation(doc, smap)
+    zones, caveats = zones_from_elevation(doc, smap)
+    if product == "dem_hrdem":
+        caveats.append("Natural Resources Canada HRDEM bare-earth terrain, 10 m analysis grid, Open Government Licence – Canada.")
+    return zones, caveats
 
 
 def spatial_limits(*, dem_present: bool, moisture_present: bool) -> list[str]:
