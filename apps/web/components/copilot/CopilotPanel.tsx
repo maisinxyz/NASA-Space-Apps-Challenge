@@ -8,13 +8,13 @@ import { strategyOf } from "@/lib/farm-future/data";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
 import { color } from "@/lib/farm-view/tokens";
-import { MAX_MESSAGE, TERMS, termsIn, useCopilot, type ScreenState } from "@/lib/copilot/copilot";
+import { TERMS, termsIn, useCopilot, type ScreenState } from "@/lib/copilot/copilot";
 import { useForecastStore } from "@/lib/forecast/store";
 import { siteForFarm } from "@/lib/forecast/sites";
 import { useAppStore } from "@/lib/store";
 
 import { FvButton } from "@/components/farm-view/FvButton";
-import type { PlaceNavigation } from "./CopilotComposer";
+import { CopilotComposer, type PlaceNavigation } from "./CopilotComposer";
 
 const SLOW_MS = 8000;
 
@@ -100,6 +100,8 @@ export function CopilotPanel({ navigation, inline = false }: {
         {error && <p role="alert" style={{ margin: 0, color: "#C46A52" }}>{error}</p>}
       </div>
       </>}
+      <CopilotComposer value={draft} onChange={(value) => useCopilot.setState({ draft: value })}
+        busy={status === "sending"} onAsk={(message) => void send(message, screen)} />
     </aside>
   );
 }

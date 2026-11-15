@@ -67,8 +67,8 @@ export function CopilotComposer({ navigation, value, onChange, onAsk, busy }: {
     }}>
       <input ref={input} value={value} maxLength={MAX_MESSAGE}
         data-testid="copilot-input"
-        aria-label={includePlaces ? "Ask a question or find a farm, city or country" : "Ask a question or find a farm"}
-        placeholder={includePlaces ? "Ask a question or find a place" : "Ask a question or find a farm"}
+        aria-label={!navigation ? "Message Gus" : includePlaces ? "Ask a question or find a farm, city or country" : "Ask a question or find a farm"}
+        placeholder={!navigation ? "Message Gus" : includePlaces ? "Ask a question or find a place" : "Ask a question or find a farm"}
         role={navigation ? "combobox" : undefined}
         aria-expanded={navigation ? hits.length > 0 : undefined}
         aria-controls={navigation && hits.length ? id : undefined}
