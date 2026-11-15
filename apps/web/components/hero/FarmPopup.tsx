@@ -60,9 +60,14 @@ function useWarmPhotoOnHover() {
 
 export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInfo | null; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
   useWarmPhotoOnHover();
+  const opener = useRef<HTMLElement | null>(null);
+  const previousFarm = useRef<string | null>(null);
+  if (farm && !previousFarm.current && typeof document !== "undefined") opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  previousFarm.current = farm?.id ?? null;
+  const close = () => { onClose(); opener.current?.focus(); };
   return (
     <AnimatePresence>
-      {farm && <Card key={farm.id} farm={farm} reduced={reduced} onClose={onClose} onDescend={onDescend} />}
+      {farm && <Card key={farm.id} farm={farm} reduced={reduced} onClose={close} onDescend={onDescend} />}
     </AnimatePresence>
   );
 }
@@ -70,6 +75,8 @@ export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInf
 function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
   const box = useRef<HTMLDivElement>(null);
   const pointer = useRef<HTMLSpanElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const focused = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
 
   // Follow this farm's pin (not another's: a replaced card keeps its last spot while it leaves).
@@ -82,6 +89,10 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       const p = last.current;
       // Hidden while the pin is round the back of the Earth.
       el.style.visibility = p && t?.id === farm.id ? "visible" : "hidden";
+      if (p && t?.id === farm.id && !focused.current) {
+        focused.current = true;
+        closeButton.current?.focus();
+      }
       if (!p) return;
       // The card and its button move as one unit; `h` is the whole unit.
       const h = el.offsetHeight;
@@ -138,24 +149,26 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       >
         <section aria-label={`${farm.name}, ${where}`} className="relative block w-full overflow-hidden rounded-[16px] border border-white/[0.1] bg-[#07090d]/92 text-left shadow-[0_18px_44px_rgba(0,0,0,0.55)] backdrop-blur-md">
           <Photo farm={farm} />
+          <button ref={closeButton} type="button" onClick={onClose} aria-label="Close farm details" className="absolute top-2 right-2 rounded-full bg-black/90 px-3 py-2 text-xs text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">Close</button>
           <span className="block px-3.5 pt-3 pb-3.5">
             <span className="line-clamp-2 text-[14px] leading-snug font-medium text-white/[0.95]">{farm.name}</span>
             <span className="mt-0.5 block text-[12px] leading-snug" style={{ color: color.accent, opacity: 0.85 }}>
               {where}
             </span>
+            <span className="mt-2 block text-[12px] font-semibold text-white">{farm.tier === "twin" ? "Digital twin · scenarios and comparison" : "Explore landscape · no simulation"}</span>
             <span className="mt-2 line-clamp-1 text-[12px] leading-[1.45] text-white/[0.58]">{line}</span>
           </span>
         </section>
         <motion.button
           type="button"
           onClick={() => onDescend(farm.id)}
-          aria-label={`Go to ${farm.name}`}
+          aria-label={`${farm.tier === "twin" ? "Open digital twin" : "Explore landscape"} at ${farm.name}`}
           whileTap={reduced ? undefined : { scale: 0.95, boxShadow: "inset 0 2px 8px rgba(0,0,0,0.65)", backgroundColor: "rgba(3,4,6,0.96)", transition: { duration: 0.07, ease: "easeOut" } }}
           transition={{ type: "spring", stiffness: 620, damping: 16, mass: 0.9 }}
           className="relative mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.14] bg-[#07090d]/92 text-[13px] font-medium shadow-[0_10px_26px_rgba(0,0,0,0.5)] backdrop-blur-md outline-none transition-colors hover:border-white/[0.26] focus-visible:ring-2 focus-visible:ring-[#a3bfe9]/80"
           style={{ height: BTN_H, color: color.accent }}
         >
-          Go to farm
+          {farm.tier === "twin" ? "Open digital twin" : "Explore landscape"}
           <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>

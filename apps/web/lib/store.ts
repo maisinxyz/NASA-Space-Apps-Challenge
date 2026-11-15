@@ -97,3 +97,8 @@ export const usePresenter = create<{ presenter: boolean }>()(() => ({ presenter:
 
 /** Page chrome: set by GlobeHome while the twin workspace is on screen, so the header collapses to a slim bar. */
 export const useChrome = create<{ twinFarm: string | null }>()(() => ({ twinFarm: null }));
+
+/** Selecting a scenario also activates its simulation, even on the first run. */
+export function activateScenario(id: ScenarioId | null) {
+  useAppStore.setState({ ...(id && { twinMode: "simulate" as const }), scenarioId: id, scenarioProgress: 0, scenarioPlaying: false });
+}

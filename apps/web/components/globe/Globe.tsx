@@ -71,6 +71,8 @@ import {
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
 
+import { cameraActionForKey, type CameraAction } from "@/lib/farm-view/camera-controls";
+
 import { type LoadTrack, startLoad, stepLoad } from "./loadProgress";
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
 
@@ -538,6 +540,28 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     if (live.current.view === "farm" && farm) flyToFarm(r, live.current, farm);
     else flyToGlobe(r, farm, GLOBE_HEIGHT_M, live.current.reducedMotion);
   };
+  const moveCamera = (action: CameraAction) => {
+    const r = rt.current;
+    const farm = selectedFarm();
+    const st = r?.orbit;
+    if (!r || !farm || !st || r.flying || live.current.view !== "farm") return;
+    if (action.startsWith("pan-")) {
+      const step = Math.max(10, st.o.range * 0.1);
+      const x = action === "pan-left" ? -step : action === "pan-right" ? step : 0;
+      const y = action === "pan-up" ? step : action === "pan-down" ? -step : 0;
+      const h = st.o.heading;
+      const box = boxOf(live.current, farm);
+      st.target = fromOffsetM(box, panTarget(offsetM(st.target, box), { x: x * Math.cos(h) + y * Math.sin(h), y: -x * Math.sin(h) + y * Math.cos(h) }, box, panMarginFor(farm.minRangeM)));
+    } else if (action.startsWith("orbit-")) {
+      st.o = { ...st.o, heading: st.o.heading + (action === "orbit-left" ? -0.12 : action === "orbit-right" ? 0.12 : 0), pitch: st.o.pitch + (action === "orbit-up" ? 0.1 : action === "orbit-down" ? -0.1 : 0) };
+    } else {
+      st.o = { ...st.o, range: st.o.range * (action === "zoom-in" ? 0.85 : 1.18) };
+    }
+    r.motion.touch(performance.now());
+    applyOrbit(r, live.current, farm);
+  };
+  const moveRef = useRef(moveCamera);
+  moveRef.current = moveCamera;
   const resetRef = useRef(resetView);
   useEffect(() => {
     resetRef.current = resetView;
@@ -546,6 +570,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     ref,
     () => ({
       resetView: () => resetRef.current(),
+      moveCamera: (action) => moveRef.current(action),
       getCamera: () => {
         const r = rt.current;
         if (!r) return null;
@@ -804,6 +829,16 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const noMenu = (e: Event) => {
       if (live.current.view === "farm") e.preventDefault();
     };
+    canvas.tabIndex = 0;
+    canvas.setAttribute("aria-label", "Farm camera. Arrow keys pan, Shift plus arrows orbit, plus and minus zoom.");
+    const onCameraKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || live.current.view !== "farm") return;
+      const action = cameraActionForKey(e.key, e.shiftKey);
+      if (!action) return;
+      e.preventDefault();
+      moveRef.current(action);
+    };
+    canvas.addEventListener("keydown", onCameraKey);
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
@@ -959,6 +994,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       r.ground?.destroy();
       offRenderError();
       handler.destroy();
+      canvas.removeEventListener("keydown", onCameraKey);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);

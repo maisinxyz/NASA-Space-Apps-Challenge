@@ -114,7 +114,7 @@ function FarmRows({ farms, ready, selectedId, onPick }: { farms: Farm[]; ready: 
                 animate={{ opacity: 1 }}
                 transition={{ delay: (i * popover.rowStaggerMs + popover.detailDelayMs) / 1000, duration: 0.16 }}
               >
-                {f.country}
+                {f.country} · {f.tier === "twin" ? "Digital twin" : "Explore only"}
               </motion.span>
             </Pressable>
           </motion.li>
@@ -146,7 +146,12 @@ export function ControlCluster({
   const reduced = useReducedMotion();
   const [open, setOpen] = useState<Panel | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const triggers = useRef<Partial<Record<Panel, HTMLElement | null>>>({});
+
+  useEffect(() => {
+    if (open) panel.current?.focus();
+  }, [open]);
 
   // Escape and outside clicks close; Escape returns focus to the trigger.
   useEffect(() => {
@@ -192,6 +197,8 @@ export function ControlCluster({
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={panel}
+            tabIndex={-1}
             id="hero-popover"
             role="dialog"
             aria-label={TITLES[open]}
@@ -218,6 +225,7 @@ export function ControlCluster({
                     selectedId={selectedId}
                     onPick={(id) => {
                       onPickFarm(id);
+                      triggers.current.maps?.querySelector("button")?.focus();
                       setOpen(null);
                     }}
                   />

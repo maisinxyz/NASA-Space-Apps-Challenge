@@ -7,6 +7,8 @@ import { clampInput } from "@/lib/twin/scenarios/clock";
 import { scenarioById } from "@/lib/twin/scenarios/registry";
 import type { ScenarioId } from "@/lib/twin/scenario";
 
+export type SharePanelSection = "scenarios" | "compare" | "evidence" | "map" | "field";
+
 export type ShareState = {
   farm: string;
   mode: TwinMode;
@@ -21,6 +23,16 @@ export type ShareState = {
   scenario?: ScenarioId | null;
   inputs?: Record<string, number>;
   detail?: DetailLevel;
+  scenarioRotation?: string;
+  scenarioProgress?: number;
+  twinYear?: number;
+  twinMonth?: number;
+  showCropFills?: boolean;
+  panelsHidden?: boolean;
+  leftOpen?: boolean;
+  rightOpen?: boolean;
+  panelOpen?: boolean;
+  panelSection?: SharePanelSection;
 };
 
 const SURFACES: FarmSurface[] = ["google", "terrain"];
@@ -39,6 +51,14 @@ export function encodeShare(s: ShareState): string {
     const si = Object.entries(s.inputs ?? {}).map(([k, v]) => `${k}:${round(v, 3)}`);
     if (si.length) q.set("si", si.join(","));
   }
+  if (s.scenarioRotation) q.set("sr", s.scenarioRotation);
+  if (s.scenario && s.scenarioProgress !== undefined) q.set("sp", String(round(s.scenarioProgress, 4)));
+  if (s.twinYear !== undefined) q.set("y", String(s.twinYear));
+  if (s.twinMonth !== undefined) q.set("mo", String(s.twinMonth));
+  for (const [key, value] of [["fills", s.showCropFills], ["ph", s.panelsHidden], ["lo", s.leftOpen], ["ro", s.rightOpen], ["po", s.panelOpen]] as const) {
+    if (value !== undefined) q.set(key, value ? "1" : "0");
+  }
+  if (s.panelSection) q.set("ps", s.panelSection);
   if (s.camera) {
     const c = s.camera;
     q.set("cam", [c.lon, c.lat, c.height, c.heading, c.pitch].map((v, i) => round(v, CAM_DIGITS[i])).join(","));
@@ -82,10 +102,36 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
     }
     if (Object.keys(inputs).length) out.inputs = inputs;
   }
+  if (twin) {
+    const rotation = q.get("sr");
+    if (rotation && twin.rotations.some((r) => r.id === rotation)) out.scenarioRotation = rotation;
+    if (def) {
+      const raw = q.get("sp");
+      if (raw?.trim() && Number.isFinite(Number(raw))) out.scenarioProgress = Math.max(0, Math.min(1, Number(raw)));
+    }
+    const selected = [out.a ?? "rot_existing", out.b ?? "rot_cover"].map((id) => twin.rotations.find((r) => r.id === id) ?? twin.rotations[0]);
+    const years = Math.max(1, ...selected.filter(Boolean).map((r) => r.years.length));
+    for (const [key, name, max] of [["y", "twinYear", years - 1], ["mo", "twinMonth", 11]] as const) {
+      const raw = q.get(key);
+      if (raw?.trim() && Number.isFinite(Number(raw))) out[name] = Math.max(0, Math.min(max, Math.floor(Number(raw))));
+    }
+    for (const [key, name] of [["fills", "showCropFills"], ["ph", "panelsHidden"], ["lo", "leftOpen"], ["ro", "rightOpen"], ["po", "panelOpen"]] as const) {
+      const raw = q.get(key);
+      if (raw === "0" || raw === "1") out[name] = raw === "1";
+    }
+    const section = q.get("ps") as SharePanelSection;
+    if (["scenarios", "compare", "evidence", "map"].includes(section) || (section === "field" && out.field)) out.panelSection = section;
+  }
   const cam = q.get("cam")?.split(",").map(Number);
   if (cam?.length === 5 && cam.every(Number.isFinite) && Math.abs(cam[0]) <= 180 && Math.abs(cam[1]) <= 90 && cam[2] > 0) {
     const [lon, lat, height, heading, pitch] = cam;
     out.camera = { lon, lat, height, heading, pitch };
   }
   return out;
+}
+
+/** Defaults preserve the original collapsed panel for legacy links. */
+export function sharePanelState(hash: string): { open: boolean; section: SharePanelSection } {
+  const share = decodeShare(hash);
+  return { open: share?.panelOpen ?? false, section: share?.panelSection ?? "scenarios" };
 }

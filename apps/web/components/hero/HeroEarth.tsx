@@ -16,6 +16,8 @@ import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { type MutableRefObject, Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import { cameraActionForKey, type CameraAction } from "@/lib/farm-view/camera-controls";
+
 import type { Farm, PinHover } from "@/components/globe/types";
 
 import { Pin3D, pinBox } from "./Pin3D";
@@ -658,7 +660,7 @@ export function HeroEarth(props: Props) {
 
   // Drag: rotate under the cursor (1 / radius-in-px radians per px), inertia after release.
   const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("[data-pin]")) return;
+    if ((e.target as HTMLElement).closest("[data-pin], [data-camera-controls]")) return;
     const m = motion.current;
     if (m.dive) return;
     m.dragging = true;
@@ -711,10 +713,33 @@ export function HeroEarth(props: Props) {
     if (started.current) props.onDragEnd();
   };
 
+  const moveCamera = (action: CameraAction) => {
+    const m = motion.current;
+    if (m.dive) return;
+    m.fly = null;
+    m.vSpin = 0;
+    m.vTilt = 0;
+    if (action.endsWith("left")) m.spin -= 0.14;
+    if (action.endsWith("right")) m.spin += 0.14;
+    if (action.endsWith("up")) m.tilt = THREE.MathUtils.clamp(m.tilt + 0.12, -MAX_TILT, MAX_TILT);
+    if (action.endsWith("down")) m.tilt = THREE.MathUtils.clamp(m.tilt - 0.12, -MAX_TILT, MAX_TILT);
+    if (props.zoomEnabled && action === "zoom-in") m.zoomTo = THREE.MathUtils.clamp(m.zoomTo * 0.85, ZOOM.min, ZOOM.max);
+    if (props.zoomEnabled && action === "zoom-out") m.zoomTo = THREE.MathUtils.clamp(m.zoomTo * 1.18, ZOOM.min, ZOOM.max);
+    props.onDragStart();
+    props.onDragEnd();
+  };
+
   return (
     <div
       ref={wrap}
       className="absolute inset-0 cursor-grab touch-none bg-black active:cursor-grabbing"
+      tabIndex={props.zoomEnabled ? 0 : -1}
+      aria-label="Earth camera. Arrow keys rotate, plus and minus zoom."
+      onKeyDown={(e) => {
+        if (!props.zoomEnabled || e.altKey || e.ctrlKey || e.metaKey || (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-camera-controls]"))) return;
+        const action = cameraActionForKey(e.key, e.shiftKey);
+        if (action) { e.preventDefault(); moveCamera(action); }
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -725,6 +750,16 @@ export function HeroEarth(props: Props) {
           <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} pinOff={pinOff} leaderEls={leaderEls} hovered={hovered} />
         </Suspense>
       </Canvas>
+      {props.zoomEnabled && (
+        <div data-camera-controls className="absolute right-6 bottom-16 z-[120] max-w-[21rem] rounded-xl border border-white/20 bg-black/85 p-3 text-xs text-white" role="group" aria-label="Earth camera controls">
+          <p className="mb-2">Arrow keys rotate · + / − zoom</p>
+          <div className="flex flex-wrap gap-1">
+            {([ ["pan-left", "Rotate left"], ["pan-right", "Rotate right"], ["pan-up", "Rotate up"], ["pan-down", "Rotate down"], ["zoom-in", "Zoom in"], ["zoom-out", "Zoom out"] ] as const).map(([action, label]) => (
+              <button key={action} type="button" onClick={() => moveCamera(action)} className="rounded border border-white/25 px-2 py-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{label}</button>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Waypoints: positioned every frame by the scene. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Hairline stems from a fanned-out glyph to its true spot (hidden until two pins overlap). */}

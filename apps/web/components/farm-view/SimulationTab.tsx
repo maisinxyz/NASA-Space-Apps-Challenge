@@ -13,6 +13,7 @@ import { useTwin } from "@/components/farm/shared";
 import type { CameraState, CropLook, Farm, FarmField } from "@/components/globe/types";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { encodeShare } from "@/lib/share";
+import { nextSimulationTab } from "@/lib/simulation-tabs";
 import { useAppStore } from "@/lib/store";
 import { layout, zIndex } from "@/lib/farm-view/tokens";
 import { scenarioById } from "@/lib/twin/scenarios/registry";
@@ -101,7 +102,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
 
   async function share() {
     const s = useAppStore.getState();
-    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera(), scenario: s.scenarioId, inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined, detail: s.detail });
+    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera(), scenario: s.scenarioId, inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined, detail: s.detail, scenarioRotation: s.scenarioRotation, scenarioProgress: s.scenarioProgress, twinYear: s.twinYear, twinMonth: s.twinMonth, showCropFills: s.showCropFills, panelsHidden: s.panelsHidden, leftOpen: s.leftOpen, rightOpen: s.rightOpen, panelOpen: sim.open, panelSection: sim.section });
     history.replaceState(null, "", hash);
     try {
       await navigator.clipboard.writeText(location.href);
@@ -114,6 +115,8 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
 
   const field = fields.find((f) => f.id === fieldId);
   const section: SimSection = sim.section === "field" && !field ? "scenarios" : sim.section;
+
+  const sections = field ? [...SECTIONS, { id: "field" as const, label: "Field" }] : SECTIONS;
 
   return (
     <>
@@ -169,14 +172,17 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
           )}
 
           <div role="tablist" aria-label="Simulation section" style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
-            {(field ? [...SECTIONS, { id: "field" as const, label: "Field" }] : SECTIONS).map((s) => (
-              <FvButton key={s.id} role="tab" aria-selected={section === s.id} className="fv-seg" data-testid={`sim-section-${s.id}`} onClick={() => choose(s.id)} style={{ height: 28, padding: "0 12px" }}>
+            {sections.map((s) => (
+              <FvButton key={s.id} id={`sim-tab-${s.id}`} role="tab" aria-selected={section === s.id} aria-controls={`sim-content-${s.id}`} tabIndex={section === s.id ? 0 : -1} className="fv-seg" data-testid={`sim-section-${s.id}`} onClick={() => choose(s.id)} onKeyDown={(e) => {
+                const next = nextSimulationTab(sections.map((item) => item.id), s.id, e.key);
+                if (next) { e.preventDefault(); choose(next); document.getElementById(`sim-tab-${next}`)?.focus(); }
+              }} style={{ height: 28, padding: "0 12px", ...(section === s.id && { color: "#fff", background: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.35)" }) }}>
                 {s.label}
               </FvButton>
             ))}
           </div>
 
-          <div className="text-sm">
+          <div id={`sim-content-${section}`} role="tabpanel" aria-labelledby={`sim-tab-${section}`} tabIndex={0} className="text-sm">
             {section === "scenarios" && (
               <>
                 <SimulateBody runSource={runSource} frame={frame} />

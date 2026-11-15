@@ -110,7 +110,7 @@ export function RestingHero({
             const on = f.id === selectedId;
             return (
               <button key={f.id} type="button" onClick={() => onPickFarm(f.id)} aria-label={`${f.name}, ${f.country}`} aria-pressed={on} className="group flex flex-col items-center rounded-sm focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ gap: u(8), minWidth: 40, minHeight: 32, justifyContent: "center" }}>
-                <span className="font-bold tabular-nums transition-colors" style={{ fontSize: u(10), color: on ? color.accent : "rgba(255,255,255,0.45)" }}>
+                <span className="font-bold tabular-nums transition-colors" style={{ fontSize: `max(12px, ${u(10)})`, color: on ? color.accent : "rgba(255,255,255,0.45)" }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="block transition-all duration-300 group-hover:bg-white/60" style={{ height: 2, width: on ? u(60) : u(8), background: on ? color.accent : "rgba(255,255,255,0.3)" }} />
@@ -128,7 +128,7 @@ export function RestingHero({
       {/* Info column: 5 of 12 columns after the sidebar, 64 px padding, vertically centred. */}
       <div className="absolute inset-y-0 flex flex-col justify-center" style={{ left: u(96), width: `calc((100vw - ${u(96)}) * 5 / 12)`, padding: u(64), paddingBottom: u(64 + 56) }}>
         <Fade order={ORDER.eyebrow} {...props}>
-          <p className="font-bold uppercase" style={{ fontSize: u(12), letterSpacing: "0.4em", color: color.accent }}>
+          <p className="font-bold uppercase" style={{ fontSize: `max(12px, ${u(12)})`, letterSpacing: "0.4em", color: color.accent }}>
             {HERO_COPY.eyebrow}
           </p>
         </Fade>
@@ -144,7 +144,7 @@ export function RestingHero({
           </h1>
         </Fade>
         <Fade order={ORDER.body} {...props}>
-          <p className="font-light text-gray-400" style={{ fontSize: u(18), lineHeight: 1.625, marginTop: u(36), maxWidth: u(440), textWrap: "pretty", overflowWrap: "break-word" }}>
+          <p className="font-light text-gray-400" style={{ fontSize: `max(16px, ${u(18)})`, lineHeight: 1.625, marginTop: u(36), maxWidth: u(440), textWrap: "pretty", overflowWrap: "break-word" }}>
             {HERO_COPY.body}
           </p>
         </Fade>
@@ -152,7 +152,7 @@ export function RestingHero({
           <dl className="grid grid-cols-2" style={{ gap: u(16), marginTop: u(48), maxWidth: u(432) }}>
             {stats.map(([k, v]) => (
               <div key={k} className="border border-white/[0.08] bg-white/[0.03]" style={{ padding: u(24), borderRadius: u(16) }}>
-                <dt className="uppercase text-gray-400" style={{ fontSize: u(10), letterSpacing: "0.1em" }}>
+                <dt className="uppercase text-gray-400" style={{ fontSize: `max(12px, ${u(10)})`, letterSpacing: "0.1em" }}>
                   {k}
                 </dt>
                 <dd className="font-bold text-white tabular-nums" style={{ fontSize: u(24), marginTop: u(8), lineHeight: 1.15 }}>
@@ -163,11 +163,18 @@ export function RestingHero({
           </dl>
         </Fade>
         <Fade order={ORDER.action} {...props}>
+          <label className="pointer-events-auto mt-3 block text-xs text-white/75">
+            Choose a research farm
+            <select value={selectedId ?? ""} onChange={(e) => e.target.value && onPickFarm(e.target.value)} className="mt-1 block w-full rounded border border-white/30 bg-[#07090d] px-2 py-2 text-sm text-white">
+              <option value="">Select a farm</option>
+              {farms.map((farm) => <option key={farm.id} value={farm.id}>{farm.name} — {farm.tier === "twin" ? "Digital twin" : "Explore only"}</option>)}
+            </select>
+          </label>
           <button
             type="button"
             onClick={onExplore}
             className="pointer-events-auto inline-flex items-center rounded-full border font-bold uppercase transition-colors hover:bg-white/[0.06] focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
-            style={{ marginTop: u(48), paddingInline: u(32), paddingBlock: u(18), gap: u(14), fontSize: u(14), letterSpacing: "0.04em", borderColor: `${color.accent}66`, color: color.accent, minHeight: 40 }}
+            style={{ marginTop: u(48), paddingInline: u(32), paddingBlock: u(18), gap: u(14), fontSize: `max(12px, ${u(14)})`, letterSpacing: "0.04em", borderColor: `${color.accent}66`, color: color.accent, minHeight: 40 }}
           >
             {HERO_COPY.action}
             <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: u(16), height: u(16) }}>
@@ -190,7 +197,7 @@ export function RestingHero({
       </Fade>
 
       {/* Status bar: 56 px, after the sidebar. Imagery state and live camera position are real; nothing simulated. */}
-      <div className="absolute right-0 bottom-0 flex items-center justify-between border-t border-white/5 bg-black/20 uppercase" style={{ left: u(96), height: u(56), paddingInline: u(64), fontSize: u(10), letterSpacing: "0.2em" }}>
+      <div className="absolute right-0 bottom-0 flex items-center justify-between border-t border-white/5 bg-black/20 uppercase" style={{ left: u(96), height: u(56), paddingInline: u(64), fontSize: `max(12px, ${u(10)})`, letterSpacing: "0.2em" }}>
         <Fade order={ORDER.statusRight} {...props} className="flex items-center text-white/60" style={{ gap: u(24) }}>
           <LiveCoords />
           <span aria-hidden className="h-3 w-px bg-white/20" />
