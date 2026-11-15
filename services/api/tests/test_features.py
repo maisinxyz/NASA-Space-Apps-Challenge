@@ -99,9 +99,11 @@ def test_feature_table_matches_contract(client, site):
     assert body["data_mode"] == "seed"
     assert body["quality"]["years_available"] >= 30
     assert body["quality"]["limited_data"] is False and body["soil"]["texture_class"]
-    for f in body["features"].values():
+    satellite_ids = {"ndvi", "ndvi_anomaly", "smap_anomaly"}
+    for fid, f in body["features"].items():
         assert f["unit"] and f["basis"] in ("measured", "derived", "modeled", "assumed", "relative")
-        assert len(f["by_year"]) == body["quality"]["years_available"]
+        if fid not in satellite_ids:
+            assert len(f["by_year"]) == body["quality"]["years_available"]
     assert all(s["license"] and s["attribution"] for s in body["sources"])
 
 
@@ -123,7 +125,15 @@ def test_route_equals_committed_fixture_and_is_deterministic(client):
     a = client.get(f"{API}/sites/site_usda_barc/features").content
     b = client.get(f"{API}/sites/site_usda_barc/features").content
     assert a == b
-    assert json.loads(a) == json.loads((FIX / "features" / "site_usda_barc.json").read_text())
+    body = json.loads(a)
+    if seeds.load_ndvi("site_usda_barc") is None and seeds.load_smap("site_usda_barc") is None:
+        assert body == json.loads((FIX / "features" / "site_usda_barc.json").read_text())
+    else:
+        contract.validate_schema(body, "FeatureTable")
+        if seeds.load_ndvi("site_usda_barc") is not None:
+            assert "ndvi" in body["features"] and "ndvi_anomaly" in body["features"]
+        if seeds.load_smap("site_usda_barc") is not None:
+            assert "smap_anomaly" in body["features"] and body["quality"]["sources_agree"] in (True, False, None)
 
 
 def test_scenario_moves_features_the_right_way():

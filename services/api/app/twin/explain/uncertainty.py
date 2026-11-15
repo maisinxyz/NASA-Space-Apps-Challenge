@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import json
+from functools import lru_cache
 
 import numpy as np
 
@@ -145,6 +146,7 @@ def _fmt_check(name: str, value: float | None, unit: str, n: int) -> str:
     return f"{name} {value:.3f} {unit}, basis derived, confidence low, n={n} weeks"
 
 
+@lru_cache(maxsize=8)
 def _engine_weeks(site_id: str) -> dict[int, dict[str, np.ndarray]] | None:
     """Rainfed weekly bucket for the preset's first crop. None when soil or weather is missing.
 

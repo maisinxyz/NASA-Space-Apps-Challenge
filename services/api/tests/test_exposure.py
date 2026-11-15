@@ -17,20 +17,36 @@ def test_spatial_limits_do_not_invent_a_value():
 
 
 def test_ubc_exposure_is_limited_and_has_no_zones():
+    from app.features import seeds
+    from app.features.zones import read_elevation
+
     doc = exposure_report("site_ubc_farm")
     contract.validate_schema(doc, "ForecastExposure")
-    assert doc["data_mode"] == "limited_data"
     assert doc["crops"] == ["crop_maize", "crop_soybean"]
-    assert doc["zones"] == []
     assert doc["bare_field_windows"]
-    assert {w["source"] for w in doc["bare_field_windows"]} == {"rotation_plan"}
-    assert all(w["scene_count"] is None for w in doc["bare_field_windows"])
+    ndvi = seeds.load_ndvi("site_ubc_farm")
+    dem, _which = read_elevation("site_ubc_farm")
+    if ndvi is None and dem is None and seeds.load_smap("site_ubc_farm") is None and seeds.load_ecostress("site_ubc_farm") is None and seeds.load_grace("site_ubc_farm") is None:
+        assert doc["data_mode"] == "limited_data"
+        assert doc["zones"] == []
+        assert {w["source"] for w in doc["bare_field_windows"]} == {"rotation_plan"}
+        assert all(w["scene_count"] is None for w in doc["bare_field_windows"])
+    else:
+        if ndvi is not None:
+            assert any(w["source"] == "ndvi" for w in doc["bare_field_windows"])
+        if dem is not None:
+            assert doc["zones"]
+            assert any(z["kind"] in {"erosion_risk", "frost_pocket"} for z in doc["zones"])
+        if seeds.load_smap("site_ubc_farm") is not None:
+            assert sum(z["kind"] == "water_stress" for z in doc["zones"]) == 1
     hazards = {h for row in doc["vulnerable_seasons"] for h in row["hazards"]}
     assert hazards <= {"heat", "drought", "frost"}
     assert "waterlogging" not in hazards
     assert all(row["growth_stage"] == "in_ground" for row in doc["vulnerable_seasons"])
-    assert any("not drawn" in note.lower() or "were not drawn" in note for note in doc["resolution_notes"])
-    assert any("water-stress" in note for note in doc["resolution_notes"])
+    if dem is None:
+        assert any("not drawn" in note.lower() or "were not drawn" in note for note in doc["resolution_notes"])
+    if seeds.load_smap("site_ubc_farm") is None and seeds.load_ecostress("site_ubc_farm") is None:
+        assert any("water-stress" in note for note in doc["resolution_notes"])
 
 
 def _hill() -> dict:

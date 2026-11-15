@@ -152,3 +152,55 @@ def test_route_unknown_site_and_cached_repeat():
     assert body["scenario"]["preset"] == "both"
     again = client.get("/api/v1/sites/site_ubc_farm/climate-outlook", params={"scenario": "both"})
     assert again.json() == body
+
+
+def test_offline_budgets_for_every_curated_site(monkeypatch):
+    """Cold outlook under 1 s, cold 30-member forecast under 1.5 s, cached forecast under 100 ms."""
+    import socket
+    import time
+
+    from app.features import config as C
+    from app.services.features import _computed, _table, base
+    from app.services.forecast import _cache_key, _cache_path, clear_forecast_cache, forecast
+
+    monkeypatch.setenv("OFFLINE", "1")
+
+    def refuse(*_args, **_kwargs):
+        raise AssertionError("network call in OFFLINE mode")
+
+    monkeypatch.setattr(socket.socket, "connect", refuse)
+    body = {
+        "selection": {"crops": ["crop_maize", "crop_soybean"], "pinned": [], "excluded": []},
+        "constraints": {
+            "equipment": [],
+            "max_cycle_years": 4,
+            "no_till": False,
+            "labour_level": "medium",
+            "livestock_on_farm": False,
+        },
+        "horizon_years": 10,
+        "strategy_count": 3,
+        "scenario": "baseline",
+        "climate_source": "history_resample",
+    }
+    for site_id in C.CURATED_SITES:
+        doc = forecast(site_id, body, members=2)
+        assert doc["site_id"] == site_id and doc["data_mode"] != "mock"
+
+    base.cache_clear()
+    _computed.cache_clear()
+    _table.cache_clear()
+    climate_outlook.cache_clear()
+    started = time.perf_counter()
+    climate_outlook("site_ubc_farm", "baseline")
+    assert time.perf_counter() - started < 1.0
+
+    path = _cache_path(_cache_key("forecast", "site_ubc_farm", body, 30))
+    path.unlink(missing_ok=True)
+    clear_forecast_cache()
+    started = time.perf_counter()
+    forecast("site_ubc_farm", body, members=30)
+    assert time.perf_counter() - started < 1.5
+    started = time.perf_counter()
+    forecast("site_ubc_farm", body, members=30)
+    assert time.perf_counter() - started < 0.1

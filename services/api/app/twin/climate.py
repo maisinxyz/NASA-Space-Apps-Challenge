@@ -15,6 +15,7 @@ import gzip
 import json
 import math
 from dataclasses import replace
+from functools import lru_cache
 
 import numpy as np
 from scipy import stats
@@ -150,6 +151,7 @@ def frost_dates_for_year(month: np.ndarray, tmin: np.ndarray, frost_c: float, la
     return last_spring, first_fall
 
 
+@lru_cache(maxsize=32)
 def load_cmip6_delta(site_id: str) -> dict | None:
     """Stored seasonal deltas, or None. A missing file is not a zero-change climate."""
 

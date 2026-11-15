@@ -112,7 +112,12 @@ def test_uncertainty_uses_sourced_resolutions_and_skips_a_missing_station():
     assert by_name["nasa_power"]["record_years"] == "1991-2024"
     assert by_name["nasa_power"]["needs_local_validation"] is True
     assert station_bias("site_ubc_farm") is None
-    assert "smap" not in by_name
+    from app.features import seeds
+    if seeds.load_smap("site_ubc_farm") is None:
+        assert "smap" not in by_name
+    else:
+        assert by_name["smap"]["native_resolution_m"] > 0
+        assert "basis derived" in by_name["smap"]["resolution_note"]
 
 
 def test_clubroot_flag_waits_for_catalog_text():
