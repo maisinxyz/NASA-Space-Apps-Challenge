@@ -1,5 +1,4 @@
-// @ts-nocheck — see playwright.config.ts
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { openFarm, tid, soundLog, clearSoundLog } from "./helpers";
 
 // Spy: lib/ui/sound.ts must append {name,t} to window.__soundLog when NEXT_PUBLIC_E2E=1 (request to Oscar).
@@ -7,7 +6,7 @@ import { openFarm, tid, soundLog, clearSoundLog } from "./helpers";
 // noise 2 ms, band-pass 3–4 kHz, gain 0.06 week / 0.12 month + pitch drop, min 35 ms between ticks, AudioContext unlocked on first pointerdown, mute in localStorage try/catch.
 test.describe("sound calls (spec: Sound module)", () => {
   test.beforeEach(({ page }) => openFarm(page));
-  const names = async (page) => (await soundLog(page)).map((s) => s.name);
+  const names = async (page: Page) => (await soundLog(page)).map((s) => s.name);
 
   test.fixme("single AudioContext, created/unlocked on first pointerdown (none before)", async ({ page }) => {});
   test.fixme("every button plays tap (incl. dead buttons: reset-view, fold, send)", async ({ page }) => {

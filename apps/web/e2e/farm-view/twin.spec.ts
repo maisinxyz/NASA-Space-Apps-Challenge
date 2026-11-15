@@ -1,10 +1,9 @@
-// @ts-nocheck — see playwright.config.ts
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { openFarm, tid, openPopupCount } from "./helpers";
 
 test.describe("Twin (spec: TWIN)", () => {
   test.beforeEach(({ page }) => openFarm(page));
-  const ask = async (page, q = "Which field needs me first?") => { await tid(page, "twin-button").click(); await tid(page, "twin-input").fill(q); await tid(page, "twin-send").click(); };
+  const ask = async (page: Page, q = "Which field needs me first?") => { await tid(page, "twin-button").click(); await tid(page, "twin-input").fill(q); await tid(page, "twin-send").click(); };
 
   test.fixme("round button is 60 px, shows logo only (no sparkle, aria-label)", async ({ page }) => {
     const b = (await tid(page, "twin-button").boundingBox())!; expect([Math.round(b.width), Math.round(b.height)]).toEqual([60, 60]);

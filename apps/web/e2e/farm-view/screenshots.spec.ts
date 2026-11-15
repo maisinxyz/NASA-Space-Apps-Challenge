@@ -1,4 +1,3 @@
-// @ts-nocheck — see playwright.config.ts
 import { test } from "@playwright/test";
 import { openFarm, tid } from "./helpers";
 

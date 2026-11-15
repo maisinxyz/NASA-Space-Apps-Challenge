@@ -1,4 +1,3 @@
-// @ts-nocheck — @playwright/test is not installed yet (see docs/farm-view/test-report.md). Remove once it is.
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({

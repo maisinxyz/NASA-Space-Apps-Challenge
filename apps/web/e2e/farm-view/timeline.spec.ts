@@ -1,4 +1,3 @@
-// @ts-nocheck — see playwright.config.ts
 import { test, expect } from "@playwright/test";
 import { openFarm, tid, soundLog, clearSoundLog, handleX } from "./helpers";
 

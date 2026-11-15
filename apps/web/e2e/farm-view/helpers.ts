@@ -1,4 +1,3 @@
-// @ts-nocheck — see playwright.config.ts
 import type { Page } from "@playwright/test";
 
 /** Route to the farm view. TODO(Oscar): confirm; today it is the globe dive (#farm=…). */
