@@ -20,7 +20,7 @@ Status: 2026-11-15. You are **Session C** of three parallel sessions. Your job: 
 - It is in the repo-root `.env` as `EARTHDATA_TOKEN` (git-ignored). Read it from the environment (`os.environ`, or load `.env` in the script). Send it only to NASA Earthdata hosts as `Authorization: Bearer <token>`, and re-add the header when a download redirects.
 - **Never print, log, commit, or write the token** into any file, sidecar, fixture, progress note or test output. Do not commit `.env` or the `EarthDataToken*.txt` file in the repo root (both git-ignored; `git add` only explicit paths you own, never `git add -A` or `git add .`).
 - Token expiry: 2027-01-14.
-- Access verified on 2026-11-15 by a 256-byte ranged download of the newest granule over UBC Farm (HTTP 206). This proves access only; no data values were read:
+- Access verified on 2026-11-15 by a 256-byte ranged download of the newest granule (HTTP 206). This proves access only; no data values were read:
 
 | Product (CMR short name, version) | Host | Result |
 | --- | --- | --- |
@@ -29,7 +29,8 @@ Status: 2026-11-15. You are **Session C** of three parallel sessions. Your job: 
 | `ECO_L3T_JET` 003, `ECO_L2T_LSTE` 002 (tile `10UDV`) | data.lpdaac.earthdatacloud.nasa.gov | OK |
 | `NASADEM_HGT` 001 (`n49w124`) | data.lpdaac.earthdatacloud.nasa.gov | OK |
 | `SPL4SMGP` 008, `SPL3SMP_E` | data.nsidc.earthdatacloud.nasa.gov | OK |
-| `GPM_3IMERGDF` 07, `GRACEDADM_CLSM0125US_7D` | data.gesdisc.earthdata.nasa.gov | **403**: the Earthdata account has not authorized the GES DISC application yet (team-lead action, `TODO(verify)` the exact step on the GES DISC data-access page). Until then: gap records. |
+| `GPM_3IMERGDF` 07, `GRACEDADM_CLSM0125US_7D` | data.gesdisc.earthdata.nasa.gov | OK (was 403 until the team lead authorized the GES DISC application; re-tested OK 2026-11-15) |
+| `TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4` | archive.podaac.earthdata.nasa.gov | OK |
 
 **Seed file contract shared by Session A (writes) and Session B (reads).** Existing loaders in `services/api/app/features/seeds.py` stay compatible:
 - Weekly layers: `data/seed/<site_id>/<layer>.json.gz` where `<layer>` is `ndvi`, `smap`, `ecostress`, `grace` (and `imerg` if added). JSON object with: `site_id`, `layer`, `variable`, `unit`, `basis`, `product` (`short_name`, `version`), `native_resolution_m`, `spatial_method` (for example "mean of valid 30 m pixels within 150 m of the site point"), `retrieved_on`, and `weekly`: a list of `{ "year": int, "values": [52 numbers or null], "n_obs": [52 ints] }`. Weeks are 7-day blocks from 1 January; days 358-366 fold into week 51 (existing pipeline convention). A week with no valid observation is `null` with `n_obs` 0. Nothing is gap-filled.
