@@ -240,12 +240,13 @@ def test_snapshot_context_uses_accepted_request(monkeypatch):
     assert seen["farm_water_quota_mm_per_season"] == 42
 
 
-def test_missing_accepted_request_is_rejected(client):
-    body = request()
-    del body["snapshot"]["forecast_request"]
-    response = client.post("/api/v1/copilot/chat", json=body)
-    assert response.status_code == 422
-    assert "accepted live forecast" in response.text
+def test_missing_accepted_request_falls_back_to_default_inputs():
+    snap = request()["snapshot"]
+    accepted = copilot.snapshot_context(snap)
+    del snap["forecast_request"]
+    context = copilot.snapshot_context(snap)
+    assert "default inputs, not an accepted run" in context["description"]
+    assert "default inputs" not in accepted["description"]
 
 
 def test_invalid_accepted_request_is_rejected(client):

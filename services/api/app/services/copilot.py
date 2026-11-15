@@ -7,6 +7,7 @@ import re
 import threading
 import time
 from collections import defaultdict, deque
+from functools import lru_cache
 import httpx
 
 from dotenv import dotenv_values
@@ -115,15 +116,19 @@ def _strategy_label(strategy: dict) -> str:
     return f"{base} ({', '.join(crops)})" if crops else base
 
 
+@lru_cache(maxsize=1)
+def _contract_components() -> dict:
+    import yaml
+    return yaml.safe_load((REPO_ROOT / "packages/contracts/openapi.yaml").read_text(encoding="utf-8"))["components"]
+
+
 def accepted_request(snapshot: dict) -> dict:
     """Validate inputs against the published contract; forecast values are always rebuilt server-side."""
     from jsonschema import Draft202012Validator
-    import yaml
     body = snapshot.get("forecast_request")
-    if body is None:
-        raise ApiError("INVALID_INPUT", "No accepted live forecast is available for this view. Run the forecast first.")
-    contract = yaml.safe_load((REPO_ROOT / "packages/contracts/openapi.yaml").read_text(encoding="utf-8"))
-    schema = {"$ref": "#/components/schemas/ForecastRequest", "components": contract["components"]}
+    if body is None:  # no accepted run yet: fall back to the site's default inputs
+        body = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[snapshot["site_id"]][1]).read_text(encoding="utf-8"))
+    schema = {"$ref": "#/components/schemas/ForecastRequest", "components": _contract_components()}
     if list(Draft202012Validator(schema).iter_errors(body)):
         raise ApiError("INVALID_INPUT", "The accepted forecast inputs are invalid. Run the forecast again.")
     return body
@@ -178,7 +183,9 @@ def snapshot_context(snapshot: dict, message: str = "") -> dict:
         flag = next((f for f in strategy.get("review_flags", []) if f["id"] == selected["id"]), None)
         if flag is None:
             flag = {"availability": "The selected flag is not in the reconstructed demo data."}
-    return {"description": "Forecast reconstructed from the accepted inputs shown on screen.",
+    described = ("Forecast reconstructed from the accepted inputs shown on screen." if snapshot.get("forecast_request") is not None
+                 else "Forecast reconstructed from default inputs, not an accepted run.")
+    return {"description": described,
             "site_id": site, "field_id": field_id, "year": year, "strategy": labels.get(sid, sid),
             "data_mode": doc["data_mode"], "metrics": metrics, "strategy_comparison": compare, "selected_flag": flag,
             "weather_resolution": POWER_RESOLUTION_NOTE,
