@@ -22,7 +22,7 @@ def test_ubc_exposure_is_limited_and_has_no_zones():
 
     doc = exposure_report("site_ubc_farm")
     contract.validate_schema(doc, "ForecastExposure")
-    assert doc["crops"] == ["crop_maize", "crop_soybean"]
+    assert doc["crops"] == ["crop_cabbage", "crop_rye_cover", "crop_lettuce"]
     assert doc["bare_field_windows"]
     ndvi = seeds.load_ndvi("site_ubc_farm")
     dem, _which = read_elevation("site_ubc_farm")

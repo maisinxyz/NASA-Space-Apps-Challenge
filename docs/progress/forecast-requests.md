@@ -124,3 +124,11 @@ SoilGrids 2.0 returned null means at 49.1093, -122.6454 (`data/seed/site_kpu_lan
 `GET /api/v1/sites/site_kpu_langley` is 404 because the id is not in the mock `sites.json`. `/features` and `/zones` return `data_mode: seed`. No mock body won.
 
 `forecast()` in `app/services/forecast.py` raises `DATA_SOURCE_UNAVAILABLE` ("No soil seed and no soil override for this site.") when `load_soil` is null. That is the KPU case. Please let a curated site with a stored null SoilGrids summary run, and say the soil is missing, instead of refusing the forecast. `tests/test_climate_outlook.py` skips a site with no soil summary in the budget loop until that exists.
+
+## 2026-11-15 — Session C, EC2 presets and the mock site card
+
+`SITE_PRESETS` for `site_ubc_farm` and `site_kpu_langley` is `Typical vegetable rotation (not this farm's records)`: year 1 `crop_cabbage` + `crop_rye_cover`, year 2 `crop_lettuce` + `crop_rye_cover`. The cash-crop order is **TODO(verify)**. Sources are the 1991 Fraser Valley handbook Table 18 and the WSU Snohomish fall-vegetable page, cited in `app/rotation/config.py`.
+
+`packages/contracts/fixtures/sites.json` lists both ids as `(mock)` with `terr_mock_hills`. `GET /api/v1/sites/site_kpu_langley` returns that card (HTTP 200). The earlier EC1 sentence that this route was 404 is no longer true. `/features` and `/zones` stay `data_mode: seed` because the site is curated. The fixture was not edited. Please decide whether the site resource should stop returning the mock card for a curated id.
+
+`app/rotation/engine.py` and `app/rotation/evidence.py` now skip a crop that is not in `traits.json` instead of raising `KeyError`. Cabbage and lettuce have no day-of-year window yet, so the v1.1 scorer does not time them. Fall rye still is. `forecast._assumptions` adds one line with the preset name. Please keep that line.

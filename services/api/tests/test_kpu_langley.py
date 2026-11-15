@@ -52,15 +52,47 @@ def test_kpu_power_cell_is_not_the_ubc_cell():
     assert "shares_power_cell_with" not in C.CURATED_SITES["site_kpu_langley"]
 
 
-def test_curated_routes_are_not_the_mock_site_list(client):
+def test_ubc_forecast_assumption_names_the_vegetable_preset():
+    from app.services.forecast import clear_forecast_cache, forecast
+
+    clear_forecast_cache()
+    doc = forecast(
+        "site_ubc_farm",
+        {
+            "selection": {"crops": ["crop_cabbage", "crop_lettuce", "crop_rye_cover"]},
+            "horizon_years": 5,
+            "strategy_count": 2,
+            "scenario": "baseline",
+            "climate_source": "history_resample",
+        },
+        members=1,
+    )
+    assert any("Typical vegetable rotation (not this farm's records)" in line for line in doc["assumptions"])
+    assert doc["fields"][0]["strategies"][0]["label"] == "Typical vegetable rotation (not this farm's records)"
+
+
+def test_bc_presets_are_a_vegetable_rotation_not_corn():
+    from app.rotation.config import SITE_PRESETS
+
+    for site_id in ("site_ubc_farm", "site_kpu_langley"):
+        preset = SITE_PRESETS[site_id]
+        assert preset["name"] == "Typical vegetable rotation (not this farm's records)"
+        mains = [main for _year, main, _off in preset["slots"]]
+        covers = [off for _year, _main, off in preset["slots"]]
+        assert "crop_maize" not in mains and "crop_soybean" not in mains
+        assert mains == ["crop_cabbage", "crop_lettuce"]
+        assert covers == ["crop_rye_cover", "crop_rye_cover"]
+
+
+def test_curated_routes_are_not_replaced_by_the_mock_site_card(client):
+    # packages/contracts/fixtures/sites.json lists this id as "KPU Langley (mock)".
+    # That card wins GET /sites/{id}. Feature and zone routes stay on the curated seed.
     listed = client.get(f"{API}/sites/site_kpu_langley")
-    assert listed.status_code == 404
-    assert listed.json()["error"]["code"] == "NOT_FOUND"
-    assert "(mock)" not in listed.text
+    assert listed.status_code == 200
+    assert "(mock)" in listed.json()["name"]
     features = client.get(f"{API}/sites/site_kpu_langley/features")
     assert features.status_code == 200
     assert features.json()["data_mode"] == "seed"
     zones = client.get(f"{API}/sites/site_kpu_langley/zones")
     assert zones.status_code == 200
     assert zones.json()["data_mode"] == "seed"
-    assert zones.json()["data_mode"] != "mock"

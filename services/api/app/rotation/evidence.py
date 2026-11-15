@@ -34,7 +34,9 @@ def risks(rot: dict, table: dict) -> list[str]:
     out = list(R.REVIEW_ALWAYS)
     coldest = min((x for x in table["features"]["tmin_c"]["p10"] if x is not None), default=None)
     for cid in sorted({s["crop_id"] for s in rot["sequence"] if s["crop_id"] != "fallow"}):
-        c = lib[cid]
+        c = lib.get(cid)
+        if c is None:
+            continue
         overwinters = c["season_window"]["terminate_doy"] < c["season_window"]["plant_doy"]
         if overwinters and coldest is not None and coldest < c["frost_tolerance_c"]:
             out.append(f"{c['name']} overwinters, and in 1 year in 10 the coldest week here drops to {coldest} degC, below its typical limit of {c['frost_tolerance_c']} degC.")

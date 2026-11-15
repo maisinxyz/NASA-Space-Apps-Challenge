@@ -172,7 +172,11 @@ def test_no_prediction_words_in_payloads(client):
 
 
 def test_mock_mode_only_for_mock_terrain(client):
-    assert client.get(f"{API}/sites/site_kpu_langley/zones").json()["data_mode"] == "mock"
+    # KPU is curated. Zones stay on the seed path even though sites.json still
+    # labels the same id "(mock)" and points it at terr_mock_hills.
+    body = client.get(f"{API}/sites/site_kpu_langley/zones").json()
+    assert body["data_mode"] == "seed"
+    assert body["terrain_id"] is None
     for s in SITES:
         assert client.get(f"{API}/sites/{s}/features").json()["data_mode"] != "mock"
 

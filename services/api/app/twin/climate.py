@@ -100,7 +100,7 @@ def preset_crop_ids(site_id: str) -> list[str]:
     """Crops in the site's existing-rotation preset, fallow removed, first-seen order.
 
     ``GET /climate-outlook`` has no crops query. This is the same preset exposure
-    uses when ``crops`` is omitted. UBC Farm is not in ``SITE_PRESETS``.
+    uses when ``crops`` is omitted. UBC Farm and KPU Langley use the vegetable preset.
     """
 
     preset = SITE_PRESETS.get(site_id, DEFAULT_PRESET)

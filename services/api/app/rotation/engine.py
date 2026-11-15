@@ -53,7 +53,10 @@ def occupants(slots: list[dict], shift: int = 0) -> list[Occupant]:
     for s in slots:
         if s["crop_id"] == "fallow":
             continue
-        c = lib[s["crop_id"]]
+        # Catalog vegetables are not all in the v1.1 trait file. Skip timing rather than invent a window.
+        c = lib.get(s["crop_id"])
+        if c is None:
+            continue
         p, t = _shifted(c, shift)
         y = s["year_index"] - 1
         if t < p:  # overwinters
@@ -199,12 +202,20 @@ def normalize(raw: list[float], lower_is_better: bool) -> list[float]:
 
 
 # ---------------------------------------------------------------- generator (PRD §8.3)
+def _season_of(lib: dict, crop_id: str, fallback: str) -> str:
+    row = None if crop_id == "fallow" else lib.get(crop_id)
+    doy = None if row is None else (row.get("season_window") or {}).get("plant_doy")
+    if isinstance(doy, int) and not isinstance(doy, bool):
+        return T.plant_season(doy)
+    return fallback
+
+
 def _slots(seq: tuple[tuple[str, str], ...]) -> list[dict]:
     lib = T.library()
     out = []
     for y, (m, o) in enumerate(seq, 1):
-        out.append({"year_index": y, "season": T.plant_season(lib[m]["season_window"]["plant_doy"]) if m != "fallow" else "spring", "crop_id": m})
-        out.append({"year_index": y, "season": T.plant_season(lib[o]["season_window"]["plant_doy"]) if o != "fallow" else "winter", "crop_id": o})
+        out.append({"year_index": y, "season": _season_of(lib, m, "spring"), "crop_id": m})
+        out.append({"year_index": y, "season": _season_of(lib, o, "winter"), "crop_id": o})
     return out
 
 
@@ -215,8 +226,11 @@ def _as_seq(slots: list[dict]) -> tuple | None:
     seq = []
     for y in range(1, years + 1):
         ys = [s["crop_id"] for s in slots if s["year_index"] == y]
-        mains = [c for c in ys if c != "fallow" and not lib[c]["cover_crop"]]
-        offs = [c for c in ys if c != "fallow" and lib[c]["cover_crop"]]
+        def _cover(cid: str) -> bool:
+            row = lib.get(cid)
+            return bool(row and row.get("cover_crop"))
+        mains = [c for c in ys if c != "fallow" and not _cover(c)]
+        offs = [c for c in ys if c != "fallow" and _cover(c)]
         if len(mains) > 1 or len(offs) > 1:
             return None
         seq.append((mains[0] if mains else "fallow", offs[0] if offs else "fallow"))
@@ -250,12 +264,12 @@ def cyclic_family_ok(mains: list[str]) -> bool:
     n = len(mains)
     for i in range(n):
         a, b = mains[i], mains[(i + 1) % n]
-        if a == "fallow" or b == "fallow" or lib[a]["family"] != lib[b]["family"]:
+        if a == "fallow" or b == "fallow" or a not in lib or b not in lib or lib[a]["family"] != lib[b]["family"]:
             continue
         if not (a == b and lib[a]["perennial"]):
             return False
     for m in set(mains):
-        if m != "fallow" and lib[m]["perennial"]:
+        if m != "fallow" and m in lib and lib[m]["perennial"]:
             run = best = 0
             for x in mains + mains:
                 run = run + 1 if x == m else 0
