@@ -1,0 +1,57 @@
+{
+ "site_id": "site_usda_barc",
+ "scenario": "baseline",
+ "rotations": [
+  {
+   "rotation_id": "rot_existing",
+   "winter": {
+    "value": 0.075,
+    "p10": 0.0,
+    "p90": 0.167,
+    "basis": "relative"
+   },
+   "summer": {
+    "value": 0.06,
+    "p10": 0.0,
+    "p90": 0.181,
+    "basis": "relative"
+   },
+   "rank_stability": null,
+   "basis": "relative"
+  },
+  {
+   "rotation_id": "rot_alt_1",
+   "winter": {
+    "value": 0.0,
+    "p10": 0.0,
+    "p90": 0.0,
+    "basis": "relative"
+   },
+   "summer": {
+    "value": 0.065,
+    "p10": 0.0,
+    "p90": 0.2,
+    "basis": "relative"
+   },
+   "rank_stability": "lower winter exposure than rot_existing in 79% of resampled years",
+   "basis": "relative"
+  },
+  {
+   "rotation_id": "rot_alt_2",
+   "winter": {
+    "value": 0.0,
+    "p10": 0.0,
+    "p90": 0.0,
+    "basis": "relative"
+   },
+   "summer": {
+    "value": 0.07,
+    "p10": 0.0,
+    "p90": 0.223,
+    "basis": "relative"
+   },
+   "rank_stability": "lower winter exposure than rot_existing in 79% of resampled years",
+   "basis": "relative"
+  }
+ ]
+}

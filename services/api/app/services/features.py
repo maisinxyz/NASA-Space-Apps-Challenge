@@ -20,9 +20,12 @@ from app.services import terrain as terrain_svc
 from app.weather import power
 
 
-def site_info(site_id: str) -> dict:
+def site_info(site_id: str, location: tuple[float, float] | None = None) -> dict:
+    """Curated site, else a request `location` ([lon, lat], limited data), else a listed site with a location."""
     if site_id in C.CURATED_SITES:
         return {**C.CURATED_SITES[site_id], "curated": True}
+    if location:
+        return {"name": site_id, "lat": float(location[1]), "lon": float(location[0]), "curated": False}
     for s in site_svc.list_sites():
         if s["id"] == site_id and s.get("location"):
             lon, lat = s["location"]
@@ -31,9 +34,9 @@ def site_info(site_id: str) -> dict:
 
 
 @lru_cache(maxsize=32)
-def base(site_id: str) -> tuple[P.Daily, str, dict | None, dict]:
+def base(site_id: str, location: tuple[float, float] | None = None) -> tuple[P.Daily, str, dict | None, dict]:
     """(baseline daily series, data_mode, soil summary or None, site info)."""
-    info = site_info(site_id)
+    info = site_info(site_id, location)
     raw = seeds.load_power(site_id) if info["curated"] else None
     if raw is not None:
         result, mode = power._validate(raw), "seed"
@@ -45,27 +48,27 @@ def base(site_id: str) -> tuple[P.Daily, str, dict | None, dict]:
 
 
 @lru_cache(maxsize=64)
-def _computed(site_id: str, scenario_key: str) -> P.Computed:
-    return P.compute(base(site_id)[0], json.loads(scenario_key))
+def _computed(site_id: str, scenario_key: str, location: tuple[float, float] | None = None) -> P.Computed:
+    return P.compute(base(site_id, location)[0], json.loads(scenario_key))
 
 
-def computed(site_id: str, scenario: dict) -> P.Computed:
-    return _computed(site_id, json.dumps(scenario, sort_keys=True))
+def computed(site_id: str, scenario: dict, location: tuple[float, float] | None = None) -> P.Computed:
+    return _computed(site_id, json.dumps(scenario, sort_keys=True), location)
 
 
 def sources(soil: dict | None) -> list[dict]:
     return [dict(C.POWER_SOURCE)] + ([dict(C.SOILGRIDS_SOURCE)] if soil else [])
 
 
-def feature_table(site_id: str, scenario: dict | None = None) -> dict:
-    """PRD §7.7 FeatureTable. `scenario` comes from pipeline.resolve_scenario (default baseline)."""
-    """Cached per (site, scenario): treat the returned dict as read-only."""
-    return _table(site_id, json.dumps(scenario or P.resolve_scenario(), sort_keys=True))
+def feature_table(site_id: str, scenario: dict | None = None, location: tuple[float, float] | None = None) -> dict:
+    """PRD §7.7 FeatureTable. `scenario` from pipeline.resolve_scenario (default baseline); `location` = [lon, lat]
+    for a non-curated site (limited data). Cached per (site, scenario, location): treat the dict as read-only."""
+    return _table(site_id, json.dumps(scenario or P.resolve_scenario(), sort_keys=True), tuple(location) if location else None)
 
 
 @lru_cache(maxsize=64)
-def _table(site_id: str, scenario_key: str) -> dict:
-    return build_table(site_id, base(site_id), _computed(site_id, scenario_key))
+def _table(site_id: str, scenario_key: str, location: tuple[float, float] | None = None) -> dict:
+    return build_table(site_id, base(site_id, location), _computed(site_id, scenario_key, location))
 
 
 def build_table(site_id: str, b: tuple, c: P.Computed) -> dict:

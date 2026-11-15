@@ -9,9 +9,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.core.config import API_PREFIX, API_VERSION, Settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, install_request_logging
-from app.routers import crops, features, health, notes, rotations, scans, simulations, sites, terrain, weather
+from app.routers import crops, features, health, rotation_analysis, notes, rotations, scans, simulations, sites, terrain, weather
 
-ROUTERS = (health, sites, features, scans, terrain, weather, crops, rotations, simulations, notes)
+ROUTERS = (health, sites, features, rotation_analysis, scans, terrain, weather, crops, rotations, simulations, notes)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:

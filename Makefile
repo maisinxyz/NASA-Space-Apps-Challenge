@@ -10,6 +10,7 @@ test:
 
 seed:
 	uv run --project services/api python scripts/build_seed.py
+	uv run --project services/api python scripts/build_rotation_fixtures.py
 
 fixtures:
 	uv run --project packages/contracts python scripts/make_fixtures_terrain.py

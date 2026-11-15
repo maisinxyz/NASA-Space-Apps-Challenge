@@ -219,6 +219,4 @@ def test_routes_match_openapi_exactly(client):
         for path, ops in client.app.openapi()["paths"].items()
         for m in ops
     }
-    # Contract v1.1 routes owned by Backend B (B7), not built yet. Delete each entry when its route lands.
-    pending = {("GET", "/sites/{}/compare"), ("POST", "/sites/{}/rotation-analysis"), ("GET", "/glossary")}
-    assert app_routes == spec - pending
+    assert app_routes == spec

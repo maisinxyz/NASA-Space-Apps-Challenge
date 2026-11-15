@@ -1,0 +1,116 @@
+[
+ {
+  "id": "evapotranspiration",
+  "kind": "term",
+  "term": "Evapotranspiration (ET)",
+  "short": "Water leaving the ground through soil evaporation and plant transpiration: the \"thirst\" of the field.",
+  "long": "Evapotranspiration is the water that leaves a field as vapour, partly from the soil surface and partly through plant leaves. Hot, dry, sunny and windy weeks raise it. A crop that grows through those weeks needs more water from rain or irrigation.",
+  "how_we_use_it": "We estimate a reference value from daily temperature only (Hargreaves-Samani method), so it is modeled, not measured. Each crop's need is that reference value times its crop coefficient.",
+  "related_terms": ["water_balance"],
+  "source": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56 (https://www.fao.org/4/x0490e/x0490e07.htm). TODO(verify) wording."
+ },
+ {
+  "id": "water_balance",
+  "kind": "term",
+  "term": "Water balance",
+  "short": "Rain minus evapotranspiration.",
+  "long": "Weeks where rain is larger than evapotranspiration add moisture to the soil. Weeks where it is smaller dry the soil out. A long run of negative weeks during the growing season is when crops are most likely to run short of water.",
+  "how_we_use_it": "We add up the weekly shortfall for the weeks each crop is in the ground. That gives the water-use criterion, compared between the three rotations only.",
+  "related_terms": ["evapotranspiration"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "soil_moisture_anomaly",
+  "kind": "term",
+  "term": "Soil-moisture anomaly",
+  "short": "How much wetter or drier the soil is than normal for that week, in standard deviations. Zero is normal.",
+  "long": "We compare each week's soil wetness with the average for the same week over many years. A value of -1 means drier than usual by about one typical year-to-year swing; +1 means wetter by the same amount.",
+  "how_we_use_it": "Built from NASA POWER root-zone soil wetness, which is a model estimate for a large area, not a probe in your field.",
+  "related_terms": ["satellite_vs_ground"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "ndvi",
+  "kind": "term",
+  "term": "NDVI",
+  "short": "A satellite \"greenness\" score. Low values in the growing season can signal stress or bare soil.",
+  "long": "NDVI compares how much red and near-infrared light a surface reflects. Healthy green leaves reflect a lot of near-infrared, so dense healthy crops score high and bare soil scores low.",
+  "how_we_use_it": "Not used yet: no NDVI data is seeded for these sites. When it is, we will use it to check bare-field periods.",
+  "related_terms": ["satellite_vs_ground"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "frost_risk",
+  "kind": "term",
+  "term": "Frost risk",
+  "short": "The share of past years with freezing temperatures in that week. It is history, not a forecast.",
+  "long": "For each week of the year we count how many of the past years had a night at or below the frost threshold. A frost risk of 0.3 means 3 years in 10 had frost that week.",
+  "how_we_use_it": "We flag weeks where a crop is in the ground and frost risk is above the stated threshold as a vulnerable season.",
+  "related_terms": ["relative_score"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "satellite_vs_ground",
+  "kind": "term",
+  "term": "Satellite vs ground-based measurements",
+  "short": "Satellites cover every field but see coarse pixels and only the surface; ground sensors measure one point accurately and deeper, but miss the rest.",
+  "long": "Combining them lets satellite data show patterns and ground data check them. A rain gauge or soil probe on your farm is more accurate for that spot; a satellite or model shows how your area compares with other years and places.",
+  "how_we_use_it": "Our baseline weather values are regional satellite-model estimates (NASA POWER, about 50 km), not field sensors. Soil classes come from a 250 m soil map, not a soil sample.",
+  "related_terms": ["soil_moisture_anomaly", "ndvi"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "relative_score",
+  "kind": "term",
+  "term": "Relative score",
+  "short": "A comparison between these three rotations only, not a prediction of harvests or soil loss.",
+  "long": "Each criterion is scored 0 to 100 across the three rotations shown: the best of the three gets 100, the weakest 0. If all three are the same, each gets 50. Scores from different farms or different sets of rotations cannot be compared.",
+  "how_we_use_it": "Your priorities change the weights, and so the order. They never change the individual criterion scores.",
+  "related_terms": [],
+  "source": "FieldTwin method (backend rotation PRD section 8.4)"
+ },
+ {
+  "id": "nitrogen_fixing_crops",
+  "kind": "crop_type",
+  "term": "Nitrogen-fixing crops",
+  "short": "Beans, peas, clover and alfalfa host bacteria that turn air nitrogen into plant food.",
+  "long": "Bacteria living in nodules on the roots of legumes take nitrogen from the air and make it available to the plant. Some of it stays in roots and residue for the next crop.",
+  "why_it_helps": "Can reduce the fertilizer the next crop needs.",
+  "limits": "The benefit depends on inoculation, soil conditions and what follows in the rotation.",
+  "related_terms": ["relative_score"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "cover_crops",
+  "kind": "crop_type",
+  "term": "Cover crops",
+  "short": "Crops grown to keep soil covered between cash crops.",
+  "long": "A cover crop such as cereal rye or clover is sown after harvest and ended before the next crop. Its leaves shield the soil from heavy rain and its roots hold the soil together.",
+  "why_it_helps": "Reduces erosion, adds organic matter and holds moisture.",
+  "limits": "It can use water that the next crop needs, and it must be ended on time.",
+  "related_terms": ["water_balance"],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "deep_rooting_crops",
+  "kind": "crop_type",
+  "term": "Deep-rooting crops",
+  "short": "Crops such as alfalfa, sunflower and sorghum send roots deep into the soil.",
+  "long": "Deep roots open channels in compacted layers and draw water and nutrients from below the reach of shallow-rooted crops.",
+  "why_it_helps": "Improves soil structure over time and reaches deeper water.",
+  "limits": "The effect builds slowly over several seasons.",
+  "related_terms": [],
+  "source": "TODO(verify)"
+ },
+ {
+  "id": "drought_tolerant_crops",
+  "kind": "crop_type",
+  "term": "Drought-tolerant crops",
+  "short": "Crops such as sorghum and millet that need less water and hold up better in dry spells.",
+  "long": "These crops close their leaf pores sooner, root deeper or finish their season faster, so a dry spell harms them less.",
+  "why_it_helps": "Lowers water use and the risk of losing a crop in a dry year.",
+  "limits": "They may earn less or have fewer buyers; check local markets.",
+  "related_terms": ["water_balance"],
+  "source": "TODO(verify)"
+ }
+]

@@ -32,9 +32,14 @@ for _t in TERRAINS:
     RESPONSES[f"terrain/{_t}/insights.json"] = ("/terrain/{terrainId}/insights", "get", "200")
 # v1.1 (Backend A): built from the real pipeline by scripts/build_seed.py
 for _dir, _path in [("features", "/sites/{siteId}/features"), ("hazard_calendar", "/sites/{siteId}/hazard-calendar"),
-                    ("hazards", "/sites/{siteId}/hazards"), ("zones", "/sites/{siteId}/zones")]:
+                    ("hazards", "/sites/{siteId}/hazards"), ("zones", "/sites/{siteId}/zones"),
+                    ("compare", "/sites/{siteId}/compare")]:
     for _p in (FIXTURES / _dir).glob("*.json"):
         RESPONSES[f"{_dir}/{_p.name}"] = (_path, "get", "200")
+# v1.1 (Backend B): saved demo responses from scripts/build_rotation_fixtures.py
+for _p in (FIXTURES / "rotation_analysis").glob("*.json"):
+    RESPONSES[f"rotation_analysis/{_p.name}"] = ("/sites/{siteId}/rotation-analysis", "post", "200")
+RESPONSES["glossary.json"] = ("/glossary", "get", "200")
 for _p in (FIXTURES / "simulations" / "sim_mock_001" / "diff").glob("*.json"):
     RESPONSES[_p.relative_to(FIXTURES).as_posix()] = ("/simulations/{simId}/diff", "get", "200")
 

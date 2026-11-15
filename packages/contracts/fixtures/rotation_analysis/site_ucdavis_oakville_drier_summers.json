@@ -1,0 +1,1351 @@
+{
+ "site_id": "site_ucdavis_oakville",
+ "engine_version": "1.0.0",
+ "request_hash": "ecd136e793febe08",
+ "request_echo": {
+  "allowed_crops": [
+   "crop_alfalfa",
+   "crop_barley",
+   "crop_canola",
+   "crop_maize",
+   "crop_millet",
+   "crop_pea_field",
+   "crop_red_clover",
+   "crop_rye_cover",
+   "crop_sorghum",
+   "crop_soybean",
+   "crop_sunflower",
+   "crop_wheat_winter"
+  ],
+  "constraints": {
+   "low_water": false,
+   "no_local_market": false,
+   "no_specialty_equipment": false
+  },
+  "criteria_selected": [
+   "nutrient_cycling",
+   "erosion_risk",
+   "organic_matter",
+   "pest_disruption",
+   "water_use",
+   "forage_potential",
+   "market_suitability"
+  ],
+  "existing_rotation": "preset",
+  "scenario": {
+   "preset": "drier_summers",
+   "rain_scale_by_season": {
+    "summer": -20.0
+   },
+   "rain_scale_pct": 0.0,
+   "temp_offset_c": 1.0
+  },
+  "weights": {
+   "erosion_risk": 1.0,
+   "forage_potential": 1.0,
+   "market_suitability": 1.0,
+   "nutrient_cycling": 1.0,
+   "organic_matter": 1.0,
+   "pest_disruption": 1.0,
+   "water_use": 1.0
+  }
+ },
+ "scenario": {
+  "preset": "drier_summers",
+  "rain_scale_pct": 0.0,
+  "temp_offset_c": 1.0,
+  "rain_scale_by_season": {
+   "summer": -20.0
+  },
+  "label": "modeled scenario, not a forecast",
+  "note": "built from observed years"
+ },
+ "data_mode": "seed",
+ "limited_data": false,
+ "confidence": "medium",
+ "rotations": [
+  {
+   "rotation_id": "rot_existing",
+   "name": "Winter wheat then fallow (dryland) (typical regional rotation, assumed)",
+   "is_existing": true,
+   "sequence": [
+    {
+     "year_index": 1,
+     "season": "fall",
+     "crop_id": "crop_wheat_winter"
+    },
+    {
+     "year_index": 1,
+     "season": "winter",
+     "crop_id": "fallow"
+    },
+    {
+     "year_index": 2,
+     "season": "spring",
+     "crop_id": "fallow"
+    },
+    {
+     "year_index": 2,
+     "season": "winter",
+     "crop_id": "fallow"
+    }
+   ],
+   "cover_calendar": {
+    "days_bare_per_year": [
+     166,
+     339
+    ],
+    "monthly_cover": [
+     [
+      0.37,
+      0.39,
+      0.41,
+      0.43,
+      0.5,
+      0.69,
+      0.49,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.08,
+      0.22,
+      0.33
+     ]
+    ]
+   },
+   "scorecard": [
+    {
+     "criterion": "nutrient_cycling",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "legume_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "mean_residue",
+       "value": 1.0,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "erosion_risk",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "days_bare_per_year",
+       "value": 252.5,
+       "unit": "days",
+       "basis": "derived"
+      },
+      {
+       "name": "bare_weeks_weighted",
+       "value": 44.469,
+       "unit": "relative index",
+       "basis": "modeled"
+      },
+      {
+       "name": "infiltration_class",
+       "value": "low",
+       "unit": "class",
+       "basis": "modeled"
+      },
+      {
+       "name": "terrain_factor",
+       "value": 1.0,
+       "unit": "relative",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 0.0,
+      "p90": 0.0
+     },
+     "note": "No terrain package: terrain factor set to 1."
+    },
+    {
+     "criterion": "organic_matter",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_residue",
+       "value": 1.0,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "perennial_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "pest_disruption",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "distinct_families",
+       "value": 1,
+       "unit": "count",
+       "basis": "derived"
+      },
+      {
+       "name": "same_family_pairs_within_2_seasons",
+       "value": 0,
+       "unit": "count",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "water_use",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "seasonal_water_shortfall",
+       "value": 234.577,
+       "unit": "mm per year",
+       "basis": "modeled"
+      },
+      {
+       "name": "rain_retained_share",
+       "value": 0.65,
+       "unit": "fraction",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 100.0,
+      "p90": 100.0
+     }
+    },
+    {
+     "criterion": "forage_potential",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "forage_index",
+       "value": 0.0,
+       "unit": "index",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "market_suitability",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "assumed",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_market_rating",
+       "value": 1.0,
+       "unit": "0-1",
+       "basis": "assumed"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    }
+   ],
+   "overall": 28.6,
+   "rank": 3,
+   "rank_stability": "ranked third in 100% of 34 resampled years",
+   "exposure": {
+    "winter": {
+     "value": 0.077,
+     "p10": 0.0,
+     "p90": 0.167,
+     "basis": "relative"
+    },
+    "summer": {
+     "value": 0.15,
+     "p10": 0.152,
+     "p90": 0.152,
+     "basis": "relative"
+    }
+   },
+   "vulnerable_seasons": [
+    {
+     "weeks": [
+      0,
+      50,
+      51
+     ],
+     "hazards": [
+      "frost_prob"
+     ]
+    },
+    {
+     "weeks": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      39,
+      40,
+      41
+     ],
+     "hazards": [
+      "heat_prob"
+     ]
+    },
+    {
+     "weeks": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+     ],
+     "hazards": [
+      "dry_spell_prob"
+     ]
+    }
+   ],
+   "evidence_card": {
+    "rotation_id": "rot_existing",
+    "why_suggested": "This is your current rotation, ranked third of 3 for your priorities. The others are compared with it.",
+    "evidence": [
+     "Bare soil (cover below 30%): 252 days per year (derived).",
+     "Seasonal water shortfall of the crops: 235 mm per year (modeled).",
+     "Bare weeks weighted by heavy-rain weeks: 44.5 relative index (relative).",
+     "Share of crops that fix nitrogen: 0.0 fraction (derived).",
+     "Mean market rating: 1.0 0-1 (assumed) (assumed)."
+    ],
+    "evidence_items": [
+     {
+      "label": "Bare soil (cover below 30%)",
+      "value": 252,
+      "unit": "days per year",
+      "basis": "derived",
+      "source": "crop cover curves (typical traits)"
+     },
+     {
+      "label": "Seasonal water shortfall of the crops",
+      "value": 235,
+      "unit": "mm per year",
+      "basis": "modeled",
+      "source": "NASA POWER 1991-2024, Hargreaves ET0 x crop coefficient"
+     },
+     {
+      "label": "Bare weeks weighted by heavy-rain weeks",
+      "value": 44.5,
+      "unit": "relative index",
+      "basis": "relative",
+      "source": "NASA POWER 1991-2024 extreme-rain shares"
+     },
+     {
+      "label": "Share of crops that fix nitrogen",
+      "value": 0.0,
+      "unit": "fraction",
+      "basis": "derived",
+      "source": "crop-trait table (typical traits)"
+     },
+     {
+      "label": "Mean market rating",
+      "value": 1.0,
+      "unit": "0-1 (assumed)",
+      "basis": "assumed",
+      "source": "placeholder ratings"
+     }
+    ],
+    "benefits": [
+     "Strongest of the 3 on water use.",
+     "Strongest of the 3 on market suitability."
+    ],
+    "information_gaps": [
+     "No satellite cross-check (NDVI or SMAP) for this site; soil moisture is a regional model estimate.",
+     "No soil sample: the soil class comes from a 250 m soil map (SoilGrids).",
+     "No terrain package: the terrain factor is set to 1 (field average).",
+     "Market ratings are placeholders (assumed), not local prices.",
+     "Crop traits are typical values awaiting review (TODO(verify))."
+    ],
+    "risks_for_local_review": [
+     "Planting and harvest windows for your area and this season.",
+     "A soil test before changing fertility plans.",
+     "Whether your equipment can plant, harvest and terminate each crop.",
+     "Local prices and buyers for each crop.",
+     "Pest and disease history of your fields.",
+     "Local frost and heat thresholds for each crop."
+    ],
+    "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+   }
+  },
+  {
+   "rotation_id": "rot_alt_1",
+   "name": "Maize (grain or silage), Soybean with Cereal rye (cover) as cover",
+   "is_existing": false,
+   "sequence": [
+    {
+     "year_index": 1,
+     "season": "spring",
+     "crop_id": "crop_maize"
+    },
+    {
+     "year_index": 1,
+     "season": "fall",
+     "crop_id": "crop_rye_cover"
+    },
+    {
+     "year_index": 2,
+     "season": "spring",
+     "crop_id": "crop_soybean"
+    },
+    {
+     "year_index": 2,
+     "season": "fall",
+     "crop_id": "crop_rye_cover"
+    }
+   ],
+   "cover_calendar": {
+    "days_bare_per_year": [
+     75,
+     83
+    ],
+    "monthly_cover": [
+     [
+      0.4,
+      0.43,
+      0.53,
+      0.75,
+      0.07,
+      0.39,
+      0.74,
+      0.82,
+      0.84,
+      0.3,
+      0.32,
+      0.37
+     ],
+     [
+      0.4,
+      0.43,
+      0.53,
+      0.75,
+      0.02,
+      0.29,
+      0.69,
+      0.82,
+      0.84,
+      0.3,
+      0.32,
+      0.37
+     ]
+    ]
+   },
+   "scorecard": [
+    {
+     "criterion": "nutrient_cycling",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "legume_share",
+       "value": 0.25,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "mean_residue",
+       "value": 0.75,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 1.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "erosion_risk",
+     "score": 87.5,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "days_bare_per_year",
+       "value": 79.0,
+       "unit": "days",
+       "basis": "derived"
+      },
+      {
+       "name": "bare_weeks_weighted",
+       "value": 14.082,
+       "unit": "relative index",
+       "basis": "modeled"
+      },
+      {
+       "name": "infiltration_class",
+       "value": "low",
+       "unit": "class",
+       "basis": "modeled"
+      },
+      {
+       "name": "terrain_factor",
+       "value": 1.0,
+       "unit": "relative",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 86.2,
+      "p90": 88.3
+     },
+     "note": "No terrain package: terrain factor set to 1."
+    },
+    {
+     "criterion": "organic_matter",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_residue",
+       "value": 0.75,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 1.0,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "perennial_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "pest_disruption",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "distinct_families",
+       "value": 2,
+       "unit": "count",
+       "basis": "derived"
+      },
+      {
+       "name": "same_family_pairs_within_2_seasons",
+       "value": 0,
+       "unit": "count",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "water_use",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "seasonal_water_shortfall",
+       "value": 788.352,
+       "unit": "mm per year",
+       "basis": "modeled"
+      },
+      {
+       "name": "rain_retained_share",
+       "value": 0.65,
+       "unit": "fraction",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 0.0,
+      "p90": 0.0
+     }
+    },
+    {
+     "criterion": "forage_potential",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "forage_index",
+       "value": 1.0,
+       "unit": "index",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "market_suitability",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "assumed",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_market_rating",
+       "value": 1.0,
+       "unit": "0-1",
+       "basis": "assumed"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    }
+   ],
+   "overall": 83.9,
+   "rank": 1,
+   "rank_stability": "ranked first in 100% of 34 resampled years",
+   "exposure": {
+    "winter": {
+     "value": 0.0,
+     "p10": 0.0,
+     "p90": 0.0,
+     "basis": "relative"
+    },
+    "summer": {
+     "value": 0.921,
+     "p10": 0.926,
+     "p90": 0.926,
+     "basis": "relative"
+    }
+   },
+   "vulnerable_seasons": [
+    {
+     "weeks": [
+      0,
+      50,
+      51
+     ],
+     "hazards": [
+      "frost_prob"
+     ]
+    },
+    {
+     "weeks": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41
+     ],
+     "hazards": [
+      "heat_prob"
+     ]
+    },
+    {
+     "weeks": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+     ],
+     "hazards": [
+      "dry_spell_prob"
+     ]
+    }
+   ],
+   "evidence_card": {
+    "rotation_id": "rot_alt_1",
+    "why_suggested": "Ranked first of 3 because you weighted 7 criteria equally, and it adds a nitrogen-fixing legume, adds a cover crop between cash crops and has about 174 fewer bare days per year.",
+    "evidence": [
+     "Bare soil (cover below 30%): 79 days per year (derived).",
+     "Seasonal water shortfall of the crops: 788 mm per year (modeled).",
+     "Bare weeks weighted by heavy-rain weeks: 14.1 relative index (relative).",
+     "Share of crops that fix nitrogen: 0.25 fraction (derived).",
+     "Mean market rating: 1.0 0-1 (assumed) (assumed)."
+    ],
+    "evidence_items": [
+     {
+      "label": "Bare soil (cover below 30%)",
+      "value": 79,
+      "unit": "days per year",
+      "basis": "derived",
+      "source": "crop cover curves (typical traits)"
+     },
+     {
+      "label": "Seasonal water shortfall of the crops",
+      "value": 788,
+      "unit": "mm per year",
+      "basis": "modeled",
+      "source": "NASA POWER 1991-2024, Hargreaves ET0 x crop coefficient"
+     },
+     {
+      "label": "Bare weeks weighted by heavy-rain weeks",
+      "value": 14.1,
+      "unit": "relative index",
+      "basis": "relative",
+      "source": "NASA POWER 1991-2024 extreme-rain shares"
+     },
+     {
+      "label": "Share of crops that fix nitrogen",
+      "value": 0.25,
+      "unit": "fraction",
+      "basis": "derived",
+      "source": "crop-trait table (typical traits)"
+     },
+     {
+      "label": "Mean market rating",
+      "value": 1.0,
+      "unit": "0-1 (assumed)",
+      "basis": "assumed",
+      "source": "placeholder ratings"
+     }
+    ],
+    "benefits": [
+     "Better nutrient cycling (incl. nitrogen fixing) than your current rotation (score 100 vs 0).",
+     "Better erosion risk than your current rotation (score 87.5 vs 0).",
+     "Better organic matter than your current rotation (score 100 vs 0).",
+     "Better pest-cycle disruption than your current rotation (score 100 vs 0).",
+     "Better forage potential than your current rotation (score 100 vs 0)."
+    ],
+    "information_gaps": [
+     "No satellite cross-check (NDVI or SMAP) for this site; soil moisture is a regional model estimate.",
+     "No soil sample: the soil class comes from a 250 m soil map (SoilGrids).",
+     "No terrain package: the terrain factor is set to 1 (field average).",
+     "Market ratings are placeholders (assumed), not local prices.",
+     "Crop traits are typical values awaiting review (TODO(verify))."
+    ],
+    "risks_for_local_review": [
+     "Planting and harvest windows for your area and this season.",
+     "A soil test before changing fertility plans.",
+     "Whether your equipment can plant, harvest and terminate each crop.",
+     "Local prices and buyers for each crop.",
+     "Pest and disease history of your fields.",
+     "Local frost and heat thresholds for each crop."
+    ],
+    "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+   }
+  },
+  {
+   "rotation_id": "rot_alt_2",
+   "name": "Spring canola, Maize (grain or silage) with Cereal rye (cover) and Red clover (cover or forage) as cover",
+   "is_existing": false,
+   "sequence": [
+    {
+     "year_index": 1,
+     "season": "spring",
+     "crop_id": "crop_canola"
+    },
+    {
+     "year_index": 1,
+     "season": "summer",
+     "crop_id": "crop_red_clover"
+    },
+    {
+     "year_index": 2,
+     "season": "spring",
+     "crop_id": "crop_maize"
+    },
+    {
+     "year_index": 2,
+     "season": "fall",
+     "crop_id": "crop_rye_cover"
+    }
+   ],
+   "cover_calendar": {
+    "days_bare_per_year": [
+     50,
+     65
+    ],
+    "monthly_cover": [
+     [
+      0.4,
+      0.43,
+      0.53,
+      0.75,
+      0.36,
+      0.77,
+      0.83,
+      0.35,
+      0.27,
+      0.49,
+      0.54,
+      0.58
+     ],
+     [
+      0.61,
+      0.65,
+      0.68,
+      0.78,
+      0.33,
+      0.39,
+      0.74,
+      0.82,
+      0.84,
+      0.3,
+      0.32,
+      0.37
+     ]
+    ]
+   },
+   "scorecard": [
+    {
+     "criterion": "nutrient_cycling",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "legume_share",
+       "value": 0.25,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "mean_residue",
+       "value": 0.75,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 1.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "erosion_risk",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "days_bare_per_year",
+       "value": 57.5,
+       "unit": "days",
+       "basis": "derived"
+      },
+      {
+       "name": "bare_weeks_weighted",
+       "value": 9.741,
+       "unit": "relative index",
+       "basis": "modeled"
+      },
+      {
+       "name": "infiltration_class",
+       "value": "low",
+       "unit": "class",
+       "basis": "modeled"
+      },
+      {
+       "name": "terrain_factor",
+       "value": 1.0,
+       "unit": "relative",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 100.0,
+      "p90": 100.0
+     },
+     "note": "No terrain package: terrain factor set to 1."
+    },
+    {
+     "criterion": "organic_matter",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_residue",
+       "value": 0.75,
+       "unit": "index 0-1",
+       "basis": "assumed"
+      },
+      {
+       "name": "cover_share",
+       "value": 1.0,
+       "unit": "fraction",
+       "basis": "derived"
+      },
+      {
+       "name": "perennial_share",
+       "value": 0.0,
+       "unit": "fraction",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "pest_disruption",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "distinct_families",
+       "value": 2,
+       "unit": "count",
+       "basis": "derived"
+      },
+      {
+       "name": "same_family_pairs_within_2_seasons",
+       "value": 0,
+       "unit": "count",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "water_use",
+     "score": 7.6,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "modeled",
+     "confidence": "medium",
+     "needs_local_review": false,
+     "inputs": [
+      {
+       "name": "seasonal_water_shortfall",
+       "value": 746.075,
+       "unit": "mm per year",
+       "basis": "modeled"
+      },
+      {
+       "name": "rain_retained_share",
+       "value": 0.65,
+       "unit": "fraction",
+       "basis": "assumed"
+      }
+     ],
+     "range": {
+      "p10": 3.7,
+      "p90": 8.4
+     }
+    },
+    {
+     "criterion": "forage_potential",
+     "score": 100.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "derived",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "forage_index",
+       "value": 1.0,
+       "unit": "index",
+       "basis": "derived"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    },
+    {
+     "criterion": "market_suitability",
+     "score": 0.0,
+     "unit": "index 0-100 across these three rotations, higher is better",
+     "basis": "assumed",
+     "confidence": "low",
+     "needs_local_review": true,
+     "inputs": [
+      {
+       "name": "mean_market_rating",
+       "value": 0.75,
+       "unit": "0-1",
+       "basis": "assumed"
+      }
+     ],
+     "note": "Based on typical crop traits, not measured on your field."
+    }
+   ],
+   "overall": 72.5,
+   "rank": 2,
+   "rank_stability": "ranked second in 100% of 34 resampled years",
+   "exposure": {
+    "winter": {
+     "value": 0.0,
+     "p10": 0.0,
+     "p90": 0.0,
+     "basis": "relative"
+    },
+    "summer": {
+     "value": 0.85,
+     "p10": 0.856,
+     "p90": 0.856,
+     "basis": "relative"
+    }
+   },
+   "vulnerable_seasons": [
+    {
+     "weeks": [
+      0,
+      50,
+      51
+     ],
+     "hazards": [
+      "frost_prob"
+     ]
+    },
+    {
+     "weeks": [
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41
+     ],
+     "hazards": [
+      "heat_prob"
+     ]
+    },
+    {
+     "weeks": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51
+     ],
+     "hazards": [
+      "dry_spell_prob"
+     ]
+    }
+   ],
+   "evidence_card": {
+    "rotation_id": "rot_alt_2",
+    "why_suggested": "Ranked second of 3 because you weighted 7 criteria equally, and it adds a nitrogen-fixing legume, adds a cover crop between cash crops and has about 195 fewer bare days per year.",
+    "evidence": [
+     "Bare soil (cover below 30%): 58 days per year (derived).",
+     "Seasonal water shortfall of the crops: 746 mm per year (modeled).",
+     "Bare weeks weighted by heavy-rain weeks: 9.7 relative index (relative).",
+     "Share of crops that fix nitrogen: 0.25 fraction (derived).",
+     "Mean market rating: 0.75 0-1 (assumed) (assumed)."
+    ],
+    "evidence_items": [
+     {
+      "label": "Bare soil (cover below 30%)",
+      "value": 58,
+      "unit": "days per year",
+      "basis": "derived",
+      "source": "crop cover curves (typical traits)"
+     },
+     {
+      "label": "Seasonal water shortfall of the crops",
+      "value": 746,
+      "unit": "mm per year",
+      "basis": "modeled",
+      "source": "NASA POWER 1991-2024, Hargreaves ET0 x crop coefficient"
+     },
+     {
+      "label": "Bare weeks weighted by heavy-rain weeks",
+      "value": 9.7,
+      "unit": "relative index",
+      "basis": "relative",
+      "source": "NASA POWER 1991-2024 extreme-rain shares"
+     },
+     {
+      "label": "Share of crops that fix nitrogen",
+      "value": 0.25,
+      "unit": "fraction",
+      "basis": "derived",
+      "source": "crop-trait table (typical traits)"
+     },
+     {
+      "label": "Mean market rating",
+      "value": 0.75,
+      "unit": "0-1 (assumed)",
+      "basis": "assumed",
+      "source": "placeholder ratings"
+     }
+    ],
+    "benefits": [
+     "Better nutrient cycling (incl. nitrogen fixing) than your current rotation (score 100 vs 0).",
+     "Better erosion risk than your current rotation (score 100 vs 0).",
+     "Better organic matter than your current rotation (score 100 vs 0).",
+     "Better pest-cycle disruption than your current rotation (score 100 vs 0).",
+     "Better forage potential than your current rotation (score 100 vs 0)."
+    ],
+    "information_gaps": [
+     "No satellite cross-check (NDVI or SMAP) for this site; soil moisture is a regional model estimate.",
+     "No soil sample: the soil class comes from a 250 m soil map (SoilGrids).",
+     "No terrain package: the terrain factor is set to 1 (field average).",
+     "Market ratings are placeholders (assumed), not local prices.",
+     "Crop traits are typical values awaiting review (TODO(verify))."
+    ],
+    "risks_for_local_review": [
+     "Planting and harvest windows for your area and this season.",
+     "A soil test before changing fertility plans.",
+     "Whether your equipment can plant, harvest and terminate each crop.",
+     "Local prices and buyers for each crop.",
+     "Pest and disease history of your fields.",
+     "Local frost and heat thresholds for each crop."
+    ],
+    "support_not_replace": "This tool supports, and does not replace, local agronomic expertise."
+   }
+  }
+ ],
+ "weights_applied": {
+  "erosion_risk": 0.1429,
+  "forage_potential": 0.1429,
+  "market_suitability": 0.1429,
+  "nutrient_cycling": 0.1429,
+  "organic_matter": 0.1429,
+  "pest_disruption": 0.1429,
+  "water_use": 0.1429
+ },
+ "warnings": [],
+ "disclaimer": "This tool supports, and does not replace, local agronomic expertise."
+}

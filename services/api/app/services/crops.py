@@ -6,7 +6,11 @@ from app.services.terrain import require_terrain
 
 
 def list_crops() -> list[dict]:
-    return store().json("crops.json")
+    """Trait library (v1.1 CropTrait, data/seed/crops) plus mock fixture crops it does not cover (old presets use them)."""
+    from app.rotation.traits import library
+
+    lib = library()
+    return list(lib.values()) + [c for c in store().json("crops.json") if c["id"] not in lib]
 
 
 def rotation_presets(terrain_id: str) -> list[dict]:

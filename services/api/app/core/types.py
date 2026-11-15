@@ -75,3 +75,42 @@ class NoteCreate(BaseModel):
     body: str = Field(min_length=1, max_length=2000)
     parent_id: NoteId | None = None
     author: str | None = Field(None, max_length=80)
+
+
+# ---------- v1.1 rotation analysis (backend rotation PRD §9) ----------
+Criterion = Literal["nutrient_cycling", "erosion_risk", "organic_matter", "pest_disruption", "water_use", "forage_potential", "market_suitability"]
+Season = Literal["spring", "summer", "fall", "winter"]
+MAX_CYCLE_YEARS = 5  # assumed: keeps the alternative search interactive
+
+
+class RotationSlotIn(BaseModel):
+    year_index: int = Field(ge=1, le=MAX_CYCLE_YEARS)
+    season: Season
+    crop_id: Annotated[str, Field(pattern=r"^(crop_[A-Za-z0-9_-]+|fallow)$")]
+
+
+class ScenarioIn(BaseModel):
+    model_config = {"extra": "forbid"}
+    preset: Scenario = "baseline"
+    rain_scale_pct: float | None = None
+    temp_offset_c: float | None = None
+    rain_scale_by_season: dict[Season, float] | None = None
+
+
+class ConstraintsIn(BaseModel):
+    model_config = {"extra": "forbid"}
+    low_water: bool = False
+    no_specialty_equipment: bool = False
+    no_local_market: bool = False
+
+
+class RotationAnalysisIn(BaseModel):
+    model_config = {"extra": "forbid"}
+    existing_rotation: Literal["preset"] | Annotated[list[RotationSlotIn], Field(min_length=1)] = "preset"
+    criteria_selected: list[Criterion] | None = None
+    weights: dict[Criterion, Annotated[float, Field(ge=0)]] | None = None
+    weight_preset: Literal["water", "income", "soil_structure", "erosion", "forage"] | None = None
+    constraints: ConstraintsIn = ConstraintsIn()
+    allowed_crops: list[CropId] | None = None
+    scenario: Scenario | ScenarioIn = "baseline"
+    location: tuple[Annotated[float, Field(ge=-180, le=180)], Annotated[float, Field(ge=-90, le=90)]] | None = None
