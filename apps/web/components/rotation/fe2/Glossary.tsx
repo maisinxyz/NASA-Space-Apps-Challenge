@@ -21,12 +21,18 @@ export function useGlossary(): GlossaryEntry[] {
 
 /** Pure tooltip view (tests render it directly). Focusable, described by the tooltip text, shown on hover and focus. */
 export function TermTip({ entry, children, tipId }: { entry: GlossaryEntry; children: ReactNode; tipId: string }) {
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setDismissed(true);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, []);
   return (
-    <span className="group relative">
+    <span className="group relative" onMouseEnter={() => setDismissed(false)} onFocus={() => setDismissed(false)}>
       <span tabIndex={0} aria-describedby={tipId} className="cursor-help underline decoration-dotted underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent">
         {children}
       </span>
-      <span id={tipId} role="tooltip" className="pointer-events-none absolute bottom-full left-0 z-20 mb-1 hidden w-64 rounded-md border border-line bg-surface p-2 text-xs font-normal text-ink shadow-md group-focus-within:block group-hover:block">
+      <span id={tipId} role="tooltip" className={`absolute bottom-full left-0 z-20 hidden w-max max-w-[min(16rem,calc(100vw-2rem))] rounded-md border border-line bg-surface p-2 text-xs font-normal text-ink shadow-md group-focus-within:block group-hover:block${dismissed ? " !hidden" : ""}`}>
         <b>{entry.term}</b>: {entry.short}
       </span>
     </span>

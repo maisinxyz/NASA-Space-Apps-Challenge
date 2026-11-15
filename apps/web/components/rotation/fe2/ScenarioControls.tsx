@@ -44,9 +44,9 @@ export function ScenarioControls() {
   const s = useRotationStore((st) => st.rotScenario);
   return (
     <section aria-labelledby="fe2-scenario" className="grid gap-3">
-      <h3 id="fe2-scenario" className="font-semibold text-ink">
+      <h4 id="fe2-scenario" className="font-semibold text-ink">
         Climate scenario
-      </h3>
+      </h4>
       <p className="text-xs font-medium text-ink-muted">{SCENARIO_LABEL}</p>
       <PresetButtons value={s.preset} onPick={setScenarioPreset} />
       <div className="grid gap-2 sm:grid-cols-2">

@@ -15,6 +15,7 @@ import { AboutPanel } from "./globe/AboutPanel";
 
 export function Header() {
   const onMethods = usePathname().startsWith("/methods");
+  const onLearn = usePathname().startsWith("/learn");
   const presenter = usePresenter((s) => s.presenter);
   const twinFarm = useChrome((s) => s.twinFarm);
   const slim = !!twinFarm && !onMethods;
@@ -75,7 +76,7 @@ export function Header() {
           <Link href="/methods" aria-current={onMethods ? "page" : undefined} className={`border-b-2 py-0.5 ${onMethods ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
             Methods &amp; data
           </Link>
-          <Link href="/learn" className="border-b-2 border-transparent py-0.5 text-ink-muted hover:text-ink">
+          <Link href="/learn" aria-current={onLearn ? "page" : undefined} className={`border-b-2 py-0.5 ${onLearn ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}>
             Learn
           </Link>
         </nav>

@@ -9,7 +9,8 @@ import { FeatureCharts } from "./FeatureCharts";
 import { TermTip } from "./Glossary";
 import { bareWeeks, HazardTimeline } from "./HazardTimeline";
 import { PresetButtons, ScenarioControls } from "./ScenarioControls";
-import { weekRuns } from "./charts";
+import { MONTH_TICKS, MONTHS, monthOfWeek, weekRuns } from "./charts";
+import { ZoneList } from "./ZoneOverlay";
 
 const base = initialRotationState.rotScenario;
 
@@ -53,6 +54,7 @@ describe("charts show unit and basis", () => {
     t.caveats = ["a caveat"];
     const html = renderToStaticMarkup(<FeatureCharts table={t} />);
     expect(html).toContain("Limited data");
+    expect(html).toContain("no seeded satellite or soil data");
     expect(html).toContain("a caveat");
   });
   it("hazard timeline", () => {
@@ -70,6 +72,10 @@ describe("bands", () => {
     expect(w.length).toBeGreaterThan(8);
     expect(bareWeeks(undefined)).toEqual([]);
   });
+  it("12 month ticks label Jan..Dec in order", () => {
+    expect(MONTH_TICKS).toHaveLength(12);
+    expect(MONTH_TICKS.map((w) => MONTHS[monthOfWeek(w)])).toEqual(MONTHS);
+  });
   it("groups consecutive weeks", () => expect(weekRuns([3, 1, 2, 7])).toEqual([[1, 3], [7, 7]]));
 });
 
@@ -79,5 +85,17 @@ describe("GlossaryTerm tooltip", () => {
     expect(html).toContain('tabindex="0"');
     expect(html).toContain('aria-describedby="t1"');
     expect(html).toContain('id="t1" role="tooltip"');
+    expect(html).not.toContain("pointer-events-none");
+    expect(html).toContain("max-w-[min(16rem,calc(100vw-2rem))]");
+  });
+});
+
+describe("ZoneList", () => {
+  it("shows label, area and relative terrain factor with basis", () => {
+    const z = { id: "z", label: "Frost pocket", area_ha: 3.2, terrain_factor: 1.1, basis: "relative" } as never;
+    const html = renderToStaticMarkup(<ZoneList zones={[z]} />);
+    expect(html).toContain("Frost pocket");
+    expect(html).toContain("3.2 ha");
+    expect(html).toContain("data-basis=");
   });
 });

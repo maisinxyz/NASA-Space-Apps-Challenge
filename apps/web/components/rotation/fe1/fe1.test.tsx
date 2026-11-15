@@ -7,8 +7,8 @@ import { MOCK_ROTATIONS } from "@/lib/rotation/draft-fixtures";
 import { RotationResults } from "./RotationResults";
 import { Scorecard } from "./Scorecard";
 
-const analysis = { site_id: "s", rotations: MOCK_ROTATIONS, warnings: [], limited_data: false } as unknown as RotationAnalysis;
 const w = (c: (typeof CRITERIA)[number]) => Object.fromEntries(CRITERIA.map((x) => [x, x === c ? 5 : 0]));
+const analysis = { site_id: "s", rotations: MOCK_ROTATIONS, warnings: [], limited_data: false, request_echo: { criteria_selected: CRITERIA, weights: w("water_use") } } as unknown as RotationAnalysis;
 const render = (weights: Record<string, number>) => renderToStaticMarkup(<RotationResults analysis={analysis} weights={weights} selected={CRITERIA} cropNames={{}} showMock={false} />);
 const names = (html: string) => MOCK_ROTATIONS.map((r) => ({ n: r.name, i: html.indexOf(r.name) })).sort((a, b) => a.i - b.i).map((x) => x.n);
 
@@ -31,6 +31,19 @@ describe("Scorecard", () => {
 });
 
 describe("RotationResults", () => {
+  it("shows rank_stability only while weights match request_echo, else a muted note", () => {
+    const stab = { ...analysis, rotations: MOCK_ROTATIONS.map((r) => ({ ...r, rank_stability: "STABLE-TEXT" })) } as unknown as RotationAnalysis;
+    const r = (weights: Record<string, number>) => renderToStaticMarkup(<RotationResults analysis={stab} weights={weights} selected={CRITERIA} cropNames={{}} showMock={false} />);
+    expect(r(w("water_use"))).toContain("STABLE-TEXT");
+    const moved = r(w("erosion_risk"));
+    expect(moved).not.toContain("STABLE-TEXT");
+    expect(moved).toContain("Rank stability refers to the weights at the last refresh.");
+  });
+
+  it("shows the pre-built badge", () => {
+    expect(render(w("water_use"))).toContain("Pre-built");
+  });
+
   it("labels the existing rotation and states scores are relative", () => {
     const html = render(w("water_use"));
     expect(html).toContain("Your current rotation");

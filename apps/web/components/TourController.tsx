@@ -4,6 +4,8 @@
 import { useEffect } from "react";
 
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
+import { resetZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { useRotationStore } from "@/lib/rotation/store";
 import { useAppStore } from "@/lib/store";
 
 export function TourController() {
@@ -12,6 +14,8 @@ export function TourController() {
       if (hasModifier(e) || isTextEntry(e.target)) return;
       if (e.key === "r" || e.key === "R") {
         useAppStore.getState().reset();
+        useRotationStore.getState().reset();
+        resetZoneToggle();
         window.dispatchEvent(new Event(RESET_EVENT));
       }
     };

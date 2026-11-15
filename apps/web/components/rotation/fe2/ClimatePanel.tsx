@@ -36,7 +36,7 @@ export function ClimatePanel({ siteId, monthlyCover }: { siteId: string; monthly
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="font-display text-xl text-ink">Climate and hazards</h2>
+        <h3 className="font-display text-xl text-ink">Climate and hazards</h3>
         {isMock && <Badge variant="mock" />}
       </div>
       <ScenarioControls />

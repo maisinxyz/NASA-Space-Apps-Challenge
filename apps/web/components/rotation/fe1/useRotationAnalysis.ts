@@ -25,7 +25,7 @@ export function useRotationAnalysis() {
     let stale = false;
     postRotationAnalysis(farmId, buildAnalysisRequest())
       .then((data) => !stale && setRes({ key, data, done: true }))
-      .catch((error) => !stale && setRes({ key, error, done: true }));
+      .catch((error) => !stale && setRes((r) => ({ key, error, data: r.data, done: true })));
     return () => {
       stale = true;
     };
@@ -33,7 +33,8 @@ export function useRotationAnalysis() {
   }, [key]);
 
   const current = res.key === key;
-  return { farmId, isMock, data: current ? res.data : undefined, error: current ? res.error : undefined, loading: !!farmId && !(current && res.done), retry: () => setTick((t) => t + 1) };
+  // Stale-while-revalidate: `data` keeps the last success while refetching (so results do not unmount); errors only for the current key.
+  return { farmId, isMock, data: res.data, error: current ? res.error : undefined, loading: !!farmId && !(current && res.done), retry: () => setTick((t) => t + 1) };
 }
 
 /** crop_id -> display name from GET /crops; empty until loaded, callers fall back to the id. */

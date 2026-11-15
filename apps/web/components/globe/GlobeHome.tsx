@@ -684,7 +684,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
         </p>
       )}
       {inTwin && (
-        <div className="absolute right-3 bottom-10 z-10">
+        <div className="absolute top-14 left-1/2 z-10 -translate-x-1/2">
           <ZoneToggle />
         </div>
       )}
