@@ -26,6 +26,31 @@ export const CONDITIONS: readonly { id: ConditionId; label: string; value: strin
   { id: "heat", label: "Heat & frost", value: "9 days" },
 ];
 
+/** Condition card copy (design-spec §2.4). Charts are not drawn yet; every card carries "Sample data". */
+export type ConditionCard = { title: string; big: string; unit: string; description?: string; grid?: readonly { label: string; value: string; note?: string }[] };
+export const CONDITION_CARDS: Record<ConditionId, ConditionCard> = {
+  rainfall: { title: "Rainfall", big: "64 mm", unit: "in July · sample" },
+  moisture: { title: "Soil moisture", big: "41%", unit: "of field capacity, farm average", description: "Under the 50% stress line since early July." },
+  vigor: { title: "Crop vigor", big: "0.48", unit: "NDVI · −0.10 vs 5-yr avg", description: "Browning earlier than the 5-year curve." },
+  heat: {
+    title: "Heat & frost",
+    big: "9 days",
+    unit: "above 30 °C",
+    grid: [
+      { label: "Days above 30 °C", value: "9", note: "normal 4" },
+      { label: "Growing degree days", value: "1,412", note: "+6%" },
+      { label: "First frost median", value: "Oct 14", note: "92 days away" },
+      { label: "Coldest July night", value: "11 °C" },
+    ],
+  },
+};
+
+/** Legend copy per map layer (design-spec §2.6). */
+export const LAYER_LEGENDS: Partial<Record<LayerId, { title: string; from: string; to: string; lo: string; hi: string; note: string }>> = {
+  vigor: { title: "Crop vigor, NDVI", from: "#F2E8A6", to: "#2C6A38", lo: "0.4 thin", hi: "0.8 lush", note: "Satellite, 14 Jul · sample data" },
+  moisture: { title: "Soil moisture, % of capacity", from: "#E1ECF7", to: "#1C5AA3", lo: "30%", hi: "60%", note: "Dashed outline: under the 50% stress line" },
+};
+
 export const LAYERS: readonly { id: LayerId; label: string }[] = [
   { id: "satellite", label: "Satellite" },
   { id: "vigor", label: "Crop vigor" },

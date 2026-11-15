@@ -17,7 +17,10 @@ export const ChevronLeft = (p: P) => <I {...p}><path d="m15 18-6-6 6-6" /></I>;
 export const ChevronRight = (p: P) => <I {...p}><path d="m9 18 6-6-6-6" /></I>;
 export const PanelLeft = (p: P) => <I {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /></I>;
 export const Volume2 = (p: P) => <I {...p}><path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></I>;
-export const VolumeX = (p: P) => <I {...p}><path d="M11 5 6 9H2v6h4l5 4z" /><path d="m22 9-6 6" /><path d="m16 9 6 6" /></I>;
+export const Minus = (p: P) => <I {...p}><path d="M5 12h14" /></I>;
+export const X = (p: P) => <I {...p}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></I>;
+export const ArrowUp = (p: P) => <I {...p}><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></I>;
+export const VolumeX =(p: P) => <I {...p}><path d="M11 5 6 9H2v6h4l5 4z" /><path d="m22 9-6 6" /><path d="m16 9 6 6" /></I>;
 
 /** The FieldTwin logo. The gold sparkle belongs to the AI button only (spec). */
 export function Logo({ size = 26, spin = false }: { size?: number; spin?: boolean }) {
