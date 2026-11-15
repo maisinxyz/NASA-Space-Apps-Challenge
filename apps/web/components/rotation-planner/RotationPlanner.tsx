@@ -8,13 +8,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { apiMode, getCropCatalog } from "@/lib/api/client";
 import type { CropCatalog, Forecast, ForecastStrategy, RotationSlot } from "@/lib/api/types";
-import { CURRENT_ROTATION, originNote } from "@/lib/farm-future/data";
+import { originNote } from "@/lib/farm-future/data";
 import { color } from "@/lib/farm-view/tokens";
 import { fmt } from "@/lib/forecast/select";
 import { baseRequest } from "@/lib/forecast/sites";
 import {
-  buildRequest, calendarOf, categoryLabel, cropAt, cropColour, cycleOf, inputFrom, MONTHS, namesOf, plainSource, roleLabel,
-  ruleStatus, SEASON_LABEL, SEASONS, setCell, strategiesFor, validate, type PlannerInput, type Season,
+  buildRequest, calendarOf, categoryLabel, cropAt, cropColour, cycleOf, inputFrom, MONTHS, namesOf, plainRole, plainRule, plainSource, ruleStatus, SEASON_LABEL, SEASONS, setCell, strategiesFor, validate, type PlannerInput, type Season,
 } from "@/lib/rotation-planner/planner";
 import { useForecastStore } from "@/lib/forecast/store";
 import { useFutureStore } from "@/lib/farm-future/store";
@@ -78,7 +77,7 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
     const selected = priorities.criteria_selected.length ? priorities.criteria_selected : Object.keys(priorities.weights) as (keyof typeof priorities.weights)[];
     const weights = Object.fromEntries(selected.map((key) => [key, priorities.weights[key]]));
     if (Object.values(weights).every((value) => value === 0)) {
-      setLocalError("Choose at least one priority with a weight above zero."); return;
+      setLocalError("Pick at least one thing that matters to you and give it more than zero."); return;
     }
     setLocalError(null);
     await useForecastStore.getState().run(siteId, { ...buildRequest(base, i), priorities: { criteria_selected: priorities.criteria_selected, weights } });
@@ -118,79 +117,79 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
   };
 
   return (
-    <div className="rp" role="dialog" aria-modal="false" aria-label="Crop rotation planner" data-testid="rotation-planner">
+    <div className="rp" role="dialog" aria-modal="false" aria-label="Plan your crop rotation" data-testid="rotation-planner">
       <style>{CSS}</style>
-      <section aria-label="Crop pool and constraints">
+      <section aria-label="Crops and your farm limits">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>Crop pool</h2>
+          <h2>1. Pick crops you could grow</h2>
           <FvButton className="ff-link" onClick={close} data-testid="planner-close">Close</FvButton>
         </div>
-        <input type="search" placeholder="Search crops" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search crops" style={{ width: "100%" }} />
-        <p className="muted" style={{ margin: "6px 0 0" }}>{poolIds.length} in the pool · tick to add · Pin keeps a crop in every option · Exclude keeps it out.</p>
+        <input type="search" placeholder="Find a crop" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Find a crop" style={{ width: "100%" }} />
+        <p className="muted" style={{ margin: "6px 0 0" }}>{poolIds.length} crops picked. Tick the box to include a crop. <b>Always use</b> puts it in every plan; <b>Never use</b> keeps it out.</p>
         {[...byCategory.entries()].map(([cat, list]) => (
           <div key={cat}>
             <h3>{categoryLabel(cat)}</h3>
             {list.map((c) => (
               <div className="crop" key={c.id} data-testid={`pool-${c.id}`}>
-                <input type="checkbox" aria-label={`Add ${c.name} to the pool`} checked={input.pool.includes(c.id)} onChange={() => toggle("pool", c.id)} />
+                <input type="checkbox" aria-label={`Include ${c.name}`} checked={input.pool.includes(c.id)} onChange={() => toggle("pool", c.id)} />
                 <details>
                   <summary style={{ cursor: "pointer" }}><span aria-hidden style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: cropColour(c.id), marginRight: 6 }} />{c.name}</summary>
                   <ul style={{ margin: "4px 0", paddingLeft: 14, color: color.inkSecondary, fontSize: 11 }}>
                     {Object.entries(c.trait_sources ?? {}).slice(0, 8).map(([k, v]) => <li key={k}><b style={{ fontWeight: 500 }}>{k.replace(/_/g, " ")}</b>: {plainSource(v as string)}</li>)}
                   </ul>
                 </details>
-                <button type="button" className="chip" aria-pressed={input.pinned.includes(c.id)} onClick={() => toggle("pinned", c.id)}>Pin</button>
-                <button type="button" className="chip x" aria-pressed={input.excluded.includes(c.id)} onClick={() => toggle("excluded", c.id)}>Exclude</button>
+                <button type="button" className="chip" aria-pressed={input.pinned.includes(c.id)} onClick={() => toggle("pinned", c.id)}>Always use</button>
+                <button type="button" className="chip x" aria-pressed={input.excluded.includes(c.id)} onClick={() => toggle("excluded", c.id)}>Never use</button>
               </div>
             ))}
           </div>
         ))}
-        {catalog && catalog.crops.length === 0 && <p className="muted">The crop catalog could not be loaded.</p>}
+        {catalog && catalog.crops.length === 0 && <p className="muted">The crop list did not load.</p>}
 
-        <h3>Constraints</h3>
+        <h3>2. Tell us about your farm</h3>
         <div style={{ display: "grid", gap: 6 }}>
           {(catalog?.equipment ?? []).map((e) => (
             <label key={e.id}><input type="checkbox" checked={input.constraints.equipment.includes(e.id)} onChange={() => set({ constraints: { ...input.constraints, equipment: input.constraints.equipment.includes(e.id) ? input.constraints.equipment.filter((x) => x !== e.id) : [...input.constraints.equipment, e.id] } })} />{e.label}</label>
           ))}
-          {catalog && (catalog.equipment ?? []).length === 0 && <span className="muted">No specialty equipment listed in the catalog.</span>}
-          <label>Labour
+          {catalog && (catalog.equipment ?? []).length === 0 && <span className="muted">No special equipment to choose from.</span>}
+          <label>Workers available
             <select value={input.constraints.labour_level} onChange={(e) => set({ constraints: { ...input.constraints, labour_level: e.target.value as PlannerInput["constraints"]["labour_level"] } })}>
-              <option value="low">low</option><option value="medium">medium</option><option value="high">high</option>
+              <option value="low">Few</option><option value="medium">Some</option><option value="high">Plenty</option>
             </select>
           </label>
-          <label><input type="checkbox" checked={input.constraints.no_till} onChange={(e) => set({ constraints: { ...input.constraints, no_till: e.target.checked } })} />No-till</label>
-          <label><input type="checkbox" checked={input.constraints.livestock_on_farm} onChange={(e) => set({ constraints: { ...input.constraints, livestock_on_farm: e.target.checked } })} />Livestock on the farm</label>
-          <label>Longest cycle
+          <label><input type="checkbox" checked={input.constraints.no_till} onChange={(e) => set({ constraints: { ...input.constraints, no_till: e.target.checked } })} />I do not plough (no-till)</label>
+          <label><input type="checkbox" checked={input.constraints.livestock_on_farm} onChange={(e) => set({ constraints: { ...input.constraints, livestock_on_farm: e.target.checked } })} />I keep animals</label>
+          <label>Longest rotation
             <input type="number" min={1} max={10} value={input.constraints.max_cycle_years} onChange={(e) => set({ constraints: { ...input.constraints, max_cycle_years: Math.min(10, Math.max(1, +e.target.value || 1)) } })} style={{ width: 52 }} /> years
           </label>
-          <label>Water quota
+          <label>Water I can use
             <input type="number" min={0} placeholder="none" value={input.waterQuotaMm ?? ""} onChange={(e) => set({ waterQuotaMm: e.target.value === "" ? null : Math.max(0, +e.target.value) })} style={{ width: 70 }} /> mm/season
           </label>
-          <label>Options to generate
+          <label>How many plans to suggest
             <select value={input.strategyCount} onChange={(e) => set({ strategyCount: +e.target.value })} data-testid="planner-count">
               {[2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
-            <span className="muted">(including the current rotation)</span>
+            <span className="muted">(your current plan counts as one)</span>
           </label>
         </div>
         {problems.map((p) => <p key={p} role="alert" className="bad" style={{ margin: "6px 0 0" }}>{p}</p>)}
         <FvButton className="fv-seg fv-accent-btn" style={{ marginTop: 10, width: "100%", background: "linear-gradient(180deg,#c3d6f4,#a3bfe9)", color: "#05070c", fontWeight: 600 }} disabled={problems.length > 0 || run.status === "loading"} onClick={() => execute(input)} data-testid="planner-run">
-          {run.status === "loading" ? "Scoring…" : "Score rotations"}
+          {run.status === "loading" ? "Working…" : "3. Show me plans"}
         </FvButton>
       </section>
 
-      <section aria-label="Rotations">
+      <section aria-label="Crop plans">
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <h2 style={{ margin: 0 }}>Rotations · 10 years</h2>
+          <h2 style={{ margin: 0 }}>Crop plans for the next 10 years</h2>
           {f && (
-            <label>Area
+            <label>Field
               <select value={fieldId ?? ""} onChange={(e) => useFutureStore.setState({ focusFieldId: e.target.value || null })} data-testid="planner-field">
-                <option value="">Whole farm</option>
+                <option value="">All fields</option>
                 {f.fields.map((x) => <option key={x.field_id} value={x.field_id}>{x.name}</option>)}
               </select>
             </label>
           )}
-          <label>Calendar year
+          <label>Show year
             <select value={year} onChange={(e) => useFutureStore.getState().setT(tOf(+e.target.value - 1, 194))}>{Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select>
           </label>
         </div>
@@ -202,9 +201,9 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
         }}>Download accepted forecast inputs</button>}
         {shared.request && <p className="muted">To rerun, post the downloaded JSON’s request property to /api/v1/sites/{siteId}/forecast.</p>}
         {run.note && <p className="muted" data-testid="planner-note">{run.note}</p>}
-        {run.status === "loading" && <p role="status">Scoring the rotations…</p>}
+        {run.status === "loading" && <p role="status">Working out the plans…</p>}
         {localError ? <p role="alert" className="bad">{localError}</p> : run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
-        {f && !fieldId && f.fields.length > 1 && <p className="muted">Plans shown for {field?.name}; numbers are area-weighted over {f.fields.length} fields.</p>}
+        {f && !fieldId && f.fields.length > 1 && <p className="muted">Crop order shown for {field?.name}; the numbers cover all {f.fields.length} fields.</p>}
 
         {strategies.map((s) => (
           <StrategyCard key={s.id} s={s} f={f!} fieldId={fieldId} year={year} name={name} onEdit={s.role === "existing" ? () => startEdit(s) : undefined} />
@@ -212,20 +211,20 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
 
         <div className="card" data-testid="custom-editor">
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <strong>Custom rotation</strong>
-            {!editing && <FvButton className="fv-seg" onClick={() => startEdit(current)} data-testid="edit-current">Edit the {CURRENT_ROTATION.toLowerCase()}</FvButton>}
-            {!editing && <FvButton className="fv-seg" onClick={() => { setInput({ ...input, custom: [] }); setEditing(true); }}>Start from empty</FvButton>}
+            <strong>Build your own plan</strong>
+            {!editing && <FvButton className="fv-seg" onClick={() => startEdit(current)} data-testid="edit-current">Start from my current plan</FvButton>}
+            {!editing && <FvButton className="fv-seg" onClick={() => { setInput({ ...input, custom: [] }); setEditing(true); }}>Start from a blank plan</FvButton>}
             {editing && (
-              <label>Cycle
+              <label>Repeats every
                 <select value={customCycle} onChange={(e) => { const n = +e.target.value; setCustomCycle(n); set({ custom: (input.custom ?? []).filter((x) => x.year_index <= n) }); }}>
                   {Array.from({ length: 10 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-                </select> years, repeated over 10
+                </select> years, then starts over until year 10
               </label>
             )}
           </div>
           {editing && (
             <>
-              <table aria-label="Custom rotation editor">
+              <table aria-label="Build your own plan">
                 <thead><tr><th />{Array.from({ length: customCycle }, (_, i) => <th key={i}>Year {i + 1}</th>)}</tr></thead>
                 <tbody>
                   {SEASONS.map((season) => (
@@ -248,28 +247,28 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
                 </tbody>
               </table>
               <div style={{ display: "flex", gap: 8 }}>
-                <FvButton className="fv-seg" disabled={!input.custom?.length || problems.length > 0 || run.status === "loading"} onClick={() => execute(input)} data-testid="custom-score">Score beside the others</FvButton>
-                <FvButton className="fv-seg" onClick={() => { set({ custom: null }); setEditing(false); }}>Remove custom rotation</FvButton>
+                <FvButton className="fv-seg" disabled={!input.custom?.length || problems.length > 0 || run.status === "loading"} onClick={() => execute(input)} data-testid="custom-score">Add it to the comparison</FvButton>
+                <FvButton className="fv-seg" onClick={() => { set({ custom: null }); setEditing(false); }}>Remove my plan</FvButton>
               </div>
             </>
           )}
         </div>
-        {f && <p className="muted">{f.support_sentence} Scenario forecast, not a planting order.</p>}
+        {f && <p className="muted">{f.support_sentence} This is a forecast, not an order to plant.</p>}
       </section>
     </div>
   );
 }
 
 const TRAJ: { key: string; label: string; note?: string }[] = [
-  { key: "soil_organic_index", label: "Soil organic matter", note: "index, year 0 = 100" },
-  { key: "bare_weeks", label: "Bare-soil weeks" },
-  { key: "irrigation_need_mm", label: "Irrigation need" },
-  { key: "pest_pressure_index", label: "Pest pressure" },
+  { key: "soil_organic_index", label: "Soil richness", note: "(100 = today)" },
+  { key: "bare_weeks", label: "Weeks the ground is bare" },
+  { key: "irrigation_need_mm", label: "Extra watering needed" },
+  { key: "pest_pressure_index", label: "Pests and disease" },
 ];
 
 function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrategy; f: Forecast; fieldId: string | null; year: number; name(id: string): string; onEdit?(): void }) {
   const traj = (fieldId ? s.trajectories : f.farm_rollup.strategies.find((x) => x.id === s.id)?.trajectories ?? s.trajectories) as Record<string, { unit: string; points: { year: number; p50: number; p10?: number; p90?: number }[] } | undefined>;
-  const label = s.role === "existing" ? CURRENT_ROTATION : s.role === "custom" ? `Custom · ${s.label}` : s.label;
+  const label = s.role === "existing" ? "Your current plan" : s.role === "custom" ? `Your own plan · ${s.label}` : s.label;
   const ex = s.rotation_explanation;
   const cal = calendarOf(s.plan, year);
   const flags = s.review_flags;
@@ -277,12 +276,12 @@ function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrate
     <div className="card" data-testid={`planner-strategy-${s.id}`}>
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <strong>{label}</strong>
-        <span className="muted">{s.cycle_years}-year cycle</span>
+        <span className="muted">repeats every {s.cycle_years} {s.cycle_years === 1 ? "year" : "years"}</span>
         {onEdit && <FvButton className="fv-seg" onClick={onEdit} data-testid="edit-rotation">Edit</FvButton>}
-        <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested for this farm, and what should I check locally?`} />
+        <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested for this farm, and what should I check on my farm?`} />
       </div>
       {originNote(s.role) && <span className="muted" data-testid="planner-origin" style={{ fontSize: 11 }}>{originNote(s.role)}</span>}
-      <table aria-label={`${label}, years 1 to 10 by season`}>
+      <table aria-label={`${label}: what grows in each season, years 1 to 10`}>
         <thead><tr><th />{Array.from({ length: 10 }, (_, i) => <th key={i} style={{ fontWeight: i + 1 === year ? 600 : 400 }}>{i + 1}</th>)}</tr></thead>
         <tbody>
           {SEASONS.map((season) => (
@@ -314,21 +313,21 @@ function StrategyCard({ s, f, fieldId, year, name, onEdit }: { s: ForecastStrate
           const series = traj[t.key];
           const p = series?.points.find((x) => x.year === year);
           if (!series || !p) return null;
-          return <span key={t.key}>{t.label}, year {year}: <b style={{ fontWeight: 500 }}>{fmt(p.p50, t.note ? undefined : series.unit)}</b>{p.p10 !== undefined && p.p90 !== undefined && p.p10 !== p.p90 ? <span className="muted"> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}{t.note ? <span className="muted"> {t.note}</span> : null}</span>;
+          return <span key={t.key}>{t.label} in year {year}: <b style={{ fontWeight: 500 }}>{fmt(p.p50, t.note ? undefined : series.unit)}</b>{p.p10 !== undefined && p.p90 !== undefined && p.p10 !== p.p90 ? <span className="muted"> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}{t.note ? <span className="muted"> {t.note}</span> : null}</span>;
         })}
       </div>
       {ex && ex.crop_roles.length > 0 && (
-        <div>{ex.crop_roles.map((r) => <span key={`${r.crop_id}-${r.role}`} className="badge" title={r.text}>{roleLabel(r.role)} · {name(r.crop_id)}</span>)}</div>
+        <div>{ex.crop_roles.map((r) => <span key={`${r.crop_id}-${r.role}`} className="badge" title={r.text}>{plainRole(r.role)} · {name(r.crop_id)}</span>)}</div>
       )}
       {ex && ex.rules.length > 0 && (
-        <ul style={{ margin: 0, paddingLeft: 16 }} aria-label="Rotation rules">
-          {ex.rules.map((r) => { const st = ruleStatus(r.status); return <li key={r.rule_id}><span className={st.tone}>{st.label}</span> · {r.text}</li>; })}
+        <ul style={{ margin: 0, paddingLeft: 16 }} aria-label="Good-practice checks">
+          {ex.rules.map((r) => { const st = ruleStatus(r.status); return <li key={r.rule_id}><span className={st.tone}>{plainRule(r.status)}</span> · {r.text}</li>; })}
         </ul>
       )}
       <details>
-        <summary style={{ cursor: "pointer" }}>Why suggested · {flags.length} review {flags.length === 1 ? "flag" : "flags"}</summary>
+        <summary style={{ cursor: "pointer" }}>Why this plan · {flags.length} {flags.length === 1 ? "thing" : "things"} to double-check</summary>
         <p style={{ margin: "6px 0" }}>{s.evidence_card.why_suggested}</p>
-        {s.evidence_card.risks_for_local_review.length > 0 && <p className="muted" style={{ margin: "4px 0" }}>Check locally: {s.evidence_card.risks_for_local_review.join(" ")}</p>}
+        {s.evidence_card.risks_for_local_review.length > 0 && <p className="muted" style={{ margin: "4px 0" }}>Check on your farm: {s.evidence_card.risks_for_local_review.join(" ")}</p>}
         <ul style={{ margin: 0, paddingLeft: 16 }}>
           {flags.slice(0, 6).map((fl) => <li key={fl.id}><span className={fl.severity === "verify" ? "bad" : "neutral"}>{fl.severity}</span> · {fl.text}</li>)}
           {flags.length > 6 && <li className="muted">+{flags.length - 6} more</li>}

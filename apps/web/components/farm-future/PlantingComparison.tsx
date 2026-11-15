@@ -10,12 +10,12 @@ import type { PlantingWeather } from "@/lib/forecast/planting";
 import { useForecastStore } from "@/lib/forecast/store";
 
 const WEATHER = {
-  baseline: "Historical weather",
+  baseline: "Normal weather",
   drier_summers: "Drier summers",
 } as const;
 const METRICS = [
-  { key: "soil_organic_index", label: "Soil organic matter index", unit: "index points" },
-  { key: "irrigation_need_mm", label: "Irrigation need", unit: "mm/year" },
+  { key: "soil_organic_index", label: "Soil richness (organic matter)", unit: "points; 100 = today" },
+  { key: "irrigation_need_mm", label: "Extra watering needed", unit: "mm per year" },
 ] as const;
 const number = new Intl.NumberFormat("en", { maximumFractionDigits: 2 });
 const signed = new Intl.NumberFormat("en", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
@@ -30,7 +30,7 @@ export function PlantingComparison({ forecast }: { forecast: Forecast }) {
       <summary>What if I plant a different crop this year?</summary>
       {expanded && (apiMode === "live" ? (
         <PlantingForm key={forecast.site_id} forecast={forecast} />
-      ) : <p>Live forecast access is needed to compare a new planting. Showing a saved forecast.</p>)}
+      ) : <p>This needs a live connection to the forecast. Showing the saved forecast instead.</p>)}
     </details>
   );
 }
@@ -94,39 +94,39 @@ function PlantingForm({ forecast }: { forecast: Forecast }) {
 
   return (
     <div className="planting-body">
-      <p>Change one planting in year 1. The rest of the rotation and starting soil stay the same.</p>
+      <p>Swap one crop in year 1 and see what changes. Everything else stays the same.</p>
       <form onSubmit={(event) => { event.preventDefault(); void compare(); }}>
         <fieldset disabled={busy} className="planting-controls">
-          <label>Field<select value={fieldId} onChange={(event) => {
+          <label>Which field<select value={fieldId} onChange={(event) => {
             setFieldId(event.target.value); setSeason(""); setCrop(""); clearResults();
           }}>{forecast.fields.map((item) => <option key={item.field_id} value={item.field_id}>{item.name}</option>)}</select></label>
-          <label>Planting to replace<select value={slot?.season ?? ""} disabled={!slots.length} onChange={(event) => {
+          <label>Crop to swap out<select value={slot?.season ?? ""} disabled={!slots.length} onChange={(event) => {
             setSeason(event.target.value); setCrop(""); clearResults();
           }}>
-            {!slots.length && <option value="">No eligible planting</option>}
+            {!slots.length && <option value="">Nothing to swap</option>}
             {slots.map((item) => <option key={item.season} value={item.season}>
               {item.season[0].toUpperCase() + item.season.slice(1)} · {cropLabel(item.crop_id)}
             </option>)}
           </select></label>
-          <label>Replacement crop<select value={crop} disabled={!catalog || !slot} onChange={(event) => {
+          <label>Crop to plant instead<select value={crop} disabled={!catalog || !slot} onChange={(event) => {
             setCrop(event.target.value); clearResults();
           }}>
-            <option value="">{catalog ? "Choose a crop" : "Crop list unavailable"}</option>
+            <option value="">{catalog ? "Choose a crop" : "Crop list not available"}</option>
             {options.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            {slot?.crop_id !== "fallow" && <option value="fallow">Leave fallow</option>}
+            {slot?.crop_id !== "fallow" && <option value="fallow">Leave the land resting (fallow)</option>}
           </select></label>
-          <button type="submit" disabled={!crop || !input || !slot || !catalog}>Compare planting</button>
+          <button type="submit" disabled={!crop || !input || !slot || !catalog}>Show me the difference</button>
         </fieldset>
       </form>
-      {catalogError && <p role="alert">The crop list could not load. <button type="button" onClick={() => {
+      {catalogError && <p role="alert">The crop list did not load. <button type="button" onClick={() => {
         setCatalogError(false); setCatalogAttempt((attempt) => attempt + 1);
       }}>Retry</button></p>}
       {!catalog && !catalogError && <p role="status">Loading crops…</p>}
-      {busy && <p role="status">Comparing both weather scenarios…</p>}
+      {busy && <p role="status">Working out both weather cases…</p>}
       {error && <p role="alert">{error}</p>}
       {results && slot && (
         <>
-          <div className="planting-weather" aria-label="Weather scenario" role="group">
+          <div className="planting-weather" aria-label="Weather case" role="group">
             {Object.entries(WEATHER).map(([key, label]) => (
               <button type="button" key={key} aria-pressed={key === weather} onClick={() => setWeather(key as PlantingWeather)}>{label}</button>
             ))}
@@ -149,7 +149,7 @@ function PlantingResults({ run, weather, before, after }: { run: Run; weather: P
         return (
           <table key={key}>
             <caption>{label} <span>({unit})</span></caption>
-            <thead><tr><th scope="col">Year</th><th scope="col">Keep plan</th><th scope="col">Change crop</th><th scope="col">Difference</th></tr></thead>
+            <thead><tr><th scope="col">Year</th><th scope="col">Keep my plan</th><th scope="col">With the swap</th><th scope="col">Change</th></tr></thead>
             <tbody>{years.map((year) => {
               const a = baseline?.points.find((item) => item.year === year);
               const b = changed?.points.find((item) => item.year === year);
@@ -165,9 +165,9 @@ function PlantingResults({ run, weather, before, after }: { run: Run; weather: P
           </table>
         );
       })}
-      <p>Values show the median and the 10th–90th percentile range across sampled weather. The soil index starts at 100. Check crop dates, soil tests and water access locally.</p>
+      <p>Each number is the most likely result, with the small numbers underneath showing a likely low and high. Soil richness starts at 100. Check planting dates, soil tests and water supply on your own farm.</p>
       <details>
-        <summary>Weather data and assumptions</summary>
+        <summary>Where the weather numbers come from</summary>
         <p>{run.forecast.scenario.note}</p>
         <ul>{run.forecast.sources.map((source) => <li key={source.name}>{source.name}</li>)}</ul>
       </details>

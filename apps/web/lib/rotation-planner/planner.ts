@@ -27,6 +27,18 @@ export const ROLE_LABEL: Record<string, string> = {
   drought_tolerant: "Drought-tolerant",
   other: "Other",
 };
+/** Farmer-friendly wording for what a crop does in the rotation. */
+export const PLAIN_ROLE: Record<string, string> = {
+  nitrogen_fixing: "Feeds the soil (adds nitrogen)",
+  cover: "Protects bare soil",
+  deep_rooting: "Deep roots loosen the soil",
+  drought_tolerant: "Copes with dry weather",
+  other: "Other",
+};
+export const plainRole = (r: string) => PLAIN_ROLE[r] ?? r.replace(/_/g, " ");
+/** Rule results in everyday words. */
+export const PLAIN_RULE: Record<string, string> = { met: "OK", broken: "Not followed", unknown: "Not sure" };
+export const plainRule = (s: string) => PLAIN_RULE[s] ?? s;
 export const roleLabel = (r: string) => ROLE_LABEL[r] ?? r.replace(/_/g, " ");
 
 const PALETTE = ["#d9b44a", "#a8d46a", "#3f9a86", "#7cb85a", "#c98a4b", "#8db6d9", "#b07fc4", "#e07a6a", "#5f8f3a", "#e2c38a", "#6aa3a0", "#c4a25a"];

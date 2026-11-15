@@ -27,11 +27,11 @@ describe("rotation comparison", () => {
     const s = ubc.fields[0].strategies[1];
     const farm = heroNumbers(ubc, s, null, 10);
     expect(farm.map((h) => h.label)).toEqual([
-      "Soil organic matter (index, starting year = 100)",
-      "Irrigation need against the quota",
-      "Bare-soil weeks",
-      "Frost-free days (whole farm)",
-      expect.stringMatching(/^Heat-stress days for /),
+      "Soil richness (organic matter; 100 = today)",
+      "Extra watering needed, against your water allowance",
+      "Weeks the ground is bare",
+      "Days without frost (whole farm)",
+      expect.stringMatching(/^Very hot days for /),
     ]);
     expect(farm[1].value).toMatch(/mm/);
     expect(farm[2].value).toMatch(/weeks/);
@@ -63,8 +63,8 @@ describe("rotation comparison", () => {
     const html = renderToStaticMarkup(createElement(RotationComparison));
     expect(html).toContain("Live engine run");
     expect(html).toContain("NASA POWER daily point");
-    expect(html).toContain("Plans, crop roles and evidence describe D3-1 Brassicas");
-    expect(html).toContain("review flags combine all fields");
+    expect(html).toContain("The crop order shown is for D3-1 Brassicas");
+    expect(html).toContain("the numbers cover the whole farm");
     expect(html).toContain("What if I plant a different crop this year?");
     useForecastStore.getState().reset();
   });
@@ -88,17 +88,17 @@ describe("scope separation", () => {
   it("whole farm shows rollup numbers, a field shows its own", () => {
     const { f, id } = scoped();
     const s = f.fields[0].strategies[0];
-    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^22/);
-    expect(heroNumbers(f, s, f.fields[0].field_id, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^11/);
+    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Weeks the ground is bare")!.value).toMatch(/^22/);
+    expect(heroNumbers(f, s, f.fields[0].field_id, 10).find((h) => h.label === "Weeks the ground is bare")!.value).toMatch(/^11/);
     expect(id).toBe(s.id);
   });
   it("missing rollup bare weeks stays Unavailable, distinct from zero", () => {
     const { f } = scoped();
     f.farm_rollup.strategies.forEach((x) => { delete (x.trajectories as Record<string, unknown>).bare_weeks; });
     const s = f.fields[0].strategies[0];
-    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Bare-soil weeks")!.value).toBe("Unavailable");
+    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Weeks the ground is bare")!.value).toBe("Unavailable");
     s.trajectories.bare_weeks = { ...s.trajectories.bare_weeks, points: [{ year: 10, p50: 0 }] } as never;
-    expect(heroNumbers(f, s, s.id && f.fields[0].field_id, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^0/);
+    expect(heroNumbers(f, s, s.id && f.fields[0].field_id, 10).find((h) => h.label === "Weeks the ground is bare")!.value).toMatch(/^0/);
   });
   it("groups whole-farm flags by field", () => {
     const f = structuredClone(ubc);
