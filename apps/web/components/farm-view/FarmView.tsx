@@ -3,7 +3,7 @@
 // timeline. Panels are fixed-size and anchored to viewport edges; the Cesium map underneath stays draggable
 // everywhere no panel covers it (root is pointer-events: none, each panel opts back in).
 // Not built yet (later slices): condition cards, map layers, field popover, Twin pill/answers.
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { CONDITIONS, LAYERS, SAMPLE_FIELDS, EXPLORE_SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
@@ -134,10 +134,23 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
     useAppStore.setState({ twinFieldId: id });
     setSim({ open: true, section: "field" });
   };
+  // Panels that open under the title block (Soil health) read its bottom edge from --fv-left-bottom.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const leftRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = leftRef.current;
+    const root = rootRef.current;
+    if (!el || !root || typeof ResizeObserver === "undefined") return;
+    const set = () => root.style.setProperty("--fv-left-bottom", `${Math.round(el.getBoundingClientRect().bottom)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isCompare]);
   const pop = reduced ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } : { initial: { opacity: 0, scale: m.popFromScale }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: m.popFromScale } };
 
   return (
-    <div className={`fv-root`} style={{ position: "absolute", inset: 0, zIndex: zIndex.chrome, pointerEvents: "none" }} data-testid="farm-view">
+    <div ref={rootRef} className={`fv-root`} style={{ position: "absolute", inset: 0, zIndex: zIndex.chrome, pointerEvents: "none" }} data-testid="farm-view">
       <style>{FV_CSS + FUTURE_CSS + "@keyframes fv-spin{to{transform:rotate(360deg)}}"}</style>
       <MapEffects />
 
@@ -155,33 +168,37 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
         }}
       >
         {/* Left Region: Title block */}
-        <div className="fv-onmap pointer-events-auto" style={{ maxWidth: 380 }}>
-          <FvButton className="fv-back fv-auto" aria-label="Back to the globe" onClick={onBack} data-testid="back-to-globe">
-            <ChevronLeft size={14} />
-            Globe
-          </FvButton>
+        <div ref={leftRef} className="fv-onmap pointer-events-auto" style={{ maxWidth: 380 }}>
+          {/* The loading note sits beside the back link so the lines below never shift. */}
+          <div style={{ display: "flex", alignItems: "center", height: 28 }}>
+            <FvButton className="fv-back fv-auto" aria-label="Back to the globe" onClick={onBack} data-testid="back-to-globe">
+              <ChevronLeft size={14} />
+              Globe
+            </FvButton>
+            {simProps && simProps.pending > 0 && <span role="status" className="fv-status">Loading 3D detail…</span>}
+          </div>
           <h1 className="fv-title" style={{ wordBreak: "break-word" }}>{farmName}</h1>
           <p className="fv-sub">{place ? `${place} · ` : ""}{simProps ? "Simulation available" : EXPLORE_SUBTITLE}</p>
           {!panelsHidden && <ModeSwitch />}
-          {!panelsHidden && futureMode === "future" && <StrategyBar />}
+          {/* Same two lines in every mode; mode-specific controls come after them. */}
           {simProps && twin && (
-            <div className="fv-cap fv-onmap" style={{ marginTop: 6, color: color.ink, display: "grid", gap: 2 }}>
+            <div className="fv-cap fv-onmap" style={{ marginTop: 8, color: color.ink, display: "grid", gap: 2 }}>
               <span>{[...twin.labels, ...twin.attribution].join(" · ")}</span>
-              {simProps.pending > 0 && <span role="status">Loading 3D detail…</span>}
               <span>This tool supports, and does not replace, local agronomic expertise.</span>
             </div>
           )}
+          {!panelsHidden && futureMode === "future" && <StrategyBar />}
           {simProps && !panelsHidden && isNow && <SimulationTab props={simProps} sim={sim} setSim={setSim} />}
         </div>
 
         {/* Center Region: Vulnerability zones box */}
         <div className="pointer-events-auto flex justify-center">
-          {isNow && zoneToggle}
+          {isNow && zoneToggle && <div className="fv-zone">{zoneToggle}</div>}
         </div>
 
         {/* Right Region: Layer bar + condition pills */}
         {!panelsHidden ? (
-          <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: isNow ? 460 : 600 }}>
+          <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: isNow ? 460 : 600, justifySelf: "end" }}>
             {/* Layer bar */}
             <div className="fv-glass fv-bar fv-auto" role="radiogroup" aria-label="Map layer" onKeyDown={onBarKey}>
               {LAYERS.map((l) => (
@@ -235,48 +252,33 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
 
             {/* Condition pills; Future mode shows projected values instead */}
             {futureMode === "future" && <FuturePills />}
-            {isNow && <div className="flex flex-col items-end gap-1.5">
-              <span
-                className="fv-cap"
-                style={{
-                  padding: "2px 8px",
-                  borderRadius: 9999,
-                  fontSize: 11,
-                  color: "rgba(242,235,221,0.75)",
-                  background: "rgba(27,22,18,0.6)",
-                  border: "1px solid rgba(242,235,221,0.12)",
-                }}
-                title="Illustrative 30-day baseline sample; not live sensor measurements"
-              >
-                Sample · Past 30 days
-              </span>
-              <LayoutGroup>
-                <div className="flex flex-wrap justify-end gap-2">
+            {isNow && (
+              <div className="fv-glass fv-stats fv-auto" role="group" aria-label="Conditions, past 30 days (sample)">
+                <div className="cells">
                   {CONDITIONS.map((c) => {
                     const Icon = PILL_ICON[c.id];
                     return (
                       <FvButton
                         key={c.id}
-                        layout
-                        className="fv-glass fv-pill fv-auto"
+                        className="fv-stat"
                         aria-expanded={card === c.id}
                         aria-controls={`condition-card-${c.id}`}
                         data-testid={`condition-pill-${c.id}`}
                         title={`${c.label}: ${c.value} (${c.period} sample; not live sensor measurements)`}
                         onClick={() => toggleCard(c.id)}
                       >
-                        <Icon size={layout.pillRow.icon} />
-                        <span className="l">{c.label}</span>
+                        <span className="l"><Icon size={12} />{c.label}</span>
                         <span className="v">{c.value}</span>
                       </FvButton>
                     );
                   })}
                 </div>
-              </LayoutGroup>
-            </div>}
+                <p className="foot" title="Illustrative 30-day baseline sample; not live sensor measurements">Sample · Past 30 days</p>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="pointer-events-auto flex items-start justify-end" style={{ maxWidth: 460 }}>
+          <div className="pointer-events-auto flex items-start justify-end" style={{ maxWidth: 460, justifySelf: "end" }}>
             <FvButton
               className="fv-glass fv-pill fv-auto"
               data-testid="show-panels"
@@ -399,7 +401,7 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
 
       </>)}
 
-      {!simProps && <p className="fv-credit fv-onmap" style={{ position: "absolute", left: "50%", bottom: 8, transform: "translateX(-50%)", margin: 0, whiteSpace: "nowrap" }}>
+      {!simProps && <p className="fv-credit fv-onmap" style={{ position: "absolute", left: 64, bottom: 8, margin: 0, whiteSpace: "nowrap" }}>
         This tool supports, and does not replace, local agronomic expertise.
       </p>}
     </div>

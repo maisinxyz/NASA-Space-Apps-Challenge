@@ -58,8 +58,9 @@ export function CropSwatch({ crop }: { crop: CropLook }) {
 }
 
 /** HUD button: ≥24 px target, visible focus ring from globals.css. */
-export const hudBtn = "inline-flex min-h-7 items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-2.5 text-sm hover:bg-white/15 disabled:opacity-50";
-export const hudBtnOn = "inline-flex min-h-7 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-sm font-semibold text-accent-ink";
+// The fv-hud-* marker classes let the farm view restyle these (components/farm-view/styles.ts).
+export const hudBtn = "fv-hud-btn inline-flex min-h-7 items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-2.5 text-sm hover:bg-white/15 disabled:opacity-50";
+export const hudBtnOn = "fv-hud-btn fv-hud-on inline-flex min-h-7 items-center gap-1.5 rounded-md border border-accent bg-accent px-2.5 text-sm font-semibold text-accent-ink";
 export const hudSelect = "min-h-7 rounded-md border border-white/15 bg-[#1b1e24] px-2 text-sm";
 
 export function Kbd({ children }: { children: ReactNode }) {
@@ -105,12 +106,13 @@ export function CoverCalendar({ rows, month, onPickMonth, activeRow }: { rows: {
         <span />
         {MONTHS.map((m, i) =>
           onPickMonth ? (
-            <button key={m} type="button" aria-pressed={i === month} aria-label={`Show ${m} on the fields`} onClick={() => onPickMonth(i)} className={`min-h-6 rounded ${i === month ? "bg-accent font-semibold text-accent-ink" : "hover:bg-white/10"}`}>
-              {m}
+            <button key={m} type="button" title={m} aria-pressed={i === month} aria-label={`Show ${m} on the fields`} onClick={() => onPickMonth(i)} className={`min-h-6 rounded ${i === month ? "bg-accent font-semibold text-accent-ink" : "hover:bg-white/10"}`}>
+              {m[0]}
             </button>
           ) : (
-            <span key={m} className={i === month ? "font-semibold text-ink" : ""}>
-              {m}
+            <span key={m} title={m} className={i === month ? "font-semibold text-ink" : ""}>
+              <span aria-hidden>{m[0]}</span>
+              <span className="sr-only">{m}</span>
             </span>
           ),
         )}

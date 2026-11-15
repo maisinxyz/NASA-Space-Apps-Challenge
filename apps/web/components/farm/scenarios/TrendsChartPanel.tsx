@@ -39,7 +39,7 @@ export function TrendsChartPanel({ progress, startYear, series, label = "Trend",
     const span = Math.max(...vs) - lo || 1;
     path = series.map((s, i) => `${i ? "L" : "M"}${x(s.year).toFixed(1)},${(H - 4 - ((s.value - lo) / span) * (H - 8)).toFixed(1)}`).join("");
   }
-  const cls = inline ? "rounded-md border border-white/10 p-2 text-xs" : "glass pointer-events-none absolute z-10 w-60 -translate-x-1/2 -translate-y-full p-2 text-xs";
+  const cls = inline ? "fv-sc-card rounded-md border border-white/10 p-2 text-xs" : "glass pointer-events-none absolute z-10 w-60 -translate-x-1/2 -translate-y-full p-2 text-xs";
   return (
     <section aria-label={`${label} chart`} className={cls} style={inline || !anchor ? undefined : { left: anchor.x, top: anchor.y - 8 }}>
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -50,13 +50,17 @@ export function TrendsChartPanel({ progress, startYear, series, label = "Trend",
         {has && <BasisChip basis="measured" />}
       </div>
       <svg role="img" aria-label={has ? `${label} from ${series[0].year} to ${series[series.length - 1].year}` : "Empty trend axis"} viewBox={`0 0 ${W} ${H}`} className="w-full">
-        <line x1={0} y1={H - 1} x2={W} y2={H - 1} stroke="currentColor" strokeOpacity={0.4} />
-        {has && <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} />}
-        <line x1={x(cursorYear)} y1={0} x2={x(cursorYear)} y2={H} stroke="currentColor" strokeDasharray="3 2" />
+        {[0.25, 0.5, 0.75].map((f) => (
+          <line key={f} x1={0} y1={H * f} x2={W} y2={H * f} stroke="currentColor" strokeOpacity={0.08} />
+        ))}
+        <line x1={0} y1={H - 1} x2={W} y2={H - 1} stroke="currentColor" strokeOpacity={0.3} />
+        {has && <path d={`${path}L${x(series[series.length - 1].year).toFixed(1)},${H - 1}L${x(series[0].year).toFixed(1)},${H - 1}Z`} fill="currentColor" fillOpacity={0.07} />}
+        {has && <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" />}
+        <line x1={x(cursorYear)} y1={0} x2={x(cursorYear)} y2={H} stroke="var(--color-accent, currentColor)" strokeWidth={1} />
       </svg>
-      <div className="flex justify-between text-ink-muted">
+      <div className="flex justify-between text-ink-muted tabular-nums">
         <span>{FIRST}</span>
-        <span>{cursorYear}</span>
+        <span className="font-semibold text-ink">{cursorYear}</span>
         <span>{LAST}</span>
       </div>
       {!has && <p className="mt-1 text-ink-muted">{note ?? "Trend data arrives from the backend"}</p>}

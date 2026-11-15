@@ -101,7 +101,7 @@ export const layout = {
   title: { left: 40, top: 28 },
   layerBar: { right: 40, top: 32, height: 40, pad: 4, segHeight: 32, segPadX: 14, resetSize: 32 },
   pillRow: { right: 40, top: 86, height: 36, gap: 8, padL: 14, padR: 16, icon: 14, iconGap: 8, valueGap: 8 },
-  card: { right: 40, top: 134, width: 332, pad: 18, chartHeight: 66 },
+  card: { right: 40, top: 184, width: 332, pad: 18, chartHeight: 66 },
   report: { left: 40, bottom: 186, width: 380, padX: 16, padTop: 14, padBottom: 12, rowHeight: 30 },
   reportTab: { left: 0, bottom: 220, width: 40, height: 160 },
   legend: { right: 40, bottom: 172, width: 248, pad: 14, barHeight: 8 },

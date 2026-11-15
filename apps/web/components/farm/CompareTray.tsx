@@ -38,12 +38,12 @@ export function CompareTray({ className = "" }: { className?: string }) {
 
   return (
     <section aria-label="A/B comparison" className={`glass grid gap-1.5 p-2 text-sm ${className}`}>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid gap-2">
         {(["compareA", "compareB"] as const).map((side, i) => (
           <label key={side} className="flex items-center gap-1.5">
-            <span className="grid size-6 place-items-center rounded bg-white/15 text-xs font-bold">{i ? "B" : "A"}</span>
+            <span className="grid size-6 flex-none place-items-center rounded bg-white/15 text-xs font-bold">{i ? "B" : "A"}</span>
             <span className="sr-only">Rotation {i ? "B, right of the split" : "A, left of the split"}</span>
-            <select className={`${hudSelect} max-w-[11rem]`} value={i ? compareB : compareA} onChange={(e) => pick(side, e.target.value)}>
+            <select className={`${hudSelect} min-w-0 flex-1`} value={i ? compareB : compareA} onChange={(e) => pick(side, e.target.value)}>
               {rotations.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.isExisting ? `Existing rotation (${r.name})` : r.name}
@@ -52,12 +52,13 @@ export function CompareTray({ className = "" }: { className?: string }) {
             </select>
           </label>
         ))}
+        <div className="flex items-center justify-between gap-2">
         <button type="button" className={hudBtn} onClick={() => useAppStore.setState({ compareA: compareB, compareB: compareA })} aria-label="Swap A and B">
           ⇄ Swap
         </button>
-        <label className="ml-auto flex items-center gap-1.5 text-xs">
+        <label className="flex items-center gap-1.5 text-xs whitespace-nowrap">
           Fields show
-          <select className={hudSelect} value={twinYear % years} onChange={(e) => useAppStore.setState({ twinYear: Number(e.target.value) })}>
+          <select className={`${hudSelect} !w-28`} value={twinYear % years} onChange={(e) => useAppStore.setState({ twinYear: Number(e.target.value) })}>
             {Array.from({ length: years }, (_, i) => (
               <option key={i} value={i}>
                 Year {i + 1}
@@ -65,13 +66,14 @@ export function CompareTray({ className = "" }: { className?: string }) {
             ))}
           </select>
         </label>
+        </div>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+      <div className="grid gap-3">
         <CoverCalendar rows={rows} month={twinMonth} activeRow={activeRow} onPickMonth={(m) => useAppStore.setState({ twinMonth: m })} />
-        <div role="group" aria-label="Split position" className="grid gap-1">
+        <div role="group" aria-label="Split position" className="flex gap-1">
           {SPLITS.map((s) => (
-            <button key={s.label} type="button" aria-pressed={divider === s.d} className={`${divider === s.d ? hudBtnOn : hudBtn} !min-h-6 justify-center text-xs`} onClick={() => useAppStore.setState({ divider: s.d })}>
+            <button key={s.label} type="button" aria-pressed={divider === s.d} className={`${divider === s.d ? hudBtnOn : hudBtn} flex-1 justify-center text-xs`} onClick={() => useAppStore.setState({ divider: s.d })}>
               {s.label}
             </button>
           ))}

@@ -20,7 +20,7 @@ export function LensCard() {
   const panel = useFutureStore((s) => s.panel);
   const openPanel = useFutureStore((s) => s.openPanel);
   return (
-    <PopCard open={!!lens && panel === "lens"} label={lens ? lensLabel(lens) : "Lens"} testId="lens-card" style={{ right: layout.card.right, top: 180, width: 320 }}>
+    <PopCard open={!!lens && panel === "lens"} label={lens ? lensLabel(lens) : "Lens"} testId="lens-card" style={{ right: layout.card.right, top: layout.card.top, width: 320 }}>
       {lens && <CardHead title={lensLabel(lens)} onMinimize={() => openPanel(null)} />}
       {lens && <LensBody lens={lens} />}
       <div style={{ display: "flex", justifyContent: "flex-end" }}><SyntheticBadge /></div>

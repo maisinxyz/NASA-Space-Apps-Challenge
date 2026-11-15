@@ -113,7 +113,8 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
 
   // Keep visible section and active mode in sync
   useEffect(() => {
-    if (!sim.open) return;
+    // Map settings belong to no mode, so that tab stays put.
+    if (!sim.open || sim.section === "map") return;
     if (mode === "simulate" && sim.section !== "scenarios" && sim.section !== "field") {
       setSim({ open: true, section: "scenarios" });
     } else if (mode === "compare" && sim.section !== "compare") {
@@ -196,7 +197,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
           data-testid="sim-panel"
           aria-label="Simulation"
           className="fv-glass fv-sim fv-auto"
-          style={{ position: "fixed", left: layout.report.left, top, bottom: layout.report.bottom, width: 360, borderRadius: 16, padding: 16, overflowY: "auto", overscrollBehavior: "contain", zIndex: zIndex.report + 5, pointerEvents: "auto" }}
+          style={{ position: "fixed", left: layout.report.left, top, bottom: layout.report.bottom, width: 420, borderRadius: 16, padding: 16, overflowY: "auto", overscrollBehavior: "contain", zIndex: zIndex.report + 5, pointerEvents: "auto" }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: -16, background: "rgba(27,22,18,0.96)", margin: "-16px -16px 8px", padding: "16px 16px 8px", zIndex: 2 }}>
             <h2 className="fv-rtitle">Simulation</h2>
@@ -276,7 +277,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
               <div className="grid gap-3">
                 <CompareTray />
                 <details>
-                  <summary className="cursor-pointer text-xs">Rank rotations</summary>
+                  <summary className="cursor-pointer text-xs">Rotation ranking</summary>
                   <ComparePanel />
                 </details>
               </div>

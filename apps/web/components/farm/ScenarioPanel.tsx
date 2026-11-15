@@ -18,7 +18,7 @@ import { hudBtn, hudBtnOn, hudSelect, Kbd, useTwin } from "./shared";
 
 const TIME_CHIP: Record<TimeKind, string> = { "event-hours": "Event, hours", "season-months": "Season", "multi-year": "Years", decades: "Decades", static: "Static" };
 const OUTPUT_CHIP: Record<OutputKind, string> = { frames: "Animated", zones: "Zones", series: "Series", timeline: "Timeline" };
-const chip = "rounded-full border border-white/15 px-1.5 text-[0.65rem] leading-4 text-ink-muted";
+const chip = "fv-chip rounded-full border border-white/15 px-1.5 text-[0.65rem] leading-4 text-ink-muted";
 
 /** Small family glyphs (inline SVG, no emoji). */
 function Glyph({ family }: { family: ScenarioFamily }) {
@@ -85,14 +85,14 @@ function ScenarioCards() {
       <p className="text-xs text-ink-muted">Pick a scenario. Results are relative comparisons between options, not predictions.</p>
       {FAMILY_ORDER.map((fam) => (
         <section key={fam} aria-labelledby={`fam-${fam}`}>
-          <h3 id={`fam-${fam}`} className="mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-ink-muted uppercase">
+          <h3 id={`fam-${fam}`} className="fv-h mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-ink-muted uppercase">
             <Glyph family={fam} />
             {FAMILY_LABEL[fam]}
           </h3>
           <ul className="grid gap-1.5">
             {SCENARIO_DEFS.filter((d) => d.family === fam).map((d) => (
               <li key={d.id}>
-                <button type="button" onClick={() => openScenario(d.id)} className="grid w-full gap-1 rounded-md border border-white/15 bg-white/5 p-2 text-left hover:bg-white/15">
+                <button type="button" onClick={() => openScenario(d.id)} className="fv-sc-card grid w-full gap-1 rounded-md border border-white/15 bg-white/5 p-2 text-left hover:bg-white/15">
                   <span className="font-semibold">{d.label}</span>
                   <span className="text-xs text-ink-muted">{d.summary}</span>
                   <span className="flex flex-wrap gap-1">
@@ -116,7 +116,7 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
   const inputs = resolveInputs(def, stored);
   const setInput = (i: ScenarioInput, v: number) => useAppStore.setState((s) => ({ scenarioInputs: { ...s.scenarioInputs, [def.id]: { ...s.scenarioInputs[def.id], [i.id]: clampInput(i, v) } } }));
   const resetInputs = () => useAppStore.setState((s) => ({ scenarioInputs: { ...s.scenarioInputs, [def.id]: {} } }));
-  const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
+  const h = "fv-h mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
   const farmId = useAppStore((s) => s.farmId) ?? "";
   const progress = useAppStore((s) => s.scenarioProgress);
   const run: ScenarioRun = { scenarioId: def.id, farmId, progress, inputs, rotationId: rotation, timeS: 0 };
@@ -170,7 +170,7 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
         <section aria-labelledby="sc-inputs" className="grid gap-2">
           <div className="flex items-center justify-between">
             <h3 id="sc-inputs" className={h}>
-              What if
+              Adjust the inputs
             </h3>
             <button type="button" className={`${hudBtn} !min-h-6 text-xs`} onClick={resetInputs}>
               Reset inputs
@@ -184,7 +184,7 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
 
       <section aria-labelledby="sc-legend">
         <h3 id="sc-legend" className={`${h} flex items-center gap-1.5`}>
-          Colour key <BasisChip basis={def.basis} />
+          Map colours <BasisChip basis={def.basis} />
         </h3>
         <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
           {legend.map((l) => (
@@ -199,9 +199,9 @@ function ScenarioDetail({ def, runSource, frame }: { def: ScenarioDef; runSource
       {frame && frame.readouts.length > 0 && (
         <section aria-labelledby="sc-read">
           <h3 id="sc-read" className={h}>
-            Readouts
+            Results at this step
           </h3>
-          <dl className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 text-xs">
+          <dl className="fv-read grid grid-cols-[1fr_auto] gap-x-2 text-xs">
             {frame.readouts.map((r) => (
               <Readout key={r.label} label={r.label}>
                 <span className="font-mono tabular-nums">
@@ -249,7 +249,7 @@ function InputRow({ input: i, value, onChange }: { input: ScenarioInput; value: 
     setDraft(null);
   };
   return (
-    <div className="grid gap-1 rounded-md border border-white/10 p-2">
+    <div className="fv-sc-card grid gap-1 rounded-md border border-white/10 p-2">
       <label className="text-xs font-medium" htmlFor={`in-${i.id}`}>
         {i.label}
       </label>
