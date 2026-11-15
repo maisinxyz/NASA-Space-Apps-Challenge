@@ -20,6 +20,9 @@ from app.services.outlook import MAX_MONTHS, outlook
 # Groq structured output: https://console.groq.com/docs/structured-outputs
 URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "openai/gpt-oss-120b"
+# Fallback when Groq has no key or fails. OpenAI-compatible API, same model id:
+# https://openrouter.ai/docs/api-reference/chat-completion, https://openrouter.ai/openai/gpt-oss-120b
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 FARMS = {"site_ubc_farm": ("ubc-farm", "ubc-request.json"), "site_kpu_langley": ("kpu-langley", "kpu-request.json")}
 LIMIT, WINDOW = 10, 60.0
 _lock = threading.Lock()
@@ -117,10 +120,10 @@ def snapshot_context(snapshot: dict) -> dict:
             "weather_resolution": POWER_RESOLUTION_NOTE, "glossary": glossary()}
 
 
-def _provider(payload: dict, key: str) -> dict:
+def _provider(payload: dict, key: str, url: str = URL) -> dict:
     try:
         with httpx.Client(timeout=45, follow_redirects=False) as client:
-            response = client.post(URL, json=payload, headers={"Authorization": "Bearer " + key})
+            response = client.post(url, json=payload, headers={"Authorization": "Bearer " + key})
             response.raise_for_status()
             data = response.json()
         result = json.loads(data["choices"][0]["message"]["content"])
@@ -139,15 +142,24 @@ def chat(body: dict, client: str) -> dict:
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable in offline mode.", retryable=True)
     # Existing environment wins. Read only the required setting and do not
     # modify the process environment or expose any other .env values.
-    key = os.getenv("GROQ_API_KEY") or dotenv_values(REPO_ROOT / ".env").get("GROQ_API_KEY")
-    if not key:
+    env = dotenv_values(REPO_ROOT / ".env")
+    key = os.getenv("GROQ_API_KEY") or env.get("GROQ_API_KEY")
+    fallback_key = os.getenv("OPENROUTER_API_KEY") or env.get("OPENROUTER_API_KEY")
+    if not key and not fallback_key:
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable right now. Please try again.", retryable=True)
     context = snapshot_context(body["snapshot"])
     messages = [{"role": "system", "content": SYSTEM}, {"role": "system", "content": "Server-supplied context: " + json.dumps(context)}]
     messages.extend(body.get("history", []))
     messages.append({"role": "user", "content": body["message"]})
     payload = {"model": MODEL, "messages": messages, "response_format": {"type": "json_schema", "json_schema": {"name": "copilot_reply", "strict": True, "schema": SCHEMA}}}
-    result = _provider(payload, key)
+    try:
+        if not key:
+            raise ApiError("DATA_SOURCE_UNAVAILABLE", "No Groq key.", retryable=True)
+        result = _provider(payload, key)
+    except ApiError:
+        if not fallback_key:
+            raise
+        result = _provider(payload, fallback_key, OPENROUTER_URL)
     allowed_layers = set(context.get("metrics", {}))
     result["referenced_layers"] = [layer for layer in result["referenced_layers"] if layer in allowed_layers]
     # The frozen snapshot has no forecast request hash or rotation edits, so

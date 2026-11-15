@@ -1,4 +1,4 @@
-"""Settings from environment. Names match .env.example: OFFLINE, DATA_DIR, LOG_LEVEL."""
+"""Settings from environment. Names match .env.example: OFFLINE, DATA_DIR, LOG_LEVEL, CORS_ORIGINS, CORS_ORIGIN_REGEX."""
 
 from __future__ import annotations
 
@@ -23,4 +23,9 @@ class Settings:
     log_level: str = field(default_factory=lambda: (os.getenv("LOG_LEVEL") or "INFO").upper())
     fixtures_dir: Path = FIXTURES_DIR
     sse_delay_s: float = 0.4  # gap between replayed fixture SSE events
-    cors_origins: tuple[str, ...] = ("http://localhost:3000",)
+    # Comma-separated exact origins, e.g. "https://fieldtwin.example.com,http://localhost:3000".
+    cors_origins: tuple[str, ...] = field(
+        default_factory=lambda: tuple(o.strip().rstrip("/") for o in (os.getenv("CORS_ORIGINS") or "http://localhost:3000").split(",") if o.strip())
+    )
+    # Optional regex for preview domains, e.g. r"https://.*\.vercel\.app".
+    cors_origin_regex: str | None = field(default_factory=lambda: os.getenv("CORS_ORIGIN_REGEX") or None)

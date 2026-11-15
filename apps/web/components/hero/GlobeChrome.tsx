@@ -138,7 +138,7 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
               <span className="truncate text-[13px]" style={{ color: INK }}>
                 {h.name}
               </span>
-              <span className="shrink-0 text-[12px] uppercase tracking-[0.2em]" style={{ color: h.kind === "farm" ? "#ffc857" : MUTED }}>
+              <span className="shrink-0 text-[12px] uppercase tracking-[0.2em]" style={{ color: h.kind === "farm" ? "#a3bfe9" : MUTED }}>
                 {h.kind === "farm" ? "Farm" : h.detail}
               </span>
             </li>
