@@ -59,10 +59,10 @@ float fbm(vec2 p) {
   }
   return s / n;
 }
-// Cloud field at a local xy (m) and slab height h (0 base .. 1 top): one puff scale ~130 m, drifting with the wind,
+// Cloud field at a local xy (m) and slab height h (0 base .. 1 top): one puff scale ~40 m (many small clouds with clear gaps, not one blanket), drifting with the wind,
 // sheared a little with height so a puff is a leaning column, not the same 2D sheet extruded.
-float cloudField(vec2 xy, float h) { return fbm((xy + u_cloud.zw + vec2(32.0, 11.0) * h) / 130.0); }
-float cloudThreshold() { return mix(0.86, 0.5, u_cloud.x); }
+float cloudField(vec2 xy, float h) { return fbm((xy + u_cloud.zw + vec2(32.0, 11.0) * h) / 40.0); }
+float cloudThreshold() { return mix(0.9, 0.66, u_cloud.x); }
 // Vertical profile, mirrors cloudProfile() in logic.ts: soft short base fade, full mid-slab, long rounded top.
 float cloudProfile(float h) { return smoothstep(0.0, 0.2, h) * (1.0 - smoothstep(0.55, 1.0, h)); }
 // Density 0..1: the field above the cover threshold, eroded toward the top and bottom (soft edges, dense cores).
@@ -119,7 +119,7 @@ void main(void) {
   float thr = cloudThreshold();
 
   // Overcast dims the ground; cloud shadows (same density as the clouds, projected along the sun) drift over it.
-  col *= mix(1.0, 0.7, cover * dark);
+  col *= mix(1.0, 0.85, cover * dark);
   if (!sky && cover > 0.0) {
     float lz = max(L.z, 0.2);
     vec3 ps = P + L * (mix(CLOUD_BASE, CLOUD_TOP, 0.4) - P.z) / lz;
@@ -202,7 +202,7 @@ void main(void) {
       float dt = (t1 - t0) / float(CLOUD_STEPS);
       float jitter = ign(gl_FragCoord.xy);
       float sStep = CLOUD_SIGMA * min(dt, 60.0); // long grazing steps must not turn one sample into a wall
-      float veil = cover * cover * 0.3;          // rough mean density, what long grazing paths fade to (no aliasing)
+      float veil = cover * cover * 0.05;          // rough mean density, what long grazing paths fade to (no aliasing)
       float T = 1.0;
       vec3 acc = vec3(0.0);
       vec3 lit = mix(vec3(0.97, 0.97, 0.98), vec3(0.55, 0.57, 0.62), dark);
@@ -210,7 +210,7 @@ void main(void) {
         float t = t0 + (float(i) + jitter) * dt;
         vec3 p = ro + rd * t;
         float h = clamp((p.z - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE), 0.0, 1.0);
-        float d = mix(cloudDensity(cloudField(p.xy, h), thr, h), veil * cloudProfile(h), smoothstep(300.0, 1100.0, t - t0));
+        float d = mix(cloudDensity(cloudField(p.xy, h), thr, h), veil * cloudProfile(h), smoothstep(600.0, 1800.0, t - t0));
         if (d > 0.0) {
           float a = (1.0 - exp(-d * sStep)) * smoothstep(15.0, 90.0, t); // fade puffs right at the lens
           // Lit from above: bright tops, darker dense undersides.
