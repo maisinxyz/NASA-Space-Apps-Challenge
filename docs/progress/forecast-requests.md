@@ -80,3 +80,11 @@ Do not invent values. The outlook will read a file only when it already has thes
 Compaction is in the PRD infiltration sentence and is not on `FieldCfg`. W6a does not invent a flag.
 
 Catalog rows with a null season window or null Kc (most of the new vegetable rows) are not placed and do not get a made-up date or Kc. Session A: a vegetable-only pool cannot form a timed plan until `season_window` and `kc_stages` are filled from a cited table. Null `reference_yield` omits `yield_t_ha` for that crop. It is not filled from a default tonne value.
+
+## 2026-11-15 — Session B, W7 strategy and score notes
+
+`generate_strategies` and `build_strategies` take `lat` as a keyword and an optional `site_id`. They read `fields[0]` only. W9 should call them once per field and roll the results up by area. A field `selection_override` is not applied inside the generator.
+
+`farm_fit` is defined in `app/twin/score.py` and re-exported from `app/twin/generate.py`. Ranking, income, fertilizer saved, estimates, deltas, and review flags are in `score.py`. `rank_stability_note()` is a sentence. The share of the climate grid that keeps the rank is W8's, and this session did not invent that percent.
+
+`custom_strategies` are expanded as entered and do not count toward `strategy_count`. Vegetable rows with a null season window produce `NO_FEASIBLE_ALTERNATIVES` and no invented dates.
