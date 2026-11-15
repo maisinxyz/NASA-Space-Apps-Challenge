@@ -19,6 +19,7 @@ ENV NEXT_PUBLIC_API_MODE=live NEXT_PUBLIC_API_BASE=/api/v1 \
 RUN pnpm build
 
 FROM python:3.14-slim-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 && rm -rf /var/lib/apt/lists/*
 COPY --from=web /usr/local/bin/node /usr/local/bin/node
 WORKDIR /fieldtwin
 COPY --from=api /fieldtwin/services/api/.venv services/api/.venv
