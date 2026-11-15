@@ -33,7 +33,7 @@ test.describe("merged globe and farm controls", () => {
     await expect(page.getByRole("listbox").getByRole("option").first()).toContainText(/Cornell/i);
     await search.press("Enter");
     await expect(page.getByRole("region", { name: /Cornell University Ruminant Center/i })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole("button", { name: /^Open digital twin at Cornell University Ruminant Center/ }).click();
+    await page.getByRole("button", { name: "Enter digital twin for Cornell University Ruminant Center", exact: true }).click();
     await expect(page.getByTestId("farm-view")).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole("button", { name: "Back to the globe" }).click();
@@ -64,7 +64,7 @@ test.describe("merged globe and farm controls", () => {
     const cornellOption = page.getByRole("button", { name: /Cornell/i }).last();
     await cornellOption.click();
     await expect(page.getByRole("region", { name: /Cornell University Ruminant Center/i })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole("button", { name: /^Open digital twin at Cornell University Ruminant Center/ }).click();
+    await page.getByRole("button", { name: "Enter digital twin for Cornell University Ruminant Center", exact: true }).click();
     await expect(page.getByTestId("farm-view")).toBeVisible({ timeout: 30_000 });
   });
 
