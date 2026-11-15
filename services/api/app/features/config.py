@@ -40,13 +40,13 @@ CURATED_SITES: dict[str, dict] = {
     "site_ucdavis_oakville": {"name": "Oakville Grade area, Napa Valley", "lat": 38.4201, "lon": -122.4121, "farm_id": "ucdavis-oakville"},
     "site_ubc_farm": {
         "name": "UBC Farm",
-        "lat": 49.2517,
-        "lon": -123.238,
+        "lat": 49.249786,
+        "lon": -123.236786,
         "farm_id": "ubc-farm",
         "address": "3461 Ross Drive, Vancouver, BC, Canada V6T 1Z4",
         "source_url": "https://ubcfarm.ubc.ca/",
         "coord_source_url": "https://geocoder.api.gov.bc.ca/addresses.json?addressString=3461%20Ross%20Drive%20Vancouver",
-        "coord_note": "BC address geocoder access point (BLOCK, low accuracy), not a field survey. TODO(verify) centroid.",
+        "coord_note": "User-supplied from a map, 49°14'59.23\"N 123°14'12.43\"W (2026-11-15). The seeds were pulled at the earlier geocoder point 49.2517, -123.238, about 300 m away and in the same NASA POWER cell. TODO(verify) centroid.",
     },
 }
 
