@@ -15,12 +15,16 @@ export const MUTED_RED = "#C46A52";
 export const HAIR = "rgba(242,235,221,0.22)";
 export const HAIR_STRONG = "rgba(242,235,221,0.45)";
 
-/** Basis label in the farm-view glass style. Same words and meanings as components/ui/BasisChip. */
+/**
+ * Basis detail in a tooltip (v4 PRD §2 rule 1): a small "i" mark on the main screens; the basis word and its meaning
+ * are in the tooltip and for screen readers. Same words and meanings as components/ui/BasisChip.
+ */
 export function Basis({ b }: { b: BasisOrRelative }) {
+  const desc = BASIS_DESCRIPTIONS[b] ?? "";
   return (
-    <span className="ff-basis" data-basis={b} title={BASIS_DESCRIPTIONS[b]}>
-      {b}
-      <span className="sr-only">: {BASIS_DESCRIPTIONS[b]}</span>
+    <span className="ff-basis" data-basis={b} title={`${b}${desc ? `: ${desc}` : ""}`} tabIndex={0} style={{ width: 16, height: 16, padding: 0, justifyContent: "center", cursor: "help" }}>
+      <span aria-hidden>i</span>
+      <span className="sr-only">Basis: {b}{desc ? `. ${desc}` : ""}</span>
     </span>
   );
 }

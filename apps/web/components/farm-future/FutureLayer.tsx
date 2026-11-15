@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 import { useFutureStore } from "@/lib/farm-future/store";
 
-import { ForecastPanel } from "@/components/farm-forecast/ForecastPanel";
+import { ForecastPanel, useFarmForecast } from "@/components/farm-forecast/ForecastPanel";
 
 import { CompareView, ReviewDrawer } from "./Compare";
 import { WhatIf } from "./Controls";
@@ -20,6 +20,7 @@ export const FUTURE_CSS = FF_CSS + EFFECTS_CSS;
 export function FutureLayer({ legendShown = false }: { legendShown?: boolean }) {
   const mode = useFutureStore((s) => s.mode);
   useFutureKeys();
+  useFarmForecast(); // Future and Compare both read the engine forecast
   if (mode === "now") return null;
   if (mode === "compare") return <CompareView />;
   return (
