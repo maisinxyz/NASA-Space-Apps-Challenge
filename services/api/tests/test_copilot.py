@@ -153,6 +153,7 @@ def test_openrouter_fallback_when_groq_fails_or_missing(client, monkeypatch):
             raise copilot.ApiError("DATA_SOURCE_UNAVAILABLE", "down", retryable=True)
         return {"reply": "ok", "referenced_layers": [], "local_validation_tips": []}
     monkeypatch.setattr(copilot, "_provider", fake)
+    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
     assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
     assert calls == [("test-key", copilot.URL), ("or-key", copilot.OPENROUTER_URL)]
@@ -161,6 +162,26 @@ def test_openrouter_fallback_when_groq_fails_or_missing(client, monkeypatch):
     monkeypatch.setattr(copilot, "dotenv_values", lambda *a, **kw: {})
     assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
     assert calls == [("or-key", copilot.OPENROUTER_URL)]
+
+
+def test_nvidia_between_groq_and_openrouter(client, monkeypatch):
+    calls = []
+    def fake(payload, key, url=copilot.URL):
+        calls.append((key, url))
+        if url != copilot.OPENROUTER_URL:
+            raise copilot.ApiError("DATA_SOURCE_UNAVAILABLE", "down", retryable=True)
+        return {"reply": "ok", "referenced_layers": [], "local_validation_tips": []}
+    monkeypatch.setattr(copilot, "_provider", fake)
+    monkeypatch.setenv("NVIDIA_API_KEY", "nv-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
+    assert calls == [("test-key", copilot.URL), ("nv-key", copilot.NVIDIA_URL), ("or-key", copilot.OPENROUTER_URL)]
+    calls.clear()
+    monkeypatch.delenv("GROQ_API_KEY")
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    monkeypatch.setattr(copilot, "dotenv_values", lambda *a, **kw: {})
+    assert client.post('/api/v1/copilot/chat', json=request()).status_code == 503
+    assert calls == [("nv-key", copilot.NVIDIA_URL)]
 
 
 def _context(client, monkeypatch, message, mutate=None):
