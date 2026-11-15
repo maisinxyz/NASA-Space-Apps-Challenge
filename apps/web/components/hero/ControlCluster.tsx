@@ -203,8 +203,8 @@ export function ControlCluster({
             role="dialog"
             aria-label={TITLES[open]}
             layout={!reduced}
-            className="absolute right-[calc(100%+10px)] w-[19rem] overflow-x-hidden overflow-y-auto rounded-[14px] border border-white/[0.1] bg-[#05060a]/90"
-            style={{ top: open === "maps" ? "calc(50% - min(40vh, 320px))" : 0, maxHeight: "min(80vh, 640px)", transformOrigin: `100% ${originY}px` }}
+            className="absolute left-[calc(100%+10px)] w-[min(19rem,calc(100vw-100px))] overflow-x-hidden overflow-y-auto rounded-[14px] border border-white/[0.1] bg-[#05060a]/95"
+            style={{ top: 0, maxHeight: "min(65vh, 640px)", transformOrigin: `0% ${originY}px` }}
             initial={{ opacity: 0, scale: popover.fromScale, clipPath: "inset(0 0 0 100% round 14px)" }}
             animate={{ opacity: 1, scale: 1, clipPath: "inset(0 0 0 0% round 14px)", transition: { duration: popover.openMs / 1000, ease: ease.inOut } }}
             exit={{ opacity: 0, scale: popover.fromScale, clipPath: "inset(0 0 0 100% round 14px)", transition: { duration: popover.closeMs / 1000, ease: ease.out } }}

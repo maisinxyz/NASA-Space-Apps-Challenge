@@ -909,10 +909,12 @@ export function HeroEarth(props: Props) {
   }, []);
 
   // Drag: rotate under the cursor (1 / radius-in-px radians per px), inertia after release.
-  const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("[data-pin], [data-camera-controls]")) return;
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!e.isPrimary || e.button !== 0 || (e.target as Element).closest("[data-pin], [data-camera-controls]")) return;
     const m = motion.current;
     if (m.dive) return;
+    e.preventDefault();
+    e.currentTarget.focus({ preventScroll: true });
     m.dragging = true;
     m.fly = null;
     m.vSpin = 0;
@@ -925,6 +927,7 @@ export function HeroEarth(props: Props) {
   const started = useRef(false);
   const downAt = useRef({ x: 0, y: 0 });
   const onPointerMove = (e: React.PointerEvent) => {
+    if (!e.isPrimary) return;
     if (e.pointerType === "mouse") {
       const r = wrap.current?.getBoundingClientRect();
       if (r) {
@@ -968,7 +971,8 @@ export function HeroEarth(props: Props) {
     m.vTilt = m.vTilt * 0.6 + (dTilt / dtS) * 0.4;
     m.last = { x: e.clientX, y: e.clientY, t: now };
   };
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!e.isPrimary) return;
     const m = motion.current;
     if (!m.dragging) return;
     m.dragging = false;
@@ -1012,6 +1016,7 @@ export function HeroEarth(props: Props) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onLostPointerCapture={onPointerUp}
       onPointerLeave={() => {
         places.current.pointer = null;
         if (lens.current) lens.current.style.opacity = "0";

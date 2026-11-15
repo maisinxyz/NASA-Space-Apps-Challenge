@@ -1,0 +1,14 @@
+.git
+.claude
+.pnpm-store
+**/node_modules
+**/.next*
+**/.venv
+**/__pycache__
+**/.env*
+**/*test.env
+**/test-results
+data/cache
+apps/web/public/cesium
+apps/web/public/mock
+apps/web/public/fonts/fontshare

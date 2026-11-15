@@ -2,7 +2,7 @@
 // Gus slide-over (v4 PRD F6). Connected to the screen state: farm, field, year or month, scenario sliders,
 // strategy and the selected field / flag / strategy. Answers come from the numbers the server builds for that screen;
 // the panel says so, names local checks, and handles slow replies and errors plainly.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { strategyOf } from "@/lib/farm-future/data";
 import { useFutureStore } from "@/lib/farm-future/store";
@@ -13,6 +13,7 @@ import { siteForFarm } from "@/lib/forecast/sites";
 import { useAppStore } from "@/lib/store";
 
 import { FvButton } from "@/components/farm-view/FvButton";
+import { CopilotComposer, type PlaceNavigation } from "./CopilotComposer";
 
 const SLOW_MS = 8000;
 
@@ -37,20 +38,13 @@ export function useScreenState(): ScreenState | null {
   };
 }
 
-/** Header button that opens the co-pilot about the current screen. */
-export function CopilotButton() {
-  const farmId = useAppStore((s) => s.farmId);
-  if (!siteForFarm(farmId)) return null;
-  return (
-    <FvButton className="fv-glass fv-seg" data-testid="copilot-open" onClick={() => useCopilot.setState({ open: true, selected: null, strategyId: null, fieldId: null })}>
-      Ask Gus
-    </FvButton>
-  );
-}
-
-export function CopilotPanel() {
-  const { open, draft, messages, status, error, send, close } = useCopilot();
+export function CopilotPanel({ navigation, inline = false }: {
+  navigation?: PlaceNavigation;
+  inline?: boolean;
+} = {}) {
+  const { open, draft, pendingFarm, messages, status, error, send, close } = useCopilot();
   const screen = useScreenState();
+  const transcript = useRef<HTMLDivElement>(null);
   const [slow, setSlow] = useState(false);
   useEffect(() => {
     if (status !== "sending") return setSlow(false);
@@ -63,26 +57,28 @@ export function CopilotPanel() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
-  if (!open || !screen) return null;
-  const submit = () => void send(draft, screen);
-  const context = [
-    screen.fieldId ? `field ${screen.fieldId}` : "whole farm",
-    screen.horizon === "years" ? `year ${screen.timeIndex}` : `month ${screen.timeIndex + 1}`,
-    screen.strategyId ?? "no strategy",
-    screen.rainPct || screen.tempC ? `rain ${screen.rainPct > 0 ? "+" : ""}${screen.rainPct} %, temp +${screen.tempC} °C` : "baseline scenario",
-  ].join(" · ");
+  useEffect(() => {
+    if (transcript.current) transcript.current.scrollTop = transcript.current.scrollHeight;
+  }, [messages, open, status]);
+  useEffect(() => {
+    if (!screen || pendingFarm !== screen.farmId || !draft.trim() || status === "sending") return;
+    useCopilot.setState({ pendingFarm: null, open: true });
+    void send(draft, screen);
+  }, [screen, pendingFarm, draft, send, status]);
+  if (!screen && !navigation) return null;
+  const showConversation = open && !!screen;
+  const location = navigation?.farms.find((farm) => farm.id === screen?.farmId)?.name.split(",")[0];
   return (
-    <aside className="fv-glass" role="complementary" aria-label="Gus" data-testid="copilot-panel"
-      style={{ position: "absolute", right: 16, top: 16, bottom: 16, width: "min(380px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 14, display: "grid", gridTemplateRows: "auto auto 1fr auto auto", gap: 10, fontSize: 13 }}>
+    <aside className="fv-glass" aria-label="Farm co-pilot" data-testid={showConversation ? "copilot-panel" : undefined}
+      style={{ position: inline ? "relative" : "absolute", left: inline ? undefined : 16, bottom: inline ? undefined : 26, width: inline ? "100%" : "min(420px, calc(100% - 32px))", zIndex: 70, pointerEvents: "auto", borderRadius: 16, padding: 12, display: "grid", gap: 10, fontSize: 13, background: "rgba(17,26,32,.95)" }}>
+      {showConversation && <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 className="fv-rtitle" style={{ margin: 0 }}>Gus</h2>
-        <FvButton className="ff-link" onClick={close} data-testid="copilot-close">Close</FvButton>
+        <h2 className="fv-rtitle" style={{ margin: 0 }}>{location ? `Ask about ${location}` : "Farm co-pilot"}</h2>
+        <FvButton className="ff-link" onClick={close} data-testid="copilot-close">Minimize</FvButton>
       </div>
-      <p style={{ margin: 0, color: color.inkSecondary, fontSize: 11.5 }}>
-        Gus uses the farm’s default forecast context ({context}), which may differ from edited rotations or the numbers on screen. Check advice locally.
-      </p>
-      <div style={{ overflowY: "auto", display: "grid", gap: 10, alignContent: "start" }} aria-live="polite">
-        {messages.length === 0 && <p style={{ margin: 0, color: color.inkSecondary }}>Ask about a field, a flag or a strategy.</p>}
+      <div ref={transcript} style={{ overflowY: "auto", maxHeight: "min(46dvh, 430px)", display: "grid", gap: 10, alignContent: "start" }} aria-live="polite">
+        {messages.length === 0 && <button type="button" className="justify-self-start rounded-full border border-white/20 px-3 py-2 text-left"
+          onClick={() => void send("What if I planted sunflower?", screen)}>What if I planted sunflower?</button>}
         {messages.map((m, i) => (
           <div key={i} data-testid={`copilot-${m.role}`} style={{ justifySelf: m.role === "user" ? "end" : "start", maxWidth: "92%", background: m.role === "user" ? "rgba(163,191,233,.18)" : "rgba(255,255,255,.06)", borderRadius: 10, padding: "8px 10px", display: "grid", gap: 6 }}>
             {m.placeholder && <b style={{ fontWeight: 500, fontSize: 11.5 }}>Placeholder sample, not a reply from Gus (mock or offline mode)</b>}
@@ -98,14 +94,17 @@ export function CopilotPanel() {
         {status === "sending" && <p role="status" style={{ margin: 0, color: color.inkSecondary }}>{slow ? "Still working on it. Replies can take up to a minute." : "Thinking…"}</p>}
         {error && <p role="alert" style={{ margin: 0, color: "#C46A52" }}>{error}</p>}
       </div>
-      <textarea aria-label="Question for Gus" data-testid="copilot-input" value={draft} maxLength={MAX_MESSAGE} rows={3}
-        onChange={(e) => useCopilot.setState({ draft: e.target.value })}
-        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-        style={{ background: "rgba(255,255,255,.06)", color: color.ink, border: "1px solid rgba(242,235,221,.22)", borderRadius: 8, padding: 8, font: "inherit", resize: "vertical" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 11, color: color.inkSecondary }}>{draft.length}/{MAX_MESSAGE}</span>
-        <FvButton className="fv-seg" disabled={!draft.trim() || status === "sending"} onClick={submit} data-testid="copilot-send">{status === "error" ? "Retry" : "Send"}</FvButton>
-      </div>
+      </>}
+      <CopilotComposer navigation={navigation} value={draft} onChange={(value) => useCopilot.setState({ draft: value })}
+        busy={status === "sending"} onAsk={(value) => {
+          if (!screen) {
+            useCopilot.setState({ open: true, error: "Forecast chat is available at UBC Farm and KPU Langley. Search for either farm to ask about its data." });
+            return;
+          }
+          useCopilot.setState({ open: true });
+          void send(value, screen);
+        }} />
+      {!screen && error && <p role="status" className="text-white/80">{error}</p>}
     </aside>
   );
 }

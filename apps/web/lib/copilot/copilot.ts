@@ -68,6 +68,8 @@ export const termsIn = (text: string) => Object.keys(TERMS).filter((t) => text.t
 type ChatState = {
   open: boolean;
   draft: string;
+  pendingFarm: string | null;
+  conversation: number;
   selected: ScreenState["selected"];
   /** Overrides the screen's strategy/field when a button asks about a specific one. */
   strategyId: string | null;
@@ -76,6 +78,7 @@ type ChatState = {
   status: "idle" | "sending" | "error";
   error: string | null;
   ask(q: { question: string; kind: SelectedKind; id: string; strategyId?: string | null; fieldId?: string | null }): void;
+  startFarm(farmId: string, question?: string): void;
   send(message: string, screen: ScreenState): Promise<void>;
   close(): void;
 };
@@ -83,6 +86,8 @@ type ChatState = {
 export const useCopilot = create<ChatState>((set, get) => ({
   open: false,
   draft: "",
+  pendingFarm: null,
+  conversation: 0,
   selected: null,
   strategyId: null,
   fieldId: null,
@@ -90,12 +95,18 @@ export const useCopilot = create<ChatState>((set, get) => ({
   status: "idle",
   error: null,
   ask: ({ question, kind, id, strategyId = null, fieldId = null }) => set({ open: true, draft: question, selected: { kind, id }, strategyId, fieldId, error: null }),
+  startFarm: (farmId, question) => set((state) => ({
+    conversation: state.conversation + 1, open: true, draft: question ?? "",
+    pendingFarm: question ? farmId : null, selected: null, strategyId: null, fieldId: null,
+    messages: [], status: "idle", error: null,
+  })),
   async send(message, screen) {
     if (!message.trim()) return;
     bindCopilotFarm(screen.farmId);
     if (get().status === "sending") return;
     const generation = ++requestGeneration;
     const history = get().messages;
+    const conversation = get().conversation;
     const body = requestOf(message, screen, history);
     set({ messages: [...history, { role: "user", content: body.message }], draft: "", status: "sending", error: null });
     try {
