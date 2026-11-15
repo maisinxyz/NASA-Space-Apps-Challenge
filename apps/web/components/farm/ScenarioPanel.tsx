@@ -6,7 +6,7 @@ import { useReducedMotion } from "framer-motion";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { BasisChip } from "@/components/ui/Provenance";
-import { useAppStore } from "@/lib/store";
+import { activateScenario, useAppStore } from "@/lib/store";
 import { clampInput, clockLabel, clockSpec, currentStep, resolveInputs, SPEEDS, stepProgress } from "@/lib/twin/scenarios/clock";
 import { FAMILY_LABEL, FAMILY_ORDER, SCENARIO_DEFS, scenarioById } from "@/lib/twin/scenarios/registry";
 import { EMPTY_RUN_MESSAGE, SYNTHETIC_BADGE, SYNTHETIC_NOTE, type RunSource } from "@/lib/twin/scenarios/runSource";
@@ -61,7 +61,7 @@ function Glyph({ family }: { family: ScenarioFamily }) {
   }
 }
 
-const openScenario = (id: ScenarioDef["id"] | null) => useAppStore.setState({ scenarioId: id, scenarioProgress: 0, scenarioPlaying: false, twinMode: "simulate" });
+const openScenario = activateScenario;
 
 export function SimulateBody({ runSource, frame }: { runSource: RunSource; frame: ScenarioFrame | null }) {
   const id = useAppStore((s) => s.scenarioId);

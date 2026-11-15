@@ -6,20 +6,20 @@ export const TICK_MIN_GAP_MS = 35;
 
 export type SoundName = "tickWeek" | "tickMonth" | "tap" | "pop" | "close" | "success";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyAudio = any;
-
+type AudioParamLike = { value: number; setValueAtTime(value:number,time:number):unknown; linearRampToValueAtTime(value:number,time:number):unknown; exponentialRampToValueAtTime(value:number,time:number):unknown };
+type BufferLike = { getChannelData(channel:number):Float32Array };
+type SoundNode = { connect(destination:unknown):unknown };
 type AudioLike = {
   currentTime: number;
   sampleRate: number;
   state: string;
   destination: unknown;
   resume?: () => Promise<void> | void;
-  createGain: () => AnyAudio;
-  createOscillator: () => AnyAudio;
-  createBiquadFilter: () => AnyAudio;
-  createBuffer: (ch: number, len: number, rate: number) => AnyAudio;
-  createBufferSource: () => AnyAudio;
+  createGain: () => SoundNode & { gain: AudioParamLike };
+  createOscillator: () => SoundNode & { type: string; frequency: AudioParamLike; start(time:number):void; stop(time:number):void };
+  createBiquadFilter: () => SoundNode & { type:string; Q: {value:number}; frequency:AudioParamLike };
+  createBuffer: (ch: number, len: number, rate: number) => BufferLike;
+  createBufferSource: () => SoundNode & { buffer:BufferLike|null; start(time:number):void; stop(time:number):void };
 };
 
 export type SoundDeps = {
@@ -30,8 +30,7 @@ export type SoundDeps = {
 
 function defaultContext(): AudioLike | null {
   if (typeof window === "undefined") return null;
-  const win = window as unknown as { AudioContext?: new () => AudioLike; webkitAudioContext?: new () => AudioLike };
-  const Ctor = win.AudioContext ?? win.webkitAudioContext;
+  const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   return Ctor ? new Ctor() : null;
 }
 
@@ -49,7 +48,7 @@ export function createSound(deps: SoundDeps = {}) {
   let ctx: AudioLike | null = null;
   let muted = false;
   let lastTick = -Infinity;
-  let noise: AnyAudio = null;
+  let noise: BufferLike | null = null;
 
   try {
     const s = deps.storage === undefined ? defaultStorage() : deps.storage;

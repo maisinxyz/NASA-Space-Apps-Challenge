@@ -8,7 +8,7 @@ import { RestingHero } from "./RestingHero";
 const noop = () => {};
 
 describe("RestingHero", () => {
-  it("uses clamp for body text and stat labels to prevent excessive shrinking at 720px height", () => {
+  it("keeps minimum font sizes for body text and labels", () => {
     const html = renderToStaticMarkup(
       <RestingHero
         shown={true}
@@ -20,14 +20,7 @@ describe("RestingHero", () => {
       />
     );
 
-    // Body text has min 14px clamp
-    expect(html).toContain("clamp(14px");
-
-    // Stat labels have min 10px clamp
-    expect(html).toContain("clamp(10px");
-
-    // Eyebrow and stats value clamped
-    expect(html).toContain("clamp(10.5px");
-    expect(html).toContain("clamp(18px");
+    expect(html).toContain("font-size:max(16px,");
+    expect(html).toContain("font-size:max(12px,");
   });
 });

@@ -134,4 +134,3 @@ function DepthProfile({ before, now, rootDepthM, year }: { before: { d: number; 
     </svg>
   );
 }
-

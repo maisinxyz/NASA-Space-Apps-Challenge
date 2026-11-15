@@ -11,6 +11,6 @@ describe("MethodsPage", () => {
     expect(html).toContain("Data &amp; Methods");
     expect(html).toContain("How to read the numbers");
     expect(html).toContain("Datasets");
-    expect(html).toContain("Every output is a relative comparison between options, not a prediction");
+    expect(html).toContain("These views provide no farm-specific forecasts");
   });
 });

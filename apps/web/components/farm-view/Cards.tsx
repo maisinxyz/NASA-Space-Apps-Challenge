@@ -57,7 +57,7 @@ export function ConditionCard({ id, onClose }: { id: ConditionId; onClose(): voi
           ))}
         </div>
       )}
-      <p className="fv-cap" style={{ margin: "12px 0 0" }}>Sample data</p>
+      <p className="fv-cap" style={{ margin: "12px 0 0" }}>Synthetic preview · not measurements for the selected farm</p>
     </motion.section>
   );
 }
@@ -83,8 +83,8 @@ export function LayerLegend({ layer }: { layer: LayerId }) {
         <span>{l.lo}</span>
         <span>{l.hi}</span>
       </div>
-      <p className="fv-cap" style={{ margin: "8px 0 0" }}>{l.note}</p>
-      <p className="fv-cap" style={{ margin: "4px 0 0" }}>Field shading on the map is not drawn yet.</p>
+      <p className="fv-cap" style={{ margin: "8px 0 0" }}>Synthetic preview legend</p>
+      <p className="fv-cap" style={{ margin: "4px 0 0" }}>Map overlay unavailable: field shading is not drawn.</p>
     </motion.section>
   );
 }

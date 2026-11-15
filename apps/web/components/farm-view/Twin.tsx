@@ -14,7 +14,7 @@ import { ArrowUp, Logo, X } from "./icons";
 const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
 type Turn = { q: string; a: TwinAnswer; words: number; thinking: boolean };
 
-export function Twin() {
+export function Twin({ bottom }: { bottom?: number }) {
   const reduced = !!useReducedMotion();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -64,7 +64,7 @@ export function Twin() {
   const P = layout.twinPill;
 
   return (
-    <div style={{ position: "absolute", left: "50%", bottom: layout.twinButton.bottom, transform: "translateX(-50%)", zIndex: zIndex.twin, display: "grid", justifyItems: "center" }}>
+    <div style={{ position: "absolute", left: "50%", bottom: bottom ?? layout.twinButton.bottom, transform: "translateX(-50%)", zIndex: zIndex.twin, display: "grid", justifyItems: "center" }}>
       <AnimatePresence>
         {open && turn && (
           <motion.section
@@ -79,7 +79,7 @@ export function Twin() {
             exit={{ opacity: 0, transition: { duration: m.popExitMs / 1000 } }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span className="fv-cap">Twin · Sample answer</span>
+              <span className="fv-cap">Twin · Synthetic preview (not this farm’s measurements)</span>
               <FvButton className="fv-icon" style={{ width: 24, height: 24, marginLeft: "auto" }} aria-label="Close Twin" onClick={close}>
                 <X size={14} />
               </FvButton>
@@ -123,8 +123,8 @@ export function Twin() {
             </FvButton>
             <motion.input
               autoFocus
-              aria-label="Ask about this farm"
-              placeholder="Ask about this farm"
+              aria-label="Ask the synthetic preview"
+              placeholder="Ask the synthetic preview"
               value={text}
               disabled={thinking}
               onChange={(e) => setText(e.target.value)}
@@ -147,8 +147,8 @@ export function Twin() {
             <FvButton
               ref={btn}
               className="fv-glass fv-twin fv-auto"
-              aria-label="Ask Twin"
-              aria-expanded={open}
+              aria-label="Ask Twin preview"
+              aria-expanded={false}
               data-testid="twin-button"
               onClick={() => {
                 setOpen(true);
@@ -156,6 +156,7 @@ export function Twin() {
               }}
             >
               <Logo size={layout.twinButton.icon} />
+              <span className="sr-only">Synthetic preview</span>
             </FvButton>
           </motion.div>
         )}

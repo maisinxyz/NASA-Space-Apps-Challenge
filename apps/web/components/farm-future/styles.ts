@@ -20,7 +20,7 @@ export const FF_CSS = `
 .ff-hr { height: 1px; background: ${color.hairline}; border: 0; margin: 0; }
 .ff-seg { display: flex; gap: 2px; padding: 3px; border-radius: 9999px; background: rgba(27,22,18,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid ${color.glassBorder}; }
 .ff-seg .fv-seg { height: 28px; padding: 0 12px; font-size: 12.5px; }
-.ff-menu { position: absolute; top: calc(100% + 8px); right: 0; width: 250px; border-radius: 14px; padding: 6px; z-index: 5; }
+.ff-menu { position: absolute; top: calc(100% + 8px); left: 0; width: min(250px, calc(100vw - 32px)); max-height: 45dvh; overflow-y: auto; border-radius: 14px; padding: 6px; z-index: 5; }
 .ff-menu-group { font: 400 11px/14px ${font.sans}; color: ${color.inkSecondary}; padding: 8px 10px 4px; }
 .ff-menu-item { display: flex !important; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px !important; border-radius: 8px; font: 400 13px/16px ${font.sans}; color: ${color.ink}; text-align: left; }
 .ff-menu-item:hover { background: ${color.fillHover} !important; }

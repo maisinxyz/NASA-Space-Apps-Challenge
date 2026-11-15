@@ -65,3 +65,7 @@ export const useFutureStore = create<FutureState>((set) => ({
   openReview: (reviewFor) => set({ reviewFor, panel: reviewFor ? "review" : null }),
   goTo: (yearIndex, doy, fieldId) => set({ mode: "future", t: tOf(yearIndex, doy), focusFieldId: fieldId ?? null, panel: null, reviewFor: null, playing: false }),
 }));
+
+export function resetFutureInvestigation() {
+  useFutureStore.setState(useFutureStore.getInitialState());
+}

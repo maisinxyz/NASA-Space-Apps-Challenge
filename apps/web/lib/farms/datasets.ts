@@ -3,7 +3,7 @@ import type { FarmInfo } from "./index";
 
 /**
  * Open datasets a candidate farm could use. Every URL appeared in a web search on 2026-11-14; the pages themselves
- * could not be opened from the scouting sandbox (network policy), so each licence is TODO(verify) on its page.
+ * could not be opened from the scouting sandbox (network policy). Licence descriptions were updated upstream in 05c71e5.
  */
 export const CANDIDATE_DATASETS = {
   usgs3dep: { name: "USGS 3DEP 1 m DEM", url: "https://catalog.data.gov/dataset/usgs-1-meter-digital-elevation-model", licence: "Public domain (USGS); attribution requested", attribution: "U.S. Geological Survey" },

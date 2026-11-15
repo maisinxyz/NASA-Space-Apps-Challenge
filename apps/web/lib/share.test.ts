@@ -77,3 +77,30 @@ describe("share link", () => {
     expect(decodeShare("#farm=usda-barc&cam=-200,39,100,0,0")).not.toHaveProperty("camera");
   });
 });
+
+it("round-trips simulation and panel state", () => {
+  const state = { ...full(), scenario: "storm" as const, scenarioRotation: "rot_forage", scenarioProgress: 0.42, twinYear: 1, twinMonth: 2, showCropFills: true, panelsHidden: true, leftOpen: false, rightOpen: true, panelOpen: true, panelSection: "compare" as const };
+  expect(decodeShare(encodeShare(state))).toMatchObject({ ...state, camera: { lon: -76.254112, lat: 42.440912, height: 812.3, heading: 12.35, pitch: -35.68 } });
+});
+
+it("validates and clamps extended share state", () => {
+  const d = decodeShare("#farm=cornell-ruminant&a=rot_existing&b=rot_forage&sc=storm&sr=rot_wheat&sp=5&y=999&mo=-3&fills=2&ph=1&lo=0&ro=bad&po=1&ps=field");
+  expect(d).toMatchObject({ scenarioProgress: 1, twinMonth: 0, panelsHidden: true, leftOpen: false, panelOpen: true });
+  expect(d?.twinYear).toBeLessThan(999);
+  expect(d).not.toHaveProperty("scenarioRotation");
+  expect(d).not.toHaveProperty("showCropFills");
+  expect(d).not.toHaveProperty("rightOpen");
+  expect(d).not.toHaveProperty("panelSection");
+  expect(decodeShare("#farm=ucdavis-oakville&sc=storm&sp=.5&sr=rot_existing&y=1&mo=1&fills=1")).toEqual({ farm: "ucdavis-oakville" });
+});
+
+it("preserves the scenario rotation even when no scenario is open", () => {
+  expect(decodeShare(encodeShare({ ...full(), scenarioRotation: "rot_forage" }))).toMatchObject({ scenarioRotation: "rot_forage" });
+});
+
+it("derives panel defaults for legacy and invalid links", async () => {
+  const { sharePanelState } = await import("./share");
+  expect(sharePanelState("#farm=cornell-ruminant")).toEqual({ open: false, section: "scenarios" });
+  expect(sharePanelState("#farm=cornell-ruminant&m=compare")).toEqual({ open: false, section: "compare" });
+  expect(sharePanelState("#farm=cornell-ruminant&po=1&ps=map")).toEqual({ open: true, section: "map" });
+});

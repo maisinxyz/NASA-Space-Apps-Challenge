@@ -31,3 +31,10 @@ describe("app store", () => {
     expect(useAppStore.getState().globeView).toBe("globe");
   });
 });
+
+it("activating a scenario switches immediately to simulation and resets its clock", async () => {
+  const { activateScenario } = await import("./store");
+  useAppStore.setState({ twinMode: "explore", scenarioProgress: 0.8, scenarioPlaying: true });
+  activateScenario("storm");
+  expect(useAppStore.getState()).toMatchObject({ twinMode: "simulate", scenarioId: "storm", scenarioProgress: 0, scenarioPlaying: false });
+});
