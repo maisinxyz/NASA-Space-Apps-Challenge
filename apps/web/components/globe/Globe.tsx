@@ -905,6 +905,8 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
         r.tier?.tileset,
         qualityFor(landed ? (p.detail ?? "medium") : "medium", window.devicePixelRatio || 1, { moving: landed && (r.flying || r.motion.moving(now)), scenario: landed && scenario }),
       );
+      // Weather/ground effects drift slowly: 30 fps is enough while the camera is still, and halves the GPU cost of the cloud march.
+      viewer.targetFrameRate = landed && scenario && !r.flying && !r.motion.moving(now) ? 30 : (undefined as unknown as number);
       // CameraFlightPath switches Cesium's controller back on after every flight; farm view uses our own controls.
       if (p.view === "farm") scene.screenSpaceCameraController.enableInputs = false;
 

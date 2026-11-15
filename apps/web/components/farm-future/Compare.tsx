@@ -54,7 +54,7 @@ export function CompareView() {
 /** Plain-language risk list for one strategy; every flag deep-links to its zone or month. */
 export function ReviewDrawer() {
   const reviewFor = useFutureStore((s) => s.reviewFor);
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const { openReview, goTo } = useFutureStore.getState();
   const reduced = useReducedMotion();
   const { data } = useFutureData();

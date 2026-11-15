@@ -16,7 +16,7 @@ export const useConditionStore = create<{ selected: CondId | null; open: boolean
 export function useConditionView() {
   const farmId = useAppStore((s) => s.farmId);
   const selected = useConditionStore((s) => s.selected);
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const strategyId = useFutureStore((s) => s.strategyId);
   const { data, forecast } = useFutureData();
   const twin = twinConfig(farmId);
@@ -33,7 +33,7 @@ export function useConditionView() {
 /** Farm-average headline numbers at the scrubber year, for the four Conditions pills. */
 export function usePillValues() {
   const farmId = useAppStore((s) => s.farmId);
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const strategyId = useFutureStore((s) => s.strategyId);
   const { data, forecast } = useFutureData();
   const twin = twinConfig(farmId);

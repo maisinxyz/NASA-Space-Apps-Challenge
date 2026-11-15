@@ -80,7 +80,7 @@ export function SoilHealthPanel() {
 /** Engine-fed soil, nitrogen, water and pest panel for the strategy and the clock year. Farm rollup, or the focused field. */
 export function EngineSoilPanel({ forecast }: { forecast: Forecast }) {
   const panel = useFutureStore((s) => s.panel);
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const strategyId = useFutureStore((s) => s.strategyId);
   const fieldId = useFutureStore((s) => s.focusFieldId);
   const openPanel = useFutureStore((s) => s.openPanel);

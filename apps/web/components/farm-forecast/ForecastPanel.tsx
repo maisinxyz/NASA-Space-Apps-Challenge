@@ -59,7 +59,7 @@ export function useFarmForecast() {
 export function ForecastPanel() {
   const siteId = useFarmForecast();
   const panel = useFutureStore((s) => s.panel);
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const { status, forecast, source, error } = useForecastStore();
   if (!siteId) return null;
   return (

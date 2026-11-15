@@ -56,7 +56,7 @@ export function heroNumbers(f: Forecast, s: ForecastStrategy, fieldId: string | 
 
 export function RotationComparison({ layout = "columns" }: { layout?: "columns" | "stack" }) {
   const { forecast } = useFutureData();
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const { status, source, error, siteId } = useForecastStore();
   const whatIf = useFutureStore((s) => s.whatIf);
   const retry = () => { if (siteId) void useForecastStore.getState().load(siteId, whatIf); };

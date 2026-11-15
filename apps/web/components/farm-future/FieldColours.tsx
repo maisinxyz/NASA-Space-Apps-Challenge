@@ -19,7 +19,7 @@ const SIZE = 1024;
 /** Current field values (or null when there is no engine forecast for this farm). */
 export function useFieldValues() {
   const { data, forecast } = useFutureData();
-  const t = useFutureStore((s) => s.t);
+  const t = useFutureStore((s) => Math.floor(s.t)); // whole years only: no re-render on every scrubber frame
   const strategyId = useFutureStore((s) => s.strategyId);
   const metric = useFutureStore((s) => s.fieldMetric);
   return useMemo(() => {
