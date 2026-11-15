@@ -1,3 +1,14 @@
+# Active follow-up — 2026-11-15 (Claude Code)
+
+**Status: implementing.** Owner: Claude Code session on branch `codex/launch-latest-20261114`. Reserved until this section says done: `apps/web/components/hero/`, `apps/web/components/globe/GlobeChrome.tsx`, `apps/web/components/farm/ScenarioPanel.tsx`, `services/api/app/core/config.py`, `services/api/app/main.py`, `.env.example`, `apps/web/e2e/farm-view/`.
+
+1. **Remove yellow text.** Replace `#ffc857` / amber text (FarmPopup "Digital twin" badge and note, GlobeChrome, RestingHero gradient, HeroEarth hover, ScenarioPanel badge) with the app accent `#a3bfe9` or neutral white. Chart and map data colours unchanged.
+2. **Deployable to Vercel or any domain.** API reads `CORS_ORIGINS` (comma list) and optional `CORS_ORIGIN_REGEX` (e.g. `https://.*\.vercel\.app`); default stays `http://localhost:3000`. Web uses existing `NEXT_PUBLIC_API_BASE`. Document in `.env.example` and a deploy section here.
+3. **Playwright.** Run full suite against a production build; fix specs made stale by the desktop repair; record remaining failures as caused-by-repair vs pre-existing.
+4. **Gus key.** `GROQ_API_KEY` is read from the API process env, then from repo-root `.env` (`services/api/app/services/copilot.py:142`). Never commit it.
+
+---
+
 # Active desktop website repair — 2026-11-15
 
 **Owner: Claude Code session (took over from Codex 2026-11-15). Status: verified and pushed; reservations released.**
