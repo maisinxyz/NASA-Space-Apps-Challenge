@@ -2,9 +2,11 @@
 
 Status: 2026-11-15. Replaces the pasted "PRD v3.1" as the working plan. Written after a design interview with the product owner. It builds on `docs/backend-forecast-prd.md` (the engine, contract v1.2.0) and keeps `CLAUDE.md` rules unless section 2 changes them.
 
+**Two people build this in parallel.** Person A takes the backend (section 6, workstreams B1 to B11). Person B takes the frontend (section 7, workstreams F1 to F8). Section 9 says exactly who owns which files, what each person can start right now without waiting, how the two halves meet, and gives a prompt for each person. Appendix A freezes the new API shapes so Person B can code against them from the first minute.
+
 ## 0. How to use this document
 
-- Sections 1 to 4 say what we are building and what is true today. Section 5 lists every data source and how we get it. Sections 6 and 7 are the work, split into backend workstreams (B1 to B11) and frontend workstreams (F1 to F8). Section 8 is the contract change. Section 9 gives the lanes for parallel sessions, with where each starts and stops. Section 10 is acceptance. Section 11 lists risks and open items.
+- Sections 1 to 4 say what we are building and what is true today. Section 5 lists every data source and how we get it. Sections 6 and 7 are the work, split into backend workstreams (B1 to B11) and frontend workstreams (F1 to F8). Section 8 is the contract change. Section 9 splits the work between two people and gives each a kickoff prompt. Section 10 is acceptance. Section 11 lists risks and open items.
 - Every value marked `TODO(verify)` must be checked against its source before the demo. Do not invent endpoints, fields, enum values, constants, dataset names, URLs or licences.
 
 ## 1. Goal and decisions
@@ -50,7 +52,7 @@ The owner relaxed the strict labelling rules in `CLAUDE.md` for this build (D12)
 - Earthdata token works for data hosts (HTTP 206 on a real HLS file). `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` are now in `.env` (checked 2026-11-15; values never printed), so AppEEARS can be used. Groq key works (HTTP 200) and stays in use until the owner rotates it.
 
 **Not real yet**
-- No satellite seeds. No elevation grid. No station check. No climate-change trend file (B1 is building it).
+- No satellite seeds. No elevation grid. No station check. The climate-change trend files exist for both farms (`cmip6_delta.json.gz`) but the engine does not use them until B1 wires them in.
 - Vegetables cannot be planned: 37 of 49 catalog crops have no planting window (`season_window` days are null), so the engine returns zero alternatives for vegetable pools. The demo pool is cereals, legumes, canola and cover crops until B4 fills the windows. Both BC farms already have a typical vegetable rotation preset (FT-EC2), currently named "Typical vegetable rotation (not this farm's records)"; B4 renames it to "Current rotation".
 - Some engine outputs are implausible for UBC (soil loss about 52 to 60 t/ha/yr, nitrogen balance index about 390, alternative pest pressure stuck at 100). They need calibration (B5).
 - The NASA POWER cell for UBC is 55 km wide with a mean elevation of about 565 m; the farm is near sea level. Temperature bias is unmeasured until B3.
@@ -81,11 +83,13 @@ The owner relaxed the strict labelling rules in `CLAUDE.md` for this build (D12)
 
 All fetching happens in seed-build scripts, not while a request waits (except B10). Each source gives a **small slice** (one point or a window of about 1 km), not a bulk download.
 
+**Which downloads are actually needed.** For the demo core only two are worth their time, and both are small: the climate trend (done) and the station check (B3, one short API call). The satellite layers (B2) do not change the forecast numbers. They add cross-checks, uncertainty rows and zones, so B2 runs last and can be dropped from the demo without breaking anything else. If the climate trend ever needs rebuilding in a hurry, run `build_ncss.py` with one model instead of four; that is about four times faster.
+
 | Need | Source | How we get it | State | Owner |
 | --- | --- | --- | --- | --- |
 | Weather, 1991 to 2024 | NASA POWER daily | Already seeded for UBC and KPU | Done | none |
 | Soil | ISRIC SoilGrids 2.0 | Seeded. KPU forecast still fails (B6) | UBC done | B6 |
-| Climate trend | NASA NEX-GDDP-CMIP6 via NCCS THREDDS NetCDF Subset Service, daily `tasmax`, `tasmin`, `pr`, 0.25 degree | `scripts/seed_cmip6/build_ncss.py`. No login. One variable-year at one point takes about 8.6 s | **Running** (4 models, ssp245 and ssp585, both sites; about an hour) | B1 |
+| Climate trend | NASA NEX-GDDP-CMIP6 via NCCS THREDDS NetCDF Subset Service, daily `tasmax`, `tasmin`, `pr`, 0.25 degree | `scripts/seed_cmip6/build_ncss.py`. No login. One variable-year at one point takes about 8.6 s | **Done** for both sites (4 models: ACCESS-CM2, ACCESS-ESM1-5, BCC-CSM2-MR, CMCC-ESM2; ssp245 and ssp585; seeds in `data/seed/<site>/cmip6_delta.json.gz`) | B1 |
 | Vegetation (NDVI) | NASA HLS vegetation indices (`HLSL30_VI.020`, `HLSS30_VI.020`) or MODIS `MOD13Q1.061` | AppEEARS point sample, needs Earthdata username and password | Ready to start (credentials in `.env`) | B2 |
 | Soil moisture | SMAP L4 `SPL4SMGP.008` (9 km, modeled) | AppEEARS point sample | Not started | B2 |
 | Evapotranspiration | ECOSTRESS `ECO_L3T_JET.002` | AppEEARS point sample | Not started | B2 |
@@ -108,7 +112,7 @@ Licence note for NEX-GDDP-CMIP6: the AWS registry says CC0 and one published fil
 All backend work stays in `services/api/`, `packages/contracts/`, `data/seed/`, `scripts/` and `docs/`. It never edits `apps/web/`. Each workstream ends with tests, a note in `docs/progress/FT-<ID>.md`, a commit to `main` with the ID, and `git pull --rebase` first.
 
 **B1. Climate trend into the engine.**
-- Let `scripts/seed_cmip6/build_ncss.py` finish for `site_ubc_farm` and `site_kpu_langley` (writes `data/seed/<site>/cmip6_delta.json.gz` and its sidecar).
+- The seeds already exist for `site_ubc_farm` and `site_kpu_langley` (built by `scripts/seed_cmip6/build_ncss.py`, which writes `data/seed/<site>/cmip6_delta.json.gz` and its sidecar). Commit them if they are not on main yet. Rerun the script only to change models or years.
 - Pass `climate_source` and `site_id` from `forecast.py` into the weather ensemble and the climate outlook (the request in `docs/progress/forecast-requests.md`, from FT-EB4).
 - Map contract presets to the file keys. Today `drier_summers` and `wetter_winters` read `ssp245` and `both` reads `ssp585`; confirm this mapping with the owner or add it to the contract.
 - Replace the assumption "No verified CMIP6 delta table is attached" in the response when the file exists.
@@ -147,11 +151,11 @@ All backend work stays in `services/api/`, `packages/contracts/`, `data/seed/`, 
 
 **B10. Custom field analysis (2D view only).** New endpoint `POST /field/analyze` (v1.3.0). Takes a GeoJSON polygon and a rotation, finds the nearest POWER and SoilGrids data (live, cached by request hash), runs the engine, returns the same strategy shapes. This is for the 2D view only (D7). Acceptance: a polygon near UBC returns a result with `data_mode: limited_data` and the resolution notes; invalid or huge polygons return a 422 error; the call is rate-limited.
 
-**B11. Contract v1.3.0.** Bump `packages/contracts/openapi.yaml` to 1.3.0, additive only: `GET /sites/{id}/outlook`, `POST /copilot/chat`, `POST /field/analyze`, the rotation explanation fields on each strategy, and the `kind` field. Add fixtures, contract tests and a message in `docs/progress/forecast-requests.md`. Update `API_VERSION`. This workstream goes first so the frontend can build against fixtures.
+**B11. Contract v1.3.0. Person A does this first.** Bump `packages/contracts/openapi.yaml` to 1.3.0, additive only, implementing the shapes in Appendix A: `GET /sites/{id}/outlook`, `POST /copilot/chat`, `POST /field/analyze`, the `rotation_explanation` block on each forecast strategy, and the `kind` field. Add example response files (fixtures) for each under `packages/contracts/fixtures/`, contract tests, and the new error codes. Update `API_VERSION`. Commit and push, then add one dated line `B11 DONE: contract v1.3.0 is on main` to `docs/progress/forecast-requests.md`. If a shape in Appendix A must change, write the change in that file first so Person B sees it. Acceptance: contract tests pass; every new endpoint has a fixture that validates against the contract.
 
 ## 7. Frontend workstreams (apps/web)
 
-Owner: the frontend session. Reads the engine only through `lib/api` and `lib/forecast`. Every number shows unit, basis and confidence. No income or fertilizer anywhere.
+Owner: Person B. Reads the engine only through `lib/api` and `lib/forecast`. Every number shows a unit and keeps its range; the basis detail lives in a tooltip or details view (section 2). No income or fertilizer anywhere.
 
 **F1. Engine-fed Future mode.** Put a data layer behind `lib/farm-future/model.ts`: a `FutureData` object built from the `Forecast` response (strategies, trajectories, review flags, climate outlook, exposure) with the current fixtures as the fallback. Replace synthetic numbers section by section; anything the engine does not provide keeps the "Synthetic demo data" label. Make the Strategy picker use the engine strategy labels. Acceptance: for UBC the strategies, soil, water, pest and flag panels show engine values with no synthetic label; tests cover the adapter.
 
@@ -189,19 +193,75 @@ An endpoint is a URL the web app calls on the backend. The shared contract file 
 
 Existing endpoints (`/sites/{id}/forecast`, `/forecast/sensitivity`, `/climate-outlook`, `/exposure`, `/crop-catalog`) are reused for everything else. New error codes, if any, are listed in B11. The web client regenerates `schema.d.ts` after the bump.
 
-## 9. Lanes for parallel sessions
+## 9. Splitting the work between two people
 
-The frontend session (this chat) does F1 to F8 and never edits backend files. Three backend sessions can run at once. Nobody edits another lane's files; requests go as a dated note in `docs/progress/forecast-requests.md`.
+### 9.1 The split
 
-| Session | Workstreams, in order | Owns | Starts when | Stops when |
-| --- | --- | --- | --- | --- |
-| A, data | B2, B3 | `scripts/seed_appeears/`, `scripts/seed_station/`, `data/seed/*/{ndvi,smap,ecostress,dem,imerg,grace,station}.*` | Now: B2 first (credentials are in `.env`), then B3 | `SESSION A FINISHED` after B3, or `SESSION A BLOCKED: <question>` for a credential or a fact it cannot verify |
-| B, engine | B1, B6, B4, B8, B5, B7 | `services/api/app/twin/**`, `services/api/app/features/**`, `data/seed/crops/**`, `data/seed/*/cmip6_delta.*`, `scripts/seed_cmip6/**` | Now (B1 needs the running CMIP6 build to finish) | `SESSION B FINISHED` after B7 step 1 (step 2 is optional), or `BLOCKED` |
-| C, API | B11 first, then B9, B10 | `services/api/app/routers/**`, `services/api/app/services/**` for the new endpoints, `packages/contracts/**` | Now (B11 first, within the first hours, so the frontend can build against fixtures) | `SESSION C FINISHED` after B10, or `BLOCKED` |
+| | Person A: backend | Person B: frontend |
+| --- | --- | --- |
+| Workstreams | B1 to B11 (section 6) | F1 to F8 (section 7) |
+| Owns (only they edit) | `services/api/**`, `packages/contracts/**`, `data/seed/**`, `data/cache/**`, `scripts/**`, `.env` | `apps/web/**` |
+| Shared, append only | `docs/progress/**` (each writes their own `FT-<ID>.md`) and the dated notes in `docs/progress/forecast-requests.md` | same |
+| Needs secrets | Yes: `.env` with the Earthdata login and the Groq key. Never shared. | No. Only `NEXT_PUBLIC_*` values (the Cesium token is already in `apps/web/.env.local`) |
 
-Rules for every session: read `CLAUDE.md` and this PRD first; stop only after the last workstream or a real block (a decision, a credential or a fact it cannot verify); after each workstream run the tests, write `docs/progress/FT-<ID>.md`, `git pull --rebase`, add files by path (never `git add -A`), commit `FT-<ID>: <summary>`, and push. Never print or commit secrets. Never edit `apps/web/`.
+The halves are about the same size. Neither edits the other's files. A request for a change goes into `docs/progress/forecast-requests.md` as a dated line addressed to the other person.
 
-Suggested order for the whole project: B11 and B1 and B6 first; then B4, B3, B2 in parallel; then B8, B5, B7 step 1, B9, B10; the frontend builds F1 and F2 immediately on the existing engine, F3 and F6 against the v1.3.0 fixtures, then F4, F5, F7, F8.
+### 9.2 How the two halves meet without waiting
+
+1. **The contract is the handshake.** Appendix A freezes the new endpoint shapes. Person B codes against Appendix A from the first minute, with hand-written fixtures under `apps/web/lib/**/fixtures` where the real ones do not exist yet. Person A makes B11 the first job (about 1 to 2 hours); when it is on main, Person B runs `pnpm types` and swaps the hand-written fixtures for the contract fixtures.
+2. **Mock first, live later.** The web app already reads fixtures in mock mode. When an endpoint is live, Person B sets `NEXT_PUBLIC_API_MODE=live` and runs the API locally from the repo (`make dev`), or points `NEXT_PUBLIC_API_BASE` at Person A's running server.
+3. **What Person B can start right now** (existing endpoints, no waiting): F1 (engine-fed Future mode), F2 (twin and field colouring), F3 (2D map: it needs only imagery and the farm points), F7 (rotation planner on `/crop-catalog` and `/forecast`), F8 (labels, Methods page). **Needs B11 fixtures:** F5 (`/outlook`), F6 (`/copilot/chat`) and the draw tool in F3 (`/field/analyze`). Until B11 lands, build those against Appendix A.
+4. **Data Person B needs from Person A:** the vegetable windows and rotations (B4) make F7 show vegetables; the climate trend (B1) changes what the sliders do; the KPU fix (B6) makes KPU forecastable. Person B does not wait for them: until they land, the screens use what the engine returns today, and the improvements appear when Person A commits.
+5. **Checkpoints.** Both run `git pull --rebase` before every commit and about once an hour. Person A announces each finished workstream with one dated line in `docs/progress/forecast-requests.md` ("B4 DONE: vegetable windows on main"). Person B re-runs `pnpm types` and the web tests after any contract change.
+6. **Git.** Both commit to `main` and `git pull --rebase` first. Add files by explicit path, never `git add -A`. Commit messages carry the workstream ID: `FT-B4: ...` (Person A) and `FT-F3: ...` (Person B).
+
+### 9.3 Sessions inside each half (optional)
+
+Each person may run more than one AI session. Keep the lanes on separate folders.
+
+- **Person A:** lane A1 (API and contract: B11, then B9, B10; owns `services/api/app/routers/**`, `services/api/app/services/**` for the new endpoints, `packages/contracts/**`); lane A2 (engine: B1, B6, B4, B8, B5, B7; owns `services/api/app/twin/**`, `services/api/app/features/**`, `data/seed/crops/**`, `data/seed/*/cmip6_delta.*`, `scripts/seed_cmip6/**`); lane A3 (data: B3, then B2; owns `scripts/seed_appeears/**`, `scripts/seed_station/**`, `data/seed/*/{ndvi,smap,ecostress,dem,imerg,grace,station}.*`). B2 goes last because it depends on NASA's queue.
+- **Person B:** lane B1 (F1, F2, F4, F5, F7, F8; owns everything under `apps/web` except the two folders below) and lane B2 (F3 and F6; owns `apps/web/components/map2d/**`, `apps/web/lib/map2d/**`, `apps/web/components/copilot/**`, `apps/web/lib/copilot/**`). The two lanes touch shared files (`FarmView.tsx`, `lib/store.ts`) only to add a mount point or one store field, in a small separate commit, with a pull just before.
+
+### 9.4 Start and stop lines
+
+- **Person A starts:** B11. Then B1 and B6 in lane A2 and B9 and B10 in lane A1 at the same time; lane A3 starts B3 at once and B2 when the other two have committed.
+- **Person A stops:** `SESSION A FINISHED` after B10 and B2 (B7 step 2 is optional), or `SESSION A BLOCKED: <question>` for a decision, a credential or a fact that cannot be verified. Finish every other workstream before blocking.
+- **Person B starts:** F1, F2, F3 and F7 now, F8 whenever, F5 and F6 as soon as Appendix A is coded against or B11 lands.
+- **Person B stops:** `SESSION B FINISHED` after F8 and the integration pass (section 9.5), or `SESSION B BLOCKED: <question>`.
+
+### 9.5 Integration pass (both, at the end)
+
+1. Person A confirms the API suite, the contract suite and a forecast run for both farms are green and tells Person B.
+2. Person B turns live mode on and runs the whole web flow against the real API: both farms, three strategies, sliders, the monthly outlook, the 2D map and a custom field, the co-pilot, the rotation planner.
+3. Anything wrong goes in `docs/progress/forecast-requests.md` as a dated line to the owner. Both re-run the acceptance list in section 10.
+
+### 9.6 Rules for every session
+
+Read `CLAUDE.md` and this PRD first. Stop only after the last workstream or a real block. After each workstream run the tests, write `docs/progress/FT-<ID>.md`, `git pull --rebase`, add files by path, commit `FT-<ID>: <summary>`, and push. Never print or commit secrets. Do not edit the other person's files.
+
+### 9.7 Kickoff prompts
+
+**Person A (backend):**
+
+```
+You are Person A (backend) on FieldTwin. Read CLAUDE.md, then docs/fieldtwin-v4-prd.md fully, including Appendix A.
+Your workstreams: B11 first (contract v1.3.0, within the first hour, then post "B11 DONE" in docs/progress/forecast-requests.md), then B1, B6, B4, B8, B5, B3, B9, B10, B7, and B2 last.
+You own services/api, packages/contracts, data/seed, scripts and .env. Do not edit apps/web.
+Rules: never invent endpoints, fields, dataset names, URLs or licences; never disable TLS verification; never print, log or commit anything from .env; git pull --rebase before each commit; add files by explicit path.
+After each workstream: run the tests, write docs/progress/FT-<ID>.md, commit "FT-<ID>: <summary>", push.
+Stop only after your last workstream, or with "SESSION A BLOCKED: <question>" for a decision, a credential or a fact you cannot verify.
+```
+
+**Person B (frontend):**
+
+```
+You are Person B (frontend) on FieldTwin. Read CLAUDE.md, then docs/fieldtwin-v4-prd.md fully, including Appendix A.
+Your workstreams: F1, F2, F3, F7 first (they need no new endpoints), then F8, then F5 and F6 against Appendix A until Person A's contract v1.3.0 lands on main (look for "B11 DONE" in docs/progress/forecast-requests.md), then run `pnpm types` and switch to the contract fixtures.
+You own apps/web. Do not edit services, packages/contracts, data, scripts or .env. If you need a backend change, add a dated line to docs/progress/forecast-requests.md.
+Rules: every number shows a unit; no income or fertilizer anywhere; no "assumed" or TODO tags on the main screens; never print, log or commit secrets; git pull --rebase before each commit; add files by explicit path.
+After each workstream: run pnpm test, pnpm typecheck and pnpm lint, write docs/progress/FT-<ID>.md, commit "FT-<ID>: <summary>", push.
+Stop only after F8 and the integration pass, or with "SESSION B BLOCKED: <question>".
+```
 
 ## 10. Acceptance criteria
 
@@ -244,3 +304,123 @@ Suggested order for the whole project: B11 and B1 and B6 first; then B4, B3, B2 
 - City of Vancouver 2022 orthophotos: https://opendata.vancouver.ca/explore/dataset/orthophoto-imagery-2022/information/
 - Township of Langley 2022 orthophotos: https://mapsvr.tol.ca/arcgisext02/rest/services/CachedServices/Ortho_2022/MapServer
 - BC vegetable production guides: https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides
+
+## Appendix A. Frozen API shapes for contract v1.3.0
+
+These are the shapes Person A implements in B11 and Person B codes against. `Number` is the existing contract object `{ value, unit, basis, confidence, p10?, p50?, p90? }`. Unknown enum values must render neutrally (no crash, no blank screen). If a shape here must change, the person who needs it writes the change in `docs/progress/forecast-requests.md` first.
+
+### A.1 `GET /sites/{siteId}/outlook?months=12&scenario=baseline`
+
+`months` is 1 to 12 (default 12). `scenario` is the existing preset name.
+
+```json
+{
+  "site_id": "site_ubc_farm",
+  "start_month": "2026-12",
+  "kind": "climatology",
+  "data_mode": "limited_data",
+  "months": [
+    {
+      "month": "2026-12",
+      "kind": "climatology",
+      "temperature_mean_c": { "value": 4.1, "unit": "degC", "basis": "derived", "confidence": "medium", "p10": 2.4, "p50": 4.0, "p90": 5.9 },
+      "rain_mm": { "value": 210, "unit": "mm", "basis": "derived", "confidence": "medium", "p10": 120, "p50": 205, "p90": 310 },
+      "water_balance_mm": { "value": 190, "unit": "mm", "basis": "modeled", "confidence": "medium", "p10": 95, "p50": 185, "p90": 290 },
+      "heat_risk": { "value": 0, "unit": "days", "basis": "derived", "confidence": "low" },
+      "frost_risk": { "value": 6, "unit": "days", "basis": "derived", "confidence": "medium", "p10": 2, "p50": 6, "p90": 11 }
+    }
+  ],
+  "sources": [ { "name": "NASA POWER daily point", "role": "weather", "url": "https://power.larc.nasa.gov/docs/services/api/", "license": "...", "attribution": "..." } ],
+  "support_sentence": "This tool supports, and does not replace, local agronomic expertise."
+}
+```
+
+The top-level `kind` is `climatology` (typical year) or `seasonal_forecast` (at least one month uses a real forecast). Each month carries its own `kind`. Ranges widen with the month index. Errors: 404 `SITE_NOT_FOUND`, 422 `INVALID_INPUT`.
+
+### A.2 `POST /copilot/chat`
+
+Request:
+
+```json
+{
+  "message": "Why is the Brassicas field flagged in year 5?",
+  "snapshot": {
+    "farm_id": "ubc-farm",
+    "site_id": "site_ubc_farm",
+    "field_id": "d3-brassicas",
+    "horizon": "years",
+    "time_index": 5,
+    "scenario": { "preset": "baseline", "rain_scale_pct": 0, "temp_offset_c": 0 },
+    "strategy_id": "rot_alt_1",
+    "selected": { "kind": "flag", "id": "flag-id-from-the-forecast" }
+  },
+  "history": [ { "role": "user", "content": "..." }, { "role": "assistant", "content": "..." } ]
+}
+```
+
+Limits: `message` up to 1000 characters; `history` up to 6 entries; `field_id`, `strategy_id` and `selected` may be null. `horizon` is `years` or `months`. `selected.kind` is `field`, `flag` or `strategy`.
+
+Response 200:
+
+```json
+{
+  "reply": "plain-language answer that quotes the numbers it was given",
+  "referenced_layers": ["soil_organic_index", "water_demand_mm"],
+  "local_validation_tips": ["Check drainage on the north edge of the plot before planting."]
+}
+```
+
+Errors: 422 `INVALID_INPUT`, 429 `RATE_LIMITED` (new code), 503 `DATA_SOURCE_UNAVAILABLE` (the language model is unreachable). The server builds the numbers from the snapshot; the client never sends forecast values.
+
+### A.3 `POST /field/analyze` (2D view only)
+
+Request:
+
+```json
+{
+  "polygon": { "type": "Polygon", "coordinates": [[[-123.2375, 49.2498], [-123.2368, 49.2498], [-123.2368, 49.2503], [-123.2375, 49.2503], [-123.2375, 49.2498]]] },
+  "rotation": "preset",
+  "scenario": { "preset": "baseline" },
+  "selection": { "crops": ["crop_potato", "crop_carrot", "crop_rye_cover"], "pinned": [], "excluded": [] }
+}
+```
+
+`rotation` is `preset` or a list of `{ "year_index": 1, "season": "spring", "crop_id": "..." }`. `selection` is optional. The polygon is WGS84 longitude and latitude, one ring, closed, at most 200 ha.
+
+Response 200:
+
+```json
+{
+  "field_id": "custom_3f9a12",
+  "area_ha": 0.43,
+  "location": { "lat": 49.25, "lon": -123.2372 },
+  "forecast": { "...": "the same Forecast object as POST /sites/{id}/forecast, with one field" },
+  "resolution_notes": ["Weather is a 55 km NASA POWER cell.", "Soil is a 250 m SoilGrids pixel."]
+}
+```
+
+Errors: 422 `INVALID_INPUT` (not a valid closed polygon, or over 200 ha), 429 `RATE_LIMITED`, 503 `DATA_SOURCE_UNAVAILABLE`.
+
+### A.4 `rotation_explanation` on every forecast strategy
+
+New optional object on each entry of `Forecast.fields[].strategies[]` (and the farm rollup entries):
+
+```json
+{
+  "rotation_explanation": {
+    "rules": [
+      { "rule_id": "break_crop", "status": "broken", "text": "Two cereal years in a row with no break crop." },
+      { "rule_id": "legume_in_cycle", "status": "met", "text": "A legume fixes nitrogen once in the cycle." }
+    ],
+    "crop_roles": [
+      { "crop_id": "crop_red_clover", "role": "nitrogen_fixing", "text": "Fixes nitrogen from the air and feeds the next crop." }
+    ]
+  }
+}
+```
+
+`status` is `met`, `broken` or `unknown`. `role` is `nitrogen_fixing`, `cover`, `deep_rooting`, `drought_tolerant` or `other`. All text comes from the API.
+
+### A.5 New error code
+
+`RATE_LIMITED` (HTTP 429, retryable true). All other codes already exist in contract v1.2.0.

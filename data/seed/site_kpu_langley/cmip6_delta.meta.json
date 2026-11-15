@@ -1,0 +1,10 @@
+{
+  "source_name": "NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6)",
+  "source_url": "https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6",
+  "access": "https://ds.nccs.nasa.gov/thredds/ncss/grid/AMES/NEX/GDDP-CMIP6/<model>/<scenario>/<variant>/<var>/<file>.nc (point subset, CSV)",
+  "licence": "CC-BY-SA 4.0 followed (per-file cmip6_license); AWS registry says CC0. TODO(verify) with NCCS.",
+  "attribution": "NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6), NASA Center for Climate Simulation, and the CMIP6 modelling groups listed in `models`.",
+  "native_resolution_m": 25000,
+  "retrieved_on": "2026-11-15",
+  "processing_notes": "Point subset of the 0.25 degree grid cell containing the site; no bias correction beyond NEX's own. Seasonal deltas of a few models are scenario context, not a forecast."
+}
