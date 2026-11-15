@@ -27,11 +27,12 @@ const MODES: { id: FutureMode; label: string }[] = [
   { id: "compare", label: "Compare strategies" },
 ];
 export function ModeSwitch() {
+  const engineFarm = !!siteForFarm(useAppStore((s) => s.farmId));
   const mode = useFutureStore((s) => s.mode);
   const setMode = useFutureStore((s) => s.setMode);
   return (
     <div role="radiogroup" aria-label="View mode" className="ff-seg fv-auto" style={{ marginTop: 10, alignSelf: "flex-start", width: "fit-content" }} data-testid="mode-switch">
-      {MODES.map((x) => (
+      {MODES.filter((x) => !engineFarm || x.id !== "compare").map((x) => (
         <FvButton key={x.id} className="fv-seg" role="radio" aria-checked={mode === x.id} data-testid={`mode-${x.id}`} onClick={() => { if (mode !== x.id) { setMode(x.id); sound.tickWeek(); } }}>
           {x.label}
         </FvButton>

@@ -4,9 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Forecast } from "@/lib/api/types";
 
-import { METRICS, seriesOf, strategiesOf, valueAt, yearOfClock } from "./select";
+import { METRICS, seriesOf, strategiesOf, valueAt, yearOfClock, scorecardOf, flagsOf } from "./select";
 import { requestFor, siteForFarm } from "./sites";
 import { useForecastStore } from "./store";
+
+vi.mock("@/lib/api/client", async (original) => ({ ...await original<Record<string, unknown>>(), apiMode: "mock" }));
 
 const PREBUILT = resolve(__dirname, "../../public/prebuilt/site_ubc_farm_forecast.json");
 const prebuilt = () => JSON.parse(readFileSync(PREBUILT, "utf-8")) as Forecast;
@@ -101,3 +103,38 @@ describe("forecast store (mock/offline mode)", () => {
     expect(useForecastStore.getState().error).toMatch(/site_nope/);
   });
 });
+
+
+describe("scope correctness and request lifecycle", () => {
+  it("uses selected-field scores and all fields' flags for whole farm", () => {
+    const f = prebuilt();
+    const id = f.fields[0].strategies[0].id;
+    f.fields[1].strategies[0].scorecard[0].score = 17;
+    f.farm_rollup.strategies[0].scorecard[0].score = 93;
+    f.fields[1].strategies[0].review_flags[0].text = "Unique second-field concern";
+    expect(scorecardOf(f, id, f.fields[1].field_id)[0].score).toBe(17);
+    expect(scorecardOf(f, id, null)[0].score).toBe(93);
+    expect(flagsOf(f, id, null).some((x) => x.text === "Unique second-field concern")).toBe(true);
+    f.farm_rollup.strategies = [];
+    expect(scorecardOf(f, id, null)).toEqual([]);
+  });
+  it("invalidates an in-flight forecast on reset", async () => {
+    let finish!: (r: Response) => void;
+    vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => { finish = resolve; }));
+    const pending = useForecastStore.getState().load("site_kpu_langley");
+    useForecastStore.getState().reset();
+    finish(new Response(JSON.stringify(prebuilt())));
+    await pending;
+    expect(useForecastStore.getState().status).toBe("idle");
+    expect(useForecastStore.getState().forecast).toBeNull();
+  });
+});
+
+  it("clears a previous site's source while the next site loads", async () => {
+    useForecastStore.setState({ siteId: "site_ubc_farm", forecast: prebuilt(), source: "prebuilt", status: "ready" });
+    vi.stubGlobal("fetch", () => new Promise<Response>(() => {}));
+    void useForecastStore.getState().load("site_kpu_langley", { rainPct: -37, tempC: 1 });
+    expect(useForecastStore.getState().source).toBeNull();
+    expect(useForecastStore.getState().forecast).toBeNull();
+    useForecastStore.getState().reset();
+  });

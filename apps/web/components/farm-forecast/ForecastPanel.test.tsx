@@ -49,3 +49,30 @@ describe("ForecastCard", () => {
     expect(html).not.toContain('role="img"'); // no chart
   });
 });
+
+  it("marks retained results stale and offers retry after refresh failure", () => {
+    const html = render({ status: "error", error: "Network failed" });
+    expect(html).toContain("Stale results shown");
+    expect(html).toContain("Retry forecast");
+  });
+
+  it("labels retained results during a pending refresh", () => {
+    expect(render({ status: "loading" })).toContain("showing previous results");
+  });
+  it("selected-field scorecard uses that field, whole farm uses the rollup", () => {
+    const f = structuredClone(forecast);
+    const id = f.fields[1].strategies[0].id;
+    f.fields[1].strategies[0].scorecard[0].score = 17;
+    f.farm_rollup.strategies.find((s) => s.id === id)!.scorecard[0].score = 93;
+    const farm = render({ forecast: f });
+    expect(farm).toContain("93");
+    // select field via initial-state-free check: the scope helper is covered in forecast.test.ts
+    expect(farm).not.toContain(">17 <");
+  });
+  it("marks absent whole-farm trajectories and scorecards unavailable", () => {
+    const f = structuredClone(forecast);
+    f.farm_rollup.strategies = [];
+    const html = render({ forecast: f });
+    expect(html).toContain("Unavailable");
+    expect(html).toContain("Scorecard unavailable for this area.");
+  });

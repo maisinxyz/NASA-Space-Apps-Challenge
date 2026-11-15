@@ -131,8 +131,8 @@ export function RestingHero({
         <Fade order={ORDER.eyebrow} {...props}>
           <p className="inline-flex items-center rounded-full border border-white/[0.1] bg-white/[0.04] font-bold uppercase backdrop-blur-sm" style={{ fontSize: `max(12px, ${u(11)})`, letterSpacing: "0.32em", color: color.accent, gap: u(10), paddingInline: u(14), paddingBlock: u(7) }}>
             <span aria-hidden className="relative flex" style={{ width: u(7), height: u(7) }}>
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#ffc857] opacity-60 motion-reduce:animate-none" />
-              <span className="relative inline-flex h-full w-full rounded-full bg-[#ffc857]" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#a3bfe9] opacity-60 motion-reduce:animate-none" />
+              <span className="relative inline-flex h-full w-full rounded-full bg-[#a3bfe9]" />
             </span>
             {HERO_COPY.eyebrow}
             <span aria-hidden className="text-white/30">·</span>
@@ -145,7 +145,7 @@ export function RestingHero({
             <span className="block" style={{ color: color.accent }}>
               {HERO_COPY.headline[1]}
             </span>
-            <span className="block bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(90deg, ${color.accent} 0%, #d9cfb4 55%, #ffc857 100%)` }}>
+            <span className="block bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(90deg, ${color.accent} 0%, #d9cfb4 55%, #a3bfe9 100%)` }}>
               {HERO_COPY.headline[2]}
             </span>
           </h1>

@@ -15,6 +15,7 @@ out/
 npm-debug.log*
 pnpm-debug.log*
 apps/web/public/mock/
+apps/web/public/maplibre/
 
 # Python
 __pycache__/

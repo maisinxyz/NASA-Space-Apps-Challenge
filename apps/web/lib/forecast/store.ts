@@ -31,7 +31,7 @@ export const useForecastStore = create<ForecastState>((set, get) => ({
   async load(siteId, whatIf) {
     const mine = ++ticket;
     const keep = get().siteId === siteId ? get().forecast : null; // keep the old result visible while a slider refetch runs
-    set({ siteId, status: "loading", forecast: keep, error: null });
+    set({ siteId, status: "loading", forecast: keep, source: keep ? get().source : null, error: null });
     try {
       const body = requestFor(siteId, whatIf);
       if (!body) throw new ApiError({ code: "SITE_NOT_FOUND", message: `No forecast request for ${siteId}.`, retryable: false }, 404);
@@ -54,5 +54,8 @@ export const useForecastStore = create<ForecastState>((set, get) => ({
       if (mine === ticket) set({ status: "error", error: e instanceof Error ? e.message : "Forecast failed." });
     }
   },
-  reset: () => set({ siteId: null, status: "idle", forecast: null, source: null, error: null }),
+  reset: () => {
+    ++ticket;
+    set({ siteId: null, status: "idle", forecast: null, source: null, error: null });
+  },
 }));

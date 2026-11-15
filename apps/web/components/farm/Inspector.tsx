@@ -160,7 +160,7 @@ export function EvidenceBody() {
     <div className="grid gap-4">
       <p
         role="note"
-        className="rounded border border-amber-300/50 bg-[#2a2210] p-3 text-sm"
+        className="rounded border border-[#a3bfe9]/40 bg-[#a3bfe9]/10 p-3 text-sm"
       >
         {EVIDENCE_NOTE}
       </p>
