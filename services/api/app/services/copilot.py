@@ -135,12 +135,12 @@ def _provider(payload: dict, key: str) -> dict:
 
 def chat(body: dict, client: str) -> dict:
     check_rate(client)
-    from app.services.planting_reply import CROP_QUESTION, reply_for_planting
+    from app.services.planting_reply import reply_for_planting
     snapshot = body["snapshot"]
     site = snapshot["site_id"]
-    if CROP_QUESTION.search(body["message"]) and site in FARMS and snapshot["farm_id"] == FARMS[site][0]:
+    if site in FARMS and snapshot["farm_id"] == FARMS[site][0]:
         request = json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[site][1]).read_text(encoding="utf-8"))
-        if result := reply_for_planting(site, request, body["message"], snapshot):
+        if result := reply_for_planting(site, request, body["message"], snapshot, body.get("history", [])):
             return result
     if os.getenv("OFFLINE") == "1":
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable in offline mode.", retryable=True)

@@ -23,4 +23,4 @@ class Settings:
     log_level: str = field(default_factory=lambda: (os.getenv("LOG_LEVEL") or "INFO").upper())
     fixtures_dir: Path = FIXTURES_DIR
     sse_delay_s: float = 0.4  # gap between replayed fixture SSE events
-    cors_origins: tuple[str, ...] = ("http://localhost:3000",)
+    cors_origins: tuple[str, ...] = ("http://localhost:3000", "http://127.0.0.1:3000")

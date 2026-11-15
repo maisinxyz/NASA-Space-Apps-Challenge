@@ -111,6 +111,25 @@ def test_sunflower_question_runs_the_forecast_without_a_provider(client, monkeyp
     assert "36%" not in result["reply"]
 
 
+@pytest.mark.parametrize(("question", "previous", "expected"), [
+    ("sunflowers instead?", None, "Spring barley with Sunflower"),
+    ("And if it gets wetter?", "What if I planted sunflower?", "Wetter winters"),
+    ("I need to water less. Can I use less water?", None, "Lowest modeled first-year irrigation"),
+    ("Should I plant sunflower or cabbage?", None, "Which one should I compare"),
+    ("What should I do?", None, "What matters most this season"),
+])
+def test_offline_copilot_resolves_short_requests(client, monkeypatch, question, previous, expected):
+    monkeypatch.setenv("OFFLINE", "1")
+    monkeypatch.setattr(copilot, "_provider", lambda *args: pytest.fail("grounded question called the provider"))
+    body = request()
+    body["message"] = question
+    if previous:
+        body["history"] = [{"role": "user", "content": previous}]
+    response = client.post("/api/v1/copilot/chat", json=body)
+    assert response.status_code == 200, response.text
+    assert expected in response.json()["reply"]
+
+
 def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
     calls = []
     monkeypatch.setattr(copilot, "_provider", lambda payload, key: calls.append(payload) or {
