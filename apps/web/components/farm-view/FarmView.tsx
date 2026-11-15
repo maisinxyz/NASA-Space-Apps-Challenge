@@ -40,6 +40,7 @@ import { CopilotButton, CopilotPanel } from "@/components/copilot/CopilotPanel";
 import { RotationPlanner } from "@/components/rotation-planner/RotationPlanner";
 import { usePlannerStore } from "@/lib/rotation-planner/store";
 import { siteForFarm } from "@/lib/forecast/sites";
+import { HorizonTabs, MonthlyOutlook } from "@/components/farm-future/MonthlyOutlook";
 
 // MapLibre is large and needs the browser: load the 2D map only when it is opened.
 const Map2D = dynamic(() => import("@/components/map2d/Map2D").then((m) => m.Map2D), { ssr: false });
@@ -160,6 +161,7 @@ export function FarmView({
   const futureMode = useFutureStore((s) => s.mode);
   const futurePanel = useFutureStore((s) => s.panel);
   const reviewFor = useFutureStore((s) => s.reviewFor);
+  const horizon = useFutureStore((s) => s.horizon);
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const storeFarmId = useAppStore((s) => s.farmId);
   const farmId = propFarmId ?? storeFarmId;
@@ -569,7 +571,10 @@ export function FarmView({
             </>
           )}
           </div>
-          {futureMode !== "now" && <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />}
+          {futureMode !== "now" && (futureMode === "future" && horizon === "months"
+            ? <MonthlyOutlook />
+            : <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />)}
+          {futureMode === "future" && <HorizonTabs bottom={horizon === "months" ? 228 : 236} />}
           <FutureLayer />
           {siteForFarm(farmId ?? null) && <RotationPlanner siteId={siteForFarm(farmId ?? null)!} />}
           <CopilotPanel />

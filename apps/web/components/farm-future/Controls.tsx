@@ -6,6 +6,12 @@ import { useRef, useState } from "react";
 
 import { STRATEGIES, WHAT_IF_LIMITS } from "@/lib/farm-future/fixtures";
 import { conditionsAt, scoreWithWhatIf, whatIfActive } from "@/lib/farm-future/model";
+import { engineSeries, pointAt } from "@/lib/farm-future/data";
+import { useFutureData } from "@/lib/farm-future/useFutureData";
+import { fmt } from "@/lib/forecast/select";
+import { baseRequest, siteForFarm } from "@/lib/forecast/sites";
+import { useForecastStore } from "@/lib/forecast/store";
+import { useAppStore } from "@/lib/store";
 import { useFutureStore, type FutureMode, type LensId } from "@/lib/farm-future/store";
 import { color, layout, motion as m } from "@/lib/farm-view/tokens";
 import { sound } from "@/lib/ui/sound";
@@ -148,6 +154,7 @@ export function WhatIf({ raised = false }: { raised?: boolean }) {
   const { openPanel, setWhatIf, resetWhatIf } = useFutureStore.getState();
   const active = whatIfActive(w);
   const open = panel === "whatif";
+  const { forecast } = useFutureData();
   // Lift above the crop growth strip when it is showing (1 yr zoom + Erosion lens).
   const lifted = useFutureStore((st) => st.zoom === "1y" && st.lens === "erosion");
   const pillBottom = lifted || raised ? 300 : 196;
@@ -165,6 +172,7 @@ export function WhatIf({ raised = false }: { raised?: boolean }) {
         <Slider label="Rainfall" value={w.rainPct} {...WHAT_IF_LIMITS.rainPct} fmt={(v) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}%`} onChange={(v) => setWhatIf({ rainPct: v })} centered />
         <Slider label="Temperature" value={w.tempC} {...WHAT_IF_LIMITS.tempC} fmt={(v) => `+${v.toFixed(1)} °C`} onChange={(v) => setWhatIf({ tempC: Math.round(v * 10) / 10 })} />
         <hr className="ff-hr" />
+        {forecast ? <EngineWhatIf /> : <>
         <Label>Score in 2035 · ring = no change</Label>
         {STRATEGIES.map((s) => {
           const now = scoreWithWhatIf(s, w);
@@ -187,8 +195,47 @@ export function WhatIf({ raised = false }: { raised?: boolean }) {
           <span className="ff-label">Relative score: compare strategies, not an amount</span>
           <SyntheticBadge />
         </div>
+        </>}
       </PopCard>
     </>
+  );
+}
+
+const CLIMATE_SOURCE: Record<string, string> = {
+  history_resample: "Resampled NASA POWER daily weather, 1991–2024",
+  cmip6_delta: "NASA NEX-GDDP-CMIP6 climate trend on NASA POWER weather",
+};
+
+/** Engine what-if: the sliders refetch the forecast (debounced in useFarmForecast); scenario and climate source shown. */
+function EngineWhatIf() {
+  const { data, forecast } = useFutureData();
+  const status = useForecastStore((s) => s.status);
+  const fsource = useForecastStore((s) => s.source);
+  const farmId = useAppStore((s) => s.farmId);
+  if (!forecast) return null;
+  const siteId = siteForFarm(farmId);
+  const source = (siteId && baseRequest(siteId)?.climate_source) || "history_resample";
+  const sc = forecast.scenario;
+  return (
+    <div data-testid="whatif-engine" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <Label>Soil organic matter, year 10 · index, year 0 = 100</Label>
+      {data.strategies.map((s) => {
+        const series = engineSeries(forecast, s.engineId, "soil_organic_index");
+        const p = series ? pointAt(series, 10) : null;
+        return (
+          <div key={s.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+            <span style={{ color: color.inkSecondary }}>{s.name}</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{p ? fmt(p.p50) : "–"}{p && p.p10 !== null && p.p90 !== null && p.p10 !== p.p90 ? <span style={{ color: color.inkSecondary }}> ({fmt(p.p10)}–{fmt(p.p90)})</span> : null}</span>
+          </div>
+        );
+      })}
+      {status === "loading" && <span className="ff-p" role="status">Updating the forecast…</span>}
+      {fsource === "prebuilt" && <span className="ff-p">Showing the pre-built run; slider changes are scored when the app runs against the live API.</span>}
+      <span className="ff-p" data-testid="whatif-scenario">
+        Scenario: {sc.preset}, rain {sc.rain_scale_pct > 0 ? "+" : ""}{sc.rain_scale_pct} %, temperature +{sc.temp_offset_c} °C, phased in over {sc.ramp?.years ?? 10} years. Scenario forecast.
+      </span>
+      <span className="ff-p" data-testid="whatif-climate-source">Climate source: {CLIMATE_SOURCE[source] ?? source}</span>
+    </div>
   );
 }
 
