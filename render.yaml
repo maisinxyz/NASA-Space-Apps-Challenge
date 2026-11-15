@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: fieldtwin
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/v1/health

@@ -2,13 +2,21 @@
 // TODO(api): replace with real Twin endpoint (none in packages/contracts/openapi.yaml yet).
 import { SAMPLE_FIELDS, STRESS_LINE, underStress } from "./sample";
 
-export type TwinAnswer = { status: string; answer: string; chips: readonly string[] };
+export type TwinAnswer = { status: string; answer: string; chips: readonly string[]; plantingComparison?: true };
 
 export const TWIN_THINK_MS = 900;
 const FOLLOW_UP = "Why not the main block?";
 
 export function twinAnswer(question: string): TwinAnswer {
-  const q = question.toLowerCase();
+  const q = question.trim().toLowerCase().replace(/[?.!]$/, "");
+  if (q !== "which field needs water first" && q !== FOLLOW_UP.toLowerCase().slice(0, -1)) {
+    return {
+      status: "Checking this preview’s available examples…",
+      answer: "This preview has a sample watering question. For a future crop choice, open Compare strategies and choose the planting you want to replace.",
+      chips: ["Which field needs water first?"],
+      plantingComparison: true,
+    };
+  }
   const stressed = SAMPLE_FIELDS.filter(underStress).sort((a, b) => a.moisture - b.moisture);
   const driest = stressed[0];
   const main = SAMPLE_FIELDS.find((f) => f.id === "main-block");

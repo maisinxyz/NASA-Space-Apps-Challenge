@@ -14,7 +14,7 @@ import { ArrowUp, Logo, X } from "./icons";
 const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
 type Turn = { q: string; a: TwinAnswer; words: number; thinking: boolean };
 
-export function Twin({ bottom }: { bottom?: number }) {
+export function Twin({ bottom, onPlantingComparison }: { bottom?: number; onPlantingComparison?: () => void }) {
   const reduced = !!useReducedMotion();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -101,6 +101,12 @@ export function Twin({ bottom }: { bottom?: number }) {
                   </motion.div>
                 ))}
               </div>
+            )}
+            {done && turn.a.plantingComparison && onPlantingComparison && (
+              <FvButton className="chip" onClick={() => {
+                close();
+                onPlantingComparison();
+              }}>Open planting comparison</FvButton>
             )}
           </motion.section>
         )}

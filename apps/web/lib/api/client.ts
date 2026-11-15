@@ -111,6 +111,7 @@ const q = (params: Record<string, string | number>) => new URLSearchParams(Objec
 export function assetUrl(path: string): string {
   if (/^https?:\/\//.test(path)) return path;
   if (isMock) return path.replace(/^\/api\/v1\//, `${MOCK_ROOT}/`);
+  if (apiBase.startsWith("/")) return path.startsWith("/") ? path : `${apiBase}/${path}`;
   return new URL(path, apiBase).toString();
 }
 
