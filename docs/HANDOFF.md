@@ -1,3 +1,15 @@
+# Active work — 2026-11-15 afternoon (Claude Code, on `main`)
+
+**Status: implementing.** Reserved until this section says done: `apps/web/components/hero/`, `components/globe/`, `components/farm-view/`, `components/farm/`, `components/farm-future/`, `apps/web/app/methods/`, `apps/web/e2e/farm-view/`.
+
+1. **"Digital twin" → "Explorable"** (done locally, not pushed): explorable farms are labelled "Explorable"; "Enter digital twin" → "Enter farm"; "3D Digital Twin Unavailable" → "3D view unavailable". Internal ids (`tier: "twin"`, `Twin.tsx`, test ids) and the "FieldTwin" product name unchanged.
+2. **Synthetic data → "No data"** (in progress): features that showed synthetic/placeholder values now show "No data"; all "synthetic"/"illustrative" labels removed. UBC/KPU live engine results unchanged. A per-feature list will be added here. The sr-only "supports, and does not replace, local agronomic expertise" line stays.
+3. **Map credits:** Cesium ion and Google Maps logos stay. Google's 3D Tiles terms require them, and Cesium's free tier requires the Cesium logo. Removing the Cesium logo needs a paid plan or loading Google tiles directly; not planned.
+4. **Playwright** (full run against production build + live API, 19 min): 43 passed, 31 failed, 71 skipped. Failures are mostly specs for the old UI: old `.fv-toolbar` layout (9), synthetic preview features (4), Cornell / old Future lens menu (8), mobile/non-3D (3, out of desktop scope), and controls timing out at 30s (7: mute, sound toggle, keyboard camera, press feedback, hidden-panel restore, missing observations), which may be moved selectors or real bugs. Next: update/delete stale specs, flag real bugs, re-run only the failing specs.
+5. **API:** restarted on merged code with `CORS_ORIGINS=http://localhost:3003,http://localhost:3000`; Gus answers live (Groq, OpenRouter fallback).
+
+---
+
 # Active follow-up — 2026-11-15 (Claude Code)
 
 **Status: items 1, 2, 4 done; item 3 (Playwright) still running.** Owner: Claude Code session on branch `codex/launch-latest-20261114`. Reserved until this section says done: `apps/web/components/hero/`, `apps/web/components/globe/GlobeChrome.tsx`, `apps/web/components/farm/ScenarioPanel.tsx`, `services/api/app/core/config.py`, `services/api/app/main.py`, `.env.example`, `apps/web/e2e/farm-view/`.
