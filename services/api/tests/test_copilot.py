@@ -254,3 +254,17 @@ def test_invalid_accepted_request_is_rejected(client):
     response = client.post("/api/v1/copilot/chat", json=body)
     assert response.status_code == 422
     assert "forecast inputs are invalid" in response.text
+
+
+def test_monthly_planting_uses_accepted_request(monkeypatch):
+    body = request()
+    body["snapshot"]["horizon"] = "months"
+    body["snapshot"]["forecast_request"]["farm_water_quota_mm_per_season"] = 42
+    seen = {}
+    from app.services import planting_reply
+    def fake(site, forecast_request, message, snapshot, history):
+        seen.update(forecast_request)
+        return {"reply": "ok", "referenced_layers": [], "local_validation_tips": []}
+    monkeypatch.setattr(planting_reply, "reply_for_planting", fake)
+    copilot.chat(body, "test-monthly")
+    assert seen["farm_water_quota_mm_per_season"] == 42

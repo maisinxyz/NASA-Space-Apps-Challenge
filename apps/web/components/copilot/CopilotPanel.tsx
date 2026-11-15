@@ -22,7 +22,6 @@ const GUS_BG = "linear-gradient(rgba(17,26,32,.35), rgba(17,26,32,.35)), url(/gu
 
 export function useScreenState(): ScreenState | null {
   const farmId = useAppStore((s) => s.farmId);
-  const twinFieldId = useAppStore((s) => s.twinFieldId);
   const { t, whatIf, strategyId, focusFieldId, horizon, monthIndex } = useFutureStore();
   const { data } = useFutureData();
   const c = useCopilot();
@@ -33,7 +32,7 @@ export function useScreenState(): ScreenState | null {
     forecastRequest: accepted,
     farmId,
     siteId,
-    fieldId: c.fieldId ?? focusFieldId ?? twinFieldId ?? null,
+    fieldId: c.fieldId ?? focusFieldId ?? null,
     horizon,
     timeIndex: horizon === "months" ? monthIndex : Math.floor(t) + 1,
     rainPct: accepted && typeof accepted.scenario !== "string" ? accepted.scenario.rain_scale_pct ?? 0 : whatIf.rainPct,

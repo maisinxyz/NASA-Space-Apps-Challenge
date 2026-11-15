@@ -62,7 +62,7 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
   const setFieldId = (id: string | null) => useFutureStore.setState({ focusFieldId: id });
   if (!forecast) return <ForecastStatus status={status} source={null} error={error} hasForecast={false} onRetry={retry} />;
   const field = (fieldId && forecast.fields.find((x) => x.field_id === fieldId)) || forecast.fields[0];
-  const strategies = field?.strategies.slice(0, 4) ?? [];
+  const strategies = field?.strategies ?? [];
   const year = forecastYear(t, forecast.horizon_years);
   const rank = forecast.comparison.rank_by_priority;
   return (

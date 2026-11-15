@@ -111,3 +111,12 @@ describe("scope separation", () => {
     useForecastStore.getState().reset();
   });
 });
+
+it("shows an accepted custom strategy after the generated alternatives", () => {
+  const f = structuredClone(ubc);
+  const original = f.fields[0].strategies[0];
+  f.fields[0].strategies = [0, 1, 2, 3, 4].map((i) => ({ ...original, id: `rot_test_${i}`, label: i === 4 ? "My custom rotation" : `Option ${i}`, role: i === 4 ? "custom" : "alternative" })) as Forecast["fields"][number]["strategies"];
+  useForecastStore.setState({ siteId: f.site_id, forecast: f, source: "live", status: "ready", error: null });
+  expect(renderToStaticMarkup(createElement(RotationComparison))).toContain("My custom rotation");
+  useForecastStore.getState().reset();
+});

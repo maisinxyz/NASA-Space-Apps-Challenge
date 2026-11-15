@@ -207,9 +207,10 @@ def chat(body: dict, client: str) -> dict:
     snapshot = body["snapshot"]
     site = snapshot["site_id"]
     if site in FARMS and snapshot["farm_id"] == FARMS[site][0]:
-        request = accepted_request(snapshot) if snapshot.get("horizon") == "years" else json.loads((REPO_ROOT / "apps/web/lib/forecast" / FARMS[site][1]).read_text(encoding="utf-8"))
-        if result := reply_for_planting(site, request, body["message"], snapshot, body.get("history", [])):
-            return result
+        if snapshot.get("forecast_request") is not None or snapshot.get("horizon") == "years":
+            request = accepted_request(snapshot)
+            if result := reply_for_planting(site, request, body["message"], snapshot, body.get("history", [])):
+                return result
     if os.getenv("OFFLINE") == "1":
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable in offline mode.", retryable=True)
     # Existing environment wins. Read only the required setting and do not

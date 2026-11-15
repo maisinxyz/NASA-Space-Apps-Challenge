@@ -46,25 +46,28 @@ export function useFarmForecast() {
   const whatIf = useFutureStore((s) => s.whatIf);
   const siteId = siteForFarm(farmId);
   const { rainPct, tempC } = whatIf;
+  const accepted = useForecastStore((s) => s.siteId === siteId ? s.request : null);
+  const status = useForecastStore((s) => s.siteId === siteId ? s.status : "idle");
   useEffect(() => {
     if (!siteId) return;
     const state = useForecastStore.getState();
-    if (state.siteId !== siteId || (!state.forecast && state.status === "idle")) void state.load(siteId);
+    if (state.siteId !== siteId || (!state.forecast && state.status === "idle")) void state.load(siteId, { rainPct, tempC });
   }, [siteId]);
   useEffect(() => {
     if (!siteId) return;
-    const state = useForecastStore.getState();
-    if (state.siteId !== siteId || !state.request) return;
-    const scenario = state.request.scenario;
-    if (typeof scenario !== "string" && scenario.rain_scale_pct === rainPct && scenario.temp_offset_c === tempC) return;
-    const accepted = state.request;
+    if (!accepted || status !== "ready") return;
+    const scenario = accepted.scenario;
+    const sameScenario = typeof scenario === "string"
+      ? scenario === "baseline" && rainPct === 0 && tempC === 0
+      : (scenario.rain_scale_pct ?? 0) === rainPct && (scenario.temp_offset_c ?? 0) === tempC;
+    if (sameScenario) return;
     const timer = setTimeout(() => {
       const current = useForecastStore.getState();
       if (current.request !== accepted || current.status === "loading") return;
       void current.run(siteId, { ...accepted, scenario: { preset: "baseline", rain_scale_pct: rainPct, temp_offset_c: tempC } });
     }, 350);
     return () => clearTimeout(timer);
-  }, [siteId, rainPct, tempC]);
+  }, [siteId, rainPct, tempC, accepted, status]);
   return siteId;
 }
 

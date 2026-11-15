@@ -198,7 +198,7 @@ export function RotationPlanner({ siteId }: { siteId: string }) {
           const blob = new Blob([JSON.stringify({ version: 1, site_id: siteId, request: shared.request }, null, 2)], { type: "application/json" });
           const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `${siteId}-forecast-request.json`; link.click(); URL.revokeObjectURL(url);
         }}>Download accepted forecast inputs</button>}
-        {shared.request && <p className="muted">The downloaded request can be posted to /api/v1/sites/{siteId}/forecast to rerun this experiment.</p>}
+        {shared.request && <p className="muted">To rerun, post the downloaded JSON’s request property to /api/v1/sites/{siteId}/forecast.</p>}
         {run.note && <p className="muted" data-testid="planner-note">{run.note}</p>}
         {run.status === "loading" && <p role="status">Scoring the rotations…</p>}
         {run.status === "error" && <p role="alert" className="bad">{run.error}</p>}
