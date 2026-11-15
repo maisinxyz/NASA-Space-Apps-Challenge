@@ -71,19 +71,108 @@ def _table(site_id: str, scenario_key: str, location: tuple[float, float] | None
     return build_table(site_id, base(site_id, location), _computed(site_id, scenario_key, location))
 
 
+_BASIS = {"measured", "derived", "modeled", "assumed"}
+_SERIES_BASIS = _BASIS | {"relative"}
+
+
+def _seed_basis(doc: dict, default: str) -> str:
+    basis = doc.get("basis")
+    return basis if basis in _SERIES_BASIS else default
+
+
+def _satellite_block(doc: dict | None, feature_id: str, anomaly_id: str | None, default_basis: str) -> dict[str, dict]:
+    """Feature series for one weekly seed. Empty when the loader returned None."""
+
+    if doc is None:
+        return {}
+    years, grid = P.weekly_seed_grid(doc)
+    if not years:
+        return {}
+    unit = doc.get("unit")
+    if not isinstance(unit, str) or not unit.strip():
+        return {}
+    start, end = years[0], years[-1]
+    basis = _seed_basis(doc, default_basis)
+    out = {
+        feature_id: P.series(
+            grid, years, unit, basis,
+            f"Weekly {feature_id} for {start}-{end} from the stored seed. Null weeks were left empty.",
+        ),
+    }
+    if anomaly_id:
+        out[anomaly_id] = P.series(
+            P.anomaly(grid, grid), years, "sigma", "derived",
+            f"{feature_id} minus its own weekly normal over {start}-{end}, in that record's standard deviations.",
+        )
+    return out
+
+
+def _layer_source(site_id: str, layer: str, role: str, doc: dict) -> dict | None:
+    """Source row from the sidecar. Skipped when licence or attribution is empty."""
+
+    meta_path = seeds.sidecar_path(seeds.SEED_DIR / site_id / f"{layer}.json.gz")
+    if not meta_path.is_file():
+        return None
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    license_text = str(meta.get("license") or "").strip()
+    attribution = str(meta.get("attribution") or "").strip()
+    name = str(meta.get("source_name") or "").strip()
+    if not license_text or not attribution or not name:
+        return None
+    basis = doc.get("basis") if doc.get("basis") in _BASIS else "measured"
+    row = {"name": name, "role": role, "license": license_text, "attribution": attribution, "basis": basis}
+    url = str(meta.get("source_url") or "").strip()
+    if url:
+        row["url"] = url
+    resolution = doc.get("native_resolution_m")
+    if isinstance(resolution, (int, float)) and not isinstance(resolution, bool) and resolution > 0:
+        row["resolution_m"] = float(resolution)
+    return row
+
+
 def build_table(site_id: str, b: tuple, c: P.Computed) -> dict:
     """FeatureTable from a base() tuple and its computed grids (scripts reuse this for fixtures)."""
     _, mode, soil, info = b
     scenario = c.scenario
-    limited = soil is None  # no NDVI/SMAP seeds exist yet, so soil is the only seeded layer
+    ndvi = seeds.load_ndvi(site_id)
+    smap = seeds.load_smap(site_id)
+    ecostress = seeds.load_ecostress(site_id)
+    features = {fid: P.series(c.grids[fid], c.years, *P.FEATURE_META[fid]) for fid in P.FEATURE_META}
+    features.update(_satellite_block(ndvi, "ndvi", "ndvi_anomaly", "measured"))
+    smap_block = _satellite_block(smap, "smap", "smap_anomaly", "modeled")
+    # The contract names smap_anomaly. The raw smap series is not a feature id.
+    smap_block.pop("smap", None)
+    features.update(smap_block)
+    satellite_present = any(doc is not None and P.weekly_seed_grid(doc)[0] for doc in (ndvi, smap, ecostress))
+    limited = soil is None and not satellite_present
     used = [{"name": "NASA POWER", "resolution_note": C.POWER_RESOLUTION_NOTE}]
     if soil:
         used.append({"name": "SoilGrids 2.0", "resolution_note": C.SOILGRIDS_RESOLUTION_NOTE})
+    table_sources = sources(soil)
+    for layer, role, doc in (
+        ("ndvi", "vegetation", ndvi),
+        ("smap", "soil_moisture", smap),
+        ("ecostress", "vegetation", ecostress),
+    ):
+        if doc is None:
+            continue
+        row = _layer_source(site_id, layer, role, doc)
+        if row:
+            table_sources.append(row)
+            used.append({"name": row["name"], "resolution_note": str(doc.get("spatial_method") or row["name"])})
+    agree = None
+    if smap is not None:
+        smap_years, smap_grid = P.weekly_seed_grid(smap)
+        if smap_years:
+            share = P.sign_agreement(c.grids["soil_moisture_anomaly"], c.years, P.anomaly(smap_grid, smap_grid), smap_years)
+            if share is not None:
+                agree = share >= float(C.THRESHOLDS["smap_agree_share"])
     caveats = list(C.CAVEATS)
     if scenario["preset"] != "baseline" or scenario["rain_scale_pct"] or scenario["temp_offset_c"] or scenario["rain_scale_by_season"]:
         caveats.append("Modeled scenario, not a forecast: observed years with rain scaled and temperatures shifted. Soil wetness is not re-modeled.")
     if limited:
         caveats.append("Limited data: no seeded soil or satellite data for this location; weather-derived features only.")
+    missing = dict(c.missing_fraction)
     return {
         "schema_version": C.SCHEMA_VERSION,
         "pipeline_version": C.PIPELINE_VERSION,
@@ -93,19 +182,19 @@ def build_table(site_id: str, b: tuple, c: P.Computed) -> dict:
         "weeks": C.WEEKS,
         "scenario": scenario,
         "data_mode": mode,
-        "features": {fid: P.series(c.grids[fid], c.years, *P.FEATURE_META[fid]) for fid in P.FEATURE_META},
+        "features": features,
         "thresholds": c.thresholds,
         "soil": soil,
         "quality": {
             "years_available": c.years_available,
-            "missing_fraction": c.missing_fraction,
+            "missing_fraction": missing,
             "sources_used": used,
-            "sources_agree": None,  # no SMAP seed yet
+            "sources_agree": agree,
             "resolution_note": "Weekly values per site point; daily series aggregated to 52 weeks. No spatial blending.",
             "interpolated_series": [],
             "limited_data": limited,
         },
-        "sources": sources(soil),
+        "sources": table_sources,
         "caveats": caveats,
     }
 

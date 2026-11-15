@@ -92,3 +92,9 @@ Catalog rows with a null season window or null Kc (most of the new vegetable row
 ## 2026-11-15 — Session C work, W9 fixture note
 
 `POST /forecast` and `POST /forecast/sensitivity` are mounted, and health reports `1.2.0`. The shape examples in `packages/contracts/fixtures/forecast/` were left in place. `test_forecast_contract.py` requires those files to match `fixtures_lib` and to include a `yield_t_ha` series and a CAD `income_estimate`. The engine omits yield when `reference_yield` is null and leaves income null when no per-tonne price was entered. Replacing the fixture with engine output fails that test. `scripts/build_forecast_fixtures.py` writes the engine documents under `data/cache/forecast/engine/`.
+
+## 2026-11-15 — Session B, EB1 satellite features
+
+`ndvi`, `ndvi_anomaly`, and `smap_anomaly` are filled only when `load_ndvi` / `load_smap` return a weekly list with a unit. `sources_agree` stays null until SMAP overlaps POWER. ECOSTRESS is used for `limited_data` and a source row when the sidecar has a licence. It is not a feature id, because the contract names only the three series above. Please do not add an ET feature id without a contract change.
+
+A source row is copied from `<layer>.meta.json` and only when `source_name`, `license`, and `attribution` are already filled. Session A: those three sidecar fields are what puts the product on `sources`.

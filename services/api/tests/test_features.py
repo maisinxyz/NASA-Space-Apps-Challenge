@@ -206,6 +206,77 @@ def test_usda_texture():
     assert seeds.usda_texture(50, 10, 38) == "sandy clay"
 
 
+def _flat_year(year: int, value: float, holes: set[int] | None = None) -> dict:
+    holes = holes or set()
+    values = [None if week in holes else value for week in range(52)]
+    return {"year": year, "values": values, "n_obs": [0 if week in holes else 3 for week in range(52)]}
+
+
+def test_weekly_seed_grid_keeps_nulls_and_rejects_a_short_row():
+    years, grid = P.weekly_seed_grid({
+        "weekly": [
+            _flat_year(2019, 0.4, holes={2}),
+            {"year": 2020, "values": [1.0], "n_obs": [1]},
+        ],
+    })
+    assert years == [2019]
+    assert np.isnan(grid[0, 2]) and grid[0, 0] == 0.4
+
+
+def test_sign_agreement_is_the_share_of_matching_signs():
+    left = np.array([[1.0, -1.0, 0.0, np.nan]])
+    right = np.array([[1.0, 1.0, -1.0, 1.0]])
+    assert P.sign_agreement(left, [2018], right, [2018]) == 0.5
+    assert P.sign_agreement(left, [2018], right, [2019]) is None
+
+
+def test_satellite_features_present_absent_and_coarse(monkeypatch):
+    """Synthetic weekly docs. Nothing is written under data/seed."""
+    from dataclasses import replace
+
+    site = "site_usda_barc"
+    b = F.base(site)
+    c = F.computed(site, P.resolve_scenario())
+    plain = F.build_table(site, b, c)
+    assert "ndvi" not in plain["features"] and plain["quality"]["sources_agree"] is None
+
+    y0, y1 = int(c.years[0]), int(c.years[1])
+    ndvi = {
+        "site_id": site, "layer": "ndvi", "variable": "NDVI", "unit": "1", "basis": "measured",
+        "native_resolution_m": 30, "weekly": [_flat_year(2018, 0.2), _flat_year(2019, 0.6)],
+    }
+    smap = {
+        "site_id": site, "layer": "smap", "variable": "sm_rootzone", "unit": "m3/m3", "basis": "modeled",
+        "native_resolution_m": 9000,
+        "weekly": [_flat_year(y0, 0.1), _flat_year(y1, 0.4)],
+    }
+    anom = np.array(c.grids["soil_moisture_anomaly"], copy=True)
+    anom[0, :] = -1.0
+    anom[1, :] = 1.0
+    grids = dict(c.grids)
+    grids["soil_moisture_anomaly"] = anom
+    aligned = replace(c, grids=grids)
+    monkeypatch.setattr(seeds, "load_ndvi", lambda _site: ndvi)
+    monkeypatch.setattr(seeds, "load_smap", lambda _site: smap)
+    monkeypatch.setattr(seeds, "load_ecostress", lambda _site: None)
+    rich = F.build_table(site, b, aligned)
+    assert {"ndvi", "ndvi_anomaly", "smap_anomaly"} <= set(rich["features"])
+    assert "smap" not in rich["features"]
+    assert rich["features"]["ndvi"]["unit"] == "1" and rich["features"]["ndvi"]["basis"] == "measured"
+    assert rich["features"]["ndvi_anomaly"]["unit"] == "sigma" and rich["features"]["ndvi_anomaly"]["basis"] == "derived"
+    assert rich["features"]["ndvi_anomaly"]["by_year"]["2018"][0] < 0
+    assert rich["features"]["ndvi_anomaly"]["by_year"]["2019"][0] > 0
+    assert rich["features"]["smap_anomaly"]["basis"] == "derived"
+    assert rich["quality"]["sources_agree"] is True
+    assert rich["quality"]["limited_data"] is False
+    contract.validate_schema(rich, "FeatureTable")
+    # A 9 km pixel is a source row only when the sidecar stores a licence. This fixture has none.
+    assert all(row["role"] != "soil_moisture" for row in rich["sources"])
+    anom[0, :] = 1.0
+    disagree = F.build_table(site, b, aligned)
+    assert disagree["quality"]["sources_agree"] is False
+
+
 def test_feature_schema_file_is_current():
     import sys
 
