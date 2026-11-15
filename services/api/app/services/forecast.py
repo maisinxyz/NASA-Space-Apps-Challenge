@@ -44,6 +44,7 @@ from app.twin.types import (
     ForecastRequest,
     InputCosts,
     IrrigationCfg,
+    Plan,
     Ramp,
     ScenarioApplied,
     Selection,
@@ -60,6 +61,7 @@ from app.twin.weather_ensemble import build_members
 _DEFAULT_AREA_HA = 1.0
 _DEFAULT_SLOPE = "gentle"
 _CACHE_LIMIT = 32
+_PLANTING_STRATEGY = "rot_first_year_planting"
 _memory: dict[str, dict] = {}
 _memory_order: list[str] = []
 
@@ -140,10 +142,13 @@ def prepare(site_id: str, body: dict, *, location: tuple[float, float] | None = 
 
 
 def simulate_plans(field_run: FieldRun, members: list[Weather], catalog, lat: float) -> list:
-    return [
-        simulate(plan, members, field_run.soil, field_run.field, catalog, lat=lat)
-        for plan in field_run.plans
-    ]
+    simulations = []
+    for plan in field_run.plans:
+        if plan.strategy_id == _PLANTING_STRATEGY and field_run.field.first_year_planting is None:
+            simulations.append(simulations[0])
+        else:
+            simulations.append(simulate(plan, members, field_run.soil, field_run.field, catalog, lat=lat))
+    return simulations
 
 
 def _assemble(prepared: Prepared, members_n: int) -> dict:
@@ -151,8 +156,14 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
     from app.twin.exposure import exposure_report
 
     req = prepared.req
+    # Hold the sampled historical years fixed across crop and climate what-ifs.
+    planting_comparison = any(run.field.first_year_planting for run in prepared.fields)
+    weather_seed = (
+        request_hash({"site_id": prepared.site_id, "horizon_years": req.horizon_years})
+        if planting_comparison else prepared.digest
+    )
     member_weather = build_members(
-        prepared.weather, prepared.scenario, req.horizon_years, members_n, prepared.digest,
+        prepared.weather, prepared.scenario, req.horizon_years, members_n, weather_seed,
         lat=prepared.lat, site_id=prepared.site_id, climate_source=req.climate_source,
     )
     field_docs = []
@@ -256,7 +267,7 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
     existing = next(sim for plan, sim in zip(field_run.plans, simulations) if plan.strategy_id == "rot_existing")
     strategies = []
     crops = TC.index_crops(prepared.catalog)
-    for plan, sim, fit, card in zip(field_run.plans, simulations, fits, cards):
+    for plan, sim, fit, card, role, label in zip(field_run.plans, simulations, fits, cards, field_run.roles, field_run.labels):
         saved = fertilizer_saved(sim["n_fertilizer_need_kg_ha"], existing["n_fertilizer_need_kg_ha"])
         income, income_notes = income_estimate(plan, sim, _req_for_field(req, field_run.field))
         flags = strategy_flags(
@@ -266,7 +277,7 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
         for slot in plan.slots:
             if slot.year_index <= len(cycle):
                 cycle[slot.year_index - 1].append(slot.crop_id)
-        matches = cycle_conflicts(cycle, crops) if len(cycle) == plan.cycle_years else (None, False)
+        matches = cycle_conflicts(cycle, crops) if len(cycle) == plan.cycle_years and plan.strategy_id != _PLANTING_STRATEGY else (None, False)
         explanation, unverified = explain_rotation(plan, crops, *matches)
         if unverified:
             flags.append({
@@ -293,10 +304,34 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
                 "trigger": {"layer": "economics", "rule": "missing_price"},
             })
         gaps = list(sim.review_notes) + list(income_notes) + gap_notes(_site_id(prepared))
+        evidence = evidence_card(
+            plan.strategy_id, role=role, rank=rank_of[plan.strategy_id], n_strategies=len(ids),
+            scorecard=card, gaps=gaps, horizon_years=req.horizon_years,
+            risks=[flag["text"] for flag in flags if flag["severity"] in ("caution", "verify")],
+        )
+        if plan.strategy_id == _PLANTING_STRATEGY and field_run.field.first_year_planting:
+            evidence["why_suggested"] = (
+                "This is your year-one planting choice. The baseline and this option share "
+                "the same weather samples, starting soil and remaining crop schedule."
+            )
+            for year in sorted({1, 3, 5, req.horizon_years}):
+                for key, name, unit in (
+                    ("soil_organic_index", "soil organic matter index", "index points"),
+                    ("infiltration_index", "infiltration index", "index points"),
+                    ("soil_loss_t_ha_yr", "soil loss proxy", "t/ha/yr"),
+                    ("irrigation_need_mm", "irrigation need", "mm/yr"),
+                ):
+                    series = sim[key]
+                    delta = series.points[year].p50 - existing[key].points[year].p50
+                    evidence["evidence_items"].append({
+                        "label": f"Year {year} {name} difference from baseline",
+                        "value": delta, "unit": unit, "basis": series.basis,
+                        "source": "Difference between scenario medians using the same sampled weather",
+                    })
         strategies.append({
             "id": plan.strategy_id,
-            "role": field_run.roles[ids.index(plan.strategy_id)],
-            "label": field_run.labels[ids.index(plan.strategy_id)],
+            "role": role,
+            "label": label,
             "cycle_years": plan.cycle_years,
             "plan": [{"year_index": slot.year_index, "season": slot.season, "crop_id": slot.crop_id} for slot in plan.slots],
             "trajectories": {key: series_to_dict(sim[key]) for key in (
@@ -308,15 +343,7 @@ def _field_doc(prepared: Prepared, field_run: FieldRun, simulations: list) -> di
             "scorecard": card,
             "estimates": estimates(sim, saved, income),
             "vulnerable_seasons": [],
-            "evidence_card": evidence_card(
-                plan.strategy_id,
-                role=field_run.roles[ids.index(plan.strategy_id)],
-                rank=rank_of[plan.strategy_id],
-                n_strategies=len(ids),
-                scorecard=card,
-                gaps=gaps,
-                risks=[flag["text"] for flag in flags if flag["severity"] in ("caution", "verify")],
-            ),
+            "evidence_card": evidence,
             "review_flags": flags,
             "rotation_explanation": explanation,
         })
@@ -653,6 +680,7 @@ def _field_runs(req: ForecastRequest, site_id: str, info: dict, summary: dict | 
     total_area = sum(field.area_ha for field in fields)
     farm_quota = req.farm_water_quota_mm_per_season
     runs = []
+    compare_planting = any(field.first_year_planting for field in fields)
     for field in fields:
         # quota_mm_per_season is a depth. The farm value applies to each hectare.
         # It is not divided by area. A field that entered its own quota keeps that depth.
@@ -665,8 +693,37 @@ def _field_runs(req: ForecastRequest, site_id: str, info: dict, summary: dict | 
             selected = field.selection_override
             field_req = replace(field_req, selection=Selection(selected.crops, selected.pinned, selected.excluded))
         built = build_strategies(field_req, catalog, None, None, lat=float(info["lat"]), site_id=site_id)
+        if compare_planting:
+            plan, label = _planting_plan(built.plans[0], field.first_year_planting, catalog, req.horizon_years)
+            built = replace(built, plans=(*built.plans, plan), roles=(*built.roles, "custom"), labels=(*built.labels, label))
         runs.append(FieldRun(field, soil, built.plans, built.roles, built.labels, built.warnings))
     return runs
+
+
+def _planting_plan(baseline: Plan, planting: Slot | None, catalog, horizon: int) -> tuple[Plan, str]:
+    """Replace one existing slot once. Preserve all other slots across the horizon."""
+    if planting is None:
+        return replace(baseline, strategy_id=_PLANTING_STRATEGY), "Year-one planting comparison (unchanged field)"
+    crops = TC.index_crops(catalog)
+    crop = crops.get(planting.crop_id)
+    if crop is None and planting.crop_id != "fallow":
+        raise ApiError("UNKNOWN_CROP", f"Unknown year-one crop: {planting.crop_id}.")
+    if crop is not None:
+        window = crop.get("season_window") or {}
+        if not all(type(window.get(key)) is int for key in ("plant_doy", "terminate_doy")):
+            raise ApiError("INVALID_INPUT", "The year-one crop needs a catalog planting and termination window.")
+    matches = [slot for slot in baseline.slots if slot.year_index == 1 and slot.season == planting.season]
+    if len(matches) != 1:
+        raise ApiError("INVALID_INPUT", "Choose a season with exactly one baseline planting slot in year one.")
+    if matches[0].crop_id == planting.crop_id:
+        raise ApiError("INVALID_INPUT", "Choose a crop different from the baseline planting.")
+    if planting.crop_id != "fallow" and any(
+        slot.year_index == 1 and slot.crop_id == planting.crop_id for slot in baseline.slots
+    ):
+        raise ApiError("INVALID_INPUT", "The crop is already in another year-one slot.")
+    slots = tuple(planting if slot == matches[0] else slot for slot in baseline.slots)
+    name = (crop.get("common_name") or crop.get("name") or planting.crop_id) if crop else "Fallow"
+    return replace(baseline, strategy_id=_PLANTING_STRATEGY, slots=slots, cycle_years=horizon), f"Plant {name} in year one"
 
 
 def _default_field(req: ForecastRequest, site_id: str, info: dict) -> FieldCfg:
@@ -799,8 +856,20 @@ def _fields(raw, no_till: bool) -> list[FieldCfg] | None:
             soil_override=soil,
             polygon=item.get("polygon"),
             selection_override=parsed_selection,
+            first_year_planting=_first_year_planting(item.get("first_year_planting")),
         ))
     return fields
+
+
+def _first_year_planting(raw) -> Slot | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or not isinstance(raw.get("crop_id"), str):
+        raise ApiError("INVALID_INPUT", "first_year_planting requires season and crop_id.")
+    try:
+        return Slot(1, raw.get("season"), raw["crop_id"])
+    except ValueError as exc:
+        raise ApiError("INVALID_INPUT", str(exc)) from exc
 
 
 def _customs(raw):

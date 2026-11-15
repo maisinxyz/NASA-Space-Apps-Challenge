@@ -1,6 +1,6 @@
 # FieldTwin
 
-Give FieldTwin a photo and a location of a farm, and it rebuilds the land as an interactive 3D model, then replays real historical storms (NASA POWER) on it so farmers can see where water pools and soil erodes under different crop rotations.
+FieldTwin helps growers compare crop rotations under changing weather and water constraints. The UBC Farm and KPU Langley forecast uses NASA POWER historical weather, mapped soil, and crop traits to simulate how each rotation affects soil organic matter, infiltration, erosion, and irrigation need over five to ten years. Supported climate scenarios can incorporate changes from NASA NEX-GDDP-CMIP6.
 
 Built for NASA Space Apps Challenge 2026 (Vancouver), challenge "Field Shift: Adapting Farms with NASA Data".
 
@@ -19,7 +19,7 @@ Built for NASA Space Apps Challenge 2026 (Vancouver), challenge "Field Shift: Ad
 | `scripts/` | Fixture, seed, smoke, and benchmark scripts |
 | `docs/progress/` | One note per finished prompt |
 
-Section 1 is implemented. See [web setup and verification](apps/web/README.md), the [current Section 1 spec](docs/prd/section1-web-3d.md), and [completion notes](docs/progress/s1-local-completion.md). All bundled data is synthetic mock data, including offline mode.
+The live API uses bundled source datasets for the curated forecasts. The default web configuration can serve a prebuilt UBC forecast and synthetic fixtures for other demo features. Run the web app and API in live mode to recompute a forecast when the scenario changes. See [web setup](apps/web/README.md) and the [first-year planting comparison](docs/first-year-planting.md).
 
 ## Contract change process
 

@@ -1,6 +1,6 @@
 """Monthly climatology, including offline data and contract behavior."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 from time import perf_counter
 
 import pytest
@@ -39,6 +39,21 @@ def test_outlook_scenario_and_lead_time():
     first = _number([0, 1, 2, 3, 4], "mm", "derived", 0)
     last = _number([0, 1, 2, 3, 4], "mm", "derived", 11)
     assert last["p10"] < first["p10"] < first["p90"] < last["p90"]
+
+
+def test_outlook_applies_seas5_only_to_matching_months(monkeypatch):
+    from app.weather import seasonal
+
+    start = date(2026, 12, 1)
+    baseline = _outlook("site_ubc_farm", 2, "baseline", start)
+    monkeypatch.setattr(seasonal, "anomalies", lambda *_: {"2026-12": (2.0, 10.0)})
+    updated = _outlook("site_ubc_farm", 2, "baseline", start, datetime(2026, 11, 16, tzinfo=UTC))
+    contract.validate_response(updated, PATH)
+    assert updated["kind"] == "seasonal_forecast"
+    assert updated["months"][0]["temperature_mean_c"]["value"] == pytest.approx(
+        baseline["months"][0]["temperature_mean_c"]["value"] + 2
+    )
+    assert updated["months"][1:] == baseline["months"][1:]
 
 
 @pytest.mark.parametrize(("path", "status", "code"), [

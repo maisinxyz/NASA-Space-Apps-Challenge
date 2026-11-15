@@ -5305,6 +5305,35 @@
     },
     "selection_override": {
      "$ref": "#/$defs/ForecastSelection"
+    },
+    "first_year_planting": {
+     "type": "object",
+     "description": "Replace exactly one year-one baseline slot in this field for a one-time\ncomparison. All other slots and sampled weather are held fixed.\nThe response adds rot_first_year_planting. Fields without a replacement\ncontribute their unchanged baseline to that strategy's farm rollup.\n",
+     "required": [
+      "season",
+      "crop_id"
+     ],
+     "properties": {
+      "season": {
+       "type": "string",
+       "enum": [
+        "spring",
+        "summer",
+        "fall",
+        "winter"
+       ]
+      },
+      "crop_id": {
+       "anyOf": [
+        {
+         "$ref": "#/$defs/CropId"
+        },
+        {
+         "const": "fallow"
+        }
+       ]
+      }
+     }
     }
    }
   },

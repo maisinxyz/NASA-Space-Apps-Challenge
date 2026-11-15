@@ -58,8 +58,13 @@ def monthly_context(snapshot: dict) -> dict:
     scenario = snapshot["scenario"].get("preset") or "baseline"
     doc = outlook(snapshot["site_id"], scenario=scenario)
     row = doc["months"][index]
+    description = (
+        "Site-level seasonal outlook using SEAS5 anomalies and historical POWER weather."
+        if row["kind"] == "seasonal_forecast"
+        else "Site-level historical monthly climatology for the selected preset."
+    )
     return {
-        "description": "Site-level historical monthly climatology for the selected preset.",
+        "description": description,
         "site_id": snapshot["site_id"],
         "month": row["month"],
         "kind": row["kind"],

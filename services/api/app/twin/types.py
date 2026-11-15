@@ -304,6 +304,7 @@ class FieldCfg:
     soil_override: SoilOverride | None = None
     polygon: dict | None = None
     selection_override: SelectionOverride | None = None
+    first_year_planting: Slot | None = None
 
     def __post_init__(self) -> None:
         if self.slope_class not in SLOPE_CLASSES:

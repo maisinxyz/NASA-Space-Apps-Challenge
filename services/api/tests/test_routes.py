@@ -116,7 +116,7 @@ def test_bad_input_uses_error_format(client):
 
 
 def test_health_mode(client):
-    assert client.get(f"{API}/health").json() == {"status": "ok", "mode": "live", "version": "1.3.0"}
+    assert client.get(f"{API}/health").json() == {"status": "ok", "mode": "live", "version": "1.4.0"}
 
 
 def test_cors_for_localhost_3000(client):

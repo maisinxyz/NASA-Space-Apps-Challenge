@@ -122,6 +122,74 @@ def test_cache_round_trip_keeps_bytes():
     assert json.loads(raw)["site_id"] == "site_usda_barc"
 
 
+def test_one_planting_choice_changes_later_soil_without_changing_later_crops(client, monkeypatch):
+    from pathlib import Path
+
+    from fixtures_lib.contract import validate_response, validate_schema
+
+    monkeypatch.setenv("OFFLINE", "1")
+    root = Path(__file__).resolve().parents[3]
+    body = json.loads((root / "apps/web/lib/forecast/ubc-request.json").read_text())
+    body["fields"] = body["fields"][:2]
+    body["fields"][0]["first_year_planting"] = {"season": "spring", "crop_id": "crop_pea_field"}
+    body["fields"][1]["existing_rotation"] = [
+        {"year_index": 1, "season": "winter", "crop_id": "crop_wheat_winter"},
+    ]
+    body["horizon_years"] = 5
+    body["scenario"] = "drier_summers"
+    validate_schema(body, "ForecastRequest")
+    response = client.post("/api/v1/sites/site_ubc_farm/forecast", json=body)
+    assert response.status_code == 200, response.text
+    doc = response.json()
+    validate_response(doc, "/sites/{siteId}/forecast", "post")
+
+    first, second = doc["fields"]
+    baseline, *_, planting = first["strategies"]
+    assert planting["id"] == "rot_first_year_planting"
+    changed = [(before, after) for before, after in zip(baseline["plan"], planting["plan"]) if before != after]
+    assert len(baseline["plan"]) == len(planting["plan"])
+    assert changed == [(
+        {"year_index": 1, "season": "spring", "crop_id": "crop_barley"},
+        {"year_index": 1, "season": "spring", "crop_id": "crop_pea_field"},
+    )]
+    original = baseline["trajectories"]["soil_organic_index"]["points"]
+    changed_soil = planting["trajectories"]["soil_organic_index"]["points"]
+    assert original[0] == changed_soil[0]
+    assert changed_soil[5]["p50"] != pytest.approx(original[5]["p50"])
+    evidence = {item["label"]: item["value"] for item in planting["evidence_card"]["evidence_items"]}
+    assert evidence["Year 5 soil organic matter index difference from baseline"] == pytest.approx(
+        changed_soil[5]["p50"] - original[5]["p50"]
+    )
+    second_base, *_, second_planting = second["strategies"]
+    assert second_base["plan"] != baseline["plan"]
+    assert second_base["plan"] == second_planting["plan"]
+    assert second_base["trajectories"] == second_planting["trajectories"]
+    baseline_weather = forecast("site_ubc_farm", {**body, "scenario": "baseline"})
+    baseline_weather_planting = baseline_weather["fields"][0]["strategies"][-1]
+    assert baseline_weather_planting["plan"] == planting["plan"]
+    assert baseline_weather_planting["trajectories"]["irrigation_need_mm"] != planting["trajectories"]["irrigation_need_mm"]
+
+
+@pytest.mark.parametrize(("planting", "expected"), [
+    ({"season": "spring", "crop_id": "crop_unlisted"}, "UNKNOWN_CROP"),
+    ({"season": "monsoon", "crop_id": "crop_soybean"}, "INVALID_INPUT"),
+    ({"season": "summer", "crop_id": "crop_soybean"}, "INVALID_INPUT"),
+    ({"season": "spring", "crop_id": "crop_maize"}, "INVALID_INPUT"),
+])
+def test_one_planting_choice_rejects_invalid_replacements(planting, expected):
+    body = {
+        **BODY,
+        "fields": [{
+            "field_id": "west", "area_ha": 2, "slope_class": "flat", "irrigation": {"available": True},
+            "existing_rotation": [{"year_index": 1, "season": "spring", "crop_id": "crop_maize"}],
+            "first_year_planting": planting,
+        }],
+    }
+    with pytest.raises(ApiError) as exc:
+        forecast("site_usda_barc", body, members=1)
+    assert exc.value.code == expected
+
+
 @pytest.mark.parametrize("site_id,request_name", [
     ("site_ubc_farm", "ubc-request.json"),
     ("site_kpu_langley", "kpu-request.json"),

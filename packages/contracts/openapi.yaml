@@ -1,11 +1,14 @@
 openapi: 3.1.0
 info:
   title: FieldTwin API
-  version: "1.3.0"
+  version: "1.4.0"
   summary: Interface contract between the FieldTwin front-end and back-end (PRD §6).
   description: |
     Encodes `prd.md` §6. Endpoints, schemas, and formats are our own design.
     Decisions made where the PRD was loose are listed in `docs/progress/02.md` ("Decisions").
+
+    v1.4.0 adds an optional first-year planting comparison to each forecast field.
+    The response continues to use the existing forecast strategy and evidence schemas.
 
     v1.3.0 (docs/fieldtwin-v4-prd.md Appendix A, additive) adds the monthly outlook,
     the farm co-pilot chat, custom-field analysis (2D view only), an optional
@@ -2977,6 +2980,20 @@ components:
               minItems: 1
               items: { $ref: '#/components/schemas/RotationSlot' }
         selection_override: { $ref: '#/components/schemas/ForecastSelection' }
+        first_year_planting:
+          type: object
+          description: |
+            Replace exactly one year-one baseline slot in this field for a one-time
+            comparison. All other slots and sampled weather are held fixed.
+            The response adds rot_first_year_planting. Fields without a replacement
+            contribute their unchanged baseline to that strategy's farm rollup.
+          required: [season, crop_id]
+          properties:
+            season: { type: string, enum: [spring, summer, fall, winter] }
+            crop_id:
+              anyOf:
+                - $ref: '#/components/schemas/CropId'
+                - const: fallow
     ForecastConstraints:
       type: object
       required: [equipment, max_cycle_years, no_till, labour_level, livestock_on_farm]

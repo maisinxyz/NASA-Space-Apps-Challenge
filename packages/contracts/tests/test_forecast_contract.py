@@ -58,7 +58,7 @@ def walk(obj):
 
 def test_version_and_paths_are_additive():
     spec = contract.openapi()
-    assert spec["info"]["version"] == "1.3.0"
+    assert spec["info"]["version"] == "1.4.0"
     for path in OLD_PATHS + NEW_PATHS + V13_PATHS:
         assert path in spec["paths"]
     codes = spec["components"]["schemas"]["ErrorCode"]["enum"]

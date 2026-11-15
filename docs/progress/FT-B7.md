@@ -4,11 +4,13 @@
 
 The central value is the historical monthly mean. The range starts at the historical 10th and 90th percentiles and broadens toward the historical extrema with lead time, as a display range convention. The midpoint is the median. Responses are cached by site, scenario, length, and start month.
 
-Roadmap: Open-Meteo seasonal forecast integration was not attempted. Every response and month is `climatology`.
+The default response uses `climatology` for every month. An optional seasonal overlay is described below.
 
 - [NASA POWER daily API](https://power.larc.nasa.gov/docs/services/api/)
 - [FAO Irrigation and Drainage Paper 56](https://www.fao.org/4/x0490e/x0490e00.htm)
 
-The co-pilot month context uses this endpoint's site-level climatology. Month selection is zero-based (0–11). It supplies the chosen month's values, units, basis, glossary, and weather resolution to Groq. Monthly snapshots use the selected scenario preset. The contract contains no field rotation identity, so the context is site-level.
+The co-pilot month context uses this endpoint's site-level outlook. Month selection is zero-based (0–11). It supplies the chosen month's values, units, basis, glossary, and weather resolution to Groq. Monthly snapshots use the selected scenario preset. The contract contains no field rotation identity, so the context is site-level.
 
 Verification: UBC and KPU responses pass the contract validator, cached HTTP responses meet the 300 ms target, month bounds reject invalid inputs, and year rollover/scenario tests pass.
+
+The seasonal overlay is available when `OPEN_METEO_SEASONAL=1` is set in the API environment. It applies Open-Meteo ECMWF SEAS5 monthly ensemble-mean temperature and precipitation anomalies to the POWER record for matching months of the baseline. The API uses the shifted historical spread to describe uncertainty. The overlay leaves other months and what-if presets on climatology. When offline or upstream data is unavailable, the baseline also uses climatology. Seasonal results refresh hourly. [Open-Meteo seasonal API](https://open-meteo.com/en/docs/seasonal-forecast-api)
