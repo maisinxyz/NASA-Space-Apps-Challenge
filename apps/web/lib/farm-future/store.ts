@@ -3,6 +3,7 @@
 // clock and the what-if sliders reach everything at once. "Now" mode leaves the existing farm view untouched.
 import { create } from "zustand";
 
+import type { FieldMetric } from "./fieldColours";
 import type { StrategyId } from "./fixtures";
 import { clampT, NO_WHAT_IF, tOf, type ClockT, type WhatIf } from "./model";
 
@@ -24,6 +25,8 @@ export type FutureState = {
   panel: FuturePanel;
   /** Field to highlight after a review-flag deep link. */
   focusFieldId: string | null;
+  /** Which engine trajectory colours the fields on the map (F2). */
+  fieldMetric: FieldMetric;
 
   setMode(m: FutureMode): void;
   setT(t: ClockT): void;
@@ -36,6 +39,7 @@ export type FutureState = {
   openPanel(p: FuturePanel): void;
   openReview(id: StrategyId | null): void;
   goTo(yearIndex: number, doy: number, fieldId?: string): void;
+  setFieldMetric(m: FieldMetric): void;
 };
 
 export const INITIAL_T = tOf(8, 194); // 14 July 2034, year 9 of 10
@@ -51,6 +55,7 @@ export const useFutureStore = create<FutureState>((set) => ({
   whatIf: NO_WHAT_IF,
   panel: null,
   focusFieldId: null,
+  fieldMetric: "soil",
 
   setMode: (mode) => set({ mode, playing: false, panel: null, reviewFor: null, ...(mode === "now" ? { lens: null } : {}) }),
   setT: (t) => set({ t: clampT(t) }),
@@ -63,6 +68,7 @@ export const useFutureStore = create<FutureState>((set) => ({
   resetWhatIf: () => set({ whatIf: NO_WHAT_IF }),
   openPanel: (panel) => set((s) => ({ panel: s.panel === panel ? null : panel })),
   openReview: (reviewFor) => set({ reviewFor, panel: reviewFor ? "review" : null }),
+  setFieldMetric: (fieldMetric) => set({ fieldMetric }),
   goTo: (yearIndex, doy, fieldId) => set({ mode: "future", t: tOf(yearIndex, doy), focusFieldId: fieldId ?? null, panel: null, reviewFor: null, playing: false }),
 }));
 

@@ -193,7 +193,74 @@ const MD_GRAIN: TwinRotation[] = [
   },
 ];
 
-export const ROTATION_SETS = { "ny-dairy": NY_DAIRY, "md-grain": MD_GRAIN } satisfies Record<string, TwinRotation[]>;
+/**
+ * Coastal / Fraser Valley BC (UBC Farm, KPU Langley). Mirrors the engine's current rotation and the two
+ * alternatives it generates for the demo crop pool (lib/forecast/ubc-request.json): barley, field pea, winter wheat;
+ * canola and soybean with a fall rye cover; canola with rye, then pea. Month windows are the generic looks of the
+ * Now-mode compare only; the engine forecast uses its own crop windows.
+ */
+const BC_MIXED: TwinRotation[] = [
+  {
+    id: "rot_existing",
+    name: "Barley / field pea / winter wheat",
+    isExisting: true,
+    years: [
+      [B, B, B, G, G, G, G, B, B, B, B, B],
+      [B, B, B, L, L, L, L, B, B, B, B, B],
+      [G, G, G, G, G, G, G, B, B, G, G, G],
+    ],
+    scores: { water: 3, erosion: 2, soilCover: 2, income: 3 },
+    card: {
+      rotation_id: "rot_existing",
+      why_suggested: "The farm's current rotation: the baseline the other two are compared against.",
+      evidence: [COVER_PRINCIPLE, LEGUME_PRINCIPLE],
+      benefits: ["Familiar small-grain and pulse crops.", "Field pea fixes some of its own nitrogen."],
+      information_gaps: [NO_SITE_DATA],
+      risks_for_local_review: ["Bare soil through the wet coastal winter after spring crops.", "Two cereals in three years can carry over cereal diseases."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+  {
+    id: "rot_cover",
+    name: "Canola + rye cover / soybean + rye cover",
+    isExisting: false,
+    years: [
+      [V, V, V, B, G, G, G, G, B, V, V, V],
+      [V, V, V, B, L, L, L, L, B, V, V, V],
+    ],
+    scores: { water: 3, erosion: 4, soilCover: 5, income: 3 },
+    card: {
+      rotation_id: "rot_cover",
+      why_suggested: "Sows fall rye after each harvest so living plants hold the soil through the wet winter.",
+      evidence: [COVER_PRINCIPLE, ROOTS_PRINCIPLE],
+      benefits: ["Fewest bare months of the three.", "A legume every second year."],
+      information_gaps: ["Whether rye can be sown early enough after harvest in a typical year here."],
+      risks_for_local_review: ["Rye left too long in spring can delay planting.", "Extra passes on wet spring soil can compact it."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+  {
+    id: "rot_legume",
+    name: "Canola + rye cover / field pea",
+    isExisting: false,
+    years: [
+      [V, V, V, B, G, G, G, G, B, V, V, V],
+      [V, V, V, B, L, L, L, B, B, B, B, B],
+    ],
+    scores: { water: 3, erosion: 3, soilCover: 4, income: 3 },
+    card: {
+      rotation_id: "rot_legume",
+      why_suggested: "Breaks the cereal chain with canola and field pea; rye covers the first winter.",
+      evidence: [LEGUME_PRINCIPLE, COVER_PRINCIPLE],
+      benefits: ["No cereal-after-cereal years.", "Pea fixes nitrogen for the next crop."],
+      information_gaps: ["Local markets for canola at this scale."],
+      risks_for_local_review: ["Bare soil after the pea harvest until spring."],
+      support_not_replace: SUPPORT_SENTENCE,
+    },
+  },
+];
+
+export const ROTATION_SETS = { "ny-dairy": NY_DAIRY, "md-grain": MD_GRAIN, "bc-mixed": BC_MIXED } satisfies Record<string, TwinRotation[]>;
 export type RotationSetId = keyof typeof ROTATION_SETS;
 
 /** A rotation of the given set by id. */

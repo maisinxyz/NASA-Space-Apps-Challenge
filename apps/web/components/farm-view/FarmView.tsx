@@ -239,7 +239,7 @@ export function FarmView({
                 {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
               </p>
               <div className="fv-action-row" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, pointerEvents: "auto" }}>
-                {isUbc && (
+                {(isUbc || isKpu) && (
                   <FvButton
                     className="fv-glass fv-seg fv-accent-btn"
                     data-testid="action-compare-rotations"
@@ -281,7 +281,7 @@ export function FarmView({
           </div>
           {futureMode === "future" && <div className="fv-lens-slot"><LensControl /></div>}
           <nav className="fv-rail" aria-label="Farm panels" hidden={futureMode === "compare"}>
-            {isUbc && <RailTab id="rotations" active={active} onToggle={toggle} data-testid="rail-rotations" />}
+            {(isUbc || isKpu) && <RailTab id="rotations" active={active} onToggle={toggle} data-testid="rail-rotations" />}
             {isKpu && <RailTab id="campus" active={active} onToggle={toggle} data-testid="rail-campus" />}
             <RailTab id="conditions" active={active} onToggle={toggle} />
             {futureMode === "now" && <RailTab id="view" active={active} onToggle={toggle} />}
@@ -336,7 +336,7 @@ export function FarmView({
                   <div style={{ fontSize: 12, color: "#a3bfe9", display: "flex", flexDirection: "column", gap: 4, margin: "0 0 12px 0" }}>
                     <span><strong>Location:</strong> 49°07′N 122°38′W (Langley, BC)</span>
                     <span><strong>Facilities:</strong> High-tech greenhouses, field lab, apiary</span>
-                    <span><strong>Status:</strong> Explore-only research site · No field sensors connected</span>
+                    <span><strong>Status:</strong> Digital twin · No field sensors connected</span>
                   </div>
                   <a href="https://www.kpu.ca/langley/campus-highlights" target="_blank" rel="noreferrer" className="fv-glass fv-seg" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", color: "#f2ebdd", padding: "8px 12px", borderRadius: 8, fontSize: 12 }}>
                     Visit KPU Campus Highlights ↗

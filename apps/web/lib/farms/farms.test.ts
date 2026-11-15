@@ -12,7 +12,7 @@ describe("farm list", () => {
   it("has the chosen farms, Cornell and Beltsville as twins, Agassiz and Lancaster gone", () => {
     expect(FARMS.map((f) => f.id).slice(0, 3)).toEqual(["cornell-ruminant", "usda-barc", "ucdavis-oakville"]);
     expect(farmById("lancaster-intercourse")).toBeNull();
-    expect(twins.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc"]);
+    expect(twins.map((f) => f.id)).toEqual(["cornell-ruminant", "usda-barc", "ubc-farm", "kpu-langley"]);
     expect(farmById("agassiz")).toBeNull();
   });
 

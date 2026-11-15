@@ -6,6 +6,7 @@ import type { CropLook, Farm, FarmField } from "@/components/globe/types";
 import type { SourceId } from "@/lib/provenance";
 import { ROTATION_SETS, type RotationSetId, type TwinRotation } from "@/lib/twin/rotations";
 
+import { KPU_TWIN, UBC_TWIN } from "./bc";
 import { BELTSVILLE, BELTSVILLE_TWIN } from "./beltsville";
 import { CORNELL, CORNELL_TWIN } from "./cornell";
 import { CANDIDATE_DATASETS, type CandidateDatasetId } from "./datasets";
@@ -53,7 +54,7 @@ export const pinnedCandidateDatasets = () =>
 export const farmById = (id: string | null) => FARMS.find((f) => f.id === id) ?? null;
 
 const TWINS: Record<string, TwinConfig> = Object.fromEntries(
-  ([[CORNELL.id, CORNELL_TWIN], [BELTSVILLE.id, BELTSVILLE_TWIN]] as const).map(([id, t]) => [id, { ...t, rotations: ROTATION_SETS[t.rotationSet] }]),
+  ([[CORNELL.id, CORNELL_TWIN], [BELTSVILLE.id, BELTSVILLE_TWIN], ["ubc-farm", UBC_TWIN], ["kpu-langley", KPU_TWIN]] as const).map(([id, t]) => [id, { ...t, rotations: ROTATION_SETS[t.rotationSet] }]),
 );
 
 /** The twin of a "twin"-tier farm, or undefined (explore-only farm or unknown id). */

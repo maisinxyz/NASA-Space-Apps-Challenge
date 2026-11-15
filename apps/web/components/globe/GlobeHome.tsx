@@ -34,6 +34,7 @@ import { GlobeChrome } from "@/components/hero/GlobeChrome";
 import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { useFieldColourOverlays } from "@/components/farm-future/FieldColours";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
@@ -418,6 +419,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const fields = twin?.fields;
   const inTwin = !!farm && view === "farm" && !!twin;
   const zoneOverlays = useZoneOverlays(inTwin && showGlobe ? (farm?.id ?? null) : null);
+  const fieldOverlays = useFieldColourOverlays();
+  const overlays = useMemo(() => (inTwin ? [...zoneOverlays, ...fieldOverlays] : zoneOverlays), [inTwin, zoneOverlays, fieldOverlays]);
   const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail } = useAppStore(
     useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail })),
   );
@@ -663,7 +666,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               exaggeration={inTwin ? exaggeration : 1}
               surface={twinSurface}
               overlayMask={inTwin ? twin.overlayMask : undefined}
-              overlays={zoneOverlays}
+              overlays={overlays}
               showCropFills={comparing && showCropFills}
               weather={frame?.atmosphere}
               groundLayers={frame?.ground}

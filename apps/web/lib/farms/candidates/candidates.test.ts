@@ -20,9 +20,9 @@ describe("candidate farms", () => {
     expect(CANDIDATES.filter((c) => c.validation === "pass").map((c) => c.farm.id).sort()).toEqual(PINNED.map((c) => c.farm.id).sort());
   });
 
-  it.each(CANDIDATES)("$farm.id is explore-only, approximate, sourced and uses known datasets", (c) => {
+  it.each(CANDIDATES)("$farm.id is approximate, sourced and uses known datasets (explore-only unless a BC demo twin)", (c) => {
     const f = c.farm;
-    expect(f.tier).toBe("explore");
+    expect(f.tier).toBe(["ubc-farm", "kpu-langley"].includes(f.id) ? "twin" : "explore");
     expect(f.coordsVerified).toBe(false);
     expect(f.sourceUrl).toMatch(/^https:\/\/\S+$/);
     expect(f.name && f.owner && f.country).toBeTruthy();

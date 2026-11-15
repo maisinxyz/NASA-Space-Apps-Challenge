@@ -13,7 +13,7 @@ export const UBC_FARM: Candidate = {
     locality: "Vancouver, British Columbia", // TODO(verify): from search results, source page not opened
     lon: -123.236786,
     lat: 49.249786,
-    tier: "explore",
+    tier: "twin",
     sourceUrl: "https://ubcfarm.ubc.ca/about/",
     coordsVerified: false,
     radiusM: 1500,

@@ -237,7 +237,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
           className="relative mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[#05070c] shadow-[0_10px_30px_-6px_rgba(163,191,233,0.6)] outline-none transition-[filter,box-shadow] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           style={{ height: BTN_H, background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)` }}
         >
-          {farm.id === "ubc-farm" ? "Compare rotations" : farm.id === "kpu-langley" ? "Explore campus" : farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
+          {farm.id === "ubc-farm" || farm.id === "kpu-langley" ? "Compare rotations" : farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
           <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>

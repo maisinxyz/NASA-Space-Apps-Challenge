@@ -39,13 +39,13 @@ describe("FarmPopup", () => {
       <FarmPopup farm={ubc} reduced={true} onClose={noop} onDescend={noop} />
     );
     expect(ubcHtml).toContain("Compare rotations");
-    expect(ubcHtml).toContain("Rotation comparison available. Simulation on Cornell &amp; Beltsville only.");
+    expect(ubcHtml).toContain("Digital twin · scenarios and comparison");
 
     const kpu = farmById("kpu-langley")!;
     const kpuHtml = renderToStaticMarkup(
       <FarmPopup farm={kpu} reduced={true} onClose={noop} onDescend={noop} />
     );
-    expect(kpuHtml).toContain("Explore campus");
-    expect(kpuHtml).toContain("Campus exploration available. Simulation on Cornell &amp; Beltsville only.");
+    expect(kpuHtml).toContain("Compare rotations");
+    expect(kpuHtml).toContain("Digital twin · scenarios and comparison");
   });
 });

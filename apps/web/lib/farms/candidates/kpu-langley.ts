@@ -17,7 +17,7 @@ export const KPU_LANGLEY: Candidate = {
     locality: "Langley, British Columbia",
     lon: -122.639547,
     lat: 49.120367,
-    tier: "explore",
+    tier: "twin",
     sourceUrl: "https://www.kpu.ca/",
     coordsVerified: false,
     radiusM: 1500,
