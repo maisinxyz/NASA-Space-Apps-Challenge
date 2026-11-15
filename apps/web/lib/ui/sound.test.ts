@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- structural Web Audio / timer fakes */
 import { describe, expect, it } from "vitest";
 import { MUTE_KEY, TICK_MIN_GAP_MS, createSound } from "./sound";
 

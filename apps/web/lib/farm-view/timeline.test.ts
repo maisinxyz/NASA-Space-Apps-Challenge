@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- structural Web Audio / timer fakes */
 import { describe, expect, it } from "vitest";
 import {
   DAYS, LAST_DAY, MONTH_STARTS, TimelineEngine, crossings, dateOf, dayToX, hapticFor, keyToDay,

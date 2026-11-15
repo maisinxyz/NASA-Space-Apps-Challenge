@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- structural Web Audio / timer fakes */
 // Web Audio feedback sounds, synthesised (no audio files). Spec: hive/farm-view/SHARED-SPEC.md.
 // One AudioContext, created/resumed on the first pointerdown. Mute persisted in localStorage.
 
@@ -118,11 +117,6 @@ export function createSound(deps: SoundDeps = {}) {
       const t0 = now();
       if (t0 - lastTick < TICK_MIN_GAP_MS) return false;
       lastTick = t0;
-    }
-    if (process.env.NEXT_PUBLIC_E2E === "1" && typeof window !== "undefined") {
-      // Dev-only log for the Playwright checks (hive/farm-view/DECISIONS.md D4).
-      const w = window as unknown as { __soundLog?: { name: string; t: number }[] };
-      (w.__soundLog ??= []).push({ name, t: now() });
     }
     if (!ctx) return false;
     try {

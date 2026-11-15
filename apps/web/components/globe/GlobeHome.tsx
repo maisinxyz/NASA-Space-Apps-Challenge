@@ -15,7 +15,6 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { TwinPanel } from "@/components/farm/TwinPanel";
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
-import { FarmView } from "@/components/farm-view/FarmView";
 import { ArrivalTitle } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
 import { CloudLoader, type CloudLoaderPhase } from "@/components/hero/CloudLoader";
@@ -26,7 +25,6 @@ import { EarthLoading } from "@/components/hero/EarthLoading";
 import { HeroEarth, type HeroEarthApi } from "@/components/hero/HeroEarth";
 import { FarmPopup } from "@/components/hero/FarmPopup";
 import { MarkerPulse } from "@/components/hero/FarmCard";
-import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
 import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
@@ -39,7 +37,7 @@ import { selectFarm, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
 import { runSourceFor, type RunSource } from "@/lib/twin/scenarios/runSource";
 
-import { FarmCard } from "./FarmCard";
+import { EXPLORE_NOTE, FarmCard } from "./FarmCard";
 import { FarmList } from "./FarmList";
 import type { CameraState, GlobeHandle, PinHover, TileTier } from "./types";
 
@@ -133,6 +131,7 @@ function season(twin: TwinConfig | undefined, id: string, year: number, month: n
  * with the arrival title playing over the farm (it no longer holds the panels back).
  */
 type Phase = "dive" | "hold" | "explore";
+const btn = "rounded-md border border-line bg-surface-2 px-3 py-1 text-sm hover:bg-line";
 
 /**
  * `runSourceProp` is only the dev page's override. In the product the run source is per farm (runSourceFor): "fixture"
@@ -556,7 +555,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   return (
     <div
       ref={root}
-      className={`hero-root theme-dark fixed inset-0 z-50 overflow-hidden bg-black ${heroUiFont.variable} ${heroWordFont.variable} ${heroMonoFont.variable} ${fvDisplayFont.variable} ${fvSansFont.variable} ${heroUiFont.className} text-ink`}
+      className={`hero-root theme-dark fixed inset-0 z-50 overflow-hidden bg-black ${heroUiFont.variable} ${heroWordFont.variable} ${heroMonoFont.variable} ${heroUiFont.className} text-ink`}
       onPointerMoveCapture={onActivity}
       onKeyDownCapture={onActivity}
     >
@@ -741,11 +740,21 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               frame={frame}
             />
           ) : (
-            <FarmView farmName={farm.name} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
+            <div className="absolute top-4 left-4 flex max-w-[calc(100%-22rem)] flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface/90 p-3">
+              <button type="button" className={btn} onClick={() => useAppStore.setState({ globeView: "globe" })}>
+                ← Back to globe
+              </button>
+              <button type="button" className={btn} onClick={() => globe.current?.resetView()}>
+                Reset view
+              </button>
+              <h1 className="font-display text-lg">{farm.name}</h1>
+              <p className="basis-full text-sm text-ink-muted">Explore only: {EXPLORE_NOTE.toLowerCase()}.</p>
+              {farm.note && <p className="basis-full text-xs text-ink-muted">{farm.note.text}</p>}
+            </div>
           )}
         </motion.div>
       )}
-      {inFarm && inTwin && (
+      {inFarm && (
         <p className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 text-[11px] whitespace-nowrap text-white/[0.7] [text-shadow:0_1px_6px_#000]">
           This tool supports, and does not replace, local agronomic expertise.
         </p>

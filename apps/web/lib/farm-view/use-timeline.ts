@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- structural Web Audio / timer fakes */
 "use client";
 // React binding for TimelineEngine: pointer capture, rAF loop, sound + haptics, keyboard.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
