@@ -1,0 +1,13 @@
+node_modules
+.venv
+.next
+.git
+test-results
+*.egg-info
+__pycache__
+EarthDataToken*
+farm-scout-commits.patch
+apps/web/.env.local
+apps/web/team-test.env
+.env
+.env.local
