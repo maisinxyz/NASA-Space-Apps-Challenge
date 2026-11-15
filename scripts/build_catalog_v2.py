@@ -169,6 +169,9 @@ BC_LETTUCE = "https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/an
 BC_VEG = "https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides"
 WSU_FALL = "https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/"
 WSU_HOME = "https://wpcdn.web.wsu.edu/wp-extension/uploads/sites/2060/2021/06/Vegetable-Gardening-in-Washington-State.pdf"
+COASTAL_CHART = "https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf"
+VSB_GARDEN_GUIDE = "https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2023/01/web_oct4_gardening_guide.pdf"
+BC_CARROT = "https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/agriservice-bc/production-guides/vegetables/carrots"
 VAN_CLIMATE = "https://en.wikipedia.org/wiki/Climate_of_Vancouver"
 # Crops named on the BC vegetable-guide index (read 2026-11-15) plus the cole-page list.
 BC_INDEX = {
@@ -329,6 +332,38 @@ WINDOW_BY_CROP = {
     ),
 }
 
+# Curated coastal-BC windows for FT-B4. The cited charts give months or chart
+# weeks, not exact field-operation dates. Day-of-year boundaries are therefore
+# deterministic month/week edges: week 1 = days 1-7, week 2 = 8-14, week 3 =
+# 15-21, week 4 = 22-end. The engine's terminate_doy is exclusive, so it is the
+# day after the last shown harvest day. End-of-harvest is a proxy for
+# termination, not a published crop termination instruction. Other windows stay null.
+WINDOW_DATES_BY_CROP = {
+    "crop_cabbage": {"plant_doy": 173, "terminate_doy": 295},  # June wk4 to Oct wk3
+    "crop_bean_green": {"plant_doy": 182, "terminate_doy": 265},  # July to Sep wk3
+    "crop_beet": {"plant_doy": 182, "terminate_doy": 265},
+    "crop_carrot": {"plant_doy": 91, "terminate_doy": 182},  # Apr to June
+    "crop_garlic": {"plant_doy": 274, "terminate_doy": 213},  # Oct to following July
+    "crop_kale": {"plant_doy": 182, "terminate_doy": 258},  # July to Sep wk2
+    "crop_lettuce": {"plant_doy": 213, "terminate_doy": 265},  # Aug wk1 to Sep wk3
+    "crop_onion": {"plant_doy": 91, "terminate_doy": 258},  # Apr wk1 to Sep wk2
+    "crop_tomato": {"plant_doy": 142, "terminate_doy": 274},  # transplant May wk4 to Sep
+    "crop_zucchini": {"plant_doy": 121, "terminate_doy": 305},  # May to Oct
+}
+
+WINDOW_SOURCES_BY_CROP = {
+    "crop_cabbage": f"Farm to School BC Coastal Crop Planning Chart: direct sow June week 4; harvest October week 3 ({COASTAL_CHART}). Week 4 was mapped to June 22 and week 3 to October 15-21; termination uses the harvest-window end as a proxy, not a source-stated termination date.",
+    "crop_bean_green": f"Farm to School BC Coastal Crop Planning Chart: beans direct sow July week 1; harvest September weeks 1-3 ({COASTAL_CHART}). Week 1 starts July 1 and week 3 ends September 21; termination is a harvest-window proxy.",
+    "crop_beet": f"Farm to School BC Coastal Crop Planning Chart: beets direct sow July week 1; harvest September weeks 1-3 ({COASTAL_CHART}). Week 1 starts July 1 and week 3 ends September 21; termination is a harvest-window proxy.",
+    "crop_carrot": f"Farm to School BC Coastal Crop Planning Chart: carrots direct sow in April; harvest in June ({COASTAL_CHART}). Month start/end boundaries are used; termination is a harvest-window proxy. The BC Ministry Lower Mainland carrot guide independently says first fields are seeded mid-March and last about July 1 ({BC_CARROT}).",
+    "crop_garlic": f"Vancouver School Board gardening guide: garlic bulbs commonly planted during October 1-14 and harvested in July ({VSB_GARDEN_GUIDE}). DOY values preserve the cross-year window; the end is July 31, the end-of-month harvest proxy.",
+    "crop_kale": f"Farm to School BC Coastal Crop Planning Chart: kale direct sow July week 1; harvest September weeks 1-2 ({COASTAL_CHART}). Week 1 starts July 1 and week 2 ends September 14; termination is a harvest-window proxy.",
+    "crop_lettuce": f"Farm to School BC Coastal Crop Planning Chart: lettuce direct sow August week 1; harvest September week 3 ({COASTAL_CHART}). Week 1 starts August 1 and week 3 ends September 21; termination is a harvest-window proxy.",
+    "crop_onion": f"Farm to School BC Coastal Crop Planning Chart: onions direct sow April week 1; harvest September weeks 1-2 ({COASTAL_CHART}). Week 1 starts April 1 and week 2 ends September 14; termination is a harvest-window proxy.",
+    "crop_tomato": f"Farm to School BC Coastal Crop Planning Chart: tomato transplant in May week 4 and harvest September weeks 1-4 ({COASTAL_CHART}). Week 4 starts May 22 and week 4 ends September 30; termination is a harvest-window proxy.",
+    "crop_zucchini": f"Vancouver School Board gardening guide: zucchini planted in May and June, harvest September-October ({VSB_GARDEN_GUIDE}). Month-start and month-end boundaries are used; termination is a harvest-window proxy.",
+}
+
 FROST_COLE = (
     "Not stored. The BC cole-crop guide says over-wintered cauliflower in Abbotsford has tolerated -19°C under snow, "
     f"and that Fraser Valley crops have survived -14°C without snow cover ({BC_COLE}, page updated 2025-06-27). "
@@ -441,7 +476,11 @@ def new_crop(spec: tuple) -> dict:
     sources = {
         "family": FAMILY_TODO,
         "n_fixing": NFIX_LEGUME if n_fixing else "Not a legume in this row. TODO(verify)",
-        "season_window": WINDOW_BY_CROP.get(cid, WINDOW_TODO),
+        "season_window": (
+            WINDOW_SOURCES_BY_CROP[cid]
+            + " `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day."
+            if cid in WINDOW_SOURCES_BY_CROP else WINDOW_BY_CROP.get(cid, WINDOW_TODO)
+        ),
         "cover_curve": COVER_TODO,
         "kc_stages": kc_source,
         "residue_class": CLASS_TODO,
@@ -476,7 +515,7 @@ def new_crop(spec: tuple) -> dict:
         "name": name,
         "family": family,
         "n_fixing": n_fixing,
-        "season_window": {"plant_doy": None, "terminate_doy": None},
+        "season_window": WINDOW_DATES_BY_CROP.get(cid, {"plant_doy": None, "terminate_doy": None}),
         "cover_curve": [],
         "notes": notes + " Coefficients are filled only where a table cell or a guide sentence was read.",
         "source": "See trait_sources.",

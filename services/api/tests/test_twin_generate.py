@@ -97,12 +97,12 @@ def test_pinned_excluded_family_and_determinism_on_the_real_catalog():
             assert left != right
 
 
-def test_vegetable_pool_does_not_invent_planting_dates():
-    crops = ["crop_cabbage", "crop_tomato", "crop_lettuce", "crop_bean_green"]
+def test_uncurated_vegetable_stays_unplaced_while_sourced_pool_generates_alternatives():
+    crops = ["crop_cabbage", "crop_tomato", "crop_lettuce", "crop_bean_green", "crop_cucumber"]
     built = _plans(_request(crops))
-    assert built.roles == ("existing",)
-    assert any(item["code"] == "NO_FEASIBLE_ALTERNATIVES" for item in built.warnings)
-    assert all(slot.crop_id not in crops for slot in built.plans[0].slots)
+    assert built.roles == ("existing", "alternative", "alternative")
+    assert any("crop_cucumber" in item["message"] for item in built.warnings)
+    assert all(slot.crop_id != "crop_cucumber" for plan in built.plans for slot in plan.slots)
 
 
 def test_custom_strategy_is_expanded_as_entered():

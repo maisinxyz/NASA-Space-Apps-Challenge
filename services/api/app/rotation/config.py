@@ -5,7 +5,7 @@ All values here are ASSUMED (stated choices for a relative comparison), so revie
 
 from __future__ import annotations
 
-ENGINE_VERSION = "1.0.0"  # bump when any formula or value below changes
+ENGINE_VERSION = "1.0.1"  # B4 changes the crop pool and preset cycles
 SUPPORT = "This tool supports, and does not replace, local agronomic expertise."
 
 CRITERIA = ("nutrient_cycling", "erosion_risk", "organic_matter", "pest_disruption", "water_use", "forage_potential", "market_suitability")
@@ -50,8 +50,9 @@ WEIGHT_PRESETS = {
     "forage": {"forage_potential": 0.6, "nutrient_cycling": 0.2, "organic_matter": 0.2},
 }
 
-# Existing rotation per curated site (`existing_rotation: "preset"`). Typical regional rotations, not this farm's records.
-# TODO(verify) each with the farm or a local extension agronomist (PRD §22).
+# Current rotation per curated site (`existing_rotation: "preset"`). BC presets below are team-defined, not
+# claims about recorded farm practice (product decision D11). UBC field blocks use the field IDs from the
+# current farm request (d3-brassicas, d4-goosefoots, d6-alliums, d6-nightshades, d7-cucurbits, d5-maya).
 # BC twins: neither farm publishes its crop list (checked 2026-11-15). The cash-crop order is not a
 # quoted rotation. Fall rye after a late vegetable harvest is Table 18 of the Soil Management
 # Handbook for the Lower Fraser Valley (BC Ministry of Agriculture, Fisheries and Food, 1991, 2nd ed.):
@@ -69,11 +70,66 @@ SITE_PRESETS = {
         (1, "crop_maize", F), (2, "crop_alfalfa", F), (3, "crop_alfalfa", F)]},
     "site_ucdavis_oakville": {"name": "Winter wheat then fallow (dryland)", "slots": [
         (1, "crop_wheat_winter", F), (2, F, F)]},
-    "site_ubc_farm": {"name": "Typical vegetable rotation (not this farm's records)", "slots": [
+    "site_ubc_farm": {"name": "Current rotation", "slots": [
         (1, "crop_cabbage", "crop_rye_cover"), (2, "crop_lettuce", "crop_rye_cover")]},
-    "site_kpu_langley": {"name": "Typical vegetable rotation (not this farm's records)", "slots": [
+    "site_kpu_langley": {"name": "Current rotation", "slots": [
         (1, "crop_cabbage", "crop_rye_cover"), (2, "crop_lettuce", "crop_rye_cover")]},
 }
+
+# Team-defined UBC sequence: Brassica → allium → legume → nightshade → cucurbit
+# → goosefoot (chard/beet), with a rye cover crop after each main crop. Each
+# field starts at the family suggested by its OpenStreetMap plot name, then
+# cycles through the same six phases. UBC Farm describes Maya Garden's Three
+# Sisters (corn, beans, squash); green bean is the sourced representative crop
+# for the mixed garden's first modeled phase. https://ubcfarm.ubc.ca/saturday-farmers-market-vendor-feature-tal-axin-maya-in-exile-garden/
+UBC_ROTATION_PHASES = (
+    ("crop_cabbage", "crop_rye_cover"),
+    ("crop_onion", "crop_rye_cover"),
+    ("crop_bean_green", "crop_rye_cover"),
+    ("crop_tomato", "crop_rye_cover"),
+    ("crop_zucchini", "crop_rye_cover"),
+    ("crop_beet", "crop_rye_cover"),
+)
+UBC_FIELD_PHASE_START = {
+    "d3-brassicas": 0,
+    "d4-goosefoots": 5,
+    "d6-alliums": 1,
+    "d6-nightshades": 3,
+    "d7-cucurbits": 4,
+    "d5-maya": 0,
+}
+
+
+def _ubc_field_slots(field_id: str, start: int) -> list[tuple[int, str, str]]:
+    slots = []
+    for year in range(len(UBC_ROTATION_PHASES)):
+        phase = (start + year) % len(UBC_ROTATION_PHASES)
+        main, cover = UBC_ROTATION_PHASES[phase]
+        if field_id == "d5-maya" and year == 0:
+            # Tal A'xin's UBC Farm interview identifies the Three Sisters mix;
+            # green bean is the sourced representative crop for the field preset.
+            main = "crop_bean_green"
+        elif field_id == "d6-nightshades" and phase == 1:
+            main = "crop_garlic"
+        slots.append((year + 1, main, cover))
+    return slots
+
+
+SITE_FIELD_PRESETS = {
+    "site_ubc_farm": {
+        field_id: {
+            "name": "Current rotation",
+            "slots": _ubc_field_slots(field_id, start),
+            "team_defined": True,
+        }
+        for field_id, start in UBC_FIELD_PHASE_START.items()
+    }
+}
+
+
+def field_preset(site_id: str, field_id: str | None) -> dict | None:
+    """Per-field current-rotation preset; explicit user rotations always take precedence."""
+    return SITE_FIELD_PRESETS.get(site_id, {}).get(field_id or "")
 DEFAULT_PRESET = {"name": "Corn, soybean (no cover crops)", "slots": [(1, "crop_maize", F), (2, "crop_soybean", F)]}
 
 REVIEW_ALWAYS = [

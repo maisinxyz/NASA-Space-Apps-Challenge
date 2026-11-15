@@ -1231,8 +1231,8 @@
    "family": "Brassicaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 173,
+    "terminate_doy": 295
    },
    "cover_curve": [],
    "notes": "Heading brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -1279,7 +1279,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: ballhead cabbage for fall harvest uses the Brussels-sprout culture, direct seed by 1 July or transplant by 1 August, and can be harvested into early winter (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/). BC cole crops: seed 4 to 6 weeks before transplant; the page does not give a calendar day (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/cole-crops). Western Washington is not Langley.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: direct sow June week 4; harvest October week 3 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 4 was mapped to June 22 and week 3 to October 15-21; termination uses the harvest-window end as a proxy, not a source-stated termination date. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Cabbage row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -1468,8 +1468,8 @@
    "family": "Brassicaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 182,
+    "terminate_doy": 258
    },
    "cover_curve": [],
    "notes": "Leaf brassica. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -1508,7 +1508,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: kale direct sow July week 1; harvest September weeks 1-2 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 1 starts July 1 and week 2 ends September 14; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12 (https://www.fao.org/4/x0490e/x0490e0b.htm) was opened on 2026-11-15. The HTML table lost its columns, so these coefficients were not copied. TODO(verify)",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -1622,8 +1622,8 @@
    "family": "Amaryllidaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 91,
+    "terminate_doy": 258
    },
    "cover_curve": [],
    "notes": "Allium. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -1664,7 +1664,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: onions direct sow April week 1; harvest September weeks 1-2 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 1 starts April 1 and week 2 ends September 14; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Onions — dry row prints Kc mid 1.05 and Kc end 0.75. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -1697,8 +1697,8 @@
    "family": "Amaryllidaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 274,
+    "terminate_doy": 213
    },
    "cover_curve": [],
    "notes": "Allium. Family placement TODO(verify). Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -1745,7 +1745,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Vancouver School Board gardening guide: garlic bulbs commonly planted during October 1-14 and harvested in July (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2023/01/web_oct4_gardening_guide.pdf). DOY values preserve the cross-year window; the end is July 31, the end-of-month harvest proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Garlic row prints Kc mid 1.0 and Kc end 0.7. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -1853,8 +1853,8 @@
    "family": "Solanaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 142,
+    "terminate_doy": 274
    },
    "cover_curve": [],
    "notes": "Fruiting nightshade. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -1901,7 +1901,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: tomato transplant in May week 4 and harvest September weeks 1-4 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 4 starts May 22 and week 4 ends September 30; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Tomato row prints Kc mid 1.15 (footnote 2: 1.20 if staked to 1.5-2 m) and Kc end 0.70-0.90. The range was not stored as one number, so Kc end stays null. Height on the row is 0.6 m. Kc ini is blank. The Solanum group row prints Kc ini 0.6. Footnote 1 calls that a general value. Not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -2246,8 +2246,8 @@
    "family": "Cucurbitaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 121,
+    "terminate_doy": 305
    },
    "cover_curve": [],
    "notes": "Summer squash. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -2288,7 +2288,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Vancouver School Board gardening guide: zucchini planted in May and June, harvest September-October (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2023/01/web_oct4_gardening_guide.pdf). Month-start and month-end boundaries are used; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Squash, Zucchini row prints Kc mid 0.95 and Kc end 0.75. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -2396,8 +2396,8 @@
    "family": "Fabaceae",
    "n_fixing": true,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 182,
+    "terminate_doy": 265
    },
    "cover_curve": [],
    "notes": "Snap bean. Fixation rate not measured. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -2438,7 +2438,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "n_fixing is true because the crop is a legume. The fixation class is not measured. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: beans direct sow July week 1; harvest September weeks 1-3 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 1 starts July 1 and week 3 ends September 21; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12 row 'Beans, green', read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf: Kc ini 0.5, Kc mid 1.05, Kc end 0.90, height 0.4 m. Footnote 2 says a staked crop can use Kc mid 1.15. The unstaked table cell is the one stored. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -2544,8 +2544,8 @@
    "family": "Apiaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 91,
+    "terminate_doy": 182
    },
    "cover_curve": [],
    "notes": "Root crop. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -2592,7 +2592,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). WSU Snohomish: plant a fall carrot crop by mid-July (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/).",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: carrots direct sow in April; harvest in June (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Month start/end boundaries are used; termination is a harvest-window proxy. The BC Ministry Lower Mainland carrot guide independently says first fields are seeded mid-March and last about July 1 (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/agriservice-bc/production-guides/vegetables/carrots). `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Carrots row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -2625,8 +2625,8 @@
    "family": "Amaranthaceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 182,
+    "terminate_doy": 265
    },
    "cover_curve": [],
    "notes": "Family placement TODO(verify); older keys use Chenopodiaceae. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -2667,7 +2667,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "Planting and termination day-of-year are not verified. TODO(verify) against a British Columbia or Pacific Northwest extension guide before use.",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: beets direct sow July week 1; harvest September weeks 1-3 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 1 starts July 1 and week 3 ends September 21; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Beets, table row prints Kc mid 1.05 and Kc end 0.95. The row also prints maximum height 0.4 m. Kc ini is blank on that row. The group row prints Kc ini 0.5. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",
@@ -2850,8 +2850,8 @@
    "family": "Asteraceae",
    "n_fixing": false,
    "season_window": {
-    "plant_doy": null,
-    "terminate_doy": null
+    "plant_doy": 213,
+    "terminate_doy": 265
    },
    "cover_curve": [],
    "notes": "Leafy green. Coefficients are filled only where a table cell or a guide sentence was read.",
@@ -2898,7 +2898,7 @@
    "trait_sources": {
     "family": "Common botanical family. TODO(verify) against https://plants.usda.gov/",
     "n_fixing": "Not a legume in this row. TODO(verify)",
-    "season_window": "No plant_doy or terminate_doy was stored. The guides that were opened state a month, a deadline, or a days-to-harvest range, not one planting day and one termination day. Those were not converted into day-of-year. TODO(verify). BC lettuce: the earliest seedings are started in greenhouse flats in early February and planted out when the fields can be prepared (https://www2.gov.bc.ca/gov/content/industry/agriculture-seafood/animals-and-crops/crop-production/vegetables-production-guides/lettuce). WSU Snohomish: sow head and romaine lettuce in July; leaf lettuce until mid-August (https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/).",
+    "season_window": "Farm to School BC Coastal Crop Planning Chart: lettuce direct sow August week 1; harvest September week 3 (https://farmtoschoolbc.ca/wp-content/uploads/sites/3/2022/03/Coastal-BC-Crop-Planning-Chart.pdf). Week 1 starts August 1 and week 3 ends September 21; termination is a harvest-window proxy. `terminate_doy` is exclusive in the engine and is set to the day after the last selected harvest day.",
     "cover_curve": "No cover curve was sourced. The array is empty on purpose. TODO(verify)",
     "kc_stages": "FAO-56 Table 12, read 2026-11-15 from the PDF at https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf. The Lettuce row prints Kc mid 1.0 and Kc end 0.95. The row also prints maximum height 0.3 m. Kc ini is blank on that row. The group row prints Kc ini 0.7. Footnote 1 calls the group Kc ini a general value for typical irrigation management and soil wetting. It is not a Fraser Valley measurement.",
     "residue_class": "Not verified. Null is not a default class. TODO(verify)",

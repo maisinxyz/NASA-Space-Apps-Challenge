@@ -548,10 +548,14 @@ def _assumptions(prepared: Prepared) -> list[str]:
             "field measurement. Check it with a local soil test."
         )
     preset = SITE_PRESETS.get(_site_id(prepared))
-    if preset is not None:
-        lines.append(
-            f"The existing rotation is the site preset \"{preset['name']}\". It is not this farm's field records. TODO(verify)."
-        )
+    if preset is not None and any(run.field.existing_rotation == "preset" for run in prepared.fields):
+        if preset["name"] == "Current rotation":
+            lines.append("Current rotation uses the team's starting preset for fields without an entered rotation.")
+        else:
+            lines.append(
+                f'The existing rotation uses the site preset "{preset["name"]}". '
+                "Confirm the sequence with the farm. TODO(verify)."
+            )
     if not prepared.body.get("fields"):
         lines.append(
             f"No field was entered. The run uses {_DEFAULT_AREA_HA} ha and slope class {_DEFAULT_SLOPE}. "
@@ -634,11 +638,10 @@ def _field_runs(req: ForecastRequest, site_id: str, info: dict, summary: dict | 
             field = replace(field, irrigation=IrrigationCfg(field.irrigation.available, farm_quota))
         _ = total_area
         soil = _soil_props(summary, field.soil_override)
-        field_req = req if field.selection_override is None else replace(
-            req,
-            selection=Selection(field.selection_override.crops, field.selection_override.pinned, field.selection_override.excluded),
-            fields=(field,),
-        )
+        field_req = _req_for_field(req, field)
+        if field.selection_override is not None:
+            selected = field.selection_override
+            field_req = replace(field_req, selection=Selection(selected.crops, selected.pinned, selected.excluded))
         built = build_strategies(field_req, catalog, None, None, lat=float(info["lat"]), site_id=site_id)
         runs.append(FieldRun(field, soil, built.plans, built.roles, built.labels, built.warnings))
     return runs

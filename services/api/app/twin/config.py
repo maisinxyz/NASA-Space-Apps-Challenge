@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.1.1"  # B3 adds sourced station-bias output to the forecast
+ENGINE_VERSION = "1.1.2"  # B4 adds curated crop windows and per-field Current rotation presets
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

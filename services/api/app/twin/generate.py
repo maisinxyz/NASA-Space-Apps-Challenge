@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from app.rotation.config import DEFAULT_PRESET, SITE_PRESETS
+from app.rotation.config import DEFAULT_PRESET, SITE_PRESETS, field_preset
 from app.twin import config as C
 from app.twin.run import expand_plan
 from app.twin.score import farm_fit
@@ -130,7 +130,8 @@ def _existing(req: ForecastRequest, crops: dict, site_id: str | None) -> tuple[P
     if field is not None and isinstance(field.existing_rotation, tuple) and field.existing_rotation:
         cycle = max(slot.year_index for slot in field.existing_rotation)
         return Plan("rot_existing", field.existing_rotation, cycle_years=cycle), "Existing rotation"
-    preset = SITE_PRESETS.get(site_id or "", DEFAULT_PRESET)
+    preset = field_preset(site_id or "", field.field_id if field is not None else None)
+    preset = preset or SITE_PRESETS.get(site_id or "", DEFAULT_PRESET)
     slots: list[Slot] = []
     for year, main, off in preset["slots"]:
         main_crop = None if main == "fallow" else crops.get(main)

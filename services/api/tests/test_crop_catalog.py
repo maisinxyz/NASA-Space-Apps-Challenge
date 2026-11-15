@@ -29,7 +29,9 @@ def test_catalog_has_forty_sourced_crops():
     assert by_id["crop_bean_dry"]["kc_stages"] == {"ini": 0.4, "mid": 1.15, "end": 0.35}
     assert by_id["crop_cabbage"]["kc_stages"] == {"ini": 0.7, "mid": 1.05, "end": 0.95}
     assert by_id["crop_lettuce"]["kc_stages"] == {"ini": 0.7, "mid": 1.0, "end": 0.95}
-    assert by_id["crop_cabbage"]["season_window"]["plant_doy"] is None
+    assert by_id["crop_cabbage"]["season_window"] == {"plant_doy": 173, "terminate_doy": 295}
+    assert "farmtoschoolbc.ca" in by_id["crop_cabbage"]["trait_sources"]["season_window"]
+    assert "exclusive" in by_id["crop_cabbage"]["trait_sources"]["season_window"]
     assert by_id["crop_cabbage"]["root_depth_m"] == {"ini": None, "mid": None, "end": None}
     assert "0.5-0.8" in by_id["crop_cabbage"]["trait_sources"]["root_depth_m"]
     assert by_id["crop_cabbage"]["region_fit"] == ["oceanic"]
@@ -82,8 +84,8 @@ def test_get_crop_catalog_filters_category():
     assert len(list_catalog(site_id="site_kpu_langley")["crops"]) == len(load_catalog()["crops"])
 
 
-def test_cabbage_yield_is_computed_only_when_a_window_exists():
-    """The catalog window stays null. A window that exists only in this test shows the engine path."""
+def test_cabbage_yield_uses_the_sourced_catalog_window():
+    """The coastal chart window enters the simulator and allows yield estimation."""
     import numpy as np
 
     from app.twin.types import PlanYear, Slot
@@ -91,19 +93,9 @@ def test_cabbage_yield_is_computed_only_when_a_window_exists():
 
     doc = load_catalog()
     cabbage = next(crop for crop in doc["crops"] if crop["id"] == "crop_cabbage")
-    assert cabbage["season_window"]["plant_doy"] is None
-    bare = year_profile(PlanYear(1, (Slot(1, "summer", "crop_cabbage"),)), doc, 49.25)
-    assert "crop_cabbage" not in bare.crop_kc
-    assert any("season window" in note for note in bare.missing)
-
-    crops = []
-    for crop in doc["crops"]:
-        row = dict(crop)
-        if row["id"] == "crop_cabbage":
-            row["season_window"] = {"plant_doy": 121, "terminate_doy": 243}
-        crops.append(row)
-    catalog = {"crops": crops}
-    profile = year_profile(PlanYear(1, (Slot(1, "summer", "crop_cabbage"),)), catalog, 49.25)
+    assert cabbage["season_window"] == {"plant_doy": 173, "terminate_doy": 295}
+    profile = year_profile(PlanYear(1, (Slot(1, "summer", "crop_cabbage"),)), doc, 49.25)
+    assert "crop_cabbage" in profile.crop_kc
     zeros = np.zeros_like(profile.kc)
-    grain, _forage, _notes = _yields(profile, catalog, zeros, zeros, zeros, zeros)
+    grain, _forage, _notes = _yields(profile, doc, zeros, zeros, zeros, zeros)
     assert grain["crop_cabbage"] == cabbage["reference_yield"]["value"]
