@@ -25,3 +25,9 @@ Date: 2026-11-15. Spec: `docs/fieldtwin-v4-prd.md` Appendix A.
 - Remove each path from `pending_v12` in `services/api/tests/test_routes.py` when you mount it.
 - Regenerating `make_fixtures_json.py` on Windows rewrites `evidence.json` with a broken `m³` (codepage). Only `errors/RATE_LIMITED.json` was committed from that run.
 - Outlook mock fixture exists only for `site_ubc_farm`; KPU 404s in mock mode until a fixture or the live endpoint exists.
+
+## Backend verification — 2026-11-15
+
+Compared `openapi.yaml` with Part A Appendix A: the outlook and its per-month/top-level kinds, co-pilot request and response, custom-field request and response, optional field and farm strategy rotation explanations, and `RATE_LIMITED` error are present with the specified shapes and error responses. Polygon closure and area require runtime validation as described in the contract. No contract change was needed. The three new routes remain implementation work for B7, B9 and B10.
+
+Verification: `uv run --project packages/contracts pytest packages/contracts -q` — **94 passed**. This verifies fixtures and contract tests; it does not verify the unimplemented live routes.
