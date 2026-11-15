@@ -9,7 +9,7 @@ import { CompareTray } from "@/components/farm/CompareTray";
 import { EvidenceBody, FieldCard } from "@/components/farm/Inspector";
 import { ScenarioClock, SimulateBody } from "@/components/farm/ScenarioPanel";
 import { setMode, MapSettings } from "@/components/farm/TwinPanel";
-import { useTwin } from "@/components/farm/shared";
+import { twinConfig } from "@/lib/farms";
 import type { CameraState, CropLook, Farm, FarmField } from "@/components/globe/types";
 import { hasModifier, isTextEntry } from "@/lib/keys";
 import { encodeShare } from "@/lib/share";
@@ -72,7 +72,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
   const scenarioId = useAppStore((s) => s.scenarioId);
   const playing = useAppStore((s) => s.scenarioPlaying);
   const fieldId = useAppStore((s) => s.twinFieldId);
-  const twin = useTwin();
+  const twin = twinConfig(farm?.id ?? null);
   const def = scenarioById(scenarioId);
   const pill = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(132);
@@ -93,15 +93,65 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
   const label = comparing ? "Comparing A / B" : def ? def.label : "Simulation";
   const canPlay = !!def && runSource !== "none" && !comparing;
 
+  const openSim = (targetSection: SimSection = sim.section) => {
+    sound.pop();
+    const targetMode = MODE_OF[targetSection] ?? "simulate";
+    setMode(targetMode);
+    setSim({ open: true, section: targetSection });
+  };
+  const close = () => {
+    sound.close();
+    setMode("explore");
+    setSim({ ...sim, open: false });
+  };
+
   const choose = (id: SimSection) => {
-    if (id !== "map" && id !== "field") setMode(MODE_OF[id]);
+    const targetMode = MODE_OF[id];
+    if (targetMode) setMode(targetMode);
     setSim({ open: true, section: id });
   };
-  const close = () => { sound.close(); setSim({ ...sim, open: false }); };
+
+  // Keep visible section and active mode in sync
+  useEffect(() => {
+    if (!sim.open) return;
+    if (mode === "simulate" && sim.section !== "scenarios" && sim.section !== "field") {
+      setSim({ open: true, section: "scenarios" });
+    } else if (mode === "compare" && sim.section !== "compare") {
+      setSim({ open: true, section: "compare" });
+    } else if (mode === "evidence" && sim.section !== "evidence") {
+      setSim({ open: true, section: "evidence" });
+    }
+  }, [mode, sim.open, sim.section, setSim]);
+
+  useEffect(() => {
+    if (!sim.open) return;
+    const expectedMode = MODE_OF[sim.section];
+    if (expectedMode && mode !== expectedMode) {
+      setMode(expectedMode);
+    }
+  }, [sim.open, sim.section, mode]);
 
   async function share() {
     const s = useAppStore.getState();
-    const hash = encodeShare({ farm: farm.id, mode: s.twinMode, field: s.twinFieldId, a: s.compareA, b: s.compareB, divider: s.divider, surface: s.twinSurface, look: s.look, camera: getCamera(), scenario: s.scenarioId, inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined, detail: s.detail });
+    const hash = encodeShare({
+      farm: farm.id,
+      mode: s.twinMode,
+      field: s.twinFieldId,
+      a: s.compareA,
+      b: s.compareB,
+      divider: s.divider,
+      surface: s.twinSurface,
+      look: s.look,
+      camera: getCamera(),
+      scenario: s.scenarioId,
+      inputs: s.scenarioId ? s.scenarioInputs[s.scenarioId] : undefined,
+      detail: s.detail,
+      rotation: s.scenarioRotation,
+      time: s.scenarioProgress,
+      year: s.twinYear,
+      month: s.twinMonth,
+      panel: section,
+    });
     history.replaceState(null, "", hash);
     try {
       await navigator.clipboard.writeText(location.href);
@@ -123,7 +173,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
           aria-label={sim.open ? "Close simulation" : "Open simulation"}
           aria-expanded={sim.open}
           data-testid="sim-tab"
-          onClick={() => (sim.open ? close() : (sound.pop(), setSim({ ...sim, open: true })))}
+          onClick={() => (sim.open ? close() : openSim())}
           style={{ pointerEvents: "auto" }}
         >
           <span className="l" style={{ color: "inherit" }}>{label}</span>
@@ -168,15 +218,54 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
             </p>
           )}
 
-          <div role="tablist" aria-label="Simulation section" style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
+          <div
+            role="tablist"
+            aria-label="Simulation section"
+            onKeyDown={(e) => {
+              const allSections = field ? [...SECTIONS, { id: "field" as const, label: "Field" }] : SECTIONS;
+              const currentIndex = allSections.findIndex((s) => s.id === section);
+              if (currentIndex === -1) return;
+              let nextIndex = -1;
+              if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = (currentIndex + 1) % allSections.length;
+              else if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + allSections.length) % allSections.length;
+              else if (e.key === "Home") nextIndex = 0;
+              else if (e.key === "End") nextIndex = allSections.length - 1;
+              if (nextIndex !== -1) {
+                e.preventDefault();
+                const nextSection = allSections[nextIndex].id;
+                choose(nextSection);
+                requestAnimationFrame(() => {
+                  document.getElementById(`sim-tab-${nextSection}`)?.focus();
+                });
+              }
+            }}
+            style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}
+          >
             {(field ? [...SECTIONS, { id: "field" as const, label: "Field" }] : SECTIONS).map((s) => (
-              <FvButton key={s.id} role="tab" aria-selected={section === s.id} className="fv-seg" data-testid={`sim-section-${s.id}`} onClick={() => choose(s.id)} style={{ height: 28, padding: "0 12px" }}>
+              <FvButton
+                key={s.id}
+                id={`sim-tab-${s.id}`}
+                role="tab"
+                aria-selected={section === s.id}
+                aria-controls={`sim-panel-${s.id}`}
+                tabIndex={section === s.id ? 0 : -1}
+                className="fv-seg"
+                data-testid={`sim-section-${s.id}`}
+                onClick={() => choose(s.id)}
+                style={{ height: 28, padding: "0 12px" }}
+              >
                 {s.label}
               </FvButton>
             ))}
           </div>
 
-          <div className="text-sm">
+          <div
+            id={`sim-panel-${section}`}
+            role="tabpanel"
+            aria-labelledby={`sim-tab-${section}`}
+            tabIndex={0}
+            className="text-sm focus:outline-none"
+          >
             {section === "scenarios" && (
               <>
                 <SimulateBody runSource={runSource} frame={frame} />
@@ -205,7 +294,7 @@ export function SimulationTab({ props, sim, setSim }: { props: SimProps; sim: Si
                   <dt className="text-ink-muted">Fields</dt>
                   <dd>{fields.length} shown</dd>
                   <dt className="text-ink-muted">Model area</dt>
-                  <dd>{twin.simAreaLabel}; the thin outline on the map marks where simulation layers apply.</dd>
+                  <dd>{twin?.simAreaLabel ?? "Model area"}; the thin outline on the map marks where simulation layers apply.</dd>
                 </dl>
               </div>
             )}

@@ -30,7 +30,7 @@ FieldTwin: a website that turns a farm photo + location into a 3D model, replays
 
 ## Honesty (PRD §2.4, §6.7)
 - Every simulation number shows units and a basis label: measured / derived / modeled / assumed / relative.
-- Simulation outputs are relative comparisons, never predictions. No yield, profit, or absolute soil-loss figures.
+- Simulation outputs are scenario forecasts. Absolute estimates (yield, income, fertilizer, soil loss) are allowed (approved by the user 2026-11-14, supersedes the earlier relative-only rule); each shows unit, basis label and a p10/p90 range. Prices come from the farmer, never invented.
 - Curated sites show a "Pre-built" badge. Mock data shows a "mock" badge in dev and must never reach the demo. Exception (approved by the user 2026-11-14): full-twin farms may run scenario effects from fixture inputs, always labelled "Synthetic demo data".
 - Drone/video capture appear only as Roadmap items; never shown working.
 - Show "This tool supports, and does not replace, local agronomic expertise." where the PRD asks.

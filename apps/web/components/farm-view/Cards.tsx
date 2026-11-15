@@ -19,7 +19,8 @@ export function ConditionCard({ id, onClose }: { id: ConditionId; onClose(): voi
   return (
     <motion.section
       id={`condition-card-${id}`}
-      data-testid={`condition-card-${id}`}
+      data-testid={`card-${id}`}
+      data-card-id={id}
       aria-label={c.title}
       className="fv-glass fv-card fv-auto"
       style={{ position: "absolute", right: layout.card.right, top: layout.card.top, zIndex: zIndex.cards, transformOrigin: "top right" }}
@@ -30,7 +31,13 @@ export function ConditionCard({ id, onClose }: { id: ConditionId; onClose(): voi
       <div className="fv-chead">
         <Icon size={16} />
         <h2>{c.title}</h2>
-        <FvButton className="fv-icon" style={{ width: 28, height: 28, marginLeft: "auto" }} aria-label={`Minimize ${c.title}`} onClick={onClose}>
+        <FvButton
+          className="fv-icon"
+          style={{ width: 28, height: 28, marginLeft: "auto" }}
+          aria-label={`Minimize ${c.title}`}
+          data-testid={`card-fold-${id}`}
+          onClick={onClose}
+        >
           <Minus size={16} />
         </FvButton>
       </div>

@@ -1,21 +1,14 @@
 "use client";
-// The global Reset key (R): resets the store and tells listeners (GlobeHome re-centres the camera). Mounted once
-// in the root layout. The guided demo runner was removed with the legacy pages (S1-P0).
+// The global Reset key (R): re-centres the camera (matching the "Reset view" button) without wiping stores.
 import { useEffect } from "react";
 
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
-import { resetZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
-import { useRotationStore } from "@/lib/rotation/store";
-import { useAppStore } from "@/lib/store";
 
 export function TourController() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (hasModifier(e) || isTextEntry(e.target)) return;
+      if (hasModifier(e) || isTextEntry(e.target) || document.querySelector("dialog[open]")) return;
       if (e.key === "r" || e.key === "R") {
-        useAppStore.getState().reset();
-        useRotationStore.getState().reset();
-        resetZoneToggle();
         window.dispatchEvent(new Event(RESET_EVENT));
       }
     };

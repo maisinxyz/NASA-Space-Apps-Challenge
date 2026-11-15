@@ -8,6 +8,7 @@ import { HOKUDAI_FARM } from "./candidates/hokudai-farm";
 import { INTA_CASTELAR } from "./candidates/inta-castelar";
 import { NTU_FARM } from "./candidates/ntu-farm";
 import { PIRQUE_VINEYARDS } from "./candidates/pirque-vineyards";
+import { KPU_LANGLEY } from "./candidates/kpu-langley";
 import { UBC_FARM } from "./candidates/ubc-farm";
 import { UIUC_SOUTH_FARMS } from "./candidates/uiuc-south-farms";
 import { UTOKYO_ISAS } from "./candidates/utokyo-isas";
@@ -15,4 +16,4 @@ import { WAITE_ADELAIDE } from "./candidates/waite-adelaide";
 import { WUR_UNIFARM } from "./candidates/wur-unifarm";
 import type { Candidate } from "./datasets";
 
-export const PINNED: Candidate[] = [WUR_UNIFARM, UBC_FARM, HOKUDAI_FARM, UTOKYO_ISAS, AGROSCOPE_RECKENHOLZ, UIUC_SOUTH_FARMS, WAITE_ADELAIDE, HELSINKI_VIIKKI, INTA_CASTELAR, NTU_FARM, PIRQUE_VINEYARDS];
+export const PINNED: Candidate[] = [WUR_UNIFARM, UBC_FARM, KPU_LANGLEY, HOKUDAI_FARM, UTOKYO_ISAS, AGROSCOPE_RECKENHOLZ, UIUC_SOUTH_FARMS, WAITE_ADELAIDE, HELSINKI_VIIKKI, INTA_CASTELAR, NTU_FARM, PIRQUE_VINEYARDS];

@@ -8,7 +8,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FieldTwin",
-  description: "Replay real NASA POWER storms on a 3D model of farmland and compare crop rotations side by side (NASA Space Apps 2026).",
+  description: "Simulate weather scenarios on a 3D model of farmland and compare crop rotations side by side (NASA Space Apps 2026).",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -20,7 +20,7 @@ export const FV_CSS = `
 .fv-seg { ${t("segment")} height: ${layout.layerBar.segHeight}px; padding: 0 ${layout.layerBar.segPadX}px; border-radius: ${radius.segment}px; color: ${color.inkSecondary}; border: 1px solid transparent !important; display: inline-flex; align-items: center; gap: 6px; transition: background-color 120ms, color 120ms; }
 .fv-seg:hover { color: ${color.ink}; background: ${color.fillHover}; }
 .fv-seg:active { background: ${color.fillPressed}; }
-.fv-seg[aria-checked="true"] { color: ${color.ink}; background: ${color.fillActive}; border-color: ${color.glassBorder} !important; }
+.fv-seg[aria-checked="true"], .fv-seg[aria-selected="true"] { color: ${color.ink}; background: ${color.fillActive}; border-color: ${color.glassBorder} !important; }
 .fv-div { width: 1px; height: 16px; background: ${color.glassBorder}; margin: 0 6px; }
 .fv-icon { width: ${layout.layerBar.resetSize}px; height: ${layout.layerBar.resetSize}px; border-radius: 50%; display: inline-grid; place-items: center; color: ${color.inkSecondary}; transition: background-color 120ms, color 120ms; }
 .fv-icon:hover { color: ${color.ink}; background: ${color.fillHover}; }
@@ -42,6 +42,7 @@ export const FV_CSS = `
 .fv-table td.s { color: ${color.inkSecondary}; }
 .fv-row { cursor: pointer; transition: background-color 120ms; }
 .fv-row:hover { background: ${color.fillHover}; }
+.fv-row:focus-visible { outline: 2px solid ${color.focusRing}; outline-offset: -2px; }
 .fv-diamond { display: inline-block; width: 7px; height: 7px; background: ${color.stress}; transform: rotate(45deg); margin-right: 8px; vertical-align: 1px; }
 .fv-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color.neutralDot}; margin-right: 8px; vertical-align: 1px; }
 .fv-cap { ${t("caption")} color: ${color.inkSecondary}; }

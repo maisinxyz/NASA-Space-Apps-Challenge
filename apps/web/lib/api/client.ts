@@ -160,8 +160,8 @@ export interface ScanEventOptions {
 
 export function parseSse(text: string): ProgressEvent[] {
   return text
-    .split("\n\n")
-    .map((block) => block.split("\n").find((l) => l.startsWith("data: ")))
+    .split(/\r?\n\r?\n/)
+    .map((block) => block.split(/\r?\n/).find((l) => l.startsWith("data: ")))
     .filter((l): l is string => Boolean(l))
     .map((l) => JSON.parse(l.slice(6)) as ProgressEvent);
 }

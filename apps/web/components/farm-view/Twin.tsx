@@ -148,7 +148,7 @@ export function Twin() {
               ref={btn}
               className="fv-glass fv-twin fv-auto"
               aria-label="Ask Twin"
-              aria-expanded={false}
+              aria-expanded={open}
               data-testid="twin-button"
               onClick={() => {
                 setOpen(true);

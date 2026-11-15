@@ -46,12 +46,16 @@ describe("mock mode", () => {
 
   it("replays the SSE fixture in order, and the failure stream on request", async () => {
     mockFetch();
-    vi.useFakeTimers();
     const run = async (mockScenario: "success" | "fail") => {
       const seen: ProgressEvent[] = [];
-      subscribeScanEvents("scan_mock_001", { onEvent: (e) => seen.push(e) }, { mockScenario, intervalMs: 10 });
-      await vi.waitFor(() => expect(seen.length).toBeGreaterThan(0));
-      await vi.runAllTimersAsync();
+      subscribeScanEvents("scan_mock_001", { onEvent: (e) => seen.push(e) }, { mockScenario, intervalMs: 2 });
+      await vi.waitFor(
+        () => {
+          const finalStage = mockScenario === "success" ? "ready" : "failed";
+          expect(seen.at(-1)?.stage).toBe(finalStage);
+        },
+        { timeout: 3000, interval: 10 },
+      );
       return seen;
     };
     const ok = await run("success");

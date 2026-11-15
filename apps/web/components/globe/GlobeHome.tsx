@@ -28,9 +28,11 @@ import { MarkerPulse } from "@/components/hero/FarmCard";
 import { fvDisplayFont, fvSansFont } from "@/lib/farm-view/fonts";
 import { heroMonoFont, heroUiFont, heroWordFont } from "@/components/hero/fonts";
 import { PinLabel } from "@/components/hero/PinLabel";
-import { HERO_UNIT, RestingHero, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
+import { GlobeChrome } from "@/components/hero/GlobeChrome";
+import { HERO_UNIT, TEXT_OUT_TOTAL_MS } from "@/components/hero/RestingHero";
 import { color, farmControlsIn, hero as HERO, heroIn } from "@/components/hero/tokens";
 import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
 import { decodeShare } from "@/lib/share";
@@ -159,14 +161,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const heroEarth = useRef<HeroEarthApi | null>(null);
   /** A waypoint was clicked while not facing the viewer: the Earth turns to it first, then the dive starts. */
   const pendingDive = useRef<string | null>(null);
-  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: false, autoRotate: true });
+  const [settings, setSettings] = useState<HeroSettings>({ showPins: true, atmosphere: true, autoRotate: true });
 
   // ---------- resting hero state machine (globe view) ----------
-  const [hs, setHs] = useState<HeroState>("hero");
-  const hsRef = useRef<HeroState>("hero");
+  const [hs, setHs] = useState<HeroState>("ui");
+  const hsRef = useRef<HeroState>("ui");
   hsRef.current = hs;
   // The Earth glides to the centre only after the hero text has faded (no text visible while it moves).
-  const [earthCentre, setEarthCentre] = useState(false);
+  const [earthCentre, setEarthCentre] = useState(true);
   const timers = useRef<{ glide?: ReturnType<typeof setTimeout>; ui?: ReturnType<typeof setTimeout>; idle?: ReturnType<typeof setTimeout> }>({});
   const clear = (k: "glide" | "ui" | "idle") => {
     clearTimeout(timers.current[k]);
@@ -177,8 +179,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   /** Back to the resting hero: map UI out, Earth back to the right, then the text returns (reverse order). */
   const goHero = () => {
     (["glide", "ui", "idle"] as const).forEach(clear);
-    setHs("hero");
-    setEarthCentre(false);
+    // The globe view now always shows the map UI, centred (fromearth-style chrome); idle no longer returns to a text hero.
+    setHs("ui");
   };
   /** Restart the idle countdown (any pointer activity while centred or in the map UI). */
   const armIdle = () => {
@@ -431,6 +433,11 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       ...(d.look && { look: d.look }),
       ...(d.detail && { detail: d.detail }),
       ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
+      ...(d.rotation && { scenarioRotation: d.rotation }),
+      ...(d.time !== undefined && { scenarioProgress: d.time }),
+      ...(d.year !== undefined && { twinYear: d.year }),
+      ...(d.month !== undefined && { twinMonth: d.month }),
+      ...(d.panel && { leftOpen: d.panel !== "none" }),
     });
   }, []);
   useEffect(() => {
@@ -555,13 +562,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const panels = phase === "explore" && !titleOn && uiBeatDone;
   // Hero visuals wait for the hero Earth only; Cesium is needed from the dive on.
   const ready = earthReady;
-  const heroShown = onGlobe && hs === "hero";
   const uiShown = onGlobe && hs === "ui";
-  // Sidebar number: same as a pick in the map UI, entering it from the hero.
-  const pickFromHero = (id: string) => {
-    explore();
-    pickFarm(id);
-  };
   const offsetX = !earthCentre ? HERO.restOffsetX : 0;
 
   return (
@@ -639,8 +640,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
               farms={FARMS}
               selectedId={farmId}
               offsetX={offsetX}
-              autoRotate={heroShown && settings.autoRotate}
-              showPins={settings.showPins && onGlobe && hs !== "hero"}
+              autoRotate={onGlobe && settings.autoRotate && !cardFor}
+              showPins={settings.showPins && onGlobe}
               atmosphere={settings.atmosphere}
               zoomEnabled={earthCentre && onGlobe}
               reducedMotion={reducedMotion}
@@ -664,7 +665,15 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       </div>
 
       {/* Resting hero: text left, Earth right. */}
-      {onGlobe && <RestingHero shown={heroShown && ready} reduced={reducedMotion} farms={FARMS} selectedId={farmId} onExplore={explore} onPickFarm={pickFromHero} />}
+      {onGlobe && ready && (
+        <GlobeChrome
+          farms={FARMS}
+          selectedId={farmId}
+          onPickFarm={pickFarm}
+          onFlyTo={(lon, lat) => heroEarth.current?.faceLonLat(lon, lat)}
+          controls={<ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />}
+        />
+      )}
 
       {/* Map UI: waypoint label, confirm pulse, farm card, controls. Fades in 2 s after a drag; not focusable while hidden. */}
       {onGlobe && (
@@ -680,9 +689,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           <div className="pointer-events-auto">
             <FarmPopup farm={cardFor ? farmById(cardFor) : null} reduced={reducedMotion} onClose={() => select(null)} onDescend={requestDive} />
           </div>
-          <div className="pointer-events-auto absolute top-1/2 right-8 -translate-y-1/2">
-            <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={pickFarm} settings={settings} onSettings={setSettings} />
-          </div>
         </motion.div>
       )}
 
@@ -694,11 +700,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
         <p className="absolute z-10 -translate-x-1/2 translate-y-1/2 text-[11px] whitespace-nowrap" style={{ color: color.accent, left: `calc(50% + ${HERO_UNIT} * 48)`, bottom: `calc(${HERO_UNIT} * 28)` }}>
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
-      )}
-      {inTwin && panels && (
-        <div className="absolute top-14 left-1/2 z-10 -translate-x-1/2">
-          <ZoneToggle />
-        </div>
       )}
       <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
 
@@ -738,13 +739,16 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           animate={{ opacity: 1 }}
           transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
         >
-          <FarmView
-            farmName={farm.name}
-            place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
-            onBack={() => useAppStore.setState({ globeView: "globe" })}
-            onReset={() => globe.current?.resetView()}
-            sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
-          />
+          <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
+            <FarmView
+              farmName={farm.name}
+              place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
+              onBack={() => useAppStore.setState({ globeView: "globe" })}
+              onReset={() => globe.current?.resetView()}
+              zoneToggle={inTwin ? <ZoneToggle /> : undefined}
+              sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
+            />
+          </ErrorBoundary>
         </motion.div>
       )}
 

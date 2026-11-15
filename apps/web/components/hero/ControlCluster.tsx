@@ -147,6 +147,19 @@ export function ControlCluster({
   const [open, setOpen] = useState<Panel | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const triggers = useRef<Partial<Record<Panel, HTMLElement | null>>>({});
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      const frame = requestAnimationFrame(() => {
+        const first = popoverRef.current?.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        first?.focus();
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [open]);
 
   // Escape and outside clicks close; Escape returns focus to the trigger.
   useEffect(() => {
@@ -192,6 +205,7 @@ export function ControlCluster({
       <AnimatePresence>
         {open && (
           <motion.div
+            ref={popoverRef}
             id="hero-popover"
             role="dialog"
             aria-label={TITLES[open]}

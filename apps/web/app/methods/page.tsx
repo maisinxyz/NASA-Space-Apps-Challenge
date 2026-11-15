@@ -12,7 +12,8 @@ import { SUPPORT_SENTENCE } from "@/components/ui/SupportBanner";
 import { getProvenance, getSites, isMock } from "@/lib/api/client";
 import { FARMS, pinnedCandidateDatasets } from "@/lib/farms";
 import { TIER_LABEL } from "@/components/globe/FarmList";
-import type { BasisOrRelative, Provenance } from "@/lib/api/types";
+import type { BasisOrRelative, Provenance, Site } from "@/lib/api/types";
+import { useAppStore } from "@/lib/store";
 
 // Regex, not the literal marker, so this file itself never trips scripts/check-build.mjs.
 const UNVERIFIED = /(TODO\(verify\))/;
@@ -127,21 +128,38 @@ type State = { kind: "loading" } | { kind: "error"; error: unknown } | { kind: "
 
 export default function MethodsPage() {
   const [state, setState] = useState<State>({ kind: "loading" });
+  const [sites, setSites] = useState<Site[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<string>("");
 
-  const load = useCallback(() => {
-    setState({ kind: "loading" });
+  useEffect(() => {
     getSites()
-      .then((sites) => sites[0]?.terrain_id)
-      .then((tid) => {
-        if (!tid) throw new Error("No terrain is available to describe yet.");
-        return getProvenance(tid);
+      .then((loadedSites) => {
+        setSites(loadedSites);
+        const currentFarmId = useAppStore.getState().farmId;
+        const matched = loadedSites.find((s) => s.id === currentFarmId || (currentFarmId && s.id.includes(currentFarmId))) ?? loadedSites[0];
+        if (matched) {
+          setSelectedSiteId(matched.id);
+        }
       })
-      .then(
-        (prov) => setState({ kind: "ok", prov }),
-        (error) => setState({ kind: "error", error }),
-      );
+      .catch((error) => setState({ kind: "error", error }));
   }, []);
-  useEffect(load, [load]);
+
+  const loadProvenance = useCallback((siteId: string, currentSites: Site[]) => {
+    const site = currentSites.find((s) => s.id === siteId) ?? currentSites[0];
+    const tid = site?.terrain_id;
+    if (!tid) return;
+    setState({ kind: "loading" });
+    getProvenance(tid).then(
+      (prov) => setState({ kind: "ok", prov }),
+      (error) => setState({ kind: "error", error }),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (selectedSiteId && sites.length > 0) {
+      loadProvenance(selectedSiteId, sites);
+    }
+  }, [selectedSiteId, sites, loadProvenance]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -177,13 +195,39 @@ export default function MethodsPage() {
       </Section>
 
       <Section id="datasets" title="Datasets">
+        {sites.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <label htmlFor="site-select" className="text-sm font-medium text-ink">
+              Farm or site:
+            </label>
+            <select
+              id="site-select"
+              aria-label="Select farm or site"
+              value={selectedSiteId}
+              onChange={(e) => setSelectedSiteId(e.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              {sites.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.region})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {state.kind === "loading" && (
           <div className="grid gap-3">
             <Skeleton className="h-24 w-full" label="Loading data sources" />
             <Skeleton className="h-24 w-full" />
           </div>
         )}
-        {state.kind === "error" && <ErrorCard title="Could not load the data sources" error={state.error} onRetry={load} />}
+        {state.kind === "error" && (
+          <ErrorCard
+            title="Could not load the data sources"
+            error={state.error}
+            onRetry={() => loadProvenance(selectedSiteId, sites)}
+          />
+        )}
         {state.kind === "ok" && (
           <>
             <p className="mb-4 text-sm text-ink-muted">

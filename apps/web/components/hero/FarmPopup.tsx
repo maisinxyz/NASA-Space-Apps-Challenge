@@ -11,14 +11,27 @@ import { FARMS, type FarmInfo } from "@/lib/farms";
 import { hoverBus, trackBus } from "./buses";
 import { card, color, ease } from "./tokens";
 
-const W = 248;
+const W = 280;
 const GAP = 16; // pin tip to card edge (clears the pin head)
-const PIN_H = 36; // pin head height above its tip, px
-const BTN_H = 36; // external "Go to farm" pill under the card
+const PIN_H = 50; // pin height above its tip, px (FarmPins FARM_PIN_BOX)
+const BTN_H = 40; // external "Go to farm" pill under the card
 const EDGE = 12; // minimum distance to the viewport edge
 
 /** Farm photo from the farm data (`Farm.image`, public/farms/<id>.jpg); null when absent. */
 const photoOf = (f: FarmInfo) => f.image ?? null;
+
+/** Tier chip on the photo: what the user can do at this farm. */
+function TierChip({ farm }: { farm: FarmInfo }) {
+  const twin = farm.tier === "twin";
+  return (
+    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[10.5px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#ffc857" : "rgba(255,255,255,0.78)" }}>
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: twin ? "#ffc857" : "rgba(255,255,255,0.55)" }} />
+      {twin ? "Digital twin" : "Explore only"}
+    </span>
+  );
+}
+
+const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(3)}° ${v >= 0 ? pos : neg}`;
 
 function Photo({ farm }: { farm: FarmInfo }) {
   const photo = photoOf(farm);
@@ -32,6 +45,7 @@ function Photo({ farm }: { farm: FarmInfo }) {
       ) : (
         <div aria-hidden className="h-full w-full bg-gradient-to-br from-white/[0.06] to-white/[0.015]" />
       )}
+      <TierChip farm={farm} />
       {photo && !failed && photo.credit && (
         <p className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent px-2.5 pt-5 pb-1.5 text-[10px] leading-tight text-white/[0.72]" title={photo.credit}>
           {photo.credit}
@@ -70,6 +84,14 @@ export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInf
 function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
   const box = useRef<HTMLDivElement>(null);
   const pointer = useRef<HTMLSpanElement>(null);
+  const descendBtn = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (farm) {
+      const frame = requestAnimationFrame(() => descendBtn.current?.focus());
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [farm]);
   const last = useRef<{ x: number; y: number } | null>(null);
 
   // Follow this farm's pin (not another's: a replaced card keeps its last spot while it leaves).
@@ -101,6 +123,9 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
         pt.style.bottom = above ? "-5px" : "auto";
         pt.style.transform = `translateX(-50%) rotate(45deg)`;
         pt.style.borderWidth = above ? "0 1px 1px 0" : "1px 0 0 1px";
+        // Above the pin the pointer hangs under the (filled) button, so it takes the button's colour.
+        pt.style.background = above ? color.accent : "#07090d";
+        pt.style.borderWidth = above ? "0" : "1px 0 0 1px";
       }
       el.style.setProperty("--ox", `${px}px`);
       el.style.setProperty("--oy", above ? "100%" : "0%");
@@ -138,24 +163,40 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       >
         <section aria-label={`${farm.name}, ${where}`} className="relative block w-full overflow-hidden rounded-[16px] border border-white/[0.1] bg-[#07090d]/92 text-left shadow-[0_18px_44px_rgba(0,0,0,0.55)] backdrop-blur-md">
           <Photo farm={farm} />
-          <span className="block px-3.5 pt-3 pb-3.5">
-            <span className="line-clamp-2 text-[14px] leading-snug font-medium text-white/[0.95]">{farm.name}</span>
-            <span className="mt-0.5 block text-[12px] leading-snug" style={{ color: color.accent, opacity: 0.85 }}>
-              {where}
+          <span className="block px-4 pt-3.5 pb-4">
+            <span className="line-clamp-2 text-[15px] leading-snug font-semibold tracking-[-0.005em] text-white/[0.96]">{farm.name}</span>
+            <span className="mt-1 flex items-center gap-1.5 text-[12px] leading-snug" style={{ color: color.accent }}>
+              <svg aria-hidden viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <path d="M8 14s4.5-4.2 4.5-7.5a4.5 4.5 0 0 0-9 0C3.5 9.8 8 14 8 14Z" />
+                <circle cx="8" cy="6.5" r="1.6" />
+              </svg>
+              <span className="truncate">{where}</span>
             </span>
-            <span className="mt-2 line-clamp-1 text-[12px] leading-[1.45] text-white/[0.58]">{line}</span>
+            <span className="mt-2.5 line-clamp-2 text-[12px] leading-[1.5] text-white/[0.62]">{line}</span>
+            {farm.tier === "explore" && (
+              <span className="mt-2 block rounded bg-amber-500/10 px-2 py-1 text-[11px] leading-snug font-medium text-amber-200/90 border border-amber-500/20">
+                Simulation available on Cornell &amp; Beltsville only (2 of 14 farms).
+              </span>
+            )}
+            <span className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.07] pt-2.5 text-[11px] text-white/[0.5]">
+              <span className="tabular-nums">
+                {deg(farm.lat, "N", "S")}, {deg(farm.lon, "E", "W")}
+              </span>
+              {!farm.coordsVerified && <span title="Coordinates not published by the owner">Approximate</span>}
+            </span>
           </span>
         </section>
         <motion.button
+          ref={descendBtn}
           type="button"
           onClick={() => onDescend(farm.id)}
-          aria-label={`Go to ${farm.name}`}
-          whileTap={reduced ? undefined : { scale: 0.95, boxShadow: "inset 0 2px 8px rgba(0,0,0,0.65)", backgroundColor: "rgba(3,4,6,0.96)", transition: { duration: 0.07, ease: "easeOut" } }}
+          aria-label={farm.tier === "twin" ? `Enter digital twin for ${farm.name}` : `Explore ${farm.name} in 3D (simulation unavailable)`}
+          whileTap={reduced ? undefined : { scale: 0.96, transition: { duration: 0.07, ease: "easeOut" } }}
           transition={{ type: "spring", stiffness: 620, damping: 16, mass: 0.9 }}
-          className="relative mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.14] bg-[#07090d]/92 text-[13px] font-medium shadow-[0_10px_26px_rgba(0,0,0,0.5)] backdrop-blur-md outline-none transition-colors hover:border-white/[0.26] focus-visible:ring-2 focus-visible:ring-[#a3bfe9]/80"
-          style={{ height: BTN_H, color: color.accent }}
+          className="relative mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full text-[13px] font-semibold text-[#05070c] shadow-[0_10px_30px_-6px_rgba(163,191,233,0.6)] outline-none transition-[filter,box-shadow] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          style={{ height: BTN_H, background: `linear-gradient(180deg, #c3d6f4 0%, ${color.accent} 100%)` }}
         >
-          Go to farm
+          {farm.tier === "twin" ? "Enter digital twin" : "Explore in 3D (no simulation)"}
           <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>

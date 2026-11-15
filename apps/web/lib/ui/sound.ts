@@ -6,17 +6,20 @@ export const TICK_MIN_GAP_MS = 35;
 
 export type SoundName = "tickWeek" | "tickMonth" | "tap" | "pop" | "close" | "success";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyAudio = any;
+
 type AudioLike = {
   currentTime: number;
   sampleRate: number;
   state: string;
   destination: unknown;
   resume?: () => Promise<void> | void;
-  createGain: () => any;
-  createOscillator: () => any;
-  createBiquadFilter: () => any;
-  createBuffer: (ch: number, len: number, rate: number) => any;
-  createBufferSource: () => any;
+  createGain: () => AnyAudio;
+  createOscillator: () => AnyAudio;
+  createBiquadFilter: () => AnyAudio;
+  createBuffer: (ch: number, len: number, rate: number) => AnyAudio;
+  createBufferSource: () => AnyAudio;
 };
 
 export type SoundDeps = {
@@ -27,7 +30,8 @@ export type SoundDeps = {
 
 function defaultContext(): AudioLike | null {
   if (typeof window === "undefined") return null;
-  const Ctor = (window as any).AudioContext ?? (window as any).webkitAudioContext;
+  const win = window as unknown as { AudioContext?: new () => AudioLike; webkitAudioContext?: new () => AudioLike };
+  const Ctor = win.AudioContext ?? win.webkitAudioContext;
   return Ctor ? new Ctor() : null;
 }
 
@@ -45,7 +49,7 @@ export function createSound(deps: SoundDeps = {}) {
   let ctx: AudioLike | null = null;
   let muted = false;
   let lastTick = -Infinity;
-  let noise: any = null;
+  let noise: AnyAudio = null;
 
   try {
     const s = deps.storage === undefined ? defaultStorage() : deps.storage;

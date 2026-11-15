@@ -1,5 +1,5 @@
 // Card for the selected farm. Facts come from lib/farms (one file per farm); every one links back to its source.
-import type { FarmInfo } from "@/lib/farms";
+import { type FarmInfo, twinConfig } from "@/lib/farms";
 
 import { TierTag } from "./FarmList";
 
@@ -8,6 +8,7 @@ export const PRIMARY_BTN = "rounded-md bg-accent px-4 py-1.5 text-sm font-medium
 
 /** `onOpen` is left out when there is no globe to fly in (small screens, globe failure). */
 export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: FarmInfo; onClose(): void; onOpen?: () => void; className?: string }) {
+  const twin = twinConfig(farm.id);
   return (
     <section aria-labelledby="farm-card-title" className={`rounded-lg border border-line bg-surface/95 p-4 text-ink shadow-lg ${className}`}>
       <div className="flex items-start justify-between gap-3">
@@ -53,12 +54,36 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
         </a>
       </p>
       {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}. You can still fly in and look around.</p>}
-      {onOpen && (
+      {onOpen ? (
         <div className="mt-3">
           <button type="button" onClick={onOpen} className={PRIMARY_BTN}>
             {farm.tier === "twin" ? "Open twin" : "Fly in"}
           </button>
         </div>
+      ) : farm.tier === "twin" ? (
+        <div className="mt-3 rounded border border-line bg-surface-2 p-3 text-sm">
+          <p className="font-semibold text-ink">3D Digital Twin Unavailable</p>
+          <p className="mt-1 text-xs text-ink-muted">
+            Interactive 3D simulation and rotation comparison require a WebGL-capable desktop browser.
+          </p>
+          {twin && twin.rotations.length > 0 && (
+            <div className="mt-2 text-xs">
+              <span className="font-medium text-ink">Modelled Rotations: </span>
+              <span className="text-ink-muted">{twin.rotations.map((r) => r.name).join(", ")}</span>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <a href="/methods" className="text-accent underline underline-offset-2 hover:opacity-90">
+              Scientific methods
+            </a>
+            <span aria-hidden className="text-ink-muted">·</span>
+            <a href="/learn" className="text-accent underline underline-offset-2 hover:opacity-90">
+              Documentation
+            </a>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-ink-muted">Interactive 3D view requires a WebGL-capable desktop browser.</p>
       )}
     </section>
   );
