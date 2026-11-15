@@ -112,5 +112,35 @@
   "limits": "They may earn less or have fewer buyers; check local markets.",
   "related_terms": ["water_balance"],
   "source": "TODO(verify)"
+ },
+ {
+  "id": "soil_organic_index",
+  "kind": "term",
+  "term": "Soil organic index",
+  "short": "A relative soil-carbon score. Year 0 is 100. It is not a percent of organic matter.",
+  "long": "The index follows a two-pool first-order model. It rises when residue and roots add carbon and falls when decay, bare weeks, or tillage remove it. The starting point is the steady state of a medium residue input, not a soil test.",
+  "how_we_use_it": "Each strategy's year-10 index is compared with the others. A higher score means more of that relative carbon, not a measured percent.",
+  "related_terms": ["water_balance"],
+  "source": "Andrén and Kätterer 1997, ICBM Table 1, http://www.oandren.com/ICBM/1-35.pdf. The index scaling is assumed. TODO(verify)."
+ },
+ {
+  "id": "weather_ensemble",
+  "kind": "term",
+  "term": "Weather ensemble",
+  "short": "Thirty replayed historical years, in an order fixed by the request.",
+  "long": "Each member is a sequence of observed years drawn with a seed from the request hash. The same request always draws the same years. The scenario is phased in from year 0 to the end of the horizon.",
+  "how_we_use_it": "The band on a chart is the 10th to 90th percentile across those members. It is the spread of the replay, not a probability forecast.",
+  "related_terms": ["evapotranspiration"],
+  "source": "The member count and the hash rule are in the forecast PRD. The seed uses SHA-256. TODO(verify) the wording with the team."
+ },
+ {
+  "id": "sensitivity_grid",
+  "kind": "term",
+  "term": "Sensitivity grid",
+  "short": "The same plans run again at five rain changes and three temperature changes.",
+  "long": "Rain is tried at -30, -15, 0, +15 and +30 percent. Temperature is tried at 0, +1.5 and +3 degrees C. Rank stability is how often each plan comes first on that grid.",
+  "how_we_use_it": "The grid uses fewer replayed years than the main forecast so it can finish quickly. The smaller set is a speed choice, not a new climate dataset.",
+  "related_terms": ["weather_ensemble"],
+  "source": "The axis values are the forecast PRD group 5 grid. TODO(verify) the wording with the team."
  }
 ]
