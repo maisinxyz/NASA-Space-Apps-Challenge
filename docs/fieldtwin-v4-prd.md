@@ -24,20 +24,22 @@ Decisions made in the interview (the product owner's answers, in order):
 | D7 | Custom drawn fields are for the **2D bird's-eye view only**. The twin itself is only UBC and KPU Langley. The app does not need to work offline. |
 | D8 | The climate trend comes from NASA NEX-GDDP-CMIP6 first. A non-NASA source is used only as a labelled fallback. |
 | D9 | Satellite data is fetched through AppEEARS with the owner's Earthdata username and password. |
+| D11 | The product owner cannot reach UBC Farm, so the existing rotations for UBC and KPU Langley are **defined by the team** (B4) and shown as the farm's "Current rotation", editable by the user. The build carries no per-screen assumption tags. |
+| D12 | The strict honesty rules in `CLAUDE.md` are relaxed by the owner for this build (section 2). |
 | D10 | **Crop rotation is the core feature.** The farmer's existing rotation is compared with two alternatives built from the farmer's own crop pool, and the farmer can edit a rotation. (An earlier draft added "crop shifting" as a separate feature; the owner meant crop rotation, so it was removed.) |
 
-## 2. Honesty and product rules
+## 2. Product rules
 
-These come from `CLAUDE.md` and the decisions above.
+The owner relaxed the strict labelling rules in `CLAUDE.md` for this build (D12). What stays, and what changes:
 
-1. Every simulation number shows a unit, a basis label (`measured`, `derived`, `modeled`, `assumed`, `relative`) and a confidence. Absolute estimates show p10 and p90. The wording "This tool supports, and does not replace, local agronomic expertise." appears wherever the API returns `support_sentence`.
-2. Simulation output is a **scenario forecast, not a prediction**. The climate source and scenario are always visible.
-3. **No income and no fertilizer figures anywhere in the UI** (D3). Prices are never invented.
-4. Anything not working is labelled **Roadmap**, never shown as working. This includes drone and video capture, the 30 m cell map and the three hotspot maps until their data exists (D4), and the real seasonal forecast until B7 step 2 ships.
-5. Mock data shows a "mock" badge in development and must never reach the demo. Pre-built engine output shows a "Pre-built" badge. Synthetic Future-mode numbers keep the "Synthetic demo data" label until F1 replaces them.
-6. The forecast and its outputs are deterministic: the same request returns the same result. The chatbot is exempt, because a language model is not deterministic. It must not change any forecast number.
-7. `CLAUDE.md` change required by D7: the demo farms may call live services. `OFFLINE=1` still serves seed data only. Custom-field lookups (B10) may call NASA POWER and SoilGrids live and must cache by request hash.
-8. Every dataset is listed with source, licence and attribution (Methods page). Secrets (`.env`, tokens, keys) are never printed, logged or committed.
+1. **Numbers.** Show a unit with every number and keep the p10 to p90 range on estimates. The per-number basis chips (`measured`, `derived`, `modeled`, `assumed`, `relative`) may be shown in a details view or tooltip instead of on every line, and "assumed" or `TODO(verify)` tags do not appear on the main screens (D11).
+2. **Current rotation.** Each farm's existing rotation is shown as "Current rotation" with an edit control. It is the team's defined starting rotation (B4). The app does not state that it is the farm's recorded practice.
+3. **One place for the details.** A single Methods and data page lists every dataset with source, licence and attribution (a licence requirement), the climate source and scenario, and the modelling assumptions in plain words. The line "This tool supports, and does not replace, local agronomic expertise." stays on the dashboard, and the forecast is described as a scenario forecast.
+4. **No income and no fertilizer figures anywhere in the UI** (D3). Prices are never invented.
+5. **Unfinished features** are hidden, or tagged Roadmap where a placeholder helps the story. Nothing that does not work is shown as working. This includes the 30 m cell map and hotspot maps until their data exists (D4) and the real seasonal forecast until B7 step 2 ships.
+6. **Deterministic forecasts.** The same request returns the same result. The chatbot is exempt, because a language model is not deterministic. It must not change any forecast number.
+7. **Live lookups.** The demo farms may call live services. `OFFLINE=1` still serves seed data only. Custom-field lookups (B10) may call NASA POWER and SoilGrids live and must cache by request hash.
+8. **Secrets** (`.env`, tokens, passwords, keys) are never printed, logged or committed.
 
 ## 3. What is true today (verified 2026-11-15)
 
@@ -45,11 +47,11 @@ These come from `CLAUDE.md` and the decisions above.
 - Contract v1.2.0: `GET /sites/{id}/climate-outlook`, `GET /sites/{id}/exposure`, `GET /crop-catalog`, `POST /sites/{id}/forecast`, `POST /sites/{id}/forecast/sensitivity`. Engine in `services/api/app/twin/` (weekly water balance, ICBM soil carbon, nitrogen, pests, strategy generator and scorecards).
 - Seeds for UBC Farm: NASA POWER daily 1991 to 2024 and SoilGrids soil. KPU Langley has the same files, but the forecast for KPU still fails with "No soil seed and no soil override for this site" (bug, B6).
 - UBC web twin pieces from this round: six real UBC Farm plots from OpenStreetMap, a pre-built forecast file (`apps/web/public/prebuilt/site_ubc_farm_forecast.json`), an API client, a Forecast panel in Future mode, mock sites UBC and KPU Langley, UBC pin at 49.249786, -123.236786.
-- Earthdata token works for data hosts (HTTP 206 on a real HLS file). Groq key works (HTTP 200).
+- Earthdata token works for data hosts (HTTP 206 on a real HLS file). `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` are now in `.env` (checked 2026-11-15; values never printed), so AppEEARS can be used. Groq key works (HTTP 200) and stays in use until the owner rotates it.
 
 **Not real yet**
 - No satellite seeds. No elevation grid. No station check. No climate-change trend file (B1 is building it).
-- Vegetables cannot be planned: 37 of 49 catalog crops have no planting window (`season_window` days are null), so the engine returns zero alternatives for UBC's real crops. The demo pool is cereals, legumes, canola and cover crops, and the "existing rotation" is assumed.
+- Vegetables cannot be planned: 37 of 49 catalog crops have no planting window (`season_window` days are null), so the engine returns zero alternatives for vegetable pools. The demo pool is cereals, legumes, canola and cover crops until B4 fills the windows. Both BC farms already have a typical vegetable rotation preset (FT-EC2), currently named "Typical vegetable rotation (not this farm's records)"; B4 renames it to "Current rotation".
 - Some engine outputs are implausible for UBC (soil loss about 52 to 60 t/ha/yr, nitrogen balance index about 390, alternative pest pressure stuck at 100). They need calibration (B5).
 - The NASA POWER cell for UBC is 55 km wide with a mean elevation of about 565 m; the farm is near sea level. Temperature bias is unmeasured until B3.
 - Most of Future mode (timeline, pills, lens cards, Soil health, Compare, the Strategy picker) reads synthetic fixtures.
@@ -84,7 +86,7 @@ All fetching happens in seed-build scripts, not while a request waits (except B1
 | Weather, 1991 to 2024 | NASA POWER daily | Already seeded for UBC and KPU | Done | none |
 | Soil | ISRIC SoilGrids 2.0 | Seeded. KPU forecast still fails (B6) | UBC done | B6 |
 | Climate trend | NASA NEX-GDDP-CMIP6 via NCCS THREDDS NetCDF Subset Service, daily `tasmax`, `tasmin`, `pr`, 0.25 degree | `scripts/seed_cmip6/build_ncss.py`. No login. One variable-year at one point takes about 8.6 s | **Running** (4 models, ssp245 and ssp585, both sites; about an hour) | B1 |
-| Vegetation (NDVI) | NASA HLS vegetation indices (`HLSL30_VI.020`, `HLSS30_VI.020`) or MODIS `MOD13Q1.061` | AppEEARS point sample, needs Earthdata username and password | Blocked on credentials in `.env` | B2 |
+| Vegetation (NDVI) | NASA HLS vegetation indices (`HLSL30_VI.020`, `HLSS30_VI.020`) or MODIS `MOD13Q1.061` | AppEEARS point sample, needs Earthdata username and password | Ready to start (credentials in `.env`) | B2 |
 | Soil moisture | SMAP L4 `SPL4SMGP.008` (9 km, modeled) | AppEEARS point sample | Not started | B2 |
 | Evapotranspiration | ECOSTRESS `ECO_L3T_JET.002` | AppEEARS point sample | Not started | B2 |
 | Elevation | NASADEM (`NASADEM_NC.001`, 30 m) | AppEEARS area sample of about 1 km | Not started | B2 |
@@ -112,14 +114,14 @@ All backend work stays in `services/api/`, `packages/contracts/`, `data/seed/`, 
 - Replace the assumption "No verified CMIP6 delta table is attached" in the response when the file exists.
 - Acceptance: with the file, a baseline run and an `ssp245` run give different year-10 weather; the response says which models and years produced the delta; tests cover the file loader and the seasonal delta maths (`services/api/tests/test_cmip6_ncss.py`).
 
-**B2. Satellite seeds for UBC and KPU through AppEEARS.** Blocked until `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` are in `.env`.
+**B2. Satellite seeds for UBC and KPU through AppEEARS.** Unblocked: the Earthdata username and password are in `.env`. Read them from the environment only; never print them.
 - New script folder `scripts/seed_appeears/`. Log in, submit point (or small area) tasks, poll, download the CSV, write the existing seed shapes (`ndvi.json.gz`, `smap.json.gz`, `ecostress.json.gz`, `dem.json.gz`, optional `imerg`, `grace`) with sidecars, and delete the matching `.gap.json`. The seed contract is in `docs/grok-A-earthdata-ingest.md`.
 - Do not use direct GDAL reads of LP DAAC files on the Windows machine and never disable TLS verification.
 - Acceptance: for each site, `load_ndvi`, `load_smap`, `load_dem` return data; the climate outlook, exposure and uncertainty rows show the new layers; `data_mode` follows the data that exists; tests run offline against small committed fixtures.
 
 **B3. Station check.** Pick the nearest active Environment Canada station with daily temperature and rain, record its climate identifier and coordinates, pull the daily record through the OGC API, and compare with the POWER seed (bias by month for temperature and rain). Write `data/seed/<site>/station.json.gz` and fill `station_bias` in the uncertainty block. Acceptance: the response shows the bias with unit, basis `derived`, years compared; the station and its distance to the farm are named.
 
-**B4. Crops: planting windows and traits for UBC and KPU.** Fill `season_window` (planting and termination day of year) for the vegetables, covers and field crops used at the two farms, only from a cited source; keep null where no source exists. Keep the FAO-56 and Statistics Canada values already in. Define the existing UBC rotation with the farm (ask UBC Farm staff) and store it as a preset. Acceptance: a UBC request with vegetables returns at least two alternatives; every filled value has `trait_sources` with a URL; the pool shown in the UI is no longer limited to field crops.
+**B4. Crops: planting windows and traits for UBC and KPU.** Fill `season_window` (planting and termination day of year) for the vegetables, covers and field crops used at the two farms, only from a cited source; keep null where no source exists. Keep the FAO-56 and Statistics Canada values already in. Define each farm's "Current rotation" ourselves, since no farm contact is available (D11). UBC: one family block per field, named by the OpenStreetMap plot names (D3-1 Brassicas, D4-1 Goosefoots, D6-1 Alliums and Legumes, D6-2 Nightshades and Garlic, D7-2 Early Cucurbits, D5-3 Maya Garden), with the families cycling through the fields in a standard market-garden order (brassicas, then alliums and legumes, then nightshades, then cucurbits, then chard and beet, with a cover crop between). KPU Langley: the typical vegetable preset already stored (FT-EC2). Store both as presets named "Current rotation" and editable in the UI. Acceptance: a UBC request with vegetables returns at least two alternatives; every filled value has `trait_sources` with a URL in the data file; the pool shown in the UI is no longer limited to field crops; the preset label reads "Current rotation".
 
 **B5. Calibrate and sanity-check engine outputs.** Review UBC and KPU runs against known ranges (soil loss, nitrogen, pest index, yields) with cited sources. Fix saturation (pest pressure at 100), unit slips and unrealistic soil loss, or relabel as `assumed` or `relative` and widen the range. Acceptance: no output outside a documented plausible range without a review flag; a short note lists each check, source and result.
 
@@ -193,7 +195,7 @@ The frontend session (this chat) does F1 to F8 and never edits backend files. Th
 
 | Session | Workstreams, in order | Owns | Starts when | Stops when |
 | --- | --- | --- | --- | --- |
-| A, data | B2, B3 | `scripts/seed_appeears/`, `scripts/seed_station/`, `data/seed/*/{ndvi,smap,ecostress,dem,imerg,grace,station}.*` | B2 starts after `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` are in `.env` (until then do B3 first) | `SESSION A FINISHED` after B3, or `SESSION A BLOCKED: <question>` for a credential or a fact it cannot verify |
+| A, data | B2, B3 | `scripts/seed_appeears/`, `scripts/seed_station/`, `data/seed/*/{ndvi,smap,ecostress,dem,imerg,grace,station}.*` | Now: B2 first (credentials are in `.env`), then B3 | `SESSION A FINISHED` after B3, or `SESSION A BLOCKED: <question>` for a credential or a fact it cannot verify |
 | B, engine | B1, B6, B4, B8, B5, B7 | `services/api/app/twin/**`, `services/api/app/features/**`, `data/seed/crops/**`, `data/seed/*/cmip6_delta.*`, `scripts/seed_cmip6/**` | Now (B1 needs the running CMIP6 build to finish) | `SESSION B FINISHED` after B7 step 1 (step 2 is optional), or `BLOCKED` |
 | C, API | B11 first, then B9, B10 | `services/api/app/routers/**`, `services/api/app/services/**` for the new endpoints, `packages/contracts/**` | Now (B11 first, within the first hours, so the frontend can build against fixtures) | `SESSION C FINISHED` after B10, or `BLOCKED` |
 
@@ -211,24 +213,24 @@ Suggested order for the whole project: B11 and B1 and B6 first; then B4, B3, B2 
 6. **Monthly outlook.** A 12-month view with ranges that widen with time, labelled "typical year" or "seasonal forecast" according to its source.
 7. **2D map.** Opening 2D shows the 2022 aerial imagery with attribution and about a 3 km by 3 km view; ten open and close cycles show no WebGL context loss and no steadily rising memory; drawing a custom field returns a result card.
 8. **Co-pilot.** Clicking "Ask co-pilot" on a field, a flag or a strategy opens the chat with the current screen state and returns a plain-language answer that quotes on-screen numbers, names its uncertainty and says what to check locally. It does not give planting orders and does not quote income or fertilizer.
-9. **Honesty.** "This tool supports, and does not replace, local agronomic expertise." is visible; the Roadmap items are labelled; the Methods page lists every dataset with source, licence and attribution; no mock data and no unlabelled synthetic data on the demo path.
+9. **Product rules.** The support sentence is on the dashboard, the Methods and data page lists every dataset with source, licence and attribution, the existing rotations read "Current rotation" and are editable, no income or fertilizer number appears anywhere, and nothing unfinished is shown as working.
 10. **Quality gates.** `services/api` tests, `packages/contracts` tests and `apps/web` tests, typecheck and lint pass (the three existing lint errors in `e2e/farm-view/helpers.ts` are tracked separately).
 
 ## 11. Risks and open items
 
 | # | Item | Owner | What settles it |
 | --- | --- | --- | --- |
-| R1 | Earthdata username and password are not yet in `.env`; AppEEARS rejects the token | Product owner | Add `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` to `.env` (git-ignored) |
+| R1 | AppEEARS rejects the Earthdata token and needs the username and password | Product owner | Done: both are in `.env` (git-ignored). Session A confirms a login works |
 | R2 | Direct LP DAAC reads fail on the Windows machine (certificate chain) | Session A | Use AppEEARS (B2). Do not disable TLS verification |
 | R3 | NEX-GDDP-CMIP6 licence disagreement (CC0 versus CC-BY-SA 4.0) | Product owner | Confirm with NCCS; the seed already follows the stricter terms |
-| R4 | The UBC "existing rotation" is assumed and the vegetable windows are unsourced | Session B, UBC Farm staff | B4 with a farm contact |
+| R4 | The UBC and KPU current rotations are team-defined and the vegetable windows are unsourced | Session B | B4: defined from the plot names and public planting guides; editable in the UI (D11) |
 | R5 | Engine outputs not calibrated; soil loss, nitrogen and pest values implausible | Session B | B5 |
 | R6 | The UBC POWER cell is 55 km and about 565 m mean elevation | Session A | B3 station bias |
 | R7 | Open-Meteo seasonal API: horizon, members, units and licence unverified | Session B | Read the official docs and record before step 2 |
 | R8 | `UBCComparison.tsx` was added by another track and overlaps with the Forecast panel and Compare mode | Frontend, other track's owner | Agree one comparison view in F4 |
-| R9 | The Groq key was printed once into a session log | Product owner | Rotate it at console.groq.com; the key now lives as `GROQ_API_KEY` in `.env` |
+| R9 | The Groq key was printed once into a session log | Product owner | The owner will rotate it later; keep using the current key until then. It lives as `GROQ_API_KEY` in `.env` |
 | R10 | Chatbot answers are not deterministic and depend on internet access | Session C | Guardrails and tests in B9; a plain error when Groq is unreachable |
-| R11 | KPU Langley field boundaries and its current rotation are not defined | Product owner, Session B | Choose fields (OpenStreetMap plots like UBC) and a rotation preset |
+| R11 | KPU Langley field boundaries are not defined | Session B, frontend | Choose fields from OpenStreetMap plots like UBC; the rotation is the stored preset (B4) |
 
 ## 12. References
 

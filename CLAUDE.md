@@ -29,6 +29,7 @@ FieldTwin: a website that turns a farm photo + location into a 3D model, replays
 - Do not refactor unrelated code. Do not touch files owned by other tracks unless the prompt says so.
 
 ## Honesty (PRD §2.4, §6.7)
+- **Relaxed by the owner on 2026-11-15 for the v4 build (UBC Farm and KPU Langley): `docs/fieldtwin-v4-prd.md` §2 replaces the labelling rules in this section.** Per-screen assumption and basis tags are not required, and no income or fertilizer figures are shown. The sections below still apply to anything §2 does not cover.
 - Every simulation number shows units and a basis label: measured / derived / modeled / assumed / relative.
 - Simulation outputs are scenario forecasts. Absolute estimates (yield, income, fertilizer, soil loss) are allowed (approved by the user 2026-11-14, supersedes the earlier relative-only rule); each shows unit, basis label and a p10/p90 range. Prices come from the farmer, never invented.
 - Curated sites show a "Pre-built" badge. Mock data shows a "mock" badge in dev and must never reach the demo. Exception (approved by the user 2026-11-14): full-twin farms may run scenario effects from fixture inputs, always labelled "Synthetic demo data".
