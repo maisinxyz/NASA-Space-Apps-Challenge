@@ -68,7 +68,7 @@ export function SimulateBody({ runSource, frame }: { runSource: RunSource; frame
   const def = scenarioById(id);
   return (
     <div className="grid gap-3">
-      {runSource === "fixture" && (
+      {runSource === "fixture" && SYNTHETIC_BADGE && (
         <p className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted" title={SYNTHETIC_NOTE}>
           <span className="rounded-full border border-amber-300/60 bg-amber-300/15 px-2 text-[0.7rem] leading-5 font-semibold text-amber-200">{SYNTHETIC_BADGE}</span>
           {SYNTHETIC_NOTE}

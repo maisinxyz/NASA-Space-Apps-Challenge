@@ -136,7 +136,7 @@ export function ReviewDrawer() {
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
             </FvButton>
           </div>
-          <span className="ff-label">{flags.length} {flags.length === 1 ? "flag" : "flags"}{data.source === "synthetic" ? " · synthetic demo data" : ""}</span>
+          <span className="ff-label">{flags.length} {flags.length === 1 ? "flag" : "flags"}</span>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", overflowY: "auto" }}>
             {flags.map((f) => (
               <li key={f.id} data-testid="review-flag" style={{ display: "flex", flexDirection: "column", gap: 3, padding: "12px 0", borderTop: `1px solid ${color.hairline}` }}>

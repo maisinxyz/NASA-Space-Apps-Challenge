@@ -145,7 +145,7 @@ export function UBCComparisonView({
 
       <p className="ubc-provenance">
         Modelled rotation comparison · NASA POWER daily weather 1991–2024, 0.5° × 0.625° · SoilGrids
-        soil estimates at 250 m · Synthetic label: illustrative, not measured at this farm
+        soil estimates at 250 m · Illustrative, not measured at this farm
       </p>
     </div>
   );

@@ -135,7 +135,7 @@ describe("UBCComparisonView", () => {
     expect(html).toContain("Modelled rotation comparison");
     expect(html).toContain("NASA POWER daily weather 1991–2024");
     expect(html).toContain("SoilGrids soil estimates at 250 m");
-    expect(html).toContain("Synthetic label: illustrative, not measured at this farm");
+    expect(html).toContain("Illustrative, not measured at this farm");
   });
 
   it("renders the limited irrigation water toggle", () => {

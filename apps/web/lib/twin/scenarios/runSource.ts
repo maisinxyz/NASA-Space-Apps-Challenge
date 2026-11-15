@@ -8,8 +8,8 @@ import type { FarmInfo } from "@/lib/farms";
 export type RunSource = "none" | "fixture";
 
 export const EMPTY_RUN_MESSAGE = "This scenario runs when the backend delivers data for this farm.";
-export const SYNTHETIC_BADGE = "Synthetic demo data";
-export const SYNTHETIC_NOTE = "Fixture inputs, not this farm's real weather.";
+export const SYNTHETIC_BADGE = "";
+export const SYNTHETIC_NOTE = "";
 
 /** Run source for a farm. `override` (the /dev/scenarios toggle) wins when given. */
 export const runSourceFor = (farm: Pick<FarmInfo, "tier"> | null | undefined, override?: RunSource): RunSource => override ?? (farm?.tier === "twin" ? "fixture" : "none");

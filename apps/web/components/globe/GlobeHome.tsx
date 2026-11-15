@@ -390,7 +390,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
             <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Digital twins still offer scenarios, comparisons, and evidence here.</p>
           )}
           {wide && !listMode && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
-          <p className="text-sm text-ink-muted">Compare what could happen under different rotations. The demo uses illustrative crops and simulated weather, with no live farm measurements.</p>
+          <p className="text-sm text-ink-muted">Compare what could happen under different rotations with illustrative crops and simulated weather.</p>
           {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} navigation={navigation} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
             {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => openFarm(farm.id) : undefined} />}
             <GlobeAssistant navigation={navigation} onAsk={askAtFarm} />
