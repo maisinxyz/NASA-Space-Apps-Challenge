@@ -11,7 +11,7 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { color } from "@/lib/farm-view/tokens";
 import { fmt, METRICS, seriesOf, strategiesOf, valueAt, yearOfClock, type MetricKey } from "@/lib/forecast/select";
 import type { Forecast } from "@/lib/api/types";
-import { siteForFarm } from "@/lib/forecast/sites";
+import { FIELD_SOURCES, siteForFarm } from "@/lib/forecast/sites";
 import { useForecastStore, type ForecastSource } from "@/lib/forecast/store";
 import { useAppStore } from "@/lib/store";
 
@@ -158,6 +158,7 @@ export function ForecastCard({ open, status, forecast, source, error, year, onCl
             <ul style={{ margin: "6px 0 0", paddingLeft: 16 }}>
               {forecast.assumptions.map((a, i) => <li key={i} className="ff-p">{a}</li>)}
               {forecast.sources.map((s) => <li key={s.name} className="ff-p">{s.name}. {s.license}. {s.attribution}</li>)}
+              {FIELD_SOURCES[forecast.site_id] && <li className="ff-p">{FIELD_SOURCES[forecast.site_id]}</li>}
             </ul>
           </details>
         </>

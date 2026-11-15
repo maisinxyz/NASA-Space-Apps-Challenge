@@ -28,6 +28,7 @@ describe("ForecastCard", () => {
     expect(html).toContain("Soil organic matter");
     expect(html).toContain("Year 3");
     expect(html).toContain("data-basis=");
+    expect(html).toContain("© OpenStreetMap contributors, ODbL 1.0");
     expect(html).not.toContain("Synthetic demo data"); // engine output; the rest of Future mode keeps its own label
   });
 
