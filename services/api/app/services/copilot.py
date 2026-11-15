@@ -24,6 +24,10 @@ MODEL = "openai/gpt-oss-120b"
 # Fallback when Groq has no key or fails. OpenAI-compatible API, same model id:
 # https://openrouter.ai/docs/api-reference/chat-completion, https://openrouter.ai/openai/gpt-oss-120b
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# NVIDIA API catalog (build.nvidia.com), OpenAI-compatible, same model id:
+# https://build.nvidia.com/openai/gpt-oss-120b. Tried after Groq, before OpenRouter.
+# TODO(verify): strict json_schema response_format on this endpoint; a rejection falls through to OpenRouter.
+NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 FARMS = {"site_ubc_farm": ("ubc-farm", "ubc-request.json"), "site_kpu_langley": ("kpu-langley", "kpu-request.json")}
 LIMIT, WINDOW = 10, 60.0
 _lock = threading.Lock()
@@ -199,22 +203,24 @@ def chat(body: dict, client: str) -> dict:
     # modify the process environment or expose any other .env values.
     env = dotenv_values(REPO_ROOT / ".env")
     key = os.getenv("GROQ_API_KEY") or env.get("GROQ_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY") or env.get("NVIDIA_API_KEY")
     fallback_key = os.getenv("OPENROUTER_API_KEY") or env.get("OPENROUTER_API_KEY")
-    if not key and not fallback_key:
+    if not key and not nvidia_key and not fallback_key:
         raise ApiError("DATA_SOURCE_UNAVAILABLE", "The co-pilot is unavailable right now. Please try again.", retryable=True)
     context = snapshot_context(body["snapshot"], body["message"])
     messages = [{"role": "system", "content": SYSTEM}, {"role": "system", "content": "Server-supplied context: " + json.dumps(context)}]
     messages.extend(body.get("history", []))
     messages.append({"role": "user", "content": body["message"]})
     payload = {"model": MODEL, "messages": messages, "response_format": {"type": "json_schema", "json_schema": {"name": "copilot_reply", "strict": True, "schema": SCHEMA}}}
-    try:
-        if not key:
-            raise ApiError("DATA_SOURCE_UNAVAILABLE", "No Groq key.", retryable=True)
-        result = _provider(payload, key)
-    except ApiError:
-        if not fallback_key:
-            raise
-        result = _provider(payload, fallback_key, OPENROUTER_URL)
+    # Groq, then NVIDIA, then OpenRouter; providers without a key are skipped.
+    attempts = [(k, u) for k, u in ((key, None), (nvidia_key, NVIDIA_URL), (fallback_key, OPENROUTER_URL)) if k]
+    for i, (k, u) in enumerate(attempts):
+        try:
+            result = _provider(payload, k) if u is None else _provider(payload, k, u)
+            break
+        except ApiError:
+            if i == len(attempts) - 1:
+                raise
     allowed_layers = set(context.get("metrics", {}))
     result["referenced_layers"] = [layer for layer in result["referenced_layers"] if layer in allowed_layers]
     if not result["local_validation_tips"]:
