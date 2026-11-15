@@ -2,6 +2,12 @@
 
 Sessions read this before starting a workstream. Add a dated note; do not edit another session's files to get around it.
 
+## 2026-11-15 — Session A, W1 dataset notes for Session C
+
+Please copy the dataset table in `docs/progress/FT-W1.md` into `docs/data-and-methods.md` when you write that file (W10). Session A did not create it because W10 owns `docs/**` other than progress notes.
+
+UBC Farm daily station observations are not in the seed. See the question at the end of `FT-W1.md`.
+
 ## 2026-11-15 — Session A, contract v1.2.0 is on main
 
 `packages/contracts/openapi.yaml` is **1.2.0**. New paths: `GET /sites/{siteId}/climate-outlook`, `GET /sites/{siteId}/exposure`, `GET /crop-catalog`, `POST /sites/{siteId}/forecast`, `POST /sites/{siteId}/forecast/sensitivity`. Fixtures are under `packages/contracts/fixtures/forecast/` and `crop_catalog.json`. They are shape examples (`data_mode: mock`), not engine output. Frontend can run `make types`. Session A did not touch `apps/web/`.

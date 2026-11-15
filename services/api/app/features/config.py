@@ -18,10 +18,36 @@ PERIOD = (date(1991, 1, 1), date(2024, 12, 31))  # climatology window; every ful
 # Chosen 2026-11-14 from the web app's twin/explore farms (apps/web/lib/farms/): humid subtropical (Beltsville),
 # humid continental with cold winters (Harford NY), Mediterranean with dry summers (Napa). Change here if the team picks others.
 # Coordinates copied from apps/web/lib/farms/*.ts (Oakville is marked approximate there).
+# UBC Farm address is published by the farm: 3461 Ross Drive, Vancouver, BC, Canada V6T 1Z4
+# (https://ubcfarm.ubc.ca/, read 2026-11-15). That page does not publish latitude/longitude.
+# The point below is the Province of British Columbia address geocoder access point for that
+# civic address, not a surveyed field centroid.
+# Query: https://geocoder.api.gov.bc.ca/addresses.json?addressString=3461%20Ross%20Drive%20Vancouver
+# Response searchTimestamp 2026-11-14T20:15:28, baseDataDate 2026-07-07, isOfficial true,
+# matchPrecision BLOCK, locationPositionalAccuracy low, locationDescriptor accessPoint,
+# fullAddress "3461 Ross Dr, Vancouver, BC", geometry [-123.237981, 49.2517018].
+# Rounded here to 4 decimals. TODO(verify): a UBC-published field centroid. The farm map PDF
+# (https://lfs-ubcfarm-clone-2018.sites.olt.ubc.ca/files/2023/06/ubcfarmmap_large2023.pdf) has no coordinates.
+# Geocoder copyright: Province of British Columbia. The response's copyrightLicense field is
+# https://www2.gov.bc.ca/gov/content?id=A519A56BC2BF44E4A008B33FCF527F61
+# which is Open Government Licence - British Columbia, version 2.0 (read 2026-11-15).
+# That page says the licence applies to B.C. Data Catalogue records that specify it.
+# Attribution: Contains information licensed under the Open Government Licence – British Columbia.
+# farm_id matches apps/web/lib/farms/candidates/ubc-farm.ts (`ubc-farm`). The web app has not promoted it yet.
 CURATED_SITES: dict[str, dict] = {
     "site_usda_barc": {"name": "USDA Beltsville Agricultural Research Center", "lat": 39.0319, "lon": -76.8844, "farm_id": "usda-barc"},
     "site_cornell_ruminant": {"name": "Cornell Harford ruminant farm", "lat": 42.4409, "lon": -76.2541, "farm_id": "cornell-ruminant"},
     "site_ucdavis_oakville": {"name": "Oakville Grade area, Napa Valley", "lat": 38.4201, "lon": -122.4121, "farm_id": "ucdavis-oakville"},
+    "site_ubc_farm": {
+        "name": "UBC Farm",
+        "lat": 49.2517,
+        "lon": -123.238,
+        "farm_id": "ubc-farm",
+        "address": "3461 Ross Drive, Vancouver, BC, Canada V6T 1Z4",
+        "source_url": "https://ubcfarm.ubc.ca/",
+        "coord_source_url": "https://geocoder.api.gov.bc.ca/addresses.json?addressString=3461%20Ross%20Drive%20Vancouver",
+        "coord_note": "BC address geocoder access point (BLOCK, low accuracy), not a field survey. TODO(verify) centroid.",
+    },
 }
 
 # Thresholds (assumed unless noted). Crop-specific frost/heat limits come from the trait library (Backend B).

@@ -1,0 +1,11 @@
+{
+  "source_name": "Environment and Climate Change Canada, Canadian Climate Normals, station VANCOUVER UBC",
+  "source_url": "https://climat.meteo.gc.ca/climate_normals/results_e.html?climate_id=1108487",
+  "product_version": "1971-2000 Canadian Climate Normals (station identity only; daily series not stored)",
+  "retrieved_on": "2026-11-15",
+  "license": "TODO(verify): attachment1 product licence restricts redistribution (https://climate.meteo.gc.ca/prods_servs/attachment1_e.html). FAQ citation text is at https://climate.weather.gc.ca/FAQ_e.html. Daily values were not copied.",
+  "attribution": "Station identity from Environment and Climate Change Canada Canadian Climate Normals. No daily observations are included in this file.",
+  "resolution_spatial": "point station, climate id 1108487",
+  "resolution_temporal": "not stored",
+  "processing_notes": "Gap record only. Candidate for the POWER hindcast. Observations omitted until the redistribution terms are confirmed. See station_gap.json."
+}

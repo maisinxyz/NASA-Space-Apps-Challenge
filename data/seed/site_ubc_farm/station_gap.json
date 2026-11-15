@@ -1,0 +1,13 @@
+{
+  "status": "not_included",
+  "reason": "Daily station observations were not copied into the repo. The product licence at https://climate.meteo.gc.ca/prods_servs/attachment1_e.html allows redistribution only if no fee is charged for the Environment and Climate Change Canada product and each recipient agrees to the same restrictions before use. A public git seed does not collect that agreement. TODO(verify): whether the Historical Climate Data website download (citation text on https://climate.weather.gc.ca/FAQ_e.html) is a separate, more open licence. Until that is confirmed, station_bias stays null and nothing is filled in.",
+  "candidate": {
+    "name": "VANCOUVER UBC",
+    "climate_id": "1108487",
+    "lat": 49.25,
+    "lon": -123.25,
+    "elevation_m": 76,
+    "source_url": "https://climat.meteo.gc.ca/climate_normals/results_e.html?climate_id=1108487",
+    "note": "Normals page read 2026-11-15: 49°15'00\" N, 123°15'00\" W, elevation 76 m, climate id 1108487. This is the climate station, about 1 km from the farm address point, not the field centroid."
+  }
+}

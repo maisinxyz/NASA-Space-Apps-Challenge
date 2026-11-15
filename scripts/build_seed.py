@@ -66,7 +66,12 @@ def seed_power(site: str, lat: float, lon: float) -> None:
         "attribution": C.POWER_SOURCE["attribution"],
         "resolution_spatial": "0.5 x 0.625 degree (MERRA-2 meteorology)",
         "resolution_temporal": "daily",
-        "processing_notes": f"Unmodified API response for {lat:.3f}, {lon:.3f}, {C.PERIOD[0]} to {C.PERIOD[1]}; parameters {', '.join(power.PARAMETERS)}. Fill value -999 becomes missing.",
+        "processing_notes": (
+            f"Unmodified API response for {lat:.3f}, {lon:.3f}, {C.PERIOD[0]} to {C.PERIOD[1]}; "
+            f"parameters {', '.join(power.PARAMETERS)}. Fill value -999 becomes missing."
+            + (" Point is the BC address-geocoder access point for 3461 Ross Drive, not a surveyed field centroid (see app/features/config.py)."
+               if site == "site_ubc_farm" else "")
+        ),
     })
 
 
@@ -103,31 +108,49 @@ def bundled_schema(name: str) -> dict:
             "$ref": f"#/$defs/{name}", "$defs": json.loads(text)}
 
 
+def selected_sites() -> dict[str, dict]:
+    """SEED_SITES=site_ubc_farm limits the fetch. Default remains every curated site."""
+    raw = os.getenv("SEED_SITES", "").strip()
+    if not raw:
+        return C.CURATED_SITES
+    wanted = [part.strip() for part in raw.split(",") if part.strip()]
+    missing = [site for site in wanted if site not in C.CURATED_SITES]
+    if missing:
+        raise SystemExit(f"unknown SEED_SITES: {', '.join(missing)}")
+    return {site: C.CURATED_SITES[site] for site in wanted}
+
+
 def main() -> None:
     offline = os.getenv("OFFLINE") == "1"
+    sites = selected_sites()
     if not offline:
-        for site, s in C.CURATED_SITES.items():
+        for site, s in sites.items():
             seed_power(site, s["lat"], s["lon"])
             seed_soil(site, s["lat"], s["lon"])
     F.base.cache_clear()
     problems = seeds.sidecar_problems()
     assert not problems, problems
 
+    filtered = bool(os.getenv("SEED_SITES", "").strip())
     full = "site_usda_barc"
-    dump(FIX / "features" / f"{full}.json", F.feature_table(full))
-    dump(FIX / "hazard_calendar" / f"{full}.json", F.hazard_calendar(full))
-    dump(FIX / "hazard_calendar" / f"{full}_drier_summers.json", F.hazard_calendar(full, "drier_summers"))
-    dump(FIX / "hazards" / f"{full}.json", F.hazard_catalog(full))
-    dump(FIX / "zones" / "site_mock_okanagan.json", F.zones("site_mock_okanagan"))
+    if not filtered or full in sites:
+        dump(FIX / "features" / f"{full}.json", F.feature_table(full))
+        dump(FIX / "hazard_calendar" / f"{full}.json", F.hazard_calendar(full))
+        dump(FIX / "hazard_calendar" / f"{full}_drier_summers.json", F.hazard_calendar(full, "drier_summers"))
+        dump(FIX / "hazards" / f"{full}.json", F.hazard_catalog(full))
+        dump(FIX / "zones" / "site_mock_okanagan.json", F.zones("site_mock_okanagan"))
 
-    sid, lat, lon = LIMITED_EXAMPLE
-    if offline:
-        os.environ["OFFLINE"] = "1"
-    res = power._validate(power_payload(lat, lon)) if not offline else power.get_daily(lat, lon, *C.PERIOD)
-    b = (P.daily_from_power(res, lat), "cached", None, {"lat": lat, "lon": lon})
-    dump(FIX / "features" / f"{sid}.json", F.build_table(sid, b, P.compute(b[0], P.resolve_scenario())))
+    if "site_ubc_farm" in sites and seeds.load_power("site_ubc_farm"):
+        dump(FIX / "features" / "site_ubc_farm.json", F.feature_table("site_ubc_farm"))
 
-    dump(ROOT / "packages" / "contracts" / "schemas" / "feature_table.schema.json", bundled_schema("FeatureTable"))
+    if not filtered:
+        sid, lat, lon = LIMITED_EXAMPLE
+        if offline:
+            os.environ["OFFLINE"] = "1"
+        res = power._validate(power_payload(lat, lon)) if not offline else power.get_daily(lat, lon, *C.PERIOD)
+        b = (P.daily_from_power(res, lat), "cached", None, {"lat": lat, "lon": lon})
+        dump(FIX / "features" / f"{sid}.json", F.build_table(sid, b, P.compute(b[0], P.resolve_scenario())))
+        dump(ROOT / "packages" / "contracts" / "schemas" / "feature_table.schema.json", bundled_schema("FeatureTable"))
     print("seed + v1.1 fixtures written")
 
 
