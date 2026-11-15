@@ -112,7 +112,7 @@ def test_feature_table_matches_contract(client, site):
     ("/sites/site_ucdavis_oakville/hazard-calendar?scenario=both", "/sites/{siteId}/hazard-calendar"),
     ("/sites/site_cornell_ruminant/hazards", "/sites/{siteId}/hazards"),
     ("/sites/site_usda_barc/zones", "/sites/{siteId}/zones"),
-    ("/sites/site_mock_okanagan/zones", "/sites/{siteId}/zones"),
+    ("/sites/site_ubc_farm/zones", "/sites/{siteId}/zones"),
     ("/sites/site_usda_barc/features?scenario=drier_summers", "/sites/{siteId}/features"),
 ])
 def test_v11_routes_match_contract(client, url, template):
@@ -161,13 +161,13 @@ def test_limited_data_fixture_has_no_satellite_values():
 
 
 def test_no_prediction_words_in_payloads(client):
-    for url in ("/sites/site_usda_barc/features", "/sites/site_usda_barc/hazards", "/sites/site_mock_okanagan/zones"):
+    for url in ("/sites/site_usda_barc/features", "/sites/site_usda_barc/hazards", "/sites/site_kpu_langley/zones"):
         text = client.get(API + url).text.lower()
         assert "yield" not in text and "profit" not in text
 
 
 def test_mock_mode_only_for_mock_terrain(client):
-    assert client.get(f"{API}/sites/site_mock_okanagan/zones").json()["data_mode"] == "mock"
+    assert client.get(f"{API}/sites/site_kpu_langley/zones").json()["data_mode"] == "mock"
     for s in SITES:
         assert client.get(f"{API}/sites/{s}/features").json()["data_mode"] != "mock"
 

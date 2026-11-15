@@ -138,7 +138,7 @@ def main() -> None:
         dump(FIX / "hazard_calendar" / f"{full}.json", F.hazard_calendar(full))
         dump(FIX / "hazard_calendar" / f"{full}_drier_summers.json", F.hazard_calendar(full, "drier_summers"))
         dump(FIX / "hazards" / f"{full}.json", F.hazard_catalog(full))
-        dump(FIX / "zones" / "site_mock_okanagan.json", F.zones("site_mock_okanagan"))
+        dump(FIX / "zones" / "site_kpu_langley.json", F.zones("site_kpu_langley"))
 
     if "site_ubc_farm" in sites and seeds.load_power("site_ubc_farm"):
         dump(FIX / "features" / "site_ubc_farm.json", F.feature_table("site_ubc_farm"))

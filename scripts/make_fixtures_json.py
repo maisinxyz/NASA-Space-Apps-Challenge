@@ -48,16 +48,15 @@ def sites(terrain: dict) -> list[dict]:
     relief = terrain["elevation"]["max_m"] - terrain["elevation"]["min_m"]
     area = T.SIZE * T.SIZE * T.CELL_SIZE_M**2 / 1e4
     rows = [
-        ("site_mock_okanagan", "Okanagan hillside (mock)", "Okanagan"),
-        ("site_mock_fraser", "Fraser Valley field (mock)", "Fraser Valley"),
-        ("site_mock_metro", "Metro Vancouver farm (mock)", "Metro Vancouver"),
+        ("site_ubc_farm", "UBC Farm (mock)", "Metro Vancouver"),
+        ("site_kpu_langley", "KPU Langley (mock)", "Metro Vancouver"),
     ]
     return [
         {
             "id": sid,
             "name": name,
             "region": region,
-            "summary": "Mock site for development. Every site uses the same procedural terrain.",
+            "summary": "Terrain is a placeholder (procedural hills) until a real scan is added.",
             "relief_m": r(relief, 1),
             "area_ha": r(area, 2),
             "terrain_id": HILLS,
