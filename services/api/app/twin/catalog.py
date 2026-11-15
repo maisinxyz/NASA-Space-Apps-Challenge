@@ -16,10 +16,13 @@ SELECTION_MAX = 30
 # Keys that are not traits. Every other key on a crop must have trait_sources.
 NOT_TRAITS = frozenset({"id", "name", "notes", "source", "trait_sources"})
 
-# No curated site has a verified climate-class id yet, so a site_id filter
-# keeps crops with an empty region_fit and drops nothing else. UBC Farm's
-# "oceanic" label is named in the contract description and is not stored here.
-SITE_CLIMATE_CLASS: dict[str, str] = {}
+# UBC Farm is in Vancouver. The contract calls this class "oceanic".
+# Source, intro read 2026-11-15: temperate oceanic, Köppen Cfb.
+# https://en.wikipedia.org/wiki/Climate_of_Vancouver
+# KPU Langley is not in this map. The Township of Langley Wikipedia intro does not
+# state a Köppen class. TODO(verify) before adding site_kpu_langley.
+# https://en.wikipedia.org/wiki/Langley,_British_Columbia_(district_municipality)
+SITE_CLIMATE_CLASS: dict[str, str] = {"site_ubc_farm": "oceanic"}
 
 
 def load_catalog() -> dict:
@@ -66,7 +69,8 @@ def list_catalog(category: str | None = None, site_id: str | None = None) -> dic
     for crop in doc["crops"]:
         if category is not None and crop["category"] != category:
             continue
-        if site_id is not None:
+        # A site with no stored class is not filtered. An empty region_fit is kept.
+        if site_id is not None and climate:
             fit = crop.get("region_fit") or []
             if fit and climate not in fit:
                 continue

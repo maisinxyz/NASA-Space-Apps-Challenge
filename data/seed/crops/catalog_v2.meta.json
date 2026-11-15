@@ -4,8 +4,8 @@
   "product_version": "2",
   "retrieved_on": "2026-11-15",
   "license": "Team-authored catalog. FAO-56 sentences are cited where a coefficient was copied. The FAO licence for those sentences is TODO(verify); page read 2026-11-15: https://www.fao.org/4/x0490e/x0490e0b.htm",
-  "attribution": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56. Only the wheat Kc mid, maize Kc mid, and dry-bean example coefficients were copied from the chapter text. The twelve commodity rows also carry the earlier hand-curated traits.json values.",
+  "attribution": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Tables 12 and 22, read 2026-11-15 from a PDF that kept the columns (https://www.cse.iitb.ac.in/~pocra/References/FAO_Paper56_Irrigation_Drainage.pdf). The twelve commodity rows still carry the earlier hand-curated traits.json values. Vancouver's temperate oceanic class is from https://en.wikipedia.org/wiki/Climate_of_Vancouver .",
   "resolution_spatial": "not spatial (crop trait table)",
   "resolution_temporal": "static",
-  "processing_notes": "Built by scripts/build_catalog_v2.py. Null numbers are unverified and must not be defaulted. The HTML Table 12 lost its columns, so other Kc values were not transcribed. Planting windows are null until a BC or PNW guide is checked. No equipment ids are published."
+  "processing_notes": "Built by scripts/build_catalog_v2.py. Null numbers are unverified and must not be defaulted. Table 12 Kc values were copied only where the PDF cell was a single number. A blank Kc ini uses the group-row value and says so. Ranges were not collapsed. Table 22 root-depth ranges were not split into ini, mid, and end. Planting day-of-year stays null: the BC and WSU pages that were opened state months or deadlines, not one plant day and one termination day. needs_equipment stays empty. region_fit oceanic is stored only for crops named on the BC vegetable-guide index."
 }
