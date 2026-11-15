@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+# Trust the operating system's certificate store (Windows/macOS behind antivirus or corporate proxies often break
+# Python's bundled CA list: SSL CERTIFICATE_VERIFY_FAILED on Groq, OpenRouter, SoilGrids). No-op if not installed.
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
