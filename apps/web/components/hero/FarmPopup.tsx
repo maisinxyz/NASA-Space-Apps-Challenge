@@ -24,8 +24,8 @@ const photoOf = (f: FarmInfo) => f.image ?? null;
 function TierChip({ farm }: { farm: FarmInfo }) {
   const twin = farm.tier === "twin";
   return (
-    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[12px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#ffc857" : "rgba(255,255,255,0.78)" }}>
-      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: twin ? "#ffc857" : "rgba(255,255,255,0.55)" }} />
+    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[12px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#a3bfe9" : "rgba(255,255,255,0.78)" }}>
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: twin ? "#a3bfe9" : "rgba(255,255,255,0.55)" }} />
       {twin ? "Digital twin" : "Explore only"}
     </span>
   );
@@ -212,7 +212,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
             <span className="mt-2 block text-[12px] font-semibold text-white">{farm.tier === "twin" ? "Digital twin · scenarios and comparison" : "Explore landscape · no simulation"}</span>
             <span className="mt-2.5 line-clamp-2 text-[12px] leading-[1.5] text-white/[0.62]">{line}</span>
             {farm.tier === "explore" && (
-              <span className="mt-2 block rounded bg-amber-500/10 px-2 py-1 text-[11px] leading-snug font-medium text-amber-200/90 border border-amber-500/20">
+              <span className="mt-2 block rounded bg-[#a3bfe9]/10 px-2 py-1 text-[11px] leading-snug font-medium text-[#c3d6f4] border border-[#a3bfe9]/20">
                 {farm.id === "ubc-farm"
                   ? "Rotation comparison available. Simulation on Cornell & Beltsville only."
                   : farm.id === "kpu-langley"

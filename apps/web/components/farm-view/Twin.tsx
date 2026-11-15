@@ -70,7 +70,7 @@ export function Twin({ bottom }: { bottom?: number }) {
           <motion.section
             key="answer"
             data-testid="twin-answer"
-            aria-label="Twin answer"
+            aria-label="Gus preview answer"
             aria-live="polite"
             className="fv-glass fv-answer fv-auto"
             style={{ position: "absolute", bottom: P.height + 10, transformOrigin: "bottom center" }}
@@ -79,8 +79,8 @@ export function Twin({ bottom }: { bottom?: number }) {
             exit={{ opacity: 0, transition: { duration: m.popExitMs / 1000 } }}
           >
             <div style={{ display: "flex", alignItems: "center" }}>
-              <span className="fv-cap">Twin · Synthetic preview (not this farm’s measurements)</span>
-              <FvButton className="fv-icon" style={{ width: 24, height: 24, marginLeft: "auto" }} aria-label="Close Twin" onClick={close}>
+              <span className="fv-cap">Gus · Synthetic preview (not this farm’s measurements)</span>
+              <FvButton className="fv-icon" style={{ width: 24, height: 24, marginLeft: "auto" }} aria-label="Close Gus preview" onClick={close}>
                 <X size={14} />
               </FvButton>
             </div>
@@ -118,7 +118,7 @@ export function Twin({ bottom }: { bottom?: number }) {
               if (!thinking) ask(text);
             }}
           >
-            <FvButton className="logo" aria-label="Close Twin" onClick={close} style={{ width: P.send, height: P.send }}>
+            <FvButton className="logo" aria-label="Close Gus preview" onClick={close} style={{ width: P.send, height: P.send }}>
               <Logo size={P.icon} spin={thinking && !reduced} />
             </FvButton>
             <motion.input
@@ -147,7 +147,7 @@ export function Twin({ bottom }: { bottom?: number }) {
             <FvButton
               ref={btn}
               className="fv-glass fv-twin fv-auto"
-              aria-label="Ask Twin preview"
+              aria-label="Ask Gus preview"
               aria-expanded={false}
               data-testid="twin-button"
               onClick={() => {

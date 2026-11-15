@@ -6,6 +6,10 @@ import { resetZoneToggle } from "@/components/rotation/fe2/ZoneOverlay";
 import { resetFutureInvestigation } from "@/lib/farm-future/store";
 import { RESET_EVENT } from "@/lib/keys";
 
+import { resetCopilot } from "@/lib/copilot/copilot";
+import { usePlannerStore } from "@/lib/rotation-planner/store";
+import { useForecastStore } from "@/lib/forecast/store";
+
 export function InvestigationControls({simulationAvailable = true}: {simulationAvailable?: boolean}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -75,6 +79,9 @@ export function InvestigationControls({simulationAvailable = true}: {simulationA
               useRotationStore.getState().reset();
               resetZoneToggle();
               resetFutureInvestigation();
+              resetCopilot();
+              usePlannerStore.setState({ open: false });
+              useForecastStore.getState().reset();
               history.replaceState(
                 null,
                 "",

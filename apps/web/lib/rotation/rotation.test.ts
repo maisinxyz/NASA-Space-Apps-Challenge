@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { postRotationAnalysis } from "./api";
 import { MOCK_ROTATIONS } from "./draft-fixtures";
 import { CRITERIA } from "./draft-types";
 import { normalizeWeights, rerank } from "./rank";
 import { buildAnalysisRequest, initialRotationState, setScenarioPreset, setScenarioValues, useRotationStore } from "./store";
+
+vi.hoisted(() => { process.env.NEXT_PUBLIC_API_MODE = "mock"; });
 
 const all = [...CRITERIA];
 const even = Object.fromEntries(all.map((c) => [c, 1]));

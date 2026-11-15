@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/sync-mocks.mjs && node scripts/sync-cesium.mjs && node scripts/fetch-fonts.mjs",
-    "dev": "next dev --turbopack",
-    "prebuild": "node scripts/sync-mocks.mjs && node scripts/sync-cesium.mjs && node scripts/fetch-fonts.mjs",
+    "predev": "node scripts/sync-mocks.mjs && node scripts/sync-maplibre.mjs && node scripts/sync-cesium.mjs && node scripts/fetch-fonts.mjs",
+    "dev": "node scripts/dev.mjs",
+    "prebuild": "node scripts/sync-mocks.mjs && node scripts/sync-maplibre.mjs && node scripts/sync-cesium.mjs && node scripts/fetch-fonts.mjs",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test -c e2e/farm-view/playwright.config.ts",
     "postbuild": "node scripts/check-build.mjs",
-    "fonts": "node scripts/fetch-fonts.mjs"
+    "fonts": "node scripts/fetch-fonts.mjs",
+    "test:assets": "node --test scripts/tests/*.test.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.2",

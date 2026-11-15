@@ -53,7 +53,7 @@ export function StrategyBar() {
       </div>
       {data.source === "engine" && (
         <FvButton className="fv-glass fv-pill fv-auto" data-testid="ask-copilot-strategy-bar" onClick={() => useCopilot.getState().ask({ question: `Why is "${s.name}" (${s.rotation}) suggested for this farm, and what should I check locally?`, kind: "strategy", id: s.engineId, strategyId: s.engineId })}>
-          <span className="l" style={{ color: color.ink }}>Ask co-pilot</span>
+          <span className="l" style={{ color: color.ink }}>Ask Gus</span>
         </FvButton>
       )}
       <FvButton className="fv-glass fv-pill fv-auto" data-testid="flags-button" aria-label={`${flags} review flags for ${s.name}`} onClick={() => openReview(strategyId)}>

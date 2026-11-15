@@ -124,3 +124,21 @@ def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
     assert response.status_code == 200
     context = json.loads(calls[0]["messages"][1]["content"].removeprefix("Server-supplied context: "))
     assert context["metrics"]["soil_organic_index"]["p50"] == 100
+
+
+def test_openrouter_fallback_when_groq_fails_or_missing(client, monkeypatch):
+    calls = []
+    def fake(payload, key, url=copilot.URL):
+        calls.append((key, url))
+        if url == copilot.URL:
+            raise copilot.ApiError("DATA_SOURCE_UNAVAILABLE", "down", retryable=True)
+        return {"reply": "ok", "referenced_layers": [], "local_validation_tips": []}
+    monkeypatch.setattr(copilot, "_provider", fake)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-key")
+    assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
+    assert calls == [("test-key", copilot.URL), ("or-key", copilot.OPENROUTER_URL)]
+    calls.clear()
+    monkeypatch.delenv("GROQ_API_KEY")
+    monkeypatch.setattr(copilot, "dotenv_values", lambda *a, **kw: {})
+    assert client.post('/api/v1/copilot/chat', json=request()).status_code == 200
+    assert calls == [("or-key", copilot.OPENROUTER_URL)]

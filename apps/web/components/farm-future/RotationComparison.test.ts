@@ -1,10 +1,24 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { useAppStore } from "@/lib/store";
+import { useForecastStore } from "@/lib/forecast/store";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Forecast } from "@/lib/api/types";
 
-import { heroNumbers, HIDDEN_EVIDENCE } from "./RotationComparison";
+import { RotationComparison, heroNumbers, HIDDEN_EVIDENCE } from "./RotationComparison";
+
+vi.mock("@/lib/farm-future/useFutureData", async () => {
+  const { useForecastStore } = await import("@/lib/forecast/store");
+  return { useFutureData: () => ({ forecast: useForecastStore.getState().forecast }) };
+});
+vi.mock("@/lib/forecast/store", async (original) => {
+  const actual = await original<typeof import("@/lib/forecast/store")>();
+  const hook = Object.assign(() => actual.useForecastStore.getState(), actual.useForecastStore);
+  return { ...actual, useForecastStore: hook };
+});
 
 const ubc = JSON.parse(readFileSync(resolve(__dirname, "../../public/prebuilt/site_ubc_farm_forecast.json"), "utf-8")) as Forecast;
 
@@ -13,13 +27,15 @@ describe("rotation comparison", () => {
     const s = ubc.fields[0].strategies[1];
     const farm = heroNumbers(ubc, s, null, 10);
     expect(farm.map((h) => h.label)).toEqual([
-      "Soil health (organic matter index, year 0 = 100)",
+      "Soil organic matter (index, starting year = 100)",
       "Irrigation need against the quota",
+      "Bare-soil weeks",
       "Frost-free days (whole farm)",
       expect.stringMatching(/^Heat-stress days for /),
     ]);
     expect(farm[1].value).toMatch(/mm/);
-    expect(farm[2].value).toMatch(/days/);
+    expect(farm[2].value).toMatch(/weeks/);
+    expect(farm[3].value).toMatch(/days/);
     const field = heroNumbers(ubc, s, s.id && ubc.fields[0].field_id, 10);
     expect(field[0].value).not.toBe("");
   });
@@ -28,5 +44,70 @@ describe("rotation comparison", () => {
     expect(HIDDEN_EVIDENCE.test("Income estimate CAD")).toBe(true);
     expect(HIDDEN_EVIDENCE.test("Fertilizer saved kg N/ha")).toBe(true);
     expect(HIDDEN_EVIDENCE.test("Year 10 soil organic matter")).toBe(false);
+  });
+});
+
+  it("never substitutes field metrics for a missing whole-farm rollup", () => {
+    const f = structuredClone(ubc);
+    f.farm_rollup.strategies = [];
+    const values = heroNumbers(f, f.fields[0].strategies[0], null, 10);
+    expect(values[0].value).toBe("Unavailable");
+    expect(values[1].value).toBe("Unavailable");
+  });
+
+  it("keeps provenance, whole-farm flag scope and first-year planting entry", () => {
+    useAppStore.setState({ farmId: "ubc-farm" });
+    const f = structuredClone(ubc);
+    f.fields[1].strategies[0].review_flags[0].text = "Concern in another field";
+    useForecastStore.setState({ siteId: f.site_id, forecast: f, source: "live", status: "ready", error: null });
+    const html = renderToStaticMarkup(createElement(RotationComparison));
+    expect(html).toContain("Live engine run");
+    expect(html).toContain("NASA POWER daily point");
+    expect(html).toContain("Plans, crop roles and evidence describe D3-1 Brassicas");
+    expect(html).toContain("review flags combine all fields");
+    expect(html).toContain("What if I plant a different crop this year?");
+    useForecastStore.getState().reset();
+  });
+  it("shows a recoverable API error instead of treating it as missing farm data", () => {
+    useAppStore.setState({ farmId: "ubc-farm" });
+    useForecastStore.setState({ siteId: "site_ubc_farm", forecast: null, source: null, status: "error", error: "Test API failure" });
+    const html = renderToStaticMarkup(createElement(RotationComparison));
+    expect(html).toContain("Test API failure");
+    expect(html).toContain("Retry forecast");
+    useForecastStore.getState().reset();
+  });
+
+describe("scope separation", () => {
+  const scoped = () => {
+    const f = structuredClone(ubc);
+    const id = f.fields[0].strategies[0].id;
+    f.fields[0].strategies[0].trajectories.bare_weeks = { ...f.fields[0].strategies[0].trajectories.bare_weeks, points: [{ year: 10, p50: 11 }] } as never;
+    f.farm_rollup.strategies.find((s) => s.id === id)!.trajectories.bare_weeks = { ...f.farm_rollup.strategies[0].trajectories.bare_weeks, points: [{ year: 10, p50: 22 }] } as never;
+    return { f, id };
+  };
+  it("whole farm shows rollup numbers, a field shows its own", () => {
+    const { f, id } = scoped();
+    const s = f.fields[0].strategies[0];
+    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^22/);
+    expect(heroNumbers(f, s, f.fields[0].field_id, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^11/);
+    expect(id).toBe(s.id);
+  });
+  it("missing rollup bare weeks stays Unavailable, distinct from zero", () => {
+    const { f } = scoped();
+    f.farm_rollup.strategies.forEach((x) => { delete (x.trajectories as Record<string, unknown>).bare_weeks; });
+    const s = f.fields[0].strategies[0];
+    expect(heroNumbers(f, s, null, 10).find((h) => h.label === "Bare-soil weeks")!.value).toBe("Unavailable");
+    s.trajectories.bare_weeks = { ...s.trajectories.bare_weeks, points: [{ year: 10, p50: 0 }] } as never;
+    expect(heroNumbers(f, s, s.id && f.fields[0].field_id, 10).find((h) => h.label === "Bare-soil weeks")!.value).toMatch(/^0/);
+  });
+  it("groups whole-farm flags by field", () => {
+    const f = structuredClone(ubc);
+    f.fields[1].strategies[0].review_flags[0].text = "Concern in another field";
+    useAppStore.setState({ farmId: "ubc-farm" });
+    useForecastStore.setState({ siteId: f.site_id, forecast: f, source: "prebuilt", status: "ready", error: null });
+    const html = renderToStaticMarkup(createElement(RotationComparison));
+    expect(html).toContain("comparison-flag-group");
+    expect(html).toContain(f.fields[1].name);
+    useForecastStore.getState().reset();
   });
 });

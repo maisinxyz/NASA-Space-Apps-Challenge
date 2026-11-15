@@ -8,7 +8,6 @@ import { useFutureStore } from "@/lib/farm-future/store";
 import { ForecastPanel, useFarmForecast } from "@/components/farm-forecast/ForecastPanel";
 
 import { CompareView, ReviewDrawer } from "./Compare";
-import { FieldColourLegend } from "./FieldColours";
 import { WhatIf } from "./Controls";
 import { LensCard } from "./LensCards";
 import { SoilHealthPanel } from "./SoilHealth";
@@ -27,7 +26,6 @@ export function FutureLayer({ legendShown = false }: { legendShown?: boolean }) 
   return (
     <>
       <LensCard />
-      <FieldColourLegend />
       <SoilHealthPanel />
       <ForecastPanel />
       <WhatIf raised={legendShown} />

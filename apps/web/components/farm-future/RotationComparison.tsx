@@ -11,10 +11,13 @@ import { forecastYear } from "@/lib/farm-future/data";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { useFutureData } from "@/lib/farm-future/useFutureData";
 import { color } from "@/lib/farm-view/tokens";
-import { fmt } from "@/lib/forecast/select";
+import { fmt, flagsOf, flagsByField } from "@/lib/forecast/select";
 import { roleLabel } from "@/lib/rotation-planner/planner";
 
 import { AskCopilot } from "@/components/copilot/AskCopilot";
+import { ForecastStatus } from "@/components/farm-forecast/ForecastPanel";
+import { useForecastStore } from "@/lib/forecast/store";
+
 import { PlantingComparison } from "./PlantingComparison";
 
 /** Evidence lines never show money or fertilizer amounts (D3). */
@@ -25,22 +28,24 @@ const SEVERITIES = ["verify", "caution", "info"];
 type Hero = { label: string; value: string; range?: string };
 
 export function heroNumbers(f: Forecast, s: ForecastStrategy, fieldId: string | null, year: number): Hero[] {
-  const core = fieldId ? s : (f.farm_rollup.strategies.find((x) => x.id === s.id) ?? s);
+  const core = fieldId ? s : f.farm_rollup.strategies.find((x) => x.id === s.id);
   const pt = (metric: string) => {
-    const series = (core.trajectories as Record<string, { unit: string; points: { year: number; p50: number; p10?: number; p90?: number }[] } | undefined>)[metric];
+    const series = (core?.trajectories as Record<string, { unit: string; points: { year: number; p50: number; p10?: number; p90?: number }[] } | undefined>)?.[metric];
     const p = series?.points.find((x) => x.year === year);
     return series && p ? { ...p, unit: series.unit } : null;
   };
   const out: Hero[] = [];
   const soil = pt("soil_organic_index");
-  if (soil) out.push({ label: "Soil health (organic matter index, year 0 = 100)", value: fmt(soil.p50), range: soil.p10 !== undefined && soil.p90 !== undefined ? `${fmt(soil.p10)}–${fmt(soil.p90)}` : undefined });
-  const w = core.farm_fit.water_vs_quota;
-  const need = w.irrigation_need_p50;
+  out.push({ label: "Soil organic matter (index, starting year = 100)", value: soil ? fmt(soil.p50) : "Unavailable", range: soil?.p10 !== undefined && soil?.p90 !== undefined ? `${fmt(soil.p10)}–${fmt(soil.p90)}` : undefined });
+  const w = core?.farm_fit.water_vs_quota;
+  const need = w?.irrigation_need_p50;
   out.push({
     label: "Irrigation need against the quota",
-    value: `${fmt(need.value, need.unit)}${w.quota_mm_per_season != null ? ` of ${fmt(w.quota_mm_per_season, "mm/season")}` : " · no quota set"}`,
-    range: need.p10 !== undefined && need.p90 !== undefined ? `${fmt(need.p10)}–${fmt(need.p90)}` : undefined,
+    value: need ? `${fmt(need.value, need.unit)}${w?.quota_mm_per_season != null ? ` of ${fmt(w?.quota_mm_per_season, "mm/season")}` : " · no quota set"}` : "Unavailable",
+    range: need?.p10 !== undefined && need?.p90 !== undefined ? `${fmt(need.p10)}–${fmt(need.p90)}` : undefined,
   });
+  const bare = pt("bare_weeks");
+  out.push({ label: "Bare-soil weeks", value: bare ? fmt(bare.p50, bare.unit) : "Unavailable", range: bare?.p10 !== undefined && bare?.p90 !== undefined ? `${fmt(bare.p10)}–${fmt(bare.p90)}` : undefined });
   const ff = f.climate_outlook.frost_windows.frost_free_season_days.scenario;
   out.push({ label: "Frost-free days (whole farm)", value: fmt(ff.value, ff.unit), range: ff.p10 !== undefined && ff.p90 !== undefined ? `${fmt(ff.p10)}–${fmt(ff.p90)}` : undefined });
   const heat = f.climate_outlook.heat_stress_days[0];
@@ -52,14 +57,19 @@ export function heroNumbers(f: Forecast, s: ForecastStrategy, fieldId: string | 
 export function RotationComparison({ layout = "columns" }: { layout?: "columns" | "stack" }) {
   const { forecast } = useFutureData();
   const t = useFutureStore((s) => s.t);
+  const { status, source, error, siteId } = useForecastStore();
+  const whatIf = useFutureStore((s) => s.whatIf);
+  const retry = () => { if (siteId) void useForecastStore.getState().load(siteId, whatIf); };
   const [fieldId, setFieldId] = useState<string | null>(null);
-  if (!forecast) return <p className="ff-p" data-testid="comparison-empty">No engine forecast for this farm yet.</p>;
+  if (!forecast) return <ForecastStatus status={status} source={null} error={error} hasForecast={false} onRetry={retry} />;
   const field = (fieldId && forecast.fields.find((x) => x.field_id === fieldId)) || forecast.fields[0];
-  const strategies = field.strategies.slice(0, 4);
+  const strategies = field?.strategies.slice(0, 4) ?? [];
   const year = forecastYear(t, forecast.horizon_years);
   const rank = forecast.comparison.rank_by_priority;
   return (
     <div data-testid="rotation-comparison" style={{ display: "grid", gap: 10 }}>
+      <ForecastStatus status={status} source={source} error={error} hasForecast dataMode={forecast.data_mode} onRetry={retry} />
+      {!fieldId && field && <p className="ff-p">Plans, crop roles and evidence describe {field.name}. Metrics are area-weighted across the whole farm; review flags combine all fields.</p>}
       <PlantingComparison key={forecast.site_id} forecast={forecast} />
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 12 }}>
         <label style={{ display: "flex", gap: 6, alignItems: "center" }}>Area
@@ -74,15 +84,16 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
         {strategies.map((s, i) => {
           const label = s.role === "existing" ? CURRENT_ROTATION : s.label;
           const ev = s.evidence_card;
-          const flagsBy = SEVERITIES.map((sev) => [sev, s.review_flags.filter((x) => x.severity === sev).length] as const).filter(([, n]) => n > 0);
-          const other = s.review_flags.filter((x) => !SEVERITIES.includes(x.severity)).length;
+          const flags = flagsOf(forecast, s.id, fieldId);
+          const flagsBy = SEVERITIES.map((sev) => [sev, flags.filter((x) => x.severity === sev).length] as const).filter(([, n]) => n > 0);
+          const other = flags.filter((x) => !SEVERITIES.includes(x.severity)).length;
           const rankPos = rank.indexOf(s.id);
           return (
             <article key={s.id} data-testid={`comparison-${s.id}`} style={{ border: "1px solid rgba(242,235,221,.14)", borderRadius: 12, padding: 12, display: "grid", gap: 8, alignContent: "start", background: "rgba(16,13,10,.55)" }}>
               <header style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <span aria-hidden style={{ width: 10, height: 10, borderRadius: 5, background: SWATCHES[STRATEGY_IDS[Math.min(i, 2)]] }} />
                 <strong style={{ fontSize: 14 }}>{LETTERS[i]} · {label}</strong>
-                {rankPos >= 0 && <span style={{ marginLeft: "auto", fontSize: 11, color: color.inkSecondary }}>rank {rankPos + 1}</span>}
+                {!fieldId && rankPos >= 0 && <span style={{ marginLeft: "auto", fontSize: 11, color: color.inkSecondary }}>farm rank {rankPos + 1}</span>}
               </header>
               <span style={{ fontSize: 12 }}>{rotationText(s.plan, s.cycle_years)} · {s.cycle_years}-year cycle</span>
               {s.rotation_explanation && s.rotation_explanation.crop_roles.length > 0 && (
@@ -97,7 +108,7 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
                 ))}
               </dl>
               <div style={{ fontSize: 12 }} data-testid="comparison-flags">
-                Review flags: {s.review_flags.length === 0 ? "none" : [...flagsBy.map(([sev, n]) => `${n} ${sev}`), ...(other ? [`${other} other`] : [])].join(" · ")}
+                Review flags: {flags.length === 0 ? "none" : [...flagsBy.map(([sev, n]) => `${n} ${sev}`), ...(other ? [`${other} other`] : [])].join(" · ")}
               </div>
               <details>
                 <summary style={{ cursor: "pointer", fontSize: 12 }}>Why suggested, evidence and local checks</summary>
@@ -110,7 +121,12 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
                   )}
                   {ev.information_gaps.length > 0 && <p style={{ margin: 0, color: color.inkSecondary }}><b style={{ fontWeight: 500 }}>Information gaps:</b> {ev.information_gaps.filter((x) => !HIDDEN_EVIDENCE.test(x)).join(" ")}</p>}
                   {ev.risks_for_local_review.length > 0 && <p style={{ margin: 0, color: color.inkSecondary }}><b style={{ fontWeight: 500 }}>Check locally:</b> {ev.risks_for_local_review.filter((x) => !HIDDEN_EVIDENCE.test(x)).join(" ")}</p>}
-                  {s.review_flags.slice(0, 4).map((fl) => <span key={fl.id}><b style={{ fontWeight: 500 }}>{fl.severity}</b> · {fl.text}</span>)}
+                  {flagsByField(forecast, s.id, fieldId).map((g) => (
+                    <div key={g.fieldId} data-testid="comparison-flag-group">
+                      <b style={{ fontWeight: 500 }}>{g.fieldName}</b>
+                      {g.flags.slice(0, 4).map((fl) => <div key={fl.id}>{fl.severity} · {fl.text}</div>)}
+                    </div>
+                  ))}
                 </div>
               </details>
               <AskCopilot kind="strategy" id={s.id} strategyId={s.id} fieldId={fieldId} question={`Why is "${label}" suggested, and what should I check locally?`} />
@@ -118,6 +134,13 @@ export function RotationComparison({ layout = "columns" }: { layout?: "columns" 
           );
         })}
       </div>
+      <details>
+        <summary className="ff-p" style={{ cursor: "pointer" }}>Data sources and assumptions</summary>
+        <ul className="ff-p">
+          {forecast.sources.map((source) => <li key={source.name}>{source.name}. {source.license}. {source.attribution}</li>)}
+          {forecast.assumptions.map((assumption, index) => <li key={index}>{assumption}</li>)}
+        </ul>
+      </details>
       <p className="ff-p" style={{ margin: 0 }}>{forecast.support_sentence}</p>
     </div>
   );

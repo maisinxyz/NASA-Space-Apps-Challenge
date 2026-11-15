@@ -52,3 +52,23 @@ export const fmt = (v: number, unit?: string) => {
   const s = abs >= 100 ? v.toFixed(0) : abs >= 10 ? v.toFixed(1) : v.toFixed(2);
   return unit ? `${s} ${unit}` : s;
 };
+
+/** Scores follow the selected area; absent rollup data is never replaced by a field. */
+export function scorecardOf(f: Forecast, strategyId: string, fieldId: string | null) {
+  const section = fieldId ? f.fields.find((field) => field.field_id === fieldId) : f.farm_rollup;
+  return section?.strategies.find((strategy) => strategy.id === strategyId)?.scorecard ?? [];
+}
+
+/** Farm-wide flags include every field, deduplicating repeated messages. */
+export function flagsOf(f: Forecast, strategyId: string, fieldId: string | null) {
+  const fields = fieldId ? f.fields.filter((field) => field.field_id === fieldId) : f.fields;
+  const flags = fields.flatMap((field) => field.strategies.find((strategy) => strategy.id === strategyId)?.review_flags ?? []);
+  return [...new Map(flags.map((flag) => [`${flag.severity}:${flag.text}`, flag])).values()];
+}
+
+/** Flags grouped by field (one group when a field is selected); fields with no flags are omitted. */
+export function flagsByField(f: Forecast, strategyId: string, fieldId: string | null) {
+  return (fieldId ? f.fields.filter((x) => x.field_id === fieldId) : f.fields)
+    .map((x) => ({ fieldId: x.field_id, fieldName: x.name, flags: x.strategies.find((s) => s.id === strategyId)?.review_flags ?? [] }))
+    .filter((g) => g.flags.length > 0);
+}

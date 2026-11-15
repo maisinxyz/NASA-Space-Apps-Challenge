@@ -1117,10 +1117,10 @@ export function HeroEarth(props: Props) {
                   if (el) labels.current.els.set(f.id, el);
                   else labels.current.els.delete(f.id);
                 }}
-                className="absolute flex max-w-[190px] items-center gap-1.5 rounded-full border border-white/[0.12] bg-[#07090d]/80 py-[3px] pr-2.5 pl-2 text-[12px] leading-[16px] font-medium whitespace-nowrap text-white/[0.94] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.5)] backdrop-blur-md transition-colors group-hover:border-[#ffc857]/50 group-focus-visible:border-[#ffc857]/70"
-                style={{ left: 36, top: 19, transform: "translateY(-50%)", ...(on && { borderColor: "rgba(255,200,87,0.7)" }) }}
+                className="absolute flex max-w-[190px] items-center gap-1.5 rounded-full border border-white/[0.12] bg-[#07090d]/80 py-[3px] pr-2.5 pl-2 text-[12px] leading-[16px] font-medium whitespace-nowrap text-white/[0.94] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.5)] backdrop-blur-md transition-colors group-hover:border-[#a3bfe9]/50 group-focus-visible:border-[#a3bfe9]/70"
+                style={{ left: 36, top: 19, transform: "translateY(-50%)", ...(on && { borderColor: "rgba(163,191,233,0.7)" }) }}
               >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: f.tier === "twin" ? "#ffc857" : "rgba(255,255,255,0.45)" }} />
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: f.tier === "twin" ? "#a3bfe9" : "rgba(255,255,255,0.45)" }} />
                 <span className="truncate">{shortName(f.name)}</span>
               </span>
             </button>

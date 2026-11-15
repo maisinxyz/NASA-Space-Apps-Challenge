@@ -1,6 +1,6 @@
 // Typed API client with a mock/live switch (PRD §6.8).
-//   NEXT_PUBLIC_API_MODE=mock (default): static fixtures under /mock (copied by `pnpm sync-mocks`).
-//   NEXT_PUBLIC_API_MODE=live: NEXT_PUBLIC_API_BASE (default http://localhost:8000/api/v1).
+//   NEXT_PUBLIC_API_MODE=mock (explicit override): static fixtures under /mock (copied by `pnpm sync-mocks`).
+//   NEXT_PUBLIC_API_MODE=live (default): NEXT_PUBLIC_API_BASE (default http://localhost:8000/api/v1).
 import type {
   ClimateOutlook,
   CopilotChatRequest,
@@ -41,7 +41,7 @@ import type {
 //   NEXT_PUBLIC_OFFLINE=1 (from OFFLINE=1 via next.config.ts): forces the local files under /mock, never the API.
 /** True when built with OFFLINE=1: only local data is used. */
 export const offline = process.env.NEXT_PUBLIC_OFFLINE === "1";
-export const apiMode: "mock" | "live" = !offline && process.env.NEXT_PUBLIC_API_MODE === "live" ? "live" : "mock";
+export const apiMode: "mock" | "live" = offline || process.env.NEXT_PUBLIC_API_MODE === "mock" ? "mock" : "live";
 /** True when the UI is showing fixture data; show a "mock" badge. */
 export const isMock = apiMode === "mock";
 export const apiBase = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api/v1").replace(/\/$/, "");
