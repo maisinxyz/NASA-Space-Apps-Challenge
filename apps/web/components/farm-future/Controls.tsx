@@ -124,13 +124,17 @@ export function FuturePills() {
     { id: "frost", icon: Leaf, label: "Frost-free", value: <Num value={c.frostFreeDays} unit=" d" />, delta: <Num value={c.frostFreeDelta} signed />, lens: "frost" as LensId },
   ];
   return (
-    <div className="fv-auto" style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: layout.pillRow.gap }} data-testid="future-pills">
+    <div className="fv-auto ff-pills-col" data-testid="future-pills">
       {pills.map((p) => (
-        <FvButton key={p.id} className="fv-glass fv-pill fv-auto" data-testid={`future-pill-${p.id}`} onClick={() => setLens(p.lens)} aria-label={`${p.label}: open the ${LENS_SHORT[p.lens]} lens`}>
-          <p.icon size={layout.pillRow.icon} />
-          <span className="l">{p.label}</span>
-          <span className="v">{p.value}</span>
-          <span className="l" style={{ fontSize: 11 }}>{p.delta}</span>
+        <FvButton key={p.id} className="fv-glass fv-pill fv-auto ff-future-bar" data-testid={`future-pill-${p.id}`} onClick={() => setLens(p.lens)} aria-label={`${p.label}: open the ${LENS_SHORT[p.lens]} lens`}>
+          <div className="ff-future-bar-left">
+            <p.icon size={layout.pillRow.icon} />
+            <span className="l">{p.label}</span>
+          </div>
+          <div className="ff-future-bar-right">
+            <span className="v">{p.value}</span>
+            <span className="l" style={{ fontSize: 11 }}>{p.delta}</span>
+          </div>
         </FvButton>
       ))}
     </div>

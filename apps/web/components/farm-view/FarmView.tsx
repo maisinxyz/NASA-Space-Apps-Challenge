@@ -49,20 +49,44 @@ export type FarmViewProps = {
 const WORKSPACE_CSS = `
 .fv-root.fv-workspace{position:absolute;inset:0;z-index:20;padding:16px;pointer-events:none;color:#f2ebdd;font-size:14px;}
 .fv-workspace .fv-panels,.fv-workspace .fv-mode-content{display:contents}.fv-workspace .fv-mode-content[hidden]{display:none}.fv-workspace .fv-panels[hidden],.fv-workspace .fv-toolbar[hidden]{display:none}
-.fv-workspace .fv-toolbar-shell{min-width:0;pointer-events:auto;display:grid;gap:6px;justify-items:start;}
-.fv-workspace .fv-control-content{min-width:0;width:100%;display:grid;gap:6px;justify-items:start;}
+.fv-workspace .fv-toolbar-shell{min-width:0;width:100%;max-width:360px;justify-self:end;pointer-events:auto;display:flex;flex-direction:column;gap:8px;}
+.fv-workspace .fv-control-content{min-width:0;width:100%;display:flex;flex-direction:column;gap:8px;}
 .fv-workspace .fv-control-content[hidden]{display:none}
-.fv-workspace .fv-heading[hidden]{display:none}.fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:20px;align-items:start;}
-.fv-workspace .fv-title-block{min-width:0;max-width:720px;background:rgba(16,20,18,.86);padding:12px 16px;border-radius:14px;pointer-events:auto;}
+.fv-workspace .fv-heading[hidden]{display:none}.fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:20px;align-items:start;}
+.fv-workspace .fv-title-block{min-width:0;max-width:720px;background:rgba(16,20,18,.86);padding:14px 18px;border-radius:16px;pointer-events:auto;box-shadow:0 8px 32px rgba(0,0,0,0.36);}
 .fv-workspace .fv-title{font-size:clamp(24px,2.4vw,36px);line-height:1.15;overflow-wrap:anywhere;}
-.fv-workspace .fv-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;align-content:start;pointer-events:auto;max-height:calc(100dvh - 280px);overflow:auto;padding:2px;}
-.fv-workspace .fv-bar{height:auto;min-height:40px;flex-wrap:wrap;border-radius:12px;}
-.fv-workspace .fv-observations{width:100%;padding:10px 12px;border-radius:12px;font-size:13px;}
-.fv-workspace .fv-observations dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
-.fv-workspace .fv-observations dt{color:#c9bfae;}.fv-workspace .fv-observations dd{margin:0;}
-.fv-workspace .fv-preview{width:100%;position:relative;display:flex;flex-wrap:wrap;gap:6px;}
-.fv-workspace .fv-preview .fv-legend{position:relative !important;right:auto !important;bottom:auto !important;width:100%;}
-.fv-workspace .fv-preview .fv-card{position:relative !important;top:auto !important;right:auto !important;width:100%;max-height:35vh;overflow:auto;}
+.fv-workspace .fv-toolbar{display:flex;flex-direction:column;gap:10px;align-items:stretch;width:100%;pointer-events:auto;max-height:calc(100dvh - 200px);overflow-y:auto;padding:2px;}
+
+/* Polished Dock Cards */
+.fv-workspace .fv-dock-card{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:rgba(22,18,15,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(242,235,221,0.12);box-shadow:0 8px 24px rgba(0,0,0,0.28);}
+.fv-workspace .fv-bar{height:auto;min-height:38px;display:flex;align-items:center;justify-content:space-between;border-radius:10px;padding:3px;background:rgba(12,10,8,0.6);border:1px solid rgba(242,235,221,0.08);}
+.fv-workspace .fv-bar .fv-seg{flex:1;justify-content:center;text-align:center;padding:0 8px;height:30px;font-size:12.5px;}
+.fv-workspace .fv-util-row{display:flex;gap:6px;align-items:center;}
+.fv-workspace .fv-util-row .fv-seg{flex:1;justify-content:center;height:32px;font-size:12px;border-radius:8px;}
+.fv-workspace .fv-status-badge{font-size:11.5px;line-height:1.4;color:#c9bfae;padding:6px 10px;border-radius:8px;background:rgba(242,235,221,0.05);border:1px solid rgba(242,235,221,0.08);display:flex;align-items:center;gap:6px;}
+
+/* Condition Stack (Rainfall, Soil moisture, Crop vigor, Heat) aligned on side of screen */
+.fv-workspace .fv-preview{width:100%;position:relative;display:flex;flex-direction:column;gap:8px;}
+.fv-workspace .fv-preview-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px;}
+.fv-workspace .fv-preview-label{font-size:11.5px;color:#c9bfae;letter-spacing:0.02em;}
+.fv-workspace .fv-condition-col{display:flex;flex-direction:column;gap:6px;width:100%;}
+.fv-workspace .fv-condition-bar{display:flex !important;align-items:center;justify-content:space-between;width:100%;height:38px;padding:0 14px !important;border-radius:10px;background:rgba(27,22,18,0.75);transition:all 120ms ease;cursor:pointer;}
+.fv-workspace .fv-condition-bar:hover{background:rgba(242,235,221,0.12);border-color:rgba(242,235,221,0.24);}
+.fv-workspace .fv-condition-bar[aria-expanded="true"]{background:rgba(242,235,221,0.16);border-color:rgba(242,235,221,0.32);}
+.fv-workspace .fv-condition-bar-left{display:flex;align-items:center;gap:10px;}
+.fv-workspace .fv-condition-bar-left .l{font-size:13px;font-weight:500;color:#f2ebdd;}
+.fv-workspace .fv-condition-badge{font-size:10.5px;color:#c9bfae;padding:2px 7px;border-radius:6px;background:rgba(242,235,221,0.08);border:1px solid rgba(242,235,221,0.08);text-transform:uppercase;letter-spacing:0.04em;}
+.fv-workspace .fv-preview .fv-legend{position:relative !important;right:auto !important;bottom:auto !important;width:100%;margin-top:6px;}
+.fv-workspace .fv-preview .fv-card{position:relative !important;top:auto !important;right:auto !important;width:100%;max-height:35vh;overflow:auto;margin-top:6px;}
+
+/* Observations Accordion */
+.fv-workspace .fv-observations{width:100%;border-radius:12px;padding:10px 14px;font-size:13px;background:rgba(22,18,15,0.75);border:1px solid rgba(242,235,221,0.1);}
+.fv-workspace .fv-observations summary{cursor:pointer;font-weight:500;color:#f2ebdd;outline:none;}
+.fv-workspace .fv-observations dl{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:10px 0 6px;}
+.fv-workspace .fv-observations dt{color:#c9bfae;font-size:12px;}
+.fv-workspace .fv-observations dd{margin:0;font-size:12px;font-weight:500;}
+.fv-workspace .fv-observations p{margin:6px 0 0;font-size:11.5px;color:#c9bfae;line-height:1.4;}
+
 .fv-workspace .fv-title-block{animation:fv-title-enter .4s ease-out both;}
 @keyframes fv-title-enter{from{opacity:0}to{opacity:1}}
 @keyframes fv-spin{to{transform:rotate(360deg)}}
@@ -74,7 +98,7 @@ const WORKSPACE_CSS = `
 .fv-workspace .fv-restore{position:absolute;left:16px;top:16px;pointer-events:auto;padding:10px 16px;border-radius:12px;}
 .fv-workspace button:disabled{opacity:.5;cursor:not-allowed;}.fv-workspace button{min-height:32px;}
 .fv-workspace .fv-twinpill,.fv-workspace .fv-answer{max-width:calc(100vw - 32px);}
-@media(max-width:700px){.fv-workspace .fv-heading{grid-template-columns:minmax(0,1fr);gap:8px;}.fv-workspace .fv-title-block{max-height:25vh;overflow:auto;}.fv-workspace .fv-toolbar{max-height:40vh;overflow:auto;align-content:start;}}
+@media(max-width:700px){.fv-workspace .fv-heading{grid-template-columns:minmax(0,1fr);gap:8px;}.fv-workspace .fv-title-block{max-height:25vh;overflow:auto;}.fv-workspace .fv-toolbar{max-height:40vh;overflow:auto;}}
 @media(min-width:701px) and (max-width:1000px){.fv-workspace .fv-heading{grid-template-columns:minmax(0,1fr) 300px;gap:10px;}.fv-workspace .fv-title-block{padding:10px;}.fv-workspace .fv-title{font-size:24px;}.fv-workspace .fv-bar{font-size:12px;}.fv-workspace .fv-seg{padding-inline:8px;}}
 `;
 
@@ -201,55 +225,93 @@ export function FarmView({
             <div className="fv-toolbar">
               {futureMode === "future" && <FuturePills />}
               <div className="fv-mode-content" hidden={futureMode !== "now"}>
-              <div
-                className="fv-glass fv-bar"
-                role="radiogroup"
-                aria-label="Map layer"
-                aria-describedby="layer-unavailable"
-              >
-                {LAYERS.map((l) => (
+
+              {/* ── Polished Map Layer & Control Dock ── */}
+              <div className="fv-dock-card">
+                <div
+                  className="fv-bar"
+                  role="radiogroup"
+                  aria-label="Map layer"
+                  aria-describedby="layer-unavailable"
+                >
+                  {LAYERS.map((l) => (
+                    <FvButton
+                      key={l.id}
+                      disabled={l.id !== "satellite"}
+                      className="fv-seg"
+                      role="radio"
+                      aria-checked={l.id === "satellite"}
+                      data-testid={`layer-${l.id}`}
+                      title={
+                        l.id === "satellite"
+                          ? "Surface imagery"
+                          : "Unavailable: no observations connected"
+                      }
+                    >
+                      {l.label}
+                    </FvButton>
+                  ))}
+                </div>
+                <span
+                  id="layer-unavailable"
+                  className="fv-status-badge"
+                >
+                  <span className="fv-dot" aria-hidden />
+                  Analytical layers unavailable: no observations connected.
+                </span>
+                <div className="fv-util-row">
                   <FvButton
-                    key={l.id}
-                    disabled={l.id !== "satellite"}
-                    className="fv-seg"
-                    role="radio"
-                    aria-checked={l.id === "satellite"}
-                    data-testid={`layer-${l.id}`}
-                    title={
-                      l.id === "satellite"
-                        ? "Surface imagery"
-                        : "Unavailable: no observations connected"
-                    }
+                    className="fv-glass fv-seg"
+                    aria-label="Reset camera"
+                    data-testid="reset-view"
+                    onClick={onReset}
                   >
-                    {l.label}
+                    Reset camera
                   </FvButton>
-                ))}
+                  <FvButton
+                    className="fv-glass fv-seg"
+                    data-testid="mute-toggle"
+                    onClick={() => {
+                      sound.setMuted(!muted);
+                      setMuted(!muted);
+                    }}
+                  >
+                    {muted ? "Unmute sounds" : "Mute sounds"}
+                  </FvButton>
+                </div>
               </div>
-              <span
-                id="layer-unavailable"
-                className="fv-glass"
-                style={{ padding: "6px 10px", borderRadius: 8, fontSize: 12 }}
-              >
-                Analytical layers unavailable: no observations connected.
-              </span>
-              <FvButton
-                className="fv-glass fv-seg"
-                aria-label="Reset camera"
-                data-testid="reset-view"
-                onClick={onReset}
-              >
-                Reset camera
-              </FvButton>
-              <FvButton
-                className="fv-glass fv-seg"
-                data-testid="mute-toggle"
-                onClick={() => {
-                  sound.setMuted(!muted);
-                  setMuted(!muted);
-                }}
-              >
-                {muted ? "Unmute sounds" : "Mute sounds"}
-              </FvButton>
+
+              {/* ── Environmental Condition Bars (Rainfall, Soil moisture, Crop vigor, Heat) ── */}
+              <div className="fv-preview" aria-label="Synthetic condition preview">
+                <div className="fv-preview-header">
+                  <span className="fv-cap fv-preview-label">Synthetic preview · not this farm’s measurements</span>
+                </div>
+                <div className="fv-condition-col">
+                  {CONDITIONS.map((c) => {
+                    const Icon = PILL_ICON[c.id];
+                    return (
+                      <FvButton
+                        key={c.id}
+                        className="fv-glass fv-pill fv-condition-bar"
+                        data-testid={`condition-pill-${c.id}`}
+                        aria-expanded={card === c.id}
+                        aria-controls={`condition-card-${c.id}`}
+                        onClick={() => setCard(card === c.id ? null : c.id)}
+                      >
+                        <div className="fv-condition-bar-left">
+                          <Icon size={16} />
+                          <span className="l">{c.label}</span>
+                        </div>
+                        <span className="fv-condition-badge">Preview</span>
+                      </FvButton>
+                    );
+                  })}
+                </div>
+                <AnimatePresence>{card && <ConditionCard key={card} id={card} onClose={() => setCard(null)} />}</AnimatePresence>
+                <AnimatePresence>{(card === "vigor" || card === "moisture") && <LayerLegend key={card} layer={card} />}</AnimatePresence>
+              </div>
+
+              {/* ── Farm Observations Accordion ── */}
               <details className="fv-glass fv-observations">
                 <summary>Farm observations: Not available</summary>
                 <dl>
@@ -267,19 +329,8 @@ export function FarmView({
                   are synthetic.
                 </p>
               </details>
-              <div className="fv-preview" aria-label="Synthetic condition preview">
-                <span className="fv-cap" style={{ width: "100%" }}>Synthetic preview · not this farm’s measurements</span>
-                {CONDITIONS.map((c) => {
-                  const Icon = PILL_ICON[c.id];
-                  return <FvButton key={c.id} className="fv-glass fv-pill" data-testid={`condition-pill-${c.id}`}
-                    aria-expanded={card === c.id} aria-controls={`condition-card-${c.id}`}
-                    onClick={() => setCard(card === c.id ? null : c.id)}>
-                    <Icon size={16} /><span className="l">{c.label}</span>
-                  </FvButton>;
-                })}
-                <AnimatePresence>{card && <ConditionCard key={card} id={card} onClose={() => setCard(null)} />}</AnimatePresence>
-                <AnimatePresence>{(card === "vigor" || card === "moisture") && <LayerLegend key={card} layer={card} />}</AnimatePresence>
-              </div>
+
+              {/* ── Vulnerability Zone Control ── */}
               {zoneControl && (
                 <div
                   className="fv-zone fv-glass"
