@@ -1,3 +1,55 @@
+# Active desktop website repair — 2026-11-15
+
+**Owner: this Codex chat and its assigned subagents. Status: implementing.**
+Other contributors: do not edit the reserved areas below until this notice releases them. This is a coordination reservation, not an enforced lock. Backend model/schema changes remain with their owner. No messages have been sent to other contributors.
+
+## Approved scope and resources
+
+Desktop browser website only. No phone layout, mobile navigation, bottom sheet, or phone acceptance work. Keep the existing workflow. Rename the user-facing farm bot to **Gus** (including buttons, accessible names, errors and introductions); preserve API endpoint and internal copilot identifiers.
+
+Base: latest fetched GitHub main `4e67563` (first-year planting comparison), rebased with existing local documentation commit, without conflicts. Preserve the incoming PlantingComparison component and its backend-driven flow.
+
+Design references: [Felt interface](https://help.felt.com/getting-started/tour-the-interface), [Felt irrigation planning](https://felt.com/gallery/irrigation-upgrade-planning), [FieldView field maps](https://www.climate.com/static/global/assets/static/docs/how-to-view-field-maps-in-fieldview-website-892dee50.pdf). Adapt layout patterns, retain existing components/style. Worker reference: [MapLibre setWorkerUrl](https://maplibre.org/maplibre-gl-js/docs/API/functions/setWorkerUrl/). Test resource: existing Vitest, pytest and Playwright suites, plus real HTTP responses and backend contracts.
+
+## Reserved files and task ownership
+
+- Map/asset agent: `apps/web/components/map2d/Map2D.tsx`, `apps/web/scripts/sync-maplibre.mjs`, `apps/web/scripts/sync-mocks.mjs`, development fixture watcher/runner, package scripts, `.gitignore`, map/asset tests. Explicitly set the installed MapLibre worker URL before map construction, copy its runtime into a versioned public path at startup/build; validate browser worker initialization. Repair missing mock copies and keep development copies current.
+- Gus agent: `apps/web/lib/copilot/`, `apps/web/components/copilot/`, Gus labels in `farm-future/SoilHealth.tsx`, `apps/web/lib/api/client.ts` and related client tests. Restore failed drafts without duplicate history; farm-scope chat and reject stale replies; expose honest context/provider errors. Live API default, retain explicit mock/offline overrides. API schemas and model calculations unchanged.
+- Data agent: `apps/web/components/farm-future/RotationComparison.tsx`, `apps/web/components/farm-forecast/ForecastPanel.tsx`, `apps/web/lib/forecast/store.ts`, forecast selectors/tests. Correct whole-farm vs field scores/flags/metrics, no field fallback for missing rollup, add loading/retry/stale/source status and invalidate pending loads on reset. Preserve first-year planting entry.
+- Root integration: `apps/web/components/farm-view/`, future controls/legend/layout (except SoilHealth source owned above), rotation planner mounting/state integration, `GlobeHome.tsx`, browser regression tests, this handoff and README startup instructions. Coordinate before crossing another agent's ownership.
+
+## Exact UI changes
+
+1. Compact vertical left menu: Compare rotations, Plan rotations, Ask Gus, 2D/3D view, Map tools. Constrain the title/location to the sidebar; eliminate duplicate entry controls.
+2. One active details workspace, no independently stacked planner/Gus/forecast/drawer. Compact inspector for details, wider workspace for planning/comparison; retain contextual question links and return context.
+3. Initial concise farm values: soil organic matter index (starting year = 100), irrigation need, bare-soil weeks; selected rotation/year and actual source. Missing data says unavailable. No invented health grades or percentages.
+4. Charts, full field list, flags, crop roles and evidence expand on demand. Move 2D reset/projection/drawing into Map tools. Reserve timeline and attribution regions to prevent overlap.
+5. Desktop acceptance at 1280/1440 widths, short laptop height and zoom. Phone work explicitly excluded.
+
+## Bug evidence and acceptance
+
+- Worker default miscompiles to main library under Turbopack; genuine worker initializes runtime while main library does not. Capture exact app console error and verify actual polygon render/click after fix, in dev and production.
+- `/mock/copilot/chat_reply.json` returns 404 while canonical fixture exists. Restore synchronization; fixture is a placeholder, never claim a real Gus reply from it. Live provider requires existing server credentials; absent provider shows recoverable unavailability.
+- Whole-farm comparison currently combines rollup numbers with first-field evidence; selected-field forecast scorecard currently remains farm-wide. Tests must intentionally differentiate fields and rollup.
+- Old results must not masquerade as new after farm/input changes or failed refresh. Planner must remount/reset by site. Gus must not claim edited planner inputs are part of its reconstructed default forecast context.
+- Audit visible buttons by outcome: navigation, comparison, first-year planting, planner inputs/run, field scope/year/scenario, Gus send/retry/close, map draw/analyze/reset/projection, lens/details/timeline, back/reset. Report external-service blockers rather than marking untested controls passing.
+- Verify live frontend/API together; test changed inputs against returned values, units/ranges, API failures/retry, and farm switching during in-flight requests. Run typecheck/lint/unit suites and targeted backend/browser tests. Build separately from the active dev server. Capture desktop screenshots and final GitHub comparison.
+
+## Progress
+
+- [x] Read-only subagent audits completed; no product changes before latest GitHub integration.
+- [x] GitHub update incorporated without conflicts.
+- [x] Scope revised: desktop only; bot renamed Gus in task specification.
+- [ ] Worker/fixture repairs and regression tests.
+- [ ] Gus/client reliability and naming.
+- [ ] Backend display correctness and status handling.
+- [ ] Desktop workspace integration and button audit.
+- [ ] Verification evidence/screenshots and release reservations.
+
+---
+
+## Historical handoff (superseded where current code/active instructions differ)
+
 # FieldTwin frontend handoff
 
 Written 2026-11-14 from the state of `main` after S2-W (sky and weather) and S2-G (ground layers) landed. Audience: the next developer or Claude Code session picking up the frontend. The backend and data pipeline belong to another owner and are not covered here.
