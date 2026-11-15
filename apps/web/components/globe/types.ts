@@ -1,4 +1,4 @@
-import type { CameraAction } from "@/lib/farm-view/camera-controls";
+import type { FarmCameraAction } from "@/lib/farm-view/camera-controls";
 
 // Shared contract between the Cesium globe (rendering owner) and the shell/UI (product owner).
 // Change only by agreement; both sides build against this file.
@@ -264,8 +264,8 @@ export type PinHover = { id: string; x: number; y: number };
 export type GlobeHandle = {
   /** Re-centre: whole Earth in "globe" view, the farm overview in "farm" view. */
   resetView(): void;
-  /** Pan, orbit, or zoom the focused farm camera. */
-  moveCamera(action: CameraAction): void;
+  /** Move the focused farm camera or switch to the overhead viewpoint. */
+  moveCamera(action: FarmCameraAction): void;
   /** Current camera (farm view), for share links. Null before the viewer is ready. */
   getCamera(): CameraState | null;
   /** Move the camera (still clamped to the farm limits). */
