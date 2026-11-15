@@ -166,6 +166,10 @@ def test_unrated_crop_flag_names_the_rule():
     class _Sim:
         review_notes = ("Nitrogen rates are assumed.",)
 
+        def __getitem__(self, key):
+            from types import SimpleNamespace
+            return SimpleNamespace(points=())
+
     req = ForecastRequest(
         selection=Selection(("crop_maize", "crop_soybean")),
         constraints=Constraints((), 4, False, "medium", False),

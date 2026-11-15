@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.2.0"  # B8 explains cycles and checks known host/return rules
+ENGINE_VERSION = "1.2.1"  # B5 restores sourced yields and flags model plausibility
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

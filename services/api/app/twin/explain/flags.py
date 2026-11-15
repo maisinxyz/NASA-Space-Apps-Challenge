@@ -93,6 +93,39 @@ def site_flags(strategy_id: str, site_id: str) -> list[dict]:
     return flags
 
 
+def plausibility_flags(strategy_id: str, simulation) -> list[dict]:
+    """Flag modeled limits without treating these checks as calibration."""
+    flags = []
+    # RUSLEFAC Table 1.1 labels potential losses over 33 t/ha/year severe:
+    # https://sis.agr.gc.ca/cansis/publications/manuals/2002-92/rusle-can.pdf
+    severe = next((p for p in simulation["soil_loss_t_ha_yr"].points if p.year > 0 and p.p50 > 33), None)
+    if severe is not None:
+        flags.append({
+            "id": f"{strategy_id}_erosion_severe",
+            "strategy_id": strategy_id,
+            "severity": "verify",
+            "text": f"Year {severe.year} modeled median soil loss exceeds 33 t/ha/yr, the RUSLEFAC severe category. This simplified estimate needs local slope, soil and erosion checks.",
+            "trigger": {"layer": "soil_loss_t_ha_yr", "rule": "ruslefac_severe"},
+        })
+    saturated = next((p for p in simulation["pest_pressure_index"].points if p.year > 0 and p.p50 >= TC.PEST_INDEX_MAX), None)
+    if saturated is not None:
+        flags.append({
+            "id": f"{strategy_id}_pest_saturation",
+            "strategy_id": strategy_id,
+            "severity": "verify",
+            "text": f"Year {saturated.year} median pest index reaches its assumed ceiling; this is not a measured pest count and can hide differences between rotations. Scout and identify pests locally.",
+            "trigger": {"layer": "pest_pressure_index", "rule": "assumed_index_saturated"},
+        })
+    flags.append({
+        "id": f"{strategy_id}_nitrogen_assumptions",
+        "strategy_id": strategy_id,
+        "severity": "verify",
+        "text": "The nitrogen balance index is relative and uses assumed rates and scale; it is not a soil test. Validate nutrient conditions with local soil or tissue testing.",
+        "trigger": {"layer": "n_balance", "rule": "assumed_nitrogen_index"},
+    })
+    return flags
+
+
 def strategy_flags(strategy_id: str, plan: Plan, simulation, req: ForecastRequest, catalog, site_id: str) -> list[dict]:
     income_missing = req.economics is None or not (req.economics.crop_prices or {})
     flags = review_flags(
@@ -102,5 +135,6 @@ def strategy_flags(strategy_id: str, plan: Plan, simulation, req: ForecastReques
         income_missing=income_missing,
     )
     flags.extend(clubroot_flags(strategy_id, plan, catalog))
+    flags.extend(plausibility_flags(strategy_id, simulation))
     flags.extend(site_flags(strategy_id, site_id))
     return flags

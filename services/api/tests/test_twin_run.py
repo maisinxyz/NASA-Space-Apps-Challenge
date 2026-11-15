@@ -148,3 +148,21 @@ def test_forecast_engine_budget_for_one_strategy():
     simulate(_plan(), members, _soil(), _field(), _catalog(), lat=49.25)
     elapsed = time.perf_counter() - started
     assert elapsed < 0.5, elapsed
+
+
+def test_sourced_number_object_yield_is_kept_and_missing_yield_is_omitted():
+    from app.twin.catalog import load_catalog
+
+    source = {crop["id"]: crop for crop in load_catalog()["crops"]}["crop_cabbage"]
+    assert isinstance(source["reference_yield"], dict) and source["yield_response_factor_ky"] is not None
+    # Use the real sourced yield and Ky with a deterministic test growing window.
+    crops = _catalog()["crops"]
+    cabbage = {**crops[0], "id": "crop_cabbage", "reference_yield": source["reference_yield"],
+               "yield_response_factor_ky": source["yield_response_factor_ky"]}
+    unknown = {**crops[1], "id": "crop_no_reference", "reference_yield": None}
+    plan = Plan("rot_existing", (Slot(1, "summer", "crop_cabbage"), Slot(2, "summer", "crop_no_reference")), 2)
+    result = simulate(plan, _members(5, 3), _soil(), _field(), {"crops": [cabbage, unknown]}, lat=49.25)
+    assert result.yield_by_crop["crop_cabbage"].points[1].p50 > 0
+    assert "crop_no_reference" not in result.yield_by_crop
+    assert not any("crop_cabbage: reference_yield is null" in note for note in result.review_notes)
+    assert any("crop_no_reference: reference_yield is null" in note for note in result.review_notes)

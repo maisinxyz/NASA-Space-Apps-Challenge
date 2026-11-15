@@ -28,7 +28,7 @@ from app.twin.types import (
     YearPoint,
     YearSeries,
 )
-from app.twin.water import run_water_year, year_profile
+from app.twin.water import _number as _finite, run_water_year, year_profile
 
 
 class Simulation(dict):
@@ -90,12 +90,6 @@ def _series(metric: str, unit: str, basis: str, confidence: str, review: bool, c
 def _pct(values: np.ndarray) -> tuple[float, float, float]:
     p10, p50, p90 = np.percentile(np.asarray(values, dtype=np.float64), [10, 50, 90])
     return float(p10), float(p50), float(p90)
-
-
-def _finite(value) -> float | None:
-    if isinstance(value, (int, float)) and not isinstance(value, bool) and np.isfinite(value):
-        return float(value)
-    return None
 
 
 def simulate(plan: Plan, members: list[Weather], soil: SoilProps, field, catalog, *, lat: float) -> Simulation:
