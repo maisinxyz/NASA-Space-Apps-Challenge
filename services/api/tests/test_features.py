@@ -99,9 +99,14 @@ def test_feature_table_matches_contract(client, site):
     assert body["data_mode"] == "seed"
     assert body["quality"]["years_available"] >= 30
     # A curated point can have a real SoilGrids response whose means are all null
-    # (site_kpu_langley, 2026-11-15). That is limited_data, not a missing seed.
+    # (site_kpu_langley, 2026-11-15). That is limited_data when no satellite
+    # weekly series is stored. A stored series clears the flag (features.py).
     if body["soil"] is None:
-        assert body["quality"]["limited_data"] is True
+        satellite = any(
+            doc is not None and P.weekly_seed_grid(doc)[0]
+            for doc in (seeds.load_ndvi(site), seeds.load_smap(site), seeds.load_ecostress(site))
+        )
+        assert body["quality"]["limited_data"] is (not satellite)
     else:
         assert body["quality"]["limited_data"] is False and body["soil"]["texture_class"]
     satellite_ids = {"ndvi", "ndvi_anomaly", "smap_anomaly"}
@@ -131,7 +136,7 @@ def test_route_equals_committed_fixture_and_is_deterministic(client):
     b = client.get(f"{API}/sites/site_usda_barc/features").content
     assert a == b
     body = json.loads(a)
-    if seeds.load_ndvi("site_usda_barc") is None and seeds.load_smap("site_usda_barc") is None:
+    if all(loader("site_usda_barc") is None for loader in (seeds.load_ndvi, seeds.load_smap, seeds.load_ecostress)):
         assert body == json.loads((FIX / "features" / "site_usda_barc.json").read_text())
     else:
         contract.validate_schema(body, "FeatureTable")

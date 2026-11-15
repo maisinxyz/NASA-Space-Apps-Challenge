@@ -27,7 +27,16 @@ def test_kpu_langley_features_offline(monkeypatch):
     assert table["years"] == {"start": "1991-01-01", "end": "2024-12-31"}
     # SoilGrids returned null means at this point. No texture was assigned.
     assert table["soil"] is None
-    assert table["quality"]["limited_data"] is True
+    from app.features.pipeline import weekly_seed_grid
+    satellite = any(
+        doc is not None and weekly_seed_grid(doc)[0]
+        for doc in (
+            seeds.load_ndvi("site_kpu_langley"),
+            seeds.load_smap("site_kpu_langley"),
+            seeds.load_ecostress("site_kpu_langley"),
+        )
+    )
+    assert table["quality"]["limited_data"] is (not satellite)
     assert seeds.sidecar_problems(seeds.SEED_DIR / "site_kpu_langley") == []
     power = seeds.load_power("site_kpu_langley")
     assert power["header"]["start"] == "19910101"

@@ -1,0 +1,11 @@
+{
+ "source_name": "ECOSTRESS Tiled Evapotranspiration PT-JPL Instantaneous and Daytime L3 Global 70 m v003",
+ "source_url": "https://doi.org/10.5067/ECOSTRESS/ECO_L3T_JET.003",
+ "product_version": "003",
+ "retrieved_on": "2026-11-15",
+ "license": "Openly shared, without restriction, per the ECO_L3T_JET.003 DOI page (https://doi.org/10.5067/ECOSTRESS/ECO_L3T_JET.003, read 2026-11-15) and the EOSDIS Data Use and Citation Guidance (https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance). That guidance says NASA-led mission data are CC0 unless a use restriction is marked. LP DAAC states its products have no restrictions on reuse, sale, or redistribution (https://forum.earthdata.nasa.gov/viewtopic.php?t=6891, read 2026-11-15).",
+ "attribution": "ECOSTRESS Tiled Evapotranspiration PT-JPL Instantaneous and Daytime L3 Global 70 m v003 (ECO_L3T_JET). NASA/JPL/ECOSTRESS, distributed by the Land Processes Distributed Active Archive Center. https://doi.org/10.5067/ECOSTRESS/ECO_L3T_JET.003.",
+ "resolution_spatial": "70 m",
+ "resolution_temporal": "Irregular ISS overpass; ETdaily is one daytime integral; weeks are 7-day blocks from 1 January",
+ "processing_notes": "NASA Earthdata rejected the request (HTTP 401) for host cmr.earthdata.nasa.gov. The token was not printed. No granule was stored. weekly is null. This file is a gap record, not a measurement."
+}

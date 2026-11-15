@@ -1,0 +1,17 @@
+{
+ "data_mode": "limited_data",
+ "available": false,
+ "site_id": "site_kpu_langley",
+ "product": "ecostress",
+ "weekly": null,
+ "scene_count": null,
+ "candidates": [
+  {
+   "short_name": "ECO_L3T_JET",
+   "version": "003",
+   "title": "ECOSTRESS Tiled Evapotranspiration PT-JPL Instantaneous and Daytime L3 Global 70 m v003",
+   "cmr": "https://cmr.earthdata.nasa.gov/search/collections.json?short_name=ECO_L3T_JET"
+  }
+ ],
+ "reason": "NASA Earthdata rejected the request (HTTP 401) for host cmr.earthdata.nasa.gov. The token was not printed. No granule was stored. weekly is null. This file is a gap record, not a measurement."
+}
