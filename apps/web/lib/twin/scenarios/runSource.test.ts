@@ -7,6 +7,10 @@ describe("runSourceFor", () => {
     expect(runSourceFor(farmById("cornell-ruminant"))).toBe("none");
     expect(runSourceFor(farmById("usda-barc"))).toBe("none");
   });
+  it("the BC what-if farms run preset events", () => {
+    expect(runSourceFor(farmById("ubc-farm"))).toBe("fixture");
+    expect(runSourceFor(farmById("kpu-langley"))).toBe("fixture");
+  });
   it("explore-only farms and no farm use none", () => {
     expect(runSourceFor(farmById("ucdavis-oakville"))).toBe("none");
     expect(runSourceFor(null)).toBe("none");

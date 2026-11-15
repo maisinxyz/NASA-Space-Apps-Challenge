@@ -1029,15 +1029,6 @@ export function HeroEarth(props: Props) {
       </Canvas>
       {props.zoomEnabled && (
         <div className="pointer-events-none absolute right-6 bottom-6 z-[120] flex flex-col items-center">
-          <details data-camera-controls className="pointer-events-auto mb-9 max-w-[21rem] rounded-xl border border-white/20 bg-black/85 p-3 text-xs text-white">
-            <summary className="cursor-pointer text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">Earth camera controls</summary>
-            <p className="mt-2 mb-2 text-center text-white/80">Arrow keys rotate · + / − zoom</p>
-            <div className="flex flex-wrap justify-center gap-1">
-              {([ ["pan-left", "Rotate left"], ["pan-right", "Rotate right"], ["pan-up", "Rotate up"], ["pan-down", "Rotate down"], ["zoom-in", "Zoom in"], ["zoom-out", "Zoom out"] ] as const).map(([action, label]) => (
-                <button key={action} type="button" onClick={() => moveCamera(action)} className="rounded border border-white/25 px-2 py-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{label}</button>
-              ))}
-            </div>
-          </details>
           <div aria-hidden className="flex flex-col items-center select-none text-[#f5f7fa]">
             <span className="tabular-nums font-light leading-none tracking-[-0.07em]" style={{ fontSize: "clamp(48px, 6.2vw, 80px)" }}>
               2026

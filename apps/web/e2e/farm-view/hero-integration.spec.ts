@@ -1,17 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-test('globe controls stay bounded and the camera controls can be hidden', async ({ page }) => {
+test('globe controls stay bounded', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  const camera = page.getByText('Earth camera controls', { exact: true });
-  await expect(camera).toBeVisible({ timeout: 45_000 });
-  const rotate = page.getByRole('button', { name: 'Rotate left' });
-  await expect(rotate).toBeHidden();
-  await camera.click();
-  await expect(rotate).toBeVisible();
-  await camera.click();
-  await expect(rotate).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'STARDEW EARTH' })).toBeVisible({ timeout: 45_000 });
   await page.getByRole('button', { name: 'Farms', exact: true }).click();
   const panel = page.getByRole('dialog', { name: 'Farms' });
   await expect(panel).toBeFocused();
