@@ -20,6 +20,12 @@ import { SimulationTab, useSimKeys, type SimProps, type SimState } from "./Simul
 import { monthOf } from "@/lib/farm-view/timeline";
 import { FV_CSS } from "./styles";
 import { Timeline } from "./Timeline";
+import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
+import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
+import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
+import { MapEffects } from "@/components/farm-future/MapEffects";
+import { StrategyBar } from "@/components/farm-future/SoilHealth";
+import { useFutureStore } from "@/lib/farm-future/store";
 import { Twin } from "./Twin";
 
 // tokens.ease.out as a cubic-bezier tuple for framer-motion.
@@ -55,6 +61,12 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const farmId = useAppStore((s) => s.farmId);
   const twin = twinConfig(farmId);
+  // Future / Compare modes (components/farm-future). "now" keeps this view exactly as before.
+  const futureMode = useFutureStore((s) => s.mode);
+  const futurePanel = useFutureStore((s) => s.panel);
+  const reviewFor = useFutureStore((s) => s.reviewFor);
+  const isNow = futureMode === "now";
+  const isCompare = futureMode === "compare";
   // The Simulation tab shares the left column: opening it folds the report away, closing restores it.
   const setSim = (next: SimState) => {
     if (next.open && !sim.open) { reportBefore.current = reportOpen; setReportOpen(false); }
@@ -126,10 +138,11 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
 
   return (
     <div className={`fv-root`} style={{ position: "absolute", inset: 0, zIndex: zIndex.chrome, pointerEvents: "none" }} data-testid="farm-view">
-      <style>{FV_CSS + "@keyframes fv-spin{to{transform:rotate(360deg)}}"}</style>
+      <style>{FV_CSS + FUTURE_CSS + "@keyframes fv-spin{to{transform:rotate(360deg)}}"}</style>
+      <MapEffects />
 
       {/* Reserved Header Regions (Grid at 1280x800 prevents overlap between title, zone toggle, and condition pills) */}
-      <header
+      {!isCompare && <header
         className="pointer-events-none absolute inset-x-0 top-0 z-20"
         style={{
           display: "grid",
@@ -149,6 +162,8 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
           </FvButton>
           <h1 className="fv-title" style={{ wordBreak: "break-word" }}>{farmName}</h1>
           <p className="fv-sub">{place ? `${place} · ` : ""}{simProps ? "Simulation available" : EXPLORE_SUBTITLE}</p>
+          {!panelsHidden && <ModeSwitch />}
+          {!panelsHidden && futureMode === "future" && <StrategyBar />}
           {simProps && twin && (
             <div className="fv-cap fv-onmap" style={{ marginTop: 6, color: color.ink, display: "grid", gap: 2 }}>
               <span>{[...twin.labels, ...twin.attribution].join(" · ")}</span>
@@ -156,17 +171,17 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
               <span>This tool supports, and does not replace, local agronomic expertise.</span>
             </div>
           )}
-          {simProps && !panelsHidden && <SimulationTab props={simProps} sim={sim} setSim={setSim} />}
+          {simProps && !panelsHidden && isNow && <SimulationTab props={simProps} sim={sim} setSim={setSim} />}
         </div>
 
         {/* Center Region: Vulnerability zones box */}
         <div className="pointer-events-auto flex justify-center">
-          {zoneToggle}
+          {isNow && zoneToggle}
         </div>
 
         {/* Right Region: Layer bar + condition pills */}
         {!panelsHidden ? (
-          <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: 460 }}>
+          <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: isNow ? 460 : 600 }}>
             {/* Layer bar */}
             <div className="fv-glass fv-bar fv-auto" role="radiogroup" aria-label="Map layer" onKeyDown={onBarKey}>
               {LAYERS.map((l) => (
@@ -189,6 +204,7 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
                   {l.label}
                 </FvButton>
               ))}
+              {futureMode === "future" && (<><span className="fv-div" aria-hidden /><LensControl /></>)}
               <span className="fv-div" aria-hidden />
               <FvButton className="fv-icon" aria-label="Reset view" data-testid="reset-view" onClick={onReset}>
                 <RotateCcw size={18} />
@@ -217,8 +233,9 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
               </FvButton>
             </div>
 
-            {/* Condition pills */}
-            <div className="flex flex-col items-end gap-1.5">
+            {/* Condition pills; Future mode shows projected values instead */}
+            {futureMode === "future" && <FuturePills />}
+            {isNow && <div className="flex flex-col items-end gap-1.5">
               <span
                 className="fv-cap"
                 style={{
@@ -256,7 +273,7 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
                   })}
                 </div>
               </LayoutGroup>
-            </div>
+            </div>}
           </div>
         ) : (
           <div className="pointer-events-auto flex items-start justify-end" style={{ maxWidth: 460 }}>
@@ -273,13 +290,13 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
             </FvButton>
           </div>
         )}
-      </header>
+      </header>}
 
       {!panelsHidden && (<>
-      <AnimatePresence>{card && <ConditionCard key={card} id={card} onClose={closeCard} />}</AnimatePresence>
-      <AnimatePresence>{layer !== "satellite" && <LayerLegend key={layer} layer={layer} />}</AnimatePresence>
+      <AnimatePresence>{card && isNow && <ConditionCard key={card} id={card} onClose={closeCard} />}</AnimatePresence>
+      <AnimatePresence>{layer !== "satellite" && !isCompare && <LayerLegend key={layer} layer={layer} />}</AnimatePresence>
       {/* Field report: open card, or a 40 px tab on the left edge */}
-      <AnimatePresence initial={false}>
+      {!isCompare && !(futureMode === "future" && futurePanel === "soil") && <AnimatePresence initial={false}>
         {reportOpen ? (
           <motion.section
             key="report"
@@ -357,22 +374,28 @@ export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zone
             </FvButton>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>}
 
-      {simProps && comparing && <DividerHandle />}
+      {simProps && comparing && isNow && <DividerHandle />}
 
-      <Timeline
-        reduced={reduced}
-        onDayChange={(day) => {
-          const m = monthOf(day);
-          if (useAppStore.getState().twinMonth !== m) {
-            useAppStore.setState({ twinMonth: m });
-          }
-        }}
-      />
+      {isNow ? (
+        <Timeline
+          reduced={reduced}
+          onDayChange={(day) => {
+            const m = monthOf(day);
+            if (useAppStore.getState().twinMonth !== m) {
+              useAppStore.setState({ twinMonth: m });
+            }
+          }}
+        />
+      ) : (
+        <FutureTimeline reduced={reduced} right={isCompare && reviewFor ? 400 : 40} />
+      )}
+
+      <FutureLayer legendShown={layer !== "satellite"} />
 
       {/* Twin: round logo button that opens the ask pill and answer card */}
-      <Twin />
+      {!isCompare && <Twin />}
 
       </>)}
 
