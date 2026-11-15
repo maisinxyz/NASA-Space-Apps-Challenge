@@ -1,4 +1,5 @@
 export type CameraAction = `pan-${"left" | "right" | "up" | "down"}` | `orbit-${"left" | "right" | "up" | "down"}` | "zoom-in" | "zoom-out";
+export type FarmCameraAction = CameraAction | "birdseye";
 
 /** Use only when the camera surface or its controls have focus. */
 export function cameraActionForKey(key: string, shift: boolean): CameraAction | null {
