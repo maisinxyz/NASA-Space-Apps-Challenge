@@ -104,17 +104,18 @@ def test_sunflower_question_runs_the_forecast_without_a_provider(client, monkeyp
     assert response.status_code == 200, response.text
     result = response.json()
     contract.validate_response(result, "/copilot/chat", "post", "200")
-    assert "Spring barley with Sunflower once in year 1" in result["reply"]
-    assert "Historical weather" in result["reply"]
-    assert "Drier summers" in result["reply"]
+    assert "planting Sunflower instead of Spring barley" in result["reply"]
+    assert "past weather" in result["reply"]
+    assert "soil organic matter" in result["reply"]
+    assert "p10" not in result["reply"] and "medians" not in result["reply"]
     assert set(result["referenced_layers"]) == {"irrigation_need_mm", "soil_organic_index"}
     assert "36%" not in result["reply"]
 
 
 @pytest.mark.parametrize(("question", "previous", "expected"), [
-    ("sunflowers instead?", None, "Spring barley with Sunflower"),
-    ("And if it gets wetter?", "What if I planted sunflower?", "Wetter winters"),
-    ("I need to water less. Can I use less water?", None, "Lowest modeled first-year irrigation"),
+    ("sunflowers instead?", None, "Sunflower instead of Spring barley"),
+    ("And if it gets wetter?", "What if I planted sunflower?", "wetter winters"),
+    ("I need to water less. Can I use less water?", None, "lowest estimated irrigation need"),
     ("Should I plant sunflower or cabbage?", None, "Which one should I compare"),
     ("What should I do?", None, "What matters most this season"),
 ])
@@ -128,6 +129,28 @@ def test_offline_copilot_resolves_short_requests(client, monkeypatch, question, 
     response = client.post("/api/v1/copilot/chat", json=body)
     assert response.status_code == 200, response.text
     assert expected in response.json()["reply"]
+
+
+def test_soybean_followups_keep_the_crop_comparison(client, monkeypatch):
+    monkeypatch.setenv("OFFLINE", "1")
+    monkeypatch.setattr(copilot, "_provider", lambda *args: pytest.fail("crop follow-up called the provider"))
+    body = request()
+    body["message"] = "Do I have enough water to grow soybean?"
+    initial = client.post("/api/v1/copilot/chat", json=body).json()["reply"]
+    assert "more irrigation" in initial
+    assert "Check that estimate against how much irrigation water you can supply." in initial
+    body["history"] = [
+        {"role": "user", "content": body["message"]},
+        {"role": "assistant", "content": initial},
+    ]
+    body["message"] = "What does that mean?"
+    explanation = client.post("/api/v1/copilot/chat", json=body).json()["reply"]
+    assert "Soybean instead of Spring barley" in explanation and "more irrigation" in explanation
+
+    body["message"] = "Show me the numbers"
+    breakdown = client.post("/api/v1/copilot/chat", json=body).json()["reply"]
+    assert "drier summers" in breakdown and "Most model runs" in breakdown
+    assert "p10" not in breakdown and "p90" not in breakdown
 
 
 def test_year_zero_snapshot_supplies_baseline_numbers(client, monkeypatch):
