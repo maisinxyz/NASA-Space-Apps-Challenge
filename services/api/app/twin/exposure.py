@@ -201,10 +201,10 @@ def bare_windows(preset: dict, ndvi_doc: dict | None = None) -> list[dict]:
     return windows
 
 
-def exposure_report(site_id: str, crops_query: str | None = None) -> dict:
-    site_info(site_id)
+def exposure_report(site_id: str, crops_query: str | None = None, *, location: tuple[float, float] | None = None) -> dict:
+    site_info(site_id, location)
     crops, preset = parse_crops(site_id, crops_query)
-    table = feature_table(site_id)
+    table = feature_table(site_id, location=location)
     lib = library()
     seasons = []
     ndvi = seeds.load_ndvi(site_id)
@@ -249,7 +249,7 @@ def exposure_report(site_id: str, crops_query: str | None = None) -> dict:
             })
     drought_weeks = {w for row in seasons if "drought" in row["hazards"] for w in row["weeks"]}
     caveats.extend(_support_notes(smap, ecostress, drought_weeks))
-    collection = zones(site_id)
+    collection = zones(site_id) if location is None else {"zones": [], "data_mode": "limited_data", "caveats": ["No elevation grid for this custom field."]}
     moisture = smap is not None or ecostress is not None
     kept = []
     for zone in collection["zones"]:

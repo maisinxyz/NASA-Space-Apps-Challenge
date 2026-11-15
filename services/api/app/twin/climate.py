@@ -247,10 +247,10 @@ def _add_season_temp(daily: P.Daily, season_temp: dict[str, float]) -> P.Daily:
     return replace(daily, v=v)
 
 
-def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate_source: str = CLIMATE_SOURCE) -> dict:
+def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate_source: str = CLIMATE_SOURCE, *, location: tuple[float, float] | None = None) -> dict:
     """ClimateOutlook for one curated (or located) site and one scenario preset."""
 
-    daily, power_mode, _soil, info = base(site_id)
+    daily, power_mode, _soil, info = base(site_id, location)
     scenario = P.resolve_scenario(scenario_name)
     adjusted = P.apply_scenario(daily, scenario)
     season_temp = None
@@ -285,7 +285,7 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate
     frost_c = float(thresholds["frost_c"])
     extreme_mm = float(thresholds["extreme_rain_mm"])
     years = np.array(sorted(set(int(y) for y in daily.year.tolist())), dtype=np.int64)
-    baseline_weekly = computed(site_id, P.resolve_scenario("baseline"))
+    baseline_weekly = computed(site_id, P.resolve_scenario("baseline"), location)
 
     seasonal_temperature = _seasonal_temperature(daily, adjusted, years, info["lat"])
     heat = _heat_stress(site_id, daily, years, scenario, info["lat"], season_temp=season_temp, climate_source=climate_source)

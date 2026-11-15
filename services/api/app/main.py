@@ -13,6 +13,7 @@ from app.routers import (
     climate_outlook,
     crop_catalog,
     copilot,
+    custom_field,
     crops,
     exposure,
     features,
@@ -30,7 +31,7 @@ from app.routers import (
 )
 
 ROUTERS = (
-    health, copilot, sites, features, rotation_analysis, scans, terrain, weather, crops, rotations,
+    health, copilot, custom_field, sites, features, rotation_analysis, scans, terrain, weather, crops, rotations,
     simulations, notes, climate_outlook, exposure, crop_catalog, forecast, outlook,
 )
 

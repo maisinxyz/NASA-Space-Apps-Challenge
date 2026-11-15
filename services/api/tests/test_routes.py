@@ -213,15 +213,10 @@ def test_routes_match_openapi_exactly(client):
     def norm(p):
         return re.sub(r"\{[^}]+\}", "{}", p)
 
-    # v1.3 paths in the contract that the API has not mounted yet (Person A removes each one when mounted).
-    pending_v12: set[tuple[str, str]] = {
-        ("POST", "/field/analyze"),
-    }
     spec = {(m.upper(), norm(p)) for p, ops in contract.openapi()["paths"].items() for m in ops if m in ("get", "post")}
     app_routes = {
         (m.upper(), norm(path.removeprefix(API)))
         for path, ops in client.app.openapi()["paths"].items()
         for m in ops
     }
-    assert app_routes.isdisjoint(pending_v12)
-    assert app_routes | pending_v12 == spec
+    assert app_routes == spec

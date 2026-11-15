@@ -88,6 +88,7 @@ class Prepared:
     fields: list[FieldRun]
     power_mode: str
     soil_summary: dict | None
+    location: tuple[float, float] | None = None
 
 
 def forecast(site_id: str, body: dict, *, members: int = ENSEMBLE_MEMBERS) -> dict:
@@ -103,11 +104,13 @@ def forecast(site_id: str, body: dict, *, members: int = ENSEMBLE_MEMBERS) -> di
     return deepcopy(doc)
 
 
-def prepare(site_id: str, body: dict) -> Prepared:
+def prepare(site_id: str, body: dict, *, location: tuple[float, float] | None = None, soil: dict | None = None) -> Prepared:
     if not isinstance(body, dict):
         raise ApiError("INVALID_INPUT", "Forecast body must be a JSON object.")
     req = _request(body)
-    daily, power_mode, soil_summary, info = base(site_id)
+    daily, power_mode, soil_summary, info = base(site_id, location)
+    if location is not None:
+        soil_summary = soil
     # The KPU point is a SoilGrids no-data cell. A nearby mapped cell is an
     # explicitly identified proxy, used only when a field has no soil test.
     if soil_summary is None and site_id == "site_kpu_langley":
@@ -132,6 +135,7 @@ def prepare(site_id: str, body: dict) -> Prepared:
         fields=fields,
         power_mode=power_mode,
         soil_summary=soil_summary,
+        location=location,
     )
 
 
@@ -171,7 +175,7 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
             for slot in plan.slots:
                 if slot.crop_id != "fallow" and slot.crop_id not in planted:
                     planted.append(slot.crop_id)
-    outlook = build_climate_outlook(prepared.site_id, prepared.scenario.preset, req.climate_source)
+    outlook = build_climate_outlook(prepared.site_id, prepared.scenario.preset, req.climate_source, location=prepared.location)
     scenario = _scenario_dict(prepared.scenario)
     forecast_sources = sources(prepared.soil_summary)
     station_source_row = station_source(_site_id(prepared))
@@ -184,7 +188,7 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
             scenario["rain_scale_pct"] = outlook["scenario"]["rain_scale_pct"]
             scenario["rain_scale_by_season"] = outlook["scenario"]["rain_scale_by_season"]
             forecast_sources.extend(outlook["sources"][1:])
-    exposure = exposure_report(_site_id(prepared), ",".join(planted) if planted else None)
+    exposure = exposure_report(_site_id(prepared), ",".join(planted) if planted else None, location=prepared.location)
     proxy_used = bool(prepared.soil_summary and prepared.soil_summary.get("nearby_proxy")) and any(
         item.field.soil_override is None for item in prepared.fields
     )
@@ -333,7 +337,7 @@ def _attach_exposure(strategies: list[dict], prepared: Prepared) -> None:
         for slot in strategy["plan"]:
             if slot["crop_id"] != "fallow" and slot["crop_id"] not in planted:
                 planted.append(slot["crop_id"])
-    report = exposure_report(_site_id(prepared), ",".join(planted) if planted else None)
+    report = exposure_report(_site_id(prepared), ",".join(planted) if planted else None, location=prepared.location)
     by_crop: dict[str, list] = {}
     for season in report.get("vulnerable_seasons") or []:
         by_crop.setdefault(season["crop_id"], []).append(season)
