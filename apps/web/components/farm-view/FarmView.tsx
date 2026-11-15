@@ -4,14 +4,18 @@
 // everywhere no panel covers it (root is pointer-events: none, each panel opts back in).
 // Not built yet (later slices): condition cards, map layers, field popover, Twin pill/answers.
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CONDITIONS, LAYERS, SAMPLE_FIELDS, EXPLORE_SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
 import { color, layout, motion as m, zIndex, type LayerId } from "@/lib/farm-view/tokens";
+import { DividerHandle } from "@/components/farm/CompareTray";
+import { useTwin } from "@/components/farm/shared";
+import { useAppStore } from "@/lib/store";
 import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "./FvButton";
 import { ChevronLeft, ChevronRight, Droplet, Leaf, Logo, PanelLeft, RotateCcw, Thermometer, Volume2, VolumeX } from "./icons";
+import { SimulationTab, useSimKeys, type SimProps, type SimState } from "./SimulationTab";
 import { FV_CSS } from "./styles";
 import { Timeline } from "./Timeline";
 
@@ -26,12 +30,26 @@ export type FarmViewProps = {
   place?: string;
   onBack(): void;
   onReset(): void;
+  /** Present on full-twin (simulation) farms: adds the Simulation tab and the farm's own field list. */
+  sim?: SimProps;
 };
 
-export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
+export function FarmView({ farmName, place, onBack, onReset, sim: simProps }: FarmViewProps) {
   const reduced = !!useReducedMotion();
   const [layer, setLayer] = useState<LayerId>("satellite");
   const [reportOpen, setReportOpen] = useState(false);
+  const [sim, setSimState] = useState<SimState>({ open: false, section: "scenarios" });
+  const reportBefore = useRef(false);
+  const panelsHidden = useAppStore((s) => s.panelsHidden);
+  const comparing = useAppStore((s) => s.twinMode === "compare");
+  const twin = useTwin();
+  // The Simulation tab shares the left column: opening it folds the report away, closing restores it.
+  const setSim = (next: SimState) => {
+    if (next.open && !sim.open) { reportBefore.current = reportOpen; setReportOpen(false); }
+    if (!next.open && sim.open) setReportOpen(reportBefore.current);
+    setSimState(next);
+  };
+  useSimKeys(sim, setSim, !!simProps);
   const [muted, setMuted] = useState(() => sound.isMuted());
 
   useEffect(() => sound.installUnlock(), []);
@@ -54,6 +72,13 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
     setReportOpen(open);
     if (!open) sound.close();
   };
+  type Row = { id: string; name: string; moisture: number | null; ndvi: number | null; status: string; sim: boolean };
+  // Sim farms: the farm's own fields, no invented per-field numbers (sim-gap.md Q1 default).
+  const rows: Row[] = simProps ? simProps.fields.map((f) => ({ id: f.id, name: f.name, moisture: null, ndvi: null, status: "–", sim: true })) : SAMPLE_FIELDS.map((f) => ({ ...f, sim: false }));
+  const pickSimField = (id: string) => {
+    useAppStore.setState({ twinFieldId: id });
+    setSim({ open: true, section: "field" });
+  };
   const pop = reduced ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } : { initial: { opacity: 0, scale: m.popFromScale }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: m.popFromScale } };
 
   return (
@@ -67,9 +92,18 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
           Globe
         </FvButton>
         <h1 className="fv-title">{farmName}</h1>
-        <p className="fv-sub">{place ? `${place} · ` : ""}{EXPLORE_SUBTITLE}</p>
+        <p className="fv-sub">{place ? `${place} · ` : ""}{simProps ? "Simulation available" : EXPLORE_SUBTITLE}</p>
+        {simProps && (
+          <div className="fv-cap fv-onmap" style={{ marginTop: 6, color: color.ink, display: "grid", gap: 2 }}>
+            <span>{[...twin.labels, ...twin.attribution].join(" · ")}</span>
+            {simProps.pending > 0 && <span role="status">Loading 3D detail…</span>}
+            <span>This tool supports, and does not replace, local agronomic expertise.</span>
+          </div>
+        )}
+        {simProps && !panelsHidden && <SimulationTab props={simProps} sim={sim} setSim={setSim} />}
       </div>
 
+      {!panelsHidden && (<>
       {/* Layer bar */}
       <div className="fv-glass fv-bar fv-auto" role="radiogroup" aria-label="Map layer" onKeyDown={onBarKey} style={{ position: "absolute", right: layout.layerBar.right, top: layout.layerBar.top }}>
         {LAYERS.map((l) => (
@@ -139,7 +173,7 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
                 <ChevronLeft size={18} />
               </FvButton>
             </div>
-            <p className="fv-sum">{reportSummary()}</p>
+            <p className="fv-sum">{simProps ? "No field measurements for this farm yet." : reportSummary()}</p>
             <table className="fv-table">
               <thead>
                 <tr>
@@ -150,11 +184,11 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
                 </tr>
               </thead>
               <tbody>
-                {SAMPLE_FIELDS.map((f) => (
-                  <tr key={f.id} className="fv-row" data-testid={`field-report-row-${f.id}`} onPointerDown={() => sound.tap()}>
+                {rows.map((f) => (
+                  <tr key={f.id} className="fv-row" data-testid={`field-report-row-${f.id}`} onPointerDown={() => sound.tap()} onClick={() => f.sim && pickSimField(f.id)}>
                     <td className="n">{f.name}</td>
-                    <td>{f.moisture}%</td>
-                    <td>{f.ndvi.toFixed(2)}</td>
+                    <td>{f.moisture === null ? "–" : `${f.moisture}%`}</td>
+                    <td>{f.ndvi === null ? "–" : f.ndvi.toFixed(2)}</td>
                     <td className="s" style={{ paddingLeft: 15 }}>
                       <span className={f.status === "Dry" || f.status === "Stressed" ? "fv-diamond" : "fv-dot"} aria-hidden />
                       {f.status}
@@ -183,6 +217,8 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
         )}
       </AnimatePresence>
 
+      {simProps && comparing && <DividerHandle />}
+
       <Timeline reduced={reduced} />
 
       {/* Twin: round button, logo only (the pill and answers arrive in Slice C) */}
@@ -192,9 +228,11 @@ export function FarmView({ farmName, place, onBack, onReset }: FarmViewProps) {
         </FvButton>
       </div>
 
-      <p className="fv-credit fv-onmap" style={{ position: "absolute", left: "50%", bottom: 8, transform: "translateX(-50%)", margin: 0, whiteSpace: "nowrap" }}>
+      </>)}
+
+      {!simProps && <p className="fv-credit fv-onmap" style={{ position: "absolute", left: "50%", bottom: 8, transform: "translateX(-50%)", margin: 0, whiteSpace: "nowrap" }}>
         This tool supports, and does not replace, local agronomic expertise.
-      </p>
+      </p>}
     </div>
   );
 }

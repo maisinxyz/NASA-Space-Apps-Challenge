@@ -184,38 +184,13 @@ export function TwinPanel({ farm, fields, cropA, cropB, pending, onBack, onReset
   );
 }
 
-function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string, CropLook> | undefined }) {
-  const { twinFieldId: fieldId, twinSurface: surface, exaggeration, look, detail } = useAppStore();
-  const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
-  return (
-    <div className="grid gap-4 text-sm">
-      <section aria-labelledby="fl-fields">
-        <h3 id="fl-fields" className={h}>
-          Fields
-        </h3>
-        <ul className="grid gap-0.5">
-          {fields.map((f) => (
-            <li key={f.id}>
-              <button
-                type="button"
-                aria-pressed={f.id === fieldId}
-                onClick={() => useAppStore.setState({ twinFieldId: f.id === fieldId ? null : f.id, rightOpen: true })}
-                className={`flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left ${f.id === fieldId ? "bg-accent/20 ring-1 ring-accent" : "hover:bg-white/10"}`}
-              >
-                <span className="font-medium">{f.name}</span>
-                <span className="text-xs text-ink-muted">
-                  <CropSwatch crop={crops?.[f.id] ?? f.crop} /> · {f.areaHa.toLocaleString("en-US", { maximumFractionDigits: 1 })} ha
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-ink-muted">
-          Area <BasisChip basis="derived" /> from the approximate outline; crops <BasisChip basis="assumed" /> illustrative. On the map, hover a field to see its name and crop.
-        </p>
-      </section>
+const h = "mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase";
 
-      <section aria-labelledby="fl-map" className="grid gap-2">
+/** Surface, height exaggeration, detail and look. Used by the old left panel and the farm view's Simulation tab. */
+export function MapSettings() {
+  const { twinSurface: surface, exaggeration, look, detail } = useAppStore();
+  return (
+    <section aria-labelledby="fl-map" className="grid gap-2">
         <h3 id="fl-map" className={h}>
           Map
         </h3>
@@ -260,6 +235,40 @@ function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string
           </span>
         </label>
       </section>
+  );
+}
+
+function LeftBody({ fields, crops }: { fields: FarmField[]; crops: Record<string, CropLook> | undefined }) {
+  const { twinFieldId: fieldId } = useAppStore();
+  return (
+    <div className="grid gap-4 text-sm">
+      <section aria-labelledby="fl-fields">
+        <h3 id="fl-fields" className={h}>
+          Fields
+        </h3>
+        <ul className="grid gap-0.5">
+          {fields.map((f) => (
+            <li key={f.id}>
+              <button
+                type="button"
+                aria-pressed={f.id === fieldId}
+                onClick={() => useAppStore.setState({ twinFieldId: f.id === fieldId ? null : f.id, rightOpen: true })}
+                className={`flex min-h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left ${f.id === fieldId ? "bg-accent/20 ring-1 ring-accent" : "hover:bg-white/10"}`}
+              >
+                <span className="font-medium">{f.name}</span>
+                <span className="text-xs text-ink-muted">
+                  <CropSwatch crop={crops?.[f.id] ?? f.crop} /> · {f.areaHa.toLocaleString("en-US", { maximumFractionDigits: 1 })} ha
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-ink-muted">
+          Area <BasisChip basis="derived" /> from the approximate outline; crops <BasisChip basis="assumed" /> illustrative. On the map, hover a field to see its name and crop.
+        </p>
+      </section>
+
+      <MapSettings />
 
       <fieldset disabled aria-describedby="nasa-note" className="grid gap-1 rounded-md border border-dashed border-white/15 p-2 opacity-70">
         <legend className={`${h} px-1`}>NASA layers</legend>

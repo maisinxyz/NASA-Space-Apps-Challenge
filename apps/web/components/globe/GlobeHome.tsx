@@ -13,7 +13,6 @@ import dynamic from "next/dynamic";
 import { Component, type ReactNode, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-import { TwinPanel } from "@/components/farm/TwinPanel";
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
 import { FarmView } from "@/components/farm-view/FarmView";
 import { ArrivalTitle } from "@/components/hero/Arrival";
@@ -727,28 +726,14 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           animate={{ opacity: 1 }}
           transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
         >
-          {inTwin ? (
-            <TwinPanel
-              farm={farm}
-              fields={twin.fields}
-              cropA={cropA}
-              cropB={cropB}
-              pending={pending}
-              onBack={() => useAppStore.setState({ globeView: "globe" })}
-              onReset={() => globe.current?.resetView()}
-              getCamera={() => globe.current?.getCamera() ?? null}
-              runSource={runSource}
-              frame={frame}
-            />
-          ) : (
-            <FarmView farmName={farm.name} place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country} onBack={() => useAppStore.setState({ globeView: "globe" })} onReset={() => globe.current?.resetView()} />
-          )}
+          <FarmView
+            farmName={farm.name}
+            place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
+            onBack={() => useAppStore.setState({ globeView: "globe" })}
+            onReset={() => globe.current?.resetView()}
+            sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
+          />
         </motion.div>
-      )}
-      {inFarm && inTwin && (
-        <p className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 text-[11px] whitespace-nowrap text-white/[0.7] [text-shadow:0_1px_6px_#000]">
-          This tool supports, and does not replace, local agronomic expertise.
-        </p>
       )}
 
       {!onGlobe && (
