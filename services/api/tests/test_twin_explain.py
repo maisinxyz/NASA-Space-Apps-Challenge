@@ -1,10 +1,107 @@
 """W8: uncertainty rows, review flags, evidence templates, and the sensitivity axes."""
 
+import numpy as np
+
 from app.twin.explain.evidence import evidence_card
 from app.twin.explain.flags import clubroot_flags, strategy_flags
 from app.twin.explain.grid import RAIN_AXIS, TEMP_AXIS
 from app.twin.explain.uncertainty import station_bias, uncertainty_layers
 from app.twin.types import SUPPORT_SENTENCE, Plan, Slot
+
+
+def _week(year: int, values: list[float], n_obs: list[int] | None = None) -> dict:
+    return {"year": year, "values": values, "n_obs": n_obs if n_obs is not None else [1] * 52}
+
+
+def test_uncertainty_layers_from_synthetic_seeds_keep_the_absent_path(monkeypatch):
+    """Present, coarse, sparse, and non-bare-earth cases. Nothing is written under data/seed."""
+    from app.features import seeds
+    from app.features.pipeline import resolve_scenario
+    from app.services.features import computed
+    from app.twin.explain import uncertainty as U
+
+    plain = {row["layer"] for row in U.uncertainty_layers("site_ubc_farm")}
+    assert "smap" not in plain and "dem" not in plain
+
+    years = computed("site_ubc_farm", resolve_scenario()).years
+    y0, y1 = int(years[-2]), int(years[-1])
+    smap_values = [0.15 + (week % 7) * 0.01 for week in range(52)]
+    smap = {
+        "unit": "m3/m3", "basis": "modeled", "native_resolution_m": 9000,
+        "weekly": [_week(y0, smap_values), _week(y1, smap_values)],
+    }
+    sparse = [None if week else 0.2 for week in range(52)]
+    sparse_obs = [0] * 52
+    sparse_obs[0] = 1
+    ndvi = {
+        "unit": "1", "basis": "measured", "native_resolution_m": 30,
+        "weekly": [_week(y0, sparse, sparse_obs), _week(y1, sparse, sparse_obs)],
+    }
+    eco = {
+        "unit": "W/m2", "basis": "measured", "native_resolution_m": 70,
+        "weekly": [_week(y0, [100.0] * 52), _week(y1, [140.0] * 52)],
+    }
+    grace = {
+        "unit": "mm", "basis": "modeled", "native_resolution_m": 25000,
+        "weekly": [_week(y0, [1.0] * 52), _week(y1, [2.0] * 52)],
+    }
+    imerg = {
+        "unit": "mm", "basis": "measured", "native_resolution_m": 10000,
+        "weekly": [_week(y0, [5.0] * 52), _week(y1, [8.0] * 52)],
+    }
+    dem = {
+        "elevation": [[10.0, 12.0], [11.0, 30.0]],
+        "res_m": 30.0,
+        "native_resolution_m": 30.0,
+        "origin": [-123.24, 49.25],
+        "bare_earth": False,
+    }
+
+    monkeypatch.setattr(seeds, "load_ndvi", lambda _site: ndvi)
+    monkeypatch.setattr(seeds, "load_smap", lambda _site: smap)
+    monkeypatch.setattr(seeds, "load_ecostress", lambda _site: eco)
+    monkeypatch.setattr(seeds, "load_grace", lambda _site: grace)
+    monkeypatch.setattr(seeds, "load_dem", lambda _site: dem)
+    real_weekly = U._weekly_file
+
+    def weekly(site_id: str, name: str):
+        if name == "imerg":
+            return imerg
+        return real_weekly(site_id, name)
+
+    monkeypatch.setattr(U, "_weekly_file", weekly)
+    layers = {row["layer"]: row for row in U.uncertainty_layers("site_ubc_farm")}
+    assert layers["smap"]["native_resolution_m"] == 9000
+    assert layers["smap"]["record_years"] == f"{y0}-{y1}"
+    assert "m3/m3" in layers["smap"]["resolution_note"]
+    assert "basis derived" in layers["smap"]["resolution_note"]
+    assert "correlation" in layers["smap"]["resolution_note"]
+    assert "not converted" in layers["ecostress"]["resolution_note"]
+    assert "not scored" in layers["grace"]["resolution_note"]
+    assert "correlation" not in layers["grace"]["resolution_note"]
+    assert "IMERG" in layers["imerg"]["resolution_note"] and "basis derived" in layers["imerg"]["resolution_note"]
+    assert layers["ndvi"]["confidence"] == "low"
+    assert layers["dem"]["confidence"] == "low"
+    assert "Canopy or buildings" in layers["dem"]["resolution_note"]
+    from fixtures_lib import contract
+    contract.validate_schema({"layers": list(layers.values()), "station_bias": None}, "ForecastUncertainty")
+
+    from app.twin.explain.flags import site_flags
+    rules = {flag["trigger"]["rule"] for flag in site_flags("rot_existing", "site_ubc_farm")}
+    assert "coarse_pixel" in rules
+    assert "few_cloud_free_scenes" in rules
+    assert "non_bare_earth" in rules
+    assert "layer_not_retrieved" not in rules
+
+
+def test_correlation_and_bias_use_overlapping_weeks_only():
+    from app.twin.explain.uncertainty import _corr_bias
+
+    corr, bias, n = _corr_bias(
+        np.array([1.0, 2.0, np.nan, 4.0]),
+        np.array([1.0, 2.0, 9.0, 4.0]),
+    )
+    assert n == 3 and corr == 1.0 and bias == 0.0
 
 
 def test_uncertainty_uses_sourced_resolutions_and_skips_a_missing_station():

@@ -102,3 +102,7 @@ A source row is copied from `<layer>.meta.json` and only when `source_name`, `li
 ## 2026-11-15 — Session B, EB2 elevation filename
 
 Zones prefer `data/seed/<site_id>/dem_hrdem.json.gz` when that file exists, then `dem.json.gz` via `load_dem`. No new loader was added in `seeds.py`. The object needs `elevation`, `res_m`, `origin` (lon, lat of the upper-left cell centre), and `bare_earth`. SMAP water stress is one farm polygon. A native resolution coarser than the clip is stated in `resolution_note`.
+
+## 2026-11-15 — Session B, EB3 hindcast placement
+
+Correlation and bias for SMAP, ECOSTRESS, and IMERG are sentences inside `UncertaintyLayer.resolution_note` (unit, basis derived, confidence low, week count). `ForecastUncertainty` has no hindcast field, and the contract was not changed. GRACE is a layer when the file has `native_resolution_m`, and it is not scored. `imerg.json.gz` is read from disk because `seeds.py` has no `load_imerg`. A loader is optional. The file uses the same weekly object as NDVI.
