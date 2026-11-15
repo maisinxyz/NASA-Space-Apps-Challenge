@@ -12,6 +12,7 @@ from app.core.logging import configure_logging, install_request_logging
 from app.routers import (
     climate_outlook,
     crop_catalog,
+    copilot,
     crops,
     exposure,
     features,
@@ -28,7 +29,7 @@ from app.routers import (
 )
 
 ROUTERS = (
-    health, sites, features, rotation_analysis, scans, terrain, weather, crops, rotations,
+    health, copilot, sites, features, rotation_analysis, scans, terrain, weather, crops, rotations,
     simulations, notes, climate_outlook, exposure, crop_catalog, forecast,
 )
 
