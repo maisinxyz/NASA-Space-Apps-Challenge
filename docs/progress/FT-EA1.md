@@ -31,9 +31,18 @@ cd services/api && uv run pytest tests/test_satellite_edl.py tests/test_satellit
 
 ## Test results (2026-11-15)
 
+First run, before `git pull --rebase` brought in later `main` commits:
+
 ```
 cd services/api && uv run pytest -q
 231 passed, 1 warning in 13.38s
+```
+
+Re-run on this commit's tree (after that pull, which includes Session B's FT-EB2 and FT-EB3):
+
+```
+cd services/api && uv run pytest -q
+237 passed, 1 warning in 12.10s
 ```
 
 The warning is the existing Starlette/`httpx` deprecation in FastAPI's test client. The new file is `tests/test_satellite_edl.py` (URL building, redirect header handling, missing-token and rejected-token errors, week bucketing, ranged cache path, concurrency cap). No test calls NASA.
