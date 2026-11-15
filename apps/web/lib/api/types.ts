@@ -35,3 +35,15 @@ export type Note = S["Note"];
 export type NoteCreate = S["NoteCreate"];
 export type ErrorCode = S["ErrorCode"];
 export type ErrorBody = S["ErrorBody"];
+
+// v1.2 forecast (docs/backend-forecast-prd.md §6)
+export type Scenario = S["Scenario"];
+export type ClimateOutlook = S["ClimateOutlook"];
+export type ForecastExposure = S["ForecastExposure"];
+export type CropCatalog = S["CropCatalog"];
+export type CropTraitV2 = S["CropTraitV2"];
+export type ForecastRequest = S["ForecastRequest"];
+export type Forecast = S["Forecast"];
+export type ForecastFieldResult = S["ForecastFieldResult"];
+export type SensitivityGrid = S["SensitivityGrid"];
+export type YearSeries = S["YearSeries"];

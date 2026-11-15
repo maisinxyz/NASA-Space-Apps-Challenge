@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, assetUrl, getSite, getSites, isMock, parseSse, runSimulation, subscribeScanEvents } from "./client";
-import type { ProgressEvent } from "./types";
+import { ApiError, assetUrl, debounce, getClimateOutlook, getCropCatalog, getForecast, getSensitivity, getSite, getSites, isMock, parseSse, runSimulation, subscribeScanEvents } from "./client";
+import type { ForecastRequest, ProgressEvent } from "./types";
 
 const FIXTURES = resolve(__dirname, "../../../../packages/contracts/fixtures");
 
@@ -33,7 +33,7 @@ describe("mock mode", () => {
 
   it("reads sites and 404s unknown ids as ApiError", async () => {
     mockFetch();
-    expect((await getSites()).length).toBe(3);
+    expect((await getSites()).length).toBe(2);
     await expect(getSite("site_nope")).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(getSite("site_nope")).rejects.toBeInstanceOf(ApiError);
   });
@@ -94,5 +94,41 @@ describe("offline mode", () => {
       vi.unstubAllEnvs();
       vi.resetModules();
     }
+  });
+});
+
+describe("forecast (v1.2)", () => {
+  const body = { selection: { crops: ["a", "b"] }, strategy_count: 3, constraints: {}, scenario: "baseline", horizon_years: 10, climate_source: "history_resample" } as unknown as ForecastRequest;
+
+  it("reads the forecast fixtures and the crop catalog", async () => {
+    mockFetch();
+    expect((await getForecast("site_usda_barc", body)).horizon_years).toBe(10);
+    expect((await getSensitivity("site_usda_barc", body)).cells.length).toBeGreaterThan(0);
+    expect((await getClimateOutlook("site_usda_barc")).site_id).toBe("site_usda_barc");
+    expect((await getCropCatalog()).crops.length).toBeGreaterThan(0);
+  });
+
+  it("reuses an identical request and 404s unknown sites", async () => {
+    const f = vi.fn(async () => new Response(readFileSync(resolve(FIXTURES, "forecast/site_usda_barc_forecast.json"))));
+    vi.stubGlobal("fetch", f);
+    const req = { ...body, strategy_count: 2 } as ForecastRequest;
+    await getForecast("site_usda_barc", req);
+    await getForecast("site_usda_barc", req);
+    expect(f).toHaveBeenCalledTimes(1);
+    mockFetch();
+    await expect(getForecast("site_nope", body)).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+describe("debounce", () => {
+  it("fires once with the last arguments", () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    const d = debounce(fn, 100);
+    d(1);
+    d(2);
+    vi.advanceTimersByTime(100);
+    expect(fn).toHaveBeenCalledOnce();
+    expect(fn).toHaveBeenCalledWith(2);
   });
 });
