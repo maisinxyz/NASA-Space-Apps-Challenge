@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from app.twin.types import SUPPORT_SENTENCE
 
-ENGINE_VERSION = "1.0.0"  # bump when a formula or coefficient below changes
+ENGINE_VERSION = "1.1.0"  # bump when a formula or coefficient below changes
 
 # Distinct from SUPPORT_SENTENCE. types.py keeps the support sentence; this is the forecast disclaimer.
 DISCLAIMER = (

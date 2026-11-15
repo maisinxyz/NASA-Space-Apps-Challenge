@@ -1,12 +1,7 @@
 """Group 1 climate outlook from the existing POWER daily series.
 
-Decision D2 (2026-11-15): NASA NEX-GDDP-CMIP6 publishes daily ``pr``, ``tasmax`` and
-``tasmin`` on a 0.25 degree grid that includes UBC Farm. The license statements do
-not agree (see ``docs/progress/FT-W3.md`` and ``docs/progress/FT-EB4.md``), so no
-delta seed is stored. When ``climate_source`` is ``cmip6_delta`` and
-``cmip6_delta.json.gz`` exists, stored seasonal deltas replace the slider.
-Otherwise the scenario stays ``history_resample``: observed years, shifted by the
-preset, with a linear ramp from year 0 to year 10 on the heat-stress series.
+Stored NASA NEX-GDDP-CMIP6 seasonal deltas replace the preset slider when
+requested and available. Other runs resample the historical POWER baseline.
 """
 
 from __future__ import annotations
@@ -40,8 +35,7 @@ from app.twin.types import (
 # Two-sided significance level for the Mann-Kendall flag. A convention, not a
 # measurement. TODO(verify) with the team before treating 0.05 as agreed.
 SIGNIFICANCE_ALPHA = 0.05
-# history_resample until a verified per-year delta file exists. Do not switch
-# this without the license note in docs/progress/FT-W3.md.
+# Historical resampling is the contract default.
 CLIMATE_SOURCE = "history_resample"
 # Contract presets only. SSP names are not scenario enums. See forecast-requests.md.
 # baseline applies no stored delta. The other three pick a key inside the file.
@@ -165,6 +159,37 @@ def load_cmip6_delta(site_id: str) -> dict | None:
     return doc
 
 
+def cmip6_provenance(doc: dict, preset: str) -> str:
+    """Describe the pathway and the windows used to build its seasonal deltas."""
+
+    pathway = _PRESET_DELTA_KEY[preset]
+    details = [f"NASA NEX-GDDP-CMIP6 {pathway} seasonal deltas"]
+    models = (doc.get("models") or {}).get(pathway)
+    if models:
+        details.append(f"models {', '.join(models)}")
+    baseline, future = doc.get("baseline_years"), doc.get("future_years")
+    if baseline and future:
+        details.append(f"{future[0]}–{future[-1]} compared with {baseline[0]}–{baseline[-1]}")
+    return "; ".join(details) + "."
+
+
+def cmip6_source(site_id: str) -> dict | None:
+    metadata = seeds.SEED_DIR / site_id / "cmip6_delta.meta.json"
+    if not metadata.is_file():
+        return None
+    sidecar = json.loads(metadata.read_text(encoding="utf-8"))
+    return {
+        "name": sidecar["source_name"],
+        "role": "weather",
+        "basis": "modeled",
+        "url": sidecar["source_url"],
+        "license": sidecar["license"],
+        "attribution": sidecar["attribution"],
+        "resolution_m": sidecar["native_resolution_m"],
+        "retrieved_on": sidecar["retrieved_on"],
+    }
+
+
 def _p50(value) -> float | None:
     raw = value.get("p50") if isinstance(value, dict) else value
     if isinstance(raw, bool) or not isinstance(raw, (int, float)):
@@ -229,8 +254,10 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate
     scenario = P.resolve_scenario(scenario_name)
     adjusted = P.apply_scenario(daily, scenario)
     season_temp = None
-    if climate_source == "cmip6_delta":
-        parsed = season_deltas(load_cmip6_delta(site_id), scenario_name)
+    sources = [dict(C.POWER_SOURCE)]
+    if climate_source == "cmip6_delta" and _PRESET_DELTA_KEY.get(scenario_name) is not None:
+        delta = load_cmip6_delta(site_id)
+        parsed = season_deltas(delta, scenario_name)
         if parsed is None:
             scenario = {
                 **scenario,
@@ -238,6 +265,8 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate
             }
         else:
             season_temp, season_rain = parsed
+            if source := cmip6_source(site_id):
+                sources.append(source)
             rain_arg = season_rain or None
             applied = P.resolve_scenario(scenario_name, 0.0, 0.0, rain_arg)
             adjusted = _add_season_temp(P.apply_scenario(daily, applied), season_temp)
@@ -246,7 +275,7 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate
                 **applied,
                 "temp_offset_c": round(mean_temp, 3) + 0.0,
                 "note": (
-                    "Stored seasonal deltas from cmip6_delta.json.gz. "
+                    f"Stored seasonal deltas from cmip6_delta.json.gz. {cmip6_provenance(delta, scenario_name)} "
                     "Each season uses its own p50. temp_offset_c is the mean of those seasonal temperatures "
                     "because the scenario object has one temperature number. "
                     "The daily series uses the seasonal values. Basis modeled. Not a forecast."
@@ -279,7 +308,7 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate
         "et_and_soil_moisture": {"et0_trend": et, "smap_root_zone_anomaly": smap, "ecostress_et": ecostress},
         "water_balance": water,
         "groundwater": _groundwater(site_id, grace_doc),
-        "sources": [dict(C.POWER_SOURCE)],
+        "sources": sources,
     }
 
 

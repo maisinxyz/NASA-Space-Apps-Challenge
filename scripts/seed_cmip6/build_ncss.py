@@ -4,7 +4,7 @@ No bulk download: the NCCS THREDDS NetCDF Subset Service (NCSS) returns one grid
 (about 366 rows for a year, no login). Catalog, dataset paths and the NCSS parameters were read from
 https://ds.nccs.nasa.gov/thredds/catalog/AMES/NEX/GDDP-CMIP6/catalog.xml and tested 2026-11-15.
 Dataset: NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6), 0.25 degree, daily
-``tasmax``, ``tasmin``, ``pr`` (https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).
+``tasmax``, ``tasmin``, ``pr`` (https://www.nccs.nasa.gov/data-collections/nex-gddp-cmip6/).
 
 Delta definition (what ``app.twin.climate.season_deltas`` reads): for each meteorological season, the model's mean
 over FUTURE_YEARS minus (or divided by) its mean over BASELINE_YEARS, one number per model. The file stores the
@@ -231,9 +231,12 @@ def write_seed(site_id: str, lat: float, lon: float, built: dict) -> None:
         json.dump(doc, fh, sort_keys=True, separators=(",", ":"))
     meta = {
         "source_name": "NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6)",
-        "source_url": "https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6",
+        "source_url": "https://www.nccs.nasa.gov/data-collections/nex-gddp-cmip6/",
         "access": f"{THREDDS}/ncss/grid/{GDDP}/<model>/<scenario>/<variant>/<var>/<file>.nc (point subset, CSV)",
-        "licence": "CC-BY-SA 4.0 followed (per-file cmip6_license); AWS registry says CC0. TODO(verify) with NCCS.",
+        "product_version": doc["product"]["version"],
+        "license": "CC BY-SA 4.0 for these combined deltas; sampled NCCS v2.0 input files report CC BY-SA 4.0 for temperature and CC BY 4.0 for precipitation.",
+        "resolution_spatial": "0.25 degrees",
+        "resolution_temporal": "daily",
         "attribution": "NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6), NASA Center for Climate Simulation, and the CMIP6 modelling groups listed in `models`.",
         "native_resolution_m": 25000,
         "retrieved_on": date.today().isoformat(),

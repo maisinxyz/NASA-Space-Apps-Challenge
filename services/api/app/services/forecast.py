@@ -147,7 +147,8 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
 
     req = prepared.req
     member_weather = build_members(
-        prepared.weather, prepared.scenario, req.horizon_years, members_n, prepared.digest, lat=prepared.lat,
+        prepared.weather, prepared.scenario, req.horizon_years, members_n, prepared.digest,
+        lat=prepared.lat, site_id=prepared.site_id, climate_source=req.climate_source,
     )
     field_docs = []
     warnings = []
@@ -169,7 +170,16 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
             for slot in plan.slots:
                 if slot.crop_id != "fallow" and slot.crop_id not in planted:
                     planted.append(slot.crop_id)
-    outlook = build_climate_outlook(prepared.info.get("id", _site_id(prepared)), prepared.scenario.preset)
+    outlook = build_climate_outlook(prepared.site_id, prepared.scenario.preset, req.climate_source)
+    scenario = _scenario_dict(prepared.scenario)
+    forecast_sources = sources(prepared.soil_summary)
+    if req.climate_source == "cmip6_delta" and prepared.scenario.preset != "baseline":
+        scenario["note"] = outlook["scenario"]["note"]
+        if len(outlook["sources"]) > 1:
+            scenario["temp_offset_c"] = outlook["scenario"]["temp_offset_c"]
+            scenario["rain_scale_pct"] = outlook["scenario"]["rain_scale_pct"]
+            scenario["rain_scale_by_season"] = outlook["scenario"]["rain_scale_by_season"]
+            forecast_sources.extend(outlook["sources"][1:])
     exposure = exposure_report(_site_id(prepared), ",".join(planted) if planted else None)
     proxy_used = bool(prepared.soil_summary and prepared.soil_summary.get("nearby_proxy")) and any(
         item.field.soil_override is None for item in prepared.fields
@@ -190,7 +200,7 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
         "pipeline_version": TC.ENGINE_VERSION,
         "request_hash": prepared.digest,
         "horizon_years": req.horizon_years,
-        "scenario": _scenario_dict(prepared.scenario),
+        "scenario": scenario,
         "data_mode": "limited_data" if limited else prepared.power_mode,
         "disclaimer": TC.DISCLAIMER,
         "support_sentence": SUPPORT_SENTENCE,
@@ -208,7 +218,7 @@ def _assemble(prepared: Prepared, members_n: int) -> dict:
         },
         "uncertainty": {"layers": uncertainty_layers(_site_id(prepared)), "station_bias": station_bias(_site_id(prepared))},
         "warnings": warnings,
-        "sources": sources(prepared.soil_summary),
+        "sources": forecast_sources,
         "assumptions": _assumptions(prepared),
     }
 
@@ -510,7 +520,6 @@ def _rollup_deltas(rollup: dict) -> dict[str, dict]:
 def _assumptions(prepared: Prepared) -> list[str]:
     lines = [
         "The climate path is a linear ramp from year 0 to the horizon. The ramp shape is assumed.",
-        "No verified CMIP6 delta table is attached, so history_resample and cmip6_delta both use that ramp.",
         "Absolute estimates are scenario comparisons. They are not a prediction of harvest, profit, or soil loss.",
         "A cost the farmer did not enter was not treated as zero.",
         "Farm rollup series are area-weighted averages of the field percentiles, not a new ensemble.",
@@ -790,7 +799,7 @@ def _economics(raw):
 
 
 def _cache_key(kind: str, site_id: str, body: dict, members: int) -> str:
-    return request_hash({"kind": kind, "site_id": site_id, "members": members, "body": body})
+    return request_hash({"kind": kind, "engine": TC.ENGINE_VERSION, "site_id": site_id, "members": members, "body": body})
 
 
 def _cache_path(key: str):

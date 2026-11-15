@@ -114,3 +114,56 @@ def test_ensemble_ramps_stored_seasonal_deltas(monkeypatch):
     assert stored.rain[9, 0] == 10.5
     assert slider.tmax[9, 27] == 21.0
     assert slider.rain[9, 27] == 8.0
+
+
+def test_bc_seed_changes_year_ten_and_reports_its_pathway():
+    from app.twin.climate import load_cmip6_delta
+
+    weather = Weather(
+        years=np.array([2000]),
+        tmax=np.full((1, 52), 20.0),
+        tmin=np.full((1, 52), 10.0),
+        rain=np.full((1, 52), 10.0),
+        et0=np.full((1, 52), 4.0),
+    )
+    for site in ("site_ubc_farm", "site_kpu_langley"):
+        delta = load_cmip6_delta(site)
+        summer = delta["scenarios"]["ssp245"]["summer"]
+        baseline = ScenarioApplied("baseline", 0, 0, {}, "", "", Ramp(years=10))
+        scenario = ScenarioApplied("drier_summers", 0, 1, {"summer": -20}, "", "", Ramp(years=10))
+        common = {"lat": 49, "site_id": site, "climate_source": "cmip6_delta"}
+        base = build_members(weather, baseline, 10, 1, "same", **common)[0]
+        shifted = build_members(weather, scenario, 10, 1, "same", **common)[0]
+        np.testing.assert_allclose(shifted.tmax[9, 27] - base.tmax[9, 27], summer["temp_delta_c"]["p50"])
+        np.testing.assert_allclose(shifted.rain[9, 27] / base.rain[9, 27], 1 + summer["precip_delta_pct"]["p50"] / 100)
+        outlook = build_climate_outlook(site, "drier_summers", climate_source="cmip6_delta")
+        assert "ssp245" in outlook["scenario"]["note"]
+        assert "1995–2014" in outlook["scenario"]["note"]
+        assert "2031–2040" in outlook["scenario"]["note"]
+        assert all(model in outlook["scenario"]["note"] for model in delta["models"]["ssp245"])
+        assert any("NEX-GDDP-CMIP6" in source["name"] for source in outlook["sources"])
+
+
+def test_forecast_uses_seed_in_ensemble_and_outlook(monkeypatch, tmp_path):
+    import app.services.forecast as service
+
+    monkeypatch.setattr(service, "_cache_path", lambda key: tmp_path / key)
+    build = service.build_members
+    calls = []
+
+    def record(*args, **kwargs):
+        calls.append(kwargs)
+        return build(*args, **kwargs)
+
+    monkeypatch.setattr(service, "build_members", record)
+    doc = service.forecast("site_ubc_farm", {
+        "selection": {"crops": ["crop_maize", "crop_soybean"]},
+        "scenario": "drier_summers",
+        "climate_source": "cmip6_delta",
+    }, members=1)
+    assert calls[0]["site_id"] == "site_ubc_farm"
+    assert calls[0]["climate_source"] == "cmip6_delta"
+    assert "ssp245" in doc["scenario"]["note"]
+    assert doc["scenario"]["rain_scale_by_season"]["summer"] == -9.664
+    assert doc["climate_outlook"]["scenario"]["note"] == doc["scenario"]["note"]
+    assert any("NEX-GDDP-CMIP6" in source["name"] for source in doc["sources"])
