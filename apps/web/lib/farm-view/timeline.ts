@@ -218,7 +218,7 @@ export class TimelineEngine {
       else this.set(this.glideFrom + (this.target - this.glideFrom) * easeOutCubic(p));
     } else if (this.mode === "coast") {
       this.vel *= Math.exp(-COAST_FRICTION * dt);
-      let next = this.day + this.vel * dt;
+      const next = this.day + this.vel * dt;
       const atEdge = next <= 0 || next >= LAST_DAY;
       this.set(next);
       if (atEdge || Math.abs(this.vel) < 0.5) this.snapTo(nearestWeekDay(this.day));
