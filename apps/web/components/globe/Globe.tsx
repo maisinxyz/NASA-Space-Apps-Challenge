@@ -44,6 +44,7 @@ import {
   localMorningUtcMs,
   type LonLat,
   MIN_HEIGHT_ABOVE_GROUND_M,
+  MIN_PITCH_RAD,
   type Offset,
   offsetM,
   type Orbit,
@@ -71,7 +72,7 @@ import {
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
 
-import { cameraActionForKey, type CameraAction } from "@/lib/farm-view/camera-controls";
+import { cameraActionForKey, type FarmCameraAction } from "@/lib/farm-view/camera-controls";
 
 import { type LoadTrack, startLoad, stepLoad } from "./loadProgress";
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
@@ -540,12 +541,14 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     if (live.current.view === "farm" && farm) flyToFarm(r, live.current, farm);
     else flyToGlobe(r, farm, GLOBE_HEIGHT_M, live.current.reducedMotion);
   };
-  const moveCamera = (action: CameraAction) => {
+  const moveCamera = (action: FarmCameraAction) => {
     const r = rt.current;
     const farm = selectedFarm();
     const st = r?.orbit;
     if (!r || !farm || !st || r.flying || live.current.view !== "farm") return;
-    if (action.startsWith("pan-")) {
+    if (action === "birdseye") {
+      st.o = { ...st.o, heading: 0, pitch: MIN_PITCH_RAD };
+    } else if (action.startsWith("pan-")) {
       const step = Math.max(10, st.o.range * 0.1);
       const x = action === "pan-left" ? -step : action === "pan-right" ? step : 0;
       const y = action === "pan-up" ? step : action === "pan-down" ? -step : 0;
