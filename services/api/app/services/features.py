@@ -265,12 +265,16 @@ def hazard_catalog(site_id: str) -> dict:
 
 
 def zones(site_id: str) -> dict:
-    """ZoneCollection. Curated sites have no terrain package yet, so they return no zones and say why."""
-    from app.features.zones import zones_for_terrain
+    """ZoneCollection. Curated sites use a DEM seed when one is stored, and stay empty otherwise."""
+    from app.features.zones import zones_for_terrain, zones_from_seed
 
     if site_id in C.CURATED_SITES:
-        return {"site_id": site_id, "terrain_id": None, "data_mode": "seed", "zones": [],
-                "caveats": ["No terrain package for this site yet; zones need an elevation grid."]}
+        built = zones_from_seed(site_id, seeds.load_smap(site_id))
+        if built is None:
+            return {"site_id": site_id, "terrain_id": None, "data_mode": "seed", "zones": [],
+                    "caveats": ["No terrain package for this site yet; zones need an elevation grid."]}
+        zone_list, caveats = built
+        return {"site_id": site_id, "terrain_id": None, "data_mode": "seed", "zones": zone_list, "caveats": caveats}
     site = next((s for s in site_svc.list_sites() if s["id"] == site_id), None)
     if site is None:
         raise ApiError("SITE_NOT_FOUND", f"No site '{site_id}'.", "Pick a site from the site list.")

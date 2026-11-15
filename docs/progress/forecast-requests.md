@@ -98,3 +98,7 @@ Catalog rows with a null season window or null Kc (most of the new vegetable row
 `ndvi`, `ndvi_anomaly`, and `smap_anomaly` are filled only when `load_ndvi` / `load_smap` return a weekly list with a unit. `sources_agree` stays null until SMAP overlaps POWER. ECOSTRESS is used for `limited_data` and a source row when the sidecar has a licence. It is not a feature id, because the contract names only the three series above. Please do not add an ET feature id without a contract change.
 
 A source row is copied from `<layer>.meta.json` and only when `source_name`, `license`, and `attribution` are already filled. Session A: those three sidecar fields are what puts the product on `sources`.
+
+## 2026-11-15 — Session B, EB2 elevation filename
+
+Zones prefer `data/seed/<site_id>/dem_hrdem.json.gz` when that file exists, then `dem.json.gz` via `load_dem`. No new loader was added in `seeds.py`. The object needs `elevation`, `res_m`, `origin` (lon, lat of the upper-left cell centre), and `bare_earth`. SMAP water stress is one farm polygon. A native resolution coarser than the clip is stated in `resolution_note`.
