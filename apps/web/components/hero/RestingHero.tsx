@@ -18,7 +18,7 @@ import { color, ease, hero } from "./tokens";
 export const HERO_COPY = {
   eyebrow: "FieldTwin",
   headline: ["Farms", "from", "orbit"],
-  body: "FieldTwin turns NASA Earth observations into a 3D model of a farm, so you can see when and where its soil is most exposed and compare crop rotations on the land itself.",
+  body: "Explore research farms in 3D, then compare illustrative crop rotations and synthetic weather scenarios on two digital twins.",
   action: "Explore the farms",
   statusRight: "NASA Space Apps 2026",
 } as const;
@@ -126,14 +126,14 @@ export function RestingHero({
       </Fade>
 
       {/* Info column: 5 of 12 columns after the sidebar, 64 px padding, vertically centred. */}
-      <div className="absolute inset-y-0 flex flex-col justify-center" style={{ left: u(96), width: `calc((100vw - ${u(96)}) * 5 / 12)`, padding: u(64), paddingBottom: u(64 + 56) }}>
+      <div className="pointer-events-auto absolute top-0 flex flex-col justify-start overflow-y-auto overscroll-contain" style={{ left: u(96), bottom: u(56), width: `calc((100vw - ${u(96)}) * 5 / 12)`, padding: u(64), paddingBottom: u(64) }}>
         <Fade order={ORDER.eyebrow} {...props}>
           <p className="font-bold uppercase" style={{ fontSize: `max(12px, ${u(12)})`, letterSpacing: "0.4em", color: color.accent }}>
             {HERO_COPY.eyebrow}
           </p>
         </Fade>
         <Fade order={ORDER.headline} {...props}>
-          <h1 className="font-black uppercase" style={{ fontFamily: HEADING_FONT, fontSize: `min(${u(96)}, calc((((100vw - ${u(96)}) * 5 / 12) - ${u(128)}) / 3.4))`, lineHeight: 1, letterSpacing: "-0.02em", marginTop: u(20), overflowWrap: "normal", wordBreak: "keep-all" }}>
+          <h1 className="font-black uppercase" style={{ fontFamily: HEADING_FONT, fontSize: `min(72px, ${u(96)}, calc((((100vw - ${u(96)}) * 5 / 12) - ${u(128)}) / 3.4))`, lineHeight: 1, letterSpacing: "-0.02em", marginTop: u(20), overflowWrap: "normal", wordBreak: "keep-all" }}>
             <span className="block text-white">{HERO_COPY.headline[0]}</span>
             <span className="block" style={{ color: color.accent }}>
               {HERO_COPY.headline[1]}

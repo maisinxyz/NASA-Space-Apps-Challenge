@@ -6,17 +6,20 @@ export const TICK_MIN_GAP_MS = 35;
 
 export type SoundName = "tickWeek" | "tickMonth" | "tap" | "pop" | "close" | "success";
 
+type AudioParamLike = { value: number; setValueAtTime(value:number,time:number):unknown; linearRampToValueAtTime(value:number,time:number):unknown; exponentialRampToValueAtTime(value:number,time:number):unknown };
+type BufferLike = { getChannelData(channel:number):Float32Array };
+type SoundNode = { connect(destination:unknown):unknown };
 type AudioLike = {
   currentTime: number;
   sampleRate: number;
   state: string;
   destination: unknown;
   resume?: () => Promise<void> | void;
-  createGain: () => any;
-  createOscillator: () => any;
-  createBiquadFilter: () => any;
-  createBuffer: (ch: number, len: number, rate: number) => any;
-  createBufferSource: () => any;
+  createGain: () => SoundNode & { gain: AudioParamLike };
+  createOscillator: () => SoundNode & { type: string; frequency: AudioParamLike; start(time:number):void; stop(time:number):void };
+  createBiquadFilter: () => SoundNode & { type:string; Q: {value:number}; frequency:AudioParamLike };
+  createBuffer: (ch: number, len: number, rate: number) => BufferLike;
+  createBufferSource: () => SoundNode & { buffer:BufferLike|null; start(time:number):void; stop(time:number):void };
 };
 
 export type SoundDeps = {
@@ -27,7 +30,7 @@ export type SoundDeps = {
 
 function defaultContext(): AudioLike | null {
   if (typeof window === "undefined") return null;
-  const Ctor = (window as any).AudioContext ?? (window as any).webkitAudioContext;
+  const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   return Ctor ? new Ctor() : null;
 }
 
@@ -45,7 +48,7 @@ export function createSound(deps: SoundDeps = {}) {
   let ctx: AudioLike | null = null;
   let muted = false;
   let lastTick = -Infinity;
-  let noise: any = null;
+  let noise: BufferLike | null = null;
 
   try {
     const s = deps.storage === undefined ? defaultStorage() : deps.storage;

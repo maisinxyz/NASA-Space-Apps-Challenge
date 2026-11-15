@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 
 const STEPS = [
   { title: "Pick a farm", body: "Choose a farm on the globe and fly in. Farms marked \"Full digital twin\" let you compare rotations; the others are explore only for now. Elevation always comes from open data." },
-  { title: "Replay a real storm", body: "Choose a storm from the NASA POWER record and watch where water runs and pools on a 3D model of the land." },
+  { title: "Explore a synthetic storm", body: "Choose synthetic storm inputs and explore illustrative weather effects and relative readouts. These are not observed weather on this farm." },
   { title: "Compare rotations", body: "Run the same storm on two crop rotations side by side. The difference shows on the land, with the evidence behind it." },
 ];
 
@@ -40,7 +40,7 @@ export function AboutPanel() {
             </button>
           </div>
           <p className="mt-3 text-ink-muted">
-            FieldTwin builds a 3D model of farmland from open elevation data, replays storms from the NASA POWER record on it, and compares rotations side by side. Results are relative comparisons, not predictions.
+            FieldTwin builds a 3D model of farmland from open elevation data, shows synthetic demonstration scenarios on it, and compares rotations side by side. Results are relative comparisons, not predictions.
           </p>
 
           <h3 className="mt-6 font-display text-xl">How it works</h3>
@@ -61,6 +61,7 @@ export function AboutPanel() {
             .
           </p>
 
+          <p className="mt-4 text-sm">Real NASA POWER event replay is upcoming. The current interactive scenarios use fixture inputs and do not represent this farm’s observed weather.</p>
           <h3 className="mt-6 font-display text-xl">Roadmap</h3>
           <p className="mt-1 text-sm text-ink-muted">Ideas we have not built. They do not work in this version.</p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">

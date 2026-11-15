@@ -62,7 +62,23 @@ export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInf
   useWarmPhotoOnHover();
   const opener = useRef<HTMLElement | null>(null);
   const previousFarm = useRef<string | null>(null);
-  if (farm && !previousFarm.current && typeof document !== "undefined") opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const pressedPin = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const rememberPin = (event: PointerEvent) => {
+      pressedPin.current = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-pin]") : null;
+    };
+    const clearPin = () => { pressedPin.current = null; };
+    window.addEventListener("pointerdown", rememberPin, true);
+    window.addEventListener("keydown", clearPin, true);
+    return () => {
+      window.removeEventListener("pointerdown", rememberPin, true);
+      window.removeEventListener("keydown", clearPin, true);
+    };
+  }, []);
+  if (farm && farm.id !== previousFarm.current && typeof document !== "undefined") {
+    opener.current = pressedPin.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    pressedPin.current = null;
+  }
   previousFarm.current = farm?.id ?? null;
   const close = () => { onClose(); opener.current?.focus(); };
   return (

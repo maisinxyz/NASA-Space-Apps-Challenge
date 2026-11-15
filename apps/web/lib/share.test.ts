@@ -76,5 +76,6 @@ it("preserves the scenario rotation even when no scenario is open", () => {
 it("derives panel defaults for legacy and invalid links", async () => {
   const { sharePanelState } = await import("./share");
   expect(sharePanelState("#farm=cornell-ruminant")).toEqual({ open: false, section: "scenarios" });
+  expect(sharePanelState("#farm=cornell-ruminant&m=compare")).toEqual({ open: false, section: "compare" });
   expect(sharePanelState("#farm=cornell-ruminant&po=1&ps=map")).toEqual({ open: true, section: "map" });
 });

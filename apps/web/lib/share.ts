@@ -133,5 +133,5 @@ export function decodeShare(hash: string): Partial<ShareState> & { farm: string 
 /** Defaults preserve the original collapsed panel for legacy links. */
 export function sharePanelState(hash: string): { open: boolean; section: SharePanelSection } {
   const share = decodeShare(hash);
-  return { open: share?.panelOpen ?? false, section: share?.panelSection ?? "scenarios" };
+  return { open: share?.panelOpen ?? false, section: share?.panelSection ?? (share?.mode === "compare" || share?.mode === "evidence" ? share.mode : "scenarios") };
 }
