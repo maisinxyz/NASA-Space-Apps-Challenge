@@ -3,8 +3,9 @@
 Baseline weather is the historical weekly table (n_years, 52). Each member draws
 `horizon` historical years with `numpy.random.default_rng(member_seed(...))`.
 The scenario is a linear ramp from year 0 (no change) to `ramp.years` (full value).
-`cmip6_delta` has no per-year delta on `ScenarioApplied` yet, so both climate
-sources use this ramp. Session C records a verified delta table before this changes.
+When `climate_source` is `cmip6_delta` and `cmip6_delta.json.gz` is stored, the
+ramp uses that file's seasonal p50 instead of the slider. With no file, the
+slider ramp is unchanged.
 """
 
 from __future__ import annotations
@@ -56,6 +57,8 @@ def build_members(
     req_hash: str,
     *,
     lat: float,
+    site_id: str | None = None,
+    climate_source: str = "history_resample",
 ) -> list[Weather]:
     """`n` members, each `Weather` with shape (horizon, 52).
 
@@ -77,6 +80,14 @@ def build_members(
     rain = _fill_weeks(weather.rain)
     et0 = _fill_weeks(weather.et0)
     ramp_years = max(int(scenario.ramp.years), 1)
+    season_temp = None
+    season_rain = None
+    if climate_source == "cmip6_delta" and site_id:
+        from app.twin.climate import load_cmip6_delta, season_deltas
+
+        parsed = season_deltas(load_cmip6_delta(site_id), scenario.preset)
+        if parsed is not None:
+            season_temp, season_rain = parsed
     members: list[Weather] = []
     for member in range(n):
         rng = np.random.default_rng(member_seed(req_hash, member))
@@ -88,7 +99,7 @@ def build_members(
         labels = years[picked].astype(np.int64, copy=True)
         for row, year_index in enumerate(range(1, horizon + 1)):
             fraction = min(1.0, year_index / ramp_years)
-            _apply_row(mt[row], mn[row], mr[row], me[row], scenario, fraction, lat)
+            _apply_row(mt[row], mn[row], mr[row], me[row], scenario, fraction, lat, season_temp, season_rain)
         members.append(Weather(years=labels, tmax=mt, tmin=mn, rain=mr, et0=me))
     return members
 
@@ -101,16 +112,28 @@ def _apply_row(
     scenario: ScenarioApplied,
     fraction: float,
     lat: float,
+    season_temp: dict[str, float] | None = None,
+    season_rain: dict[str, float] | None = None,
 ) -> None:
     """In-place ramp. ET0 follows the Hargreaves temperature factor already in the feature pipeline.
 
     Shifting tmax and tmin by the same amount leaves sqrt(tmax-tmin) unchanged, so
     ET0 scales by (Tmean + dT + 17.8) / (Tmean + 17.8). 0.0023 and 0.408 cancel.
     """
-    delta_t = float(scenario.temp_offset_c) * fraction
-    pct = np.full(WEEK_COUNT, float(scenario.rain_scale_pct), dtype=np.float64)
-    for season, seasonal in scenario.rain_scale_by_season.items():
-        pct[week_in_season(season, lat)] = float(seasonal)
+    if season_temp:
+        delta_t = np.zeros(WEEK_COUNT, dtype=np.float64)
+        for season, value in season_temp.items():
+            delta_t[week_in_season(season, lat)] = float(value) * fraction
+    else:
+        delta_t = np.full(WEEK_COUNT, float(scenario.temp_offset_c) * fraction, dtype=np.float64)
+    if season_rain is not None:
+        pct = np.zeros(WEEK_COUNT, dtype=np.float64)
+        for season, seasonal in season_rain.items():
+            pct[week_in_season(season, lat)] = float(seasonal)
+    else:
+        pct = np.full(WEEK_COUNT, float(scenario.rain_scale_pct), dtype=np.float64)
+        for season, seasonal in scenario.rain_scale_by_season.items():
+            pct[week_in_season(season, lat)] = float(seasonal)
     rain *= 1.0 + pct / 100.0 * fraction
     tmean = 0.5 * (tmax + tmin)
     denom = np.maximum(tmean + 17.8, 1e-6)

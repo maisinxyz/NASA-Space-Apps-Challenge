@@ -10,7 +10,8 @@ describe("AboutPanel", () => {
 
     // Honest scenario description
     expect(html).toContain("Simulate weather scenarios");
-    expect(html).toContain("Current runs are synthetic scenarios calibrated against regional historical baselines");
+    expect(html).toContain("Current runs are synthetic fixture inputs");
+    expect(html).not.toContain("calibrated against regional historical baselines");
     expect(html).not.toContain("Replay a real storm");
     expect(html).not.toContain("replays storms from the NASA POWER record on it");
 

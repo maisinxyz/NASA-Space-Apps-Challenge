@@ -16,6 +16,7 @@ from app.core.config import REPO_ROOT
 from app.core.errors import ApiError
 from app.features import pipeline as P
 from app.features import seeds
+from app.rotation.config import SITE_PRESETS
 from app.services.features import base, sources
 from app.twin import config as TC
 from app.twin.catalog import load_catalog, validate_selection
@@ -479,6 +480,11 @@ def _assumptions(prepared: Prepared) -> list[str]:
         "Farm rollup series are area-weighted averages of the field percentiles, not a new ensemble.",
         "Sensitivity cells use the rain and temperature axis alone. Seasonal rain from the request is not added on that grid.",
     ]
+    preset = SITE_PRESETS.get(_site_id(prepared))
+    if preset is not None:
+        lines.append(
+            f"The existing rotation is the site preset \"{preset['name']}\". It is not this farm's field records. TODO(verify)."
+        )
     if not prepared.body.get("fields"):
         lines.append(
             f"No field was entered. The run uses {_DEFAULT_AREA_HA} ha and slope class {_DEFAULT_SLOPE}. "

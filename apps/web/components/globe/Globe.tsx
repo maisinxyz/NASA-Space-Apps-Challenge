@@ -71,9 +71,10 @@ import {
 
 import { createWeatherEngine, type WeatherEngine } from "@/components/viewer/cesium/weather";
 
+import { cameraActionForKey, type CameraAction } from "@/lib/farm-view/camera-controls";
+
 import { type LoadTrack, startLoad, stepLoad } from "./loadProgress";
 import type { CameraState, Farm, FarmSurface, GlobeHandle, GlobeProps, TileTier } from "./types";
-import { hasModifier, isTextEntry } from "@/lib/keys";
 
 // Camera framing (product choices, tune freely).
 /** Whole-Earth view: camera height above the ellipsoid, metres. */
@@ -539,6 +540,28 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     if (live.current.view === "farm" && farm) flyToFarm(r, live.current, farm);
     else flyToGlobe(r, farm, GLOBE_HEIGHT_M, live.current.reducedMotion);
   };
+  const moveCamera = (action: CameraAction) => {
+    const r = rt.current;
+    const farm = selectedFarm();
+    const st = r?.orbit;
+    if (!r || !farm || !st || r.flying || live.current.view !== "farm") return;
+    if (action.startsWith("pan-")) {
+      const step = Math.max(10, st.o.range * 0.1);
+      const x = action === "pan-left" ? -step : action === "pan-right" ? step : 0;
+      const y = action === "pan-up" ? step : action === "pan-down" ? -step : 0;
+      const h = st.o.heading;
+      const box = boxOf(live.current, farm);
+      st.target = fromOffsetM(box, panTarget(offsetM(st.target, box), { x: x * Math.cos(h) + y * Math.sin(h), y: -x * Math.sin(h) + y * Math.cos(h) }, box, panMarginFor(farm.minRangeM)));
+    } else if (action.startsWith("orbit-")) {
+      st.o = { ...st.o, heading: st.o.heading + (action === "orbit-left" ? -0.12 : action === "orbit-right" ? 0.12 : 0), pitch: st.o.pitch + (action === "orbit-up" ? 0.1 : action === "orbit-down" ? -0.1 : 0) };
+    } else {
+      st.o = { ...st.o, range: st.o.range * (action === "zoom-in" ? 0.85 : 1.18) };
+    }
+    r.motion.touch(performance.now());
+    applyOrbit(r, live.current, farm);
+  };
+  const moveRef = useRef(moveCamera);
+  moveRef.current = moveCamera;
   const resetRef = useRef(resetView);
   useEffect(() => {
     resetRef.current = resetView;
@@ -547,6 +570,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     ref,
     () => ({
       resetView: () => resetRef.current(),
+      moveCamera: (action) => moveRef.current(action),
       getCamera: () => {
         const r = rt.current;
         if (!r) return null;
@@ -805,6 +829,17 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     const noMenu = (e: Event) => {
       if (live.current.view === "farm") e.preventDefault();
     };
+    canvas.tabIndex = 0;
+    canvas.setAttribute("aria-label", "Farm camera. Arrow keys pan, Shift plus arrows orbit, plus and minus zoom.");
+    const onCameraKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || live.current.view !== "farm") return;
+      const aliases: Record<string, string> = { a: "ArrowLeft", d: "ArrowRight", w: "ArrowUp", s: "ArrowDown", pageup: "+", pagedown: "-" };
+      const action = cameraActionForKey(aliases[e.key.toLowerCase()] ?? e.key, e.shiftKey);
+      if (!action) return;
+      e.preventDefault();
+      moveRef.current(action);
+    };
+    canvas.addEventListener("keydown", onCameraKey);
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
@@ -812,65 +847,6 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
     canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("contextmenu", noMenu);
     canvas.addEventListener("pointerleave", onLeave);
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (hasModifier(e) || isTextEntry(e.target) || document.querySelector("dialog[open]")) return;
-      const st = r.orbit;
-      const farm = farmNow();
-      if (live.current.view === "farm" && st && farm && !r.flying) {
-        let handled = false;
-        const STEP_PAN = 35; // metres
-        const STEP_RAD = 0.06; // radians
-        const box = boxOf(live.current, farm);
-        const t = offsetM(st.target, box);
-
-        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-          if (e.shiftKey) st.o = { ...st.o, heading: st.o.heading + STEP_RAD };
-          else st.target = fromOffsetM(box, panTarget(t, { x: -STEP_PAN, y: 0 }, box, panMarginFor(farm.minRangeM)));
-          handled = true;
-        } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-          if (e.shiftKey) st.o = { ...st.o, heading: st.o.heading - STEP_RAD };
-          else st.target = fromOffsetM(box, panTarget(t, { x: STEP_PAN, y: 0 }, box, panMarginFor(farm.minRangeM)));
-          handled = true;
-        } else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-          if (e.shiftKey) st.o = { ...st.o, pitch: st.o.pitch + STEP_RAD };
-          else st.target = fromOffsetM(box, panTarget(t, { x: 0, y: STEP_PAN }, box, panMarginFor(farm.minRangeM)));
-          handled = true;
-        } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-          if (e.shiftKey) st.o = { ...st.o, pitch: st.o.pitch - STEP_RAD };
-          else st.target = fromOffsetM(box, panTarget(t, { x: 0, y: -STEP_PAN }, box, panMarginFor(farm.minRangeM)));
-          handled = true;
-        } else if (e.key === "+" || e.key === "=" || e.key === "PageUp") {
-          const range = clampOrbit({ ...st.o, range: st.o.range * 0.88 }, 0, farm.minRangeM).range;
-          st.o = { ...st.o, range };
-          handled = true;
-        } else if (e.key === "-" || e.key === "_" || e.key === "PageDown") {
-          const range = clampOrbit({ ...st.o, range: st.o.range * 1.14 }, 0, farm.minRangeM).range;
-          st.o = { ...st.o, range };
-          handled = true;
-        }
-
-        if (handled) {
-          e.preventDefault();
-          r.motion.touch(performance.now());
-          applyOrbit(r, live.current, farm);
-        }
-      } else if (live.current.view === "globe" && !r.flying) {
-        let handled = false;
-        const c = r.viewer.camera;
-        if (e.key === "ArrowLeft") { c.rotateRight(0.04); handled = true; }
-        else if (e.key === "ArrowRight") { c.rotateLeft(0.04); handled = true; }
-        else if (e.key === "ArrowUp") { c.rotateUp(0.04); handled = true; }
-        else if (e.key === "ArrowDown") { c.rotateDown(0.04); handled = true; }
-        else if (e.key === "+" || e.key === "=" || e.key === "PageUp") { c.zoomIn(1500000); handled = true; }
-        else if (e.key === "-" || e.key === "_" || e.key === "PageDown") { c.zoomOut(1500000); handled = true; }
-        if (handled) {
-          e.preventDefault();
-          scene.requestRender();
-        }
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
 
     // Per-frame work. preUpdate fires every animation frame even in requestRenderMode; moving the camera
     // makes Cesium render, so an idle globe costs nothing.
@@ -1019,6 +995,7 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       r.ground?.destroy();
       offRenderError();
       handler.destroy();
+      canvas.removeEventListener("keydown", onCameraKey);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
@@ -1026,7 +1003,6 @@ const GlobeImpl = forwardRef<GlobeHandle, GlobeProps & GlobeDevProps>(function G
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("contextmenu", noMenu);
       canvas.removeEventListener("pointerleave", onLeave);
-      window.removeEventListener("keydown", onKeyDown);
       for (const ev of inputs) canvas.removeEventListener(ev, stopAuto);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       rt.current = null;

@@ -1,409 +1,431 @@
 "use client";
-// Farm view overlay (Slice A): title block, layer bar, condition pills, Field report + collapsed tab, Twin button,
-// timeline. Panels are fixed-size and anchored to viewport edges; the Cesium map underneath stays draggable
-// everywhere no panel covers it (root is pointer-events: none, each panel opts back in).
-// Not built yet (later slices): condition cards, map layers, field popover, Twin pill/answers.
+// Shared farm chrome. Twin-only content remains guarded by simProps/twinConfig.
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-
-import { CONDITIONS, LAYERS, SAMPLE_FIELDS, EXPLORE_SUBTITLE, reportSummary, type ConditionId } from "@/lib/farm-view/sample";
-import { color, layout, motion as m, zIndex, type LayerId } from "@/lib/farm-view/tokens";
-import { DividerHandle } from "@/components/farm/CompareTray";
+import { CONDITIONS, LAYERS, EXPLORE_SUBTITLE, type ConditionId } from "@/lib/farm-view/sample";
 import { twinConfig } from "@/lib/farms";
 import { useAppStore } from "@/lib/store";
+import { decodeShare, sharePanelState } from "@/lib/share";
 import { sound } from "@/lib/ui/sound";
-
-import { ConditionCard, LayerLegend } from "./Cards";
+import { DividerHandle } from "@/components/farm/CompareTray";
+import {
+  cameraActionForKey,
+  type CameraAction,
+} from "@/lib/farm-view/camera-controls";
+import { InvestigationControls } from "./InvestigationControls";
 import { FvButton } from "./FvButton";
-import { ChevronLeft, ChevronRight, Droplet, Leaf, PanelLeft, RotateCcw, Thermometer, Volume2, VolumeX } from "./icons";
-import { SimulationTab, useSimKeys, type SimProps, type SimState } from "./SimulationTab";
-import { monthOf } from "@/lib/farm-view/timeline";
+import {
+  SimulationTab,
+  useSimKeys,
+  type SimProps,
+  type SimState,
+} from "./SimulationTab";
 import { FV_CSS } from "./styles";
-import { Timeline } from "./Timeline";
+import { ComparisonTimeline } from "./Timeline";
+import { ConditionCard, LayerLegend } from "./Cards";
+import { Twin } from "./Twin";
 import { FutureLayer, FUTURE_CSS } from "@/components/farm-future/FutureLayer";
 import { FuturePills, LensControl, ModeSwitch } from "@/components/farm-future/Controls";
 import { FutureTimeline } from "@/components/farm-future/FutureTimeline";
 import { MapEffects } from "@/components/farm-future/MapEffects";
 import { StrategyBar } from "@/components/farm-future/SoilHealth";
 import { useFutureStore } from "@/lib/farm-future/store";
-import { Twin } from "./Twin";
-
-// tokens.ease.out as a cubic-bezier tuple for framer-motion.
-const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
+import { Droplet, Leaf, Thermometer } from "./icons";
 
 const PILL_ICON: Record<ConditionId, typeof Droplet> = { rainfall: Droplet, moisture: Droplet, vigor: Leaf, heat: Thermometer };
 
 export type FarmViewProps = {
   farmName: string;
-  /** "Zürich, Switzerland": from the farm record, never hard-coded. */
   place?: string;
   onBack(): void;
   onReset(): void;
-  /** Present on full-twin (simulation) farms: adds the Simulation tab and the farm's own field list. */
   sim?: SimProps;
-  /** Vulnerability zone toggle or custom controls rendered in the reserved center header region. */
-  zoneToggle?: ReactNode;
-  /** Whether the field report is initially expanded (useful for testing or direct links). */
+  zoneControl?: ReactNode;
+  onCamera?(action: CameraAction): void;
   initialReportOpen?: boolean;
   initialSim?: SimState;
   initialPanelsHidden?: boolean;
 };
+const WORKSPACE_CSS = `
+.fv-root.fv-workspace{position:absolute;inset:0;z-index:20;padding:16px;pointer-events:none;color:#f2ebdd;font-size:14px;}
+.fv-workspace .fv-panels,.fv-workspace .fv-mode-content{display:contents}.fv-workspace .fv-mode-content[hidden]{display:none}.fv-workspace .fv-panels[hidden],.fv-workspace .fv-toolbar[hidden]{display:none}
+.fv-workspace .fv-toolbar-shell{min-width:0;pointer-events:auto;display:grid;gap:6px;justify-items:start;}
+.fv-workspace .fv-control-content{min-width:0;width:100%;display:grid;gap:6px;justify-items:start;}
+.fv-workspace .fv-control-content[hidden]{display:none}
+.fv-workspace .fv-heading[hidden]{display:none}.fv-workspace .fv-heading{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:20px;align-items:start;}
+.fv-workspace .fv-title-block{min-width:0;max-width:720px;background:rgba(16,20,18,.86);padding:12px 16px;border-radius:14px;pointer-events:auto;}
+.fv-workspace .fv-title{font-size:clamp(24px,2.4vw,36px);line-height:1.15;overflow-wrap:anywhere;}
+.fv-workspace .fv-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;align-content:start;pointer-events:auto;max-height:calc(100dvh - 280px);overflow:auto;padding:2px;}
+.fv-workspace .fv-bar{height:auto;min-height:40px;flex-wrap:wrap;border-radius:12px;}
+.fv-workspace .fv-observations{width:100%;padding:10px 12px;border-radius:12px;font-size:13px;}
+.fv-workspace .fv-observations dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.fv-workspace .fv-observations dt{color:#c9bfae;}.fv-workspace .fv-observations dd{margin:0;}
+.fv-workspace .fv-preview{width:100%;position:relative;display:flex;flex-wrap:wrap;gap:6px;}
+.fv-workspace .fv-preview .fv-legend{position:relative !important;right:auto !important;bottom:auto !important;width:100%;}
+.fv-workspace .fv-preview .fv-card{position:relative !important;top:auto !important;right:auto !important;width:100%;max-height:35vh;overflow:auto;}
+.fv-workspace .fv-title-block{animation:fv-title-enter .4s ease-out both;}
+@keyframes fv-title-enter{from{opacity:0}to{opacity:1}}
+@keyframes fv-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.fv-workspace .fv-title-block{animation:none}}
+.fv-workspace .fv-zone{width:100%;font-size:12px;}
+.fv-workspace .fv-report{position:absolute;left:16px;bottom:70px;max-height:calc(100% - 280px);overflow:auto;width:min(380px,calc(100% - 32px));}
+.fv-workspace .fv-field-button{padding:6px 0;text-decoration:underline;text-underline-offset:3px;text-align:left;min-height:36px;}
+.fv-workspace .fv-bottom-tools{position:absolute;bottom:24px;right:16px;max-width:min(360px,calc(100% - 32px));pointer-events:auto;display:grid;gap:6px;}
+.fv-workspace .fv-restore{position:absolute;left:16px;top:16px;pointer-events:auto;padding:10px 16px;border-radius:12px;}
+.fv-workspace button:disabled{opacity:.5;cursor:not-allowed;}.fv-workspace button{min-height:32px;}
+.fv-workspace .fv-twinpill,.fv-workspace .fv-answer{max-width:calc(100vw - 32px);}
+@media(max-width:700px){.fv-workspace .fv-heading{grid-template-columns:minmax(0,1fr);gap:8px;}.fv-workspace .fv-title-block{max-height:25vh;overflow:auto;}.fv-workspace .fv-toolbar{max-height:40vh;overflow:auto;align-content:start;}}
+@media(min-width:701px) and (max-width:1000px){.fv-workspace .fv-heading{grid-template-columns:minmax(0,1fr) 300px;gap:10px;}.fv-workspace .fv-title-block{padding:10px;}.fv-workspace .fv-title{font-size:24px;}.fv-workspace .fv-bar{font-size:12px;}.fv-workspace .fv-seg{padding-inline:8px;}}
+`;
 
-export function FarmView({ farmName, place, onBack, onReset, sim: simProps, zoneToggle, initialReportOpen = false, initialSim, initialPanelsHidden }: FarmViewProps) {
+export function FarmView({
+  farmName,
+  place,
+  onBack,
+  onReset,
+  sim: simProps,
+  zoneControl,
+  onCamera,
+  initialReportOpen = false,
+  initialSim,
+  initialPanelsHidden,
+}: FarmViewProps) {
   const reduced = !!useReducedMotion();
-  const currentLook = useAppStore((s) => s.look);
-  const [layer, setLayer] = useState<LayerId>(() => (currentLook === "vegetation" ? "vigor" : currentLook === "thermal" ? "moisture" : "satellite"));
   const [reportOpen, setReportOpen] = useState(initialReportOpen);
-  const [sim, setSimState] = useState<SimState>(() => initialSim ?? { open: false, section: "scenarios" });
+  const [toolbarOpen, setToolbarOpen] = useState(true);
+  const [sim, setSimState] = useState<SimState>(() => {
+    if (initialSim) return initialSim;
+    const hash = typeof window === "undefined" ? "" : window.location.hash;
+    return decodeShare(hash)?.farm === useAppStore.getState().farmId
+      ? sharePanelState(hash)
+      : { open: false, section: "scenarios" };
+  });
   const reportBefore = useRef(false);
   const storePanelsHidden = useAppStore((s) => s.panelsHidden);
-  const panelsHidden = initialPanelsHidden !== undefined ? initialPanelsHidden : storePanelsHidden;
+  const panelsHidden = initialPanelsHidden ?? storePanelsHidden;
+  const restorePanels = useRef<HTMLButtonElement>(null);
+  const hidePanels = useRef<HTMLButtonElement>(null);
+  const previousPanelsHidden = useRef(panelsHidden);
+  useEffect(() => {
+    if (previousPanelsHidden.current !== panelsHidden) {
+      (panelsHidden ? restorePanels : hidePanels).current?.focus();
+      previousPanelsHidden.current = panelsHidden;
+    }
+  }, [panelsHidden]);
+  const futureMode = useFutureStore((s) => s.mode);
+  const reviewFor = useFutureStore((s) => s.reviewFor);
   const comparing = useAppStore((s) => s.twinMode === "compare");
   const farmId = useAppStore((s) => s.farmId);
+  // Preserve upstream explore-only entry fix: absence of a twin is supported here.
   const twin = twinConfig(farmId);
-  // Future / Compare modes (components/farm-future). "now" keeps this view exactly as before.
-  const futureMode = useFutureStore((s) => s.mode);
-  const futurePanel = useFutureStore((s) => s.panel);
-  const reviewFor = useFutureStore((s) => s.reviewFor);
-  const isNow = futureMode === "now";
-  const isCompare = futureMode === "compare";
-  // The Simulation tab shares the left column: opening it folds the report away, closing restores it.
+  const [card, setCard] = useState<ConditionId | null>(null);
+  useEffect(() => {
+    if (!card) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setCard(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [card]);
+  const [muted, setMuted] = useState(() => sound.isMuted());
   const setSim = (next: SimState) => {
-    if (next.open && !sim.open) { reportBefore.current = reportOpen; setReportOpen(false); }
+    if (next.open && !sim.open) {
+      reportBefore.current = reportOpen;
+      setReportOpen(false);
+    }
     if (!next.open && sim.open) setReportOpen(reportBefore.current);
     setSimState(next);
   };
-  useSimKeys(sim, setSim, !!simProps);
-  // One condition card at a time; its pill toggles it, Esc closes it.
-  const [card, setCard] = useState<ConditionId | null>(null);
-  const toggleCard = (id: ConditionId) => {
-    if (card === id) return closeCard();
-    setCard(id);
-    sound.tickWeek();
-  };
-  const closeCard = () => {
-    setCard(null);
-    sound.close();
-  };
-  useEffect(() => {
-    if (!card) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeCard();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  });
-  const [muted, setMuted] = useState(() => sound.isMuted());
-
+  useSimKeys(sim, setSim, !!simProps && futureMode === "now");
   useEffect(() => sound.installUnlock(), []);
-
-  // Sync analytical layer changes with Cesium post-processing look filters
-  const pickLayer = (id: LayerId) => {
-    if (id === layer) return;
-    setLayer(id);
-    sound.tickWeek();
-    if (id === "vigor") {
-      useAppStore.setState({ look: "vegetation" });
-    } else if (id === "moisture") {
-      useAppStore.setState({ look: "thermal" });
-    } else {
-      useAppStore.setState({ look: "none" });
-    }
-  };
-
   useEffect(() => {
-    if (currentLook === "vegetation" && layer !== "vigor") setLayer("vigor");
-    else if (currentLook === "thermal" && layer !== "moisture") setLayer("moisture");
-    else if (currentLook === "none" && layer !== "satellite") setLayer("satellite");
-  }, [currentLook, layer]);
-  const onBarKey = (e: React.KeyboardEvent) => {
-    const i = LAYERS.findIndex((l) => l.id === layer);
-    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    if (!d) return;
-    e.preventDefault();
-    const next = LAYERS[(i + d + LAYERS.length) % LAYERS.length].id;
-    pickLayer(next);
-    document.querySelector<HTMLElement>(`[data-testid="layer-${next}"]`)?.focus();
-  };
-  const toggleReport = (open: boolean) => {
-    setReportOpen(open);
-    if (!open) sound.close();
-  };
-  type Row = { id: string; name: string; moisture: number | null; ndvi: number | null; status: string; sim: boolean };
-  // Sim farms: the farm's own fields, no invented per-field numbers (sim-gap.md Q1 default).
-  const rows: Row[] = simProps ? simProps.fields.map((f) => ({ id: f.id, name: f.name, moisture: null, ndvi: null, status: "–", sim: true })) : SAMPLE_FIELDS.map((f) => ({ ...f, sim: false }));
-  const pickSimField = (id: string) => {
+    if (simProps && futureMode === "now") return;
+    const togglePanels = (event: KeyboardEvent) => {
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      if (event.altKey || event.ctrlKey || event.metaKey || target?.closest('input,textarea,select,[contenteditable="true"]') || document.querySelector('dialog[open]')) return;
+      if (event.key.toLowerCase() === 'h') useAppStore.setState(state => ({panelsHidden: !state.panelsHidden}));
+    };
+    window.addEventListener('keydown', togglePanels);
+    return () => window.removeEventListener('keydown', togglePanels);
+  }, [simProps, futureMode]);
+  const selectField = (id: string) => {
     useAppStore.setState({ twinFieldId: id });
     setSim({ open: true, section: "field" });
   };
-  // Panels that open under the title block (Soil health) read its bottom edge from --fv-left-bottom.
-  const rootRef = useRef<HTMLDivElement>(null);
-  const leftRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = leftRef.current;
-    const root = rootRef.current;
-    if (!el || !root || typeof ResizeObserver === "undefined") return;
-    const set = () => root.style.setProperty("--fv-left-bottom", `${Math.round(el.getBoundingClientRect().bottom)}px`);
-    set();
-    const ro = new ResizeObserver(set);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isCompare]);
-  const pop = reduced ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } : { initial: { opacity: 0, scale: m.popFromScale }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: m.popFromScale } };
-
   return (
-    <div ref={rootRef} className={`fv-root`} style={{ position: "absolute", inset: 0, zIndex: zIndex.chrome, pointerEvents: "none" }} data-testid="farm-view">
-      <style>{FV_CSS + FUTURE_CSS + "@keyframes fv-spin{to{transform:rotate(360deg)}}"}</style>
+    <div className="fv-root fv-workspace" data-testid="farm-view">
+      <style>{FV_CSS + FUTURE_CSS + WORKSPACE_CSS}</style>
       <MapEffects />
-
-      {/* Reserved Header Regions (Grid at 1280x800 prevents overlap between title, zone toggle, and condition pills) */}
-      {!isCompare && <header
-        className="pointer-events-none absolute inset-x-0 top-0 z-20"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(280px, 1fr) auto minmax(280px, 1fr)",
-          gap: 16,
-          alignItems: "start",
-          paddingLeft: layout.title.left,
-          paddingRight: layout.layerBar.right,
-          paddingTop: layout.title.top,
-        }}
-      >
-        {/* Left Region: Title block */}
-        <div ref={leftRef} className="fv-onmap pointer-events-auto" style={{ maxWidth: 380 }}>
-          {/* The loading note sits beside the back link so the lines below never shift. */}
-          <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-            <FvButton className="fv-back fv-auto" aria-label="Back to the globe" onClick={onBack} data-testid="back-to-globe">
-              <ChevronLeft size={14} />
-              Globe
-            </FvButton>
-            {simProps && simProps.pending > 0 && <span role="status" className="fv-status">Loading 3D detail…</span>}
-          </div>
-          <h1 className="fv-title" style={{ wordBreak: "break-word" }}>{farmName}</h1>
-          <p className="fv-sub">{place ? `${place} · ` : ""}{simProps ? "Simulation available" : EXPLORE_SUBTITLE}</p>
-          {!panelsHidden && <ModeSwitch />}
-          {/* Same two lines in every mode; mode-specific controls come after them. */}
-          {simProps && twin && (
-            <div className="fv-cap fv-onmap" style={{ marginTop: 8, color: color.ink, display: "grid", gap: 2 }}>
-              <span>{[...twin.labels, ...twin.attribution].join(" · ")}</span>
-              <span>This tool supports, and does not replace, local agronomic expertise.</span>
+      {panelsHidden && (
+        <FvButton
+          ref={restorePanels}
+          data-testid="show-panels"
+          aria-keyshortcuts="H"
+          className="fv-glass fv-restore"
+          onClick={() => useAppStore.setState({ panelsHidden: false })}
+        >
+          Show panels
+        </FvButton>
+      )}
+      <div className="fv-panels" hidden={panelsHidden}>
+          {futureMode === "compare" && <FvButton ref={futureMode === "compare" ? undefined : hidePanels} className="fv-glass fv-seg" style={{ position: "absolute", right: 16, top: 16, pointerEvents: "auto" }} onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>}
+          <div className="fv-heading" hidden={futureMode === "compare"}>
+            <div className="fv-title-block">
+              <FvButton
+                className="fv-back"
+                aria-label="Back to the globe"
+                data-testid="back-to-globe"
+                onClick={onBack}
+              >
+                ← Globe
+              </FvButton>
+              <FvButton ref={futureMode === "compare" ? undefined : hidePanels} className="fv-glass fv-seg" onClick={() => useAppStore.setState({ panelsHidden: true })}>Hide panels</FvButton>
+              <h1 className="fv-title">{farmName}</h1>
+              <p className="fv-sub">
+                {place}
+                {place ? " · " : ""}
+                {simProps ? "Simulation available" : EXPLORE_SUBTITLE}
+              </p>
+              <ModeSwitch />
+              {futureMode === "future" && <StrategyBar />}
+              {simProps && twin && (
+                <details className="fv-cap" style={{ marginTop: 8 }}>
+                  <summary>Approximate outlines · illustrative crops</summary>
+                  <p>{[...twin.labels, ...twin.attribution].join(" · ")}</p>
+                </details>
+              )}
+              {simProps && <div hidden={futureMode !== "now"}><SimulationTab props={simProps} sim={sim} setSim={setSim} /></div>}
             </div>
-          )}
-          {!panelsHidden && futureMode === "future" && <StrategyBar />}
-          {simProps && !panelsHidden && isNow && <SimulationTab props={simProps} sim={sim} setSim={setSim} />}
-        </div>
-
-        {/* Center Region: Vulnerability zones box */}
-        <div className="pointer-events-auto flex justify-center">
-          {isNow && zoneToggle && <div className="fv-zone">{zoneToggle}</div>}
-        </div>
-
-        {/* Right Region: Layer bar + condition pills */}
-        {!panelsHidden ? (
-          <div className="pointer-events-auto flex flex-col items-end gap-3" style={{ maxWidth: isNow ? 460 : 600, justifySelf: "end" }}>
-            {/* Layer bar */}
-            <div className="fv-glass fv-bar fv-auto" role="radiogroup" aria-label="Map layer" onKeyDown={onBarKey}>
-              {LAYERS.map((l) => (
-                <FvButton
-                  key={l.id}
-                  className="fv-seg"
-                  role="radio"
-                  aria-checked={layer === l.id}
-                  tabIndex={layer === l.id ? 0 : -1}
-                  data-testid={`layer-${l.id}`}
-                  onClick={() => pickLayer(l.id)}
-                  title={
-                    l.id === "vigor"
-                      ? "Crop vigor (illustrative excess-green layer)"
-                      : l.id === "moisture"
-                        ? "Soil moisture (illustrative false-colour thermal layer)"
-                        : "True colour satellite imagery"
-                  }
-                >
-                  {l.label}
-                </FvButton>
-              ))}
-              {futureMode === "future" && (<><span className="fv-div" aria-hidden /><LensControl /></>)}
-              <span className="fv-div" aria-hidden />
-              <FvButton className="fv-icon" aria-label="Reset view" data-testid="reset-view" onClick={onReset}>
-                <RotateCcw size={18} />
+            <div className="fv-toolbar-shell">
+              <FvButton className="fv-glass fv-seg" aria-expanded={toolbarOpen} aria-controls="farm-controls" onClick={() => setToolbarOpen(!toolbarOpen)}>{toolbarOpen ? "Hide farm controls" : "Show farm controls"}</FvButton>
+            <div id="farm-controls" className="fv-control-content" hidden={!toolbarOpen}>
+              {futureMode === "future" && <LensControl />}
+            <div className="fv-toolbar">
+              {futureMode === "future" && <FuturePills />}
+              <div className="fv-mode-content" hidden={futureMode !== "now"}>
+              <div
+                className="fv-glass fv-bar"
+                role="radiogroup"
+                aria-label="Map layer"
+                aria-describedby="layer-unavailable"
+              >
+                {LAYERS.map((l) => (
+                  <FvButton
+                    key={l.id}
+                    disabled={l.id !== "satellite"}
+                    className="fv-seg"
+                    role="radio"
+                    aria-checked={l.id === "satellite"}
+                    data-testid={`layer-${l.id}`}
+                    title={
+                      l.id === "satellite"
+                        ? "Surface imagery"
+                        : "Unavailable: no observations connected"
+                    }
+                  >
+                    {l.label}
+                  </FvButton>
+                ))}
+              </div>
+              <span
+                id="layer-unavailable"
+                className="fv-glass"
+                style={{ padding: "6px 10px", borderRadius: 8, fontSize: 12 }}
+              >
+                Analytical layers unavailable: no observations connected.
+              </span>
+              <FvButton
+                className="fv-glass fv-seg"
+                aria-label="Reset camera"
+                data-testid="reset-view"
+                onClick={onReset}
+              >
+                Reset camera
               </FvButton>
               <FvButton
-                className="fv-icon"
-                aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+                className="fv-glass fv-seg"
                 data-testid="mute-toggle"
                 onClick={() => {
                   sound.setMuted(!muted);
                   setMuted(!muted);
                 }}
               >
-                <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.span
-                    key={muted ? "x" : "on"}
-                    style={{ display: "grid" }}
-                    initial={reduced ? { opacity: 0 } : { opacity: 0, scale: m.iconSwapFromScale, filter: `blur(${m.iconSwapBlur}px)` }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={reduced ? { opacity: 0 } : { opacity: 0, scale: m.iconSwapFromScale, filter: `blur(${m.iconSwapBlur}px)` }}
-                    transition={{ duration: m.iconSwapMs / 1000, ease: EASE_OUT }}
-                  >
-                    {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  </motion.span>
-                </AnimatePresence>
+                {muted ? "Unmute sounds" : "Mute sounds"}
               </FvButton>
-            </div>
-
-            {/* Condition pills; Future mode shows projected values instead */}
-            {futureMode === "future" && <FuturePills />}
-            {isNow && (
-              <div className="fv-glass fv-stats fv-auto" role="group" aria-label="Conditions, past 30 days (sample)">
-                <div className="cells">
-                  {CONDITIONS.map((c) => {
-                    const Icon = PILL_ICON[c.id];
-                    return (
-                      <FvButton
-                        key={c.id}
-                        className="fv-stat"
-                        aria-expanded={card === c.id}
-                        aria-controls={`condition-card-${c.id}`}
-                        data-testid={`condition-pill-${c.id}`}
-                        title={`${c.label}: ${c.value} (${c.period} sample; not live sensor measurements)`}
-                        onClick={() => toggleCard(c.id)}
-                      >
-                        <span className="l"><Icon size={12} />{c.label}</span>
-                        <span className="v">{c.value}</span>
-                      </FvButton>
-                    );
-                  })}
-                </div>
-                <p className="foot" title="Illustrative 30-day baseline sample; not live sensor measurements">Sample · Past 30 days</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="pointer-events-auto flex items-start justify-end" style={{ maxWidth: 460, justifySelf: "end" }}>
-            <FvButton
-              className="fv-glass fv-pill fv-auto"
-              data-testid="show-panels"
-              aria-label="Show panels (H)"
-              aria-keyshortcuts="H"
-              onClick={() => useAppStore.setState({ panelsHidden: false })}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px" }}
-            >
-              <span>Show panels</span>
-              <kbd style={{ fontSize: 11, opacity: 0.8, padding: "1px 5px", borderRadius: 4, background: "rgba(242,235,221,0.18)" }}>H</kbd>
-            </FvButton>
-          </div>
-        )}
-      </header>}
-
-      {!panelsHidden && (<>
-      <AnimatePresence>{card && isNow && <ConditionCard key={card} id={card} onClose={closeCard} />}</AnimatePresence>
-      <AnimatePresence>{layer !== "satellite" && !isCompare && <LayerLegend key={layer} layer={layer} />}</AnimatePresence>
-      {/* Field report: open card, or a 40 px tab on the left edge */}
-      {!isCompare && !(futureMode === "future" && futurePanel === "soil") && <AnimatePresence initial={false}>
-        {reportOpen ? (
-          <motion.section
-            key="report"
-            data-testid="field-report"
-            aria-label="Field report"
-            className="fv-glass fv-report fv-auto"
-            style={{ position: "absolute", left: layout.report.left, bottom: layout.report.bottom, zIndex: zIndex.report, transformOrigin: "left center" }}
-            {...pop}
-            transition={{ duration: (reportOpen ? m.reportCollapseMs : m.reportCollapseMs * 0.8) / 1000, ease: EASE_OUT }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h2 className="fv-rtitle">Field report</h2>
-              <FvButton className="fv-icon" style={{ width: 28, height: 28 }} aria-label="Collapse field report" aria-expanded data-testid="field-report-toggle" onClick={() => toggleReport(false)}>
-                <ChevronLeft size={18} />
-              </FvButton>
-            </div>
-            <p className="fv-sum">{simProps ? "No field measurements for this farm yet." : reportSummary()}</p>
-            <table className="fv-table">
-              <thead>
-                <tr>
-                  <th scope="col">Field</th>
-                  <th scope="col" style={{ width: 70 }}>Moisture</th>
-                  <th scope="col" style={{ width: 60 }}>NDVI</th>
-                  <th scope="col" style={{ width: 83, paddingLeft: 15 }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((f) => {
-                  const isClickable = f.sim;
-                  return (
-                    <tr
-                      key={f.id}
-                      className={`fv-row ${isClickable ? "cursor-pointer" : ""}`}
-                      data-testid={`field-report-row-${f.id}`}
-                      tabIndex={isClickable ? 0 : undefined}
-                      role={isClickable ? "button" : undefined}
-                      aria-label={isClickable ? `Select field ${f.name}` : undefined}
-                      onPointerDown={() => isClickable && sound.tap()}
-                      onClick={() => isClickable && pickSimField(f.id)}
-                      onKeyDown={(e) => {
-                        if (isClickable && (e.key === "Enter" || e.key === " ")) {
-                          e.preventDefault();
-                          sound.tap();
-                          pickSimField(f.id);
-                        }
-                      }}
-                    >
-                      <td className="n">{f.name}</td>
-                      <td>{f.moisture === null ? "–" : `${f.moisture}%`}</td>
-                      <td>{f.ndvi === null ? "–" : f.ndvi.toFixed(2)}</td>
-                      <td className="s" style={{ paddingLeft: 15 }}>
-                        <span className={f.status === "Dry" || f.status === "Stressed" ? "fv-diamond" : "fv-dot"} aria-hidden />
-                        {f.status}
-                      </td>
-                    </tr>
-                  );
+              <details className="fv-glass fv-observations">
+                <summary>Farm observations: Not available</summary>
+                <dl>
+                  {CONDITIONS.map((c) => (
+                    <div key={c.id}>
+                      <dt>{c.label}</dt>
+                      <dd data-testid={`condition-value-${c.id}`}>
+                        Not available
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p>
+                  No dated farm observations are connected. Simulation inputs
+                  are synthetic.
+                </p>
+              </details>
+              <div className="fv-preview" aria-label="Synthetic condition preview">
+                <span className="fv-cap" style={{ width: "100%" }}>Synthetic preview · not this farm’s measurements</span>
+                {CONDITIONS.map((c) => {
+                  const Icon = PILL_ICON[c.id];
+                  return <FvButton key={c.id} className="fv-glass fv-pill" data-testid={`condition-pill-${c.id}`}
+                    aria-expanded={card === c.id} aria-controls={`condition-card-${c.id}`}
+                    onClick={() => setCard(card === c.id ? null : c.id)}>
+                    <Icon size={16} /><span className="l">{c.label}</span>
+                  </FvButton>;
                 })}
-              </tbody>
-            </table>
-            <p className="fv-cap" style={{ margin: "8px 0 0" }}>Sample data</p>
-          </motion.section>
-        ) : (
-          <motion.div
-            key="tab"
-            style={{ position: "absolute", left: layout.reportTab.left, bottom: layout.reportTab.bottom, zIndex: zIndex.report }}
-            initial={{ opacity: 0, x: reduced ? 0 : -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: reduced ? 0 : -8 }}
-            transition={{ duration: 0.15, ease: EASE_OUT }}
-          >
-            <FvButton className="fv-glass fv-tab fv-auto" origin="left center" aria-label="Expand field report" aria-expanded={false} data-testid="field-report-toggle" onClick={() => setReportOpen(true)}>
-              <PanelLeft size={16} />
-              <span className="t">Field report</span>
-              <ChevronRight size={14} />
+                <AnimatePresence>{card && <ConditionCard key={card} id={card} onClose={() => setCard(null)} />}</AnimatePresence>
+                <AnimatePresence>{(card === "vigor" || card === "moisture") && <LayerLegend key={card} layer={card} />}</AnimatePresence>
+              </div>
+              {zoneControl && (
+                <div
+                  className="fv-zone fv-glass"
+                  style={{ padding: 8, borderRadius: 12 }}
+                >
+                  {zoneControl}
+                </div>
+              )}
+              </div>
+            </div>
+            </div>
+            </div>
+          </div>
+          <div className="fv-mode-content" hidden={futureMode !== "now"}>
+          {!sim.open && (
+            <FvButton
+              className="fv-glass fv-seg fv-auto"
+              style={{
+                position: "absolute",
+                left: 16,
+                bottom: comparing ? 104 : 32,
+              }}
+              aria-expanded={reportOpen}
+              aria-label={
+                reportOpen ? "Collapse field report" : "Expand field report"
+              }
+              data-testid="field-report-toggle"
+              onClick={() => setReportOpen(!reportOpen)}
+            >
+              Field report {reportOpen ? "−" : "+"}
             </FvButton>
-          </motion.div>
-        )}
-      </AnimatePresence>}
-
-      {simProps && comparing && isNow && <DividerHandle />}
-
-      {isNow ? (
-        <Timeline
-          reduced={reduced}
-          onDayChange={(day) => {
-            const m = monthOf(day);
-            if (useAppStore.getState().twinMonth !== m) {
-              useAppStore.setState({ twinMonth: m });
-            }
-          }}
-        />
-      ) : (
-        <FutureTimeline reduced={reduced} right={isCompare && reviewFor ? 400 : 40} />
-      )}
-
-      <FutureLayer legendShown={layer !== "satellite"} />
-
-      {/* Twin: round logo button that opens the ask pill and answer card */}
-      {!isCompare && <Twin />}
-
-      </>)}
-
-      {!simProps && <p className="fv-credit fv-onmap" style={{ position: "absolute", left: 64, bottom: 8, margin: 0, whiteSpace: "nowrap" }}>
-        This tool supports, and does not replace, local agronomic expertise.
-      </p>}
+          )}
+          <AnimatePresence>{reportOpen && !sim.open && (
+            <motion.section
+              initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="fv-glass fv-report fv-auto"
+              style={comparing ? { bottom: 150 } : undefined}
+              data-testid="field-report"
+              aria-label="Field report"
+            >
+              <h2 className="fv-rtitle">Field report</h2>
+              <p>No field measurements for this farm yet.</p>
+              {simProps ? (
+                <table className="fv-table">
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Observations</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {simProps.fields.map((f) => (
+                      <tr key={f.id} data-testid={`field-report-row-${f.id}`}>
+                        <td>
+                          <button
+                            type="button"
+                            className="fv-field-button"
+                            onClick={() => selectField(f.id)}
+                          >
+                            {f.name}
+                          </button>
+                        </td>
+                        <td>Not available</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>
+                  Field-level data is not available for this explore-only farm.
+                </p>
+              )}
+            </motion.section>
+          )}</AnimatePresence>
+          <Twin bottom={comparing ? 110 : undefined} />
+          {simProps && comparing && (
+            <>
+              <DividerHandle />
+              <ComparisonTimeline />
+            </>
+          )}
+          <div
+            className="fv-bottom-tools"
+            style={comparing ? { bottom: 104 } : undefined}
+          >
+            {onCamera && (
+              <details
+                className="fv-glass"
+                style={{ padding: 10, borderRadius: 12 }}
+              >
+                <summary>Camera controls</summary>
+                <div
+                  role="group"
+                  aria-label="Camera controls"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    const action = cameraActionForKey(e.key, e.shiftKey);
+                    if (action) {
+                      e.preventDefault();
+                      onCamera(action);
+                    }
+                  }}
+                >
+                  <p style={{ fontSize: 12 }}>
+                    Focus this group: arrows pan, Shift + arrows orbit, + / −
+                    zoom.
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {(
+                      [
+                        "pan-left",
+                        "pan-right",
+                        "pan-up",
+                        "pan-down",
+                        "orbit-left",
+                        "orbit-right",
+                        "zoom-in",
+                        "zoom-out",
+                      ] as CameraAction[]
+                    ).map((a) => (
+                      <button
+                        className="fv-seg"
+                        type="button"
+                        key={a}
+                        onClick={() => onCamera(a)}
+                      >
+                        {a.replace("-", " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </details>
+            )}
+            <InvestigationControls simulationAvailable={!!simProps} />
+          </div>
+          </div>
+          {futureMode !== "now" && <FutureTimeline reduced={reduced} right={futureMode === "compare" && reviewFor ? 400 : 40} />}
+          <FutureLayer />
+      </div>
+      <p className="sr-only">
+        {reduced ? "Reduced motion enabled." : ""}This tool supports, and does
+        not replace, local agronomic expertise.
+      </p>
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { REVIEW_FLAGS, STRATEGIES, YEARS } from "@/lib/farm-future/fixtures";
 import { dateAt, soilHealthAt, strategyById } from "@/lib/farm-future/model";
 import { useFutureStore } from "@/lib/farm-future/store";
 import { color } from "@/lib/farm-view/tokens";
+import { siteForFarm } from "@/lib/forecast/sites";
+import { useAppStore } from "@/lib/store";
 import { sound } from "@/lib/ui/sound";
 
 import { FvButton } from "@/components/farm-view/FvButton";
@@ -15,6 +17,7 @@ import { Basis, CardHead, HAIR, Headline, Label, MUTED_RED, Num, PopCard, Row, S
 
 export function StrategyBar() {
   const strategyId = useFutureStore((s) => s.strategyId);
+  const farmId = useAppStore((s) => s.farmId);
   const panel = useFutureStore((s) => s.panel);
   const { setStrategy, openPanel, openReview } = useFutureStore.getState();
   const [open, setOpen] = useState(false);
@@ -23,9 +26,9 @@ export function StrategyBar() {
   const s = strategyById(strategyId);
   const flags = REVIEW_FLAGS[strategyId].length;
   return (
-    <div className="fv-glass fv-group fv-auto" role="group" aria-label="Strategy" style={{ marginTop: 12 }}>
-      <div ref={ref} style={{ position: "relative", display: "inline-flex" }}>
-        <FvButton className="fv-pill" aria-haspopup="listbox" aria-expanded={open} data-testid="strategy-picker" onClick={() => setOpen(!open)}>
+    <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
+      <div ref={ref} style={{ position: "relative" }}>
+        <FvButton className="fv-glass fv-pill fv-auto" aria-haspopup="listbox" aria-expanded={open} data-testid="strategy-picker" onClick={() => setOpen(!open)}>
           <span className="l">Strategy</span>
           <span className="v" style={{ marginLeft: 0, fontWeight: 500 }}>{s.rotation}</span>
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
@@ -42,13 +45,17 @@ export function StrategyBar() {
           </div>
         )}
       </div>
-      <span className="fv-div" aria-hidden />
-      <FvButton className="fv-pill" data-testid="flags-button" aria-label={`${flags} review flags for ${s.name}`} onClick={() => openReview(strategyId)}>
+      <FvButton className="fv-glass fv-pill fv-auto" data-testid="flags-button" aria-label={`${flags} review flags for ${s.name}`} onClick={() => openReview(strategyId)}>
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke={color.stress} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
         <span className="l" style={{ color: color.ink }}>{flags} {flags === 1 ? "flag" : "flags"}</span>
       </FvButton>
-      <span className="fv-div" aria-hidden />
-      <FvButton className="fv-pill" aria-expanded={panel === "soil"} data-testid="soil-toggle" onClick={() => openPanel("soil")}>
+      {siteForFarm(farmId) && (
+        <FvButton className="fv-glass fv-pill fv-auto" aria-expanded={panel === "forecast"} data-testid="forecast-toggle" onClick={() => openPanel("forecast")}>
+          <span className="l" style={{ color: color.ink }}>Forecast</span>
+          {panel === "forecast" ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+        </FvButton>
+      )}
+      <FvButton className="fv-glass fv-pill fv-auto" aria-expanded={panel === "soil"} data-testid="soil-toggle" onClick={() => openPanel("soil")}>
         <span className="l" style={{ color: color.ink }}>Soil health</span>
         {panel === "soil" ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
       </FvButton>
@@ -65,7 +72,7 @@ export function SoilHealthPanel() {
   const h = soilHealthAt(s, t);
   const d = dateAt(t);
   return (
-    <PopCard open={panel === "soil"} origin="top left" label="Soil health" testId="soil-panel" style={{ left: 40, top: "calc(var(--fv-left-bottom, 236px) + 10px)", width: 412, maxHeight: "calc(100vh - var(--fv-left-bottom, 236px) - 220px)", overflowY: "auto" }}>
+    <PopCard open={panel === "soil"} origin="top left" label="Soil health" testId="soil-panel" style={{ left: 40, top: 236, width: 412, maxHeight: "calc(100vh - 236px - 210px)", overflowY: "auto" }}>
       <CardHead title={`Soil health · ${s.name}, year ${d.yearIndex + 1}`} onMinimize={() => openPanel(null)} />
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <DepthProfile before={h.profile2026} now={h.profileNow} rootDepthM={h.rootDepthM} year={d.year} />
@@ -136,4 +143,3 @@ function DepthProfile({ before, now, rootDepthM, year }: { before: { d: number; 
     </svg>
   );
 }
-

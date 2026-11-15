@@ -185,4 +185,3 @@ function YearBars({ values, sel, label }: { values: number[]; sel: number; label
     </div>
   );
 }
-

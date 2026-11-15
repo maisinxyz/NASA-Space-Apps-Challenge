@@ -5,6 +5,8 @@ import { useEffect } from "react";
 
 import { useFutureStore } from "@/lib/farm-future/store";
 
+import { ForecastPanel } from "@/components/farm-forecast/ForecastPanel";
+
 import { CompareView, ReviewDrawer } from "./Compare";
 import { WhatIf } from "./Controls";
 import { LensCard } from "./LensCards";
@@ -24,6 +26,7 @@ export function FutureLayer({ legendShown = false }: { legendShown?: boolean }) 
     <>
       <LensCard />
       <SoilHealthPanel />
+      <ForecastPanel />
       <WhatIf raised={legendShown} />
       <ReviewDrawer />
     </>

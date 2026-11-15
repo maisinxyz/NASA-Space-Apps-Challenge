@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Farm } from "@/components/globe/types";
+import { encodeShare } from "@/lib/share";
+import { useAppStore } from "@/lib/store";
 import { type Place, type SearchHit, searchPlaces } from "@/lib/globe/search";
 
 const FONT = "'Satoshi', var(--font-hero-ui), ui-sans-serif, system-ui, sans-serif";
@@ -53,6 +55,8 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
   const hits = useMemo(() => searchPlaces(q, farms, places), [q, farms, places]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,8 +70,13 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
   }, []);
   useEffect(() => {
     if (open) input.current?.focus();
+    else if (restoreFocus.current) {
+      trigger.current?.focus();
+      restoreFocus.current = false;
+    }
   }, [open]);
-  const close = () => {
+  const close = (returnFocus = false) => {
+    restoreFocus.current = returnFocus;
     setOpen(false);
     setQ("");
     setActive(0);
@@ -79,7 +88,7 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
   };
   if (!open)
     return (
-      <button type="button" onClick={() => setOpen(true)} className="pointer-events-auto flex h-12 items-center border-b border-white/80 text-[14px] transition-opacity duration-200 hover:opacity-70 focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ color: "#d7dcd3" }} aria-keyshortcuts="Control+K Meta+K">
+      <button ref={trigger} type="button" onClick={() => setOpen(true)} className="pointer-events-auto flex h-12 items-center border-b border-white/80 text-[14px] transition-opacity duration-200 hover:opacity-70 focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70" style={{ color: "#d7dcd3" }} aria-keyshortcuts="Control+K Meta+K">
         Find a place
       </button>
     );
@@ -92,12 +101,12 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
           setQ(e.target.value);
           setActive(0);
         }}
-        onBlur={() => setTimeout(close, 150)}
+        onBlur={() => setTimeout(() => close(), 150)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") close();
+          if (e.key === "Escape") close(true);
           else if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive((a) => Math.min(a + 1, hits.length - 1));
+            setActive((a) => Math.max(0, Math.min(a + 1, hits.length - 1)));
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setActive((a) => Math.max(a - 1, 0));
@@ -129,7 +138,7 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
               <span className="truncate text-[13px]" style={{ color: INK }}>
                 {h.name}
               </span>
-              <span className="shrink-0 text-[10px] uppercase tracking-[0.2em]" style={{ color: h.kind === "farm" ? "#ffc857" : MUTED }}>
+              <span className="shrink-0 text-[12px] uppercase tracking-[0.2em]" style={{ color: h.kind === "farm" ? "#ffc857" : MUTED }}>
                 {h.kind === "farm" ? "Farm" : h.detail}
               </span>
             </li>
@@ -143,6 +152,24 @@ function Search({ farms, onPick }: { farms: Farm[]; onPick(hit: SearchHit): void
 function ShareButton() {
   const [done, setDone] = useState<string | null>(null);
   const share = async () => {
+    const state = useAppStore.getState();
+    if (state.farmId) {
+      const hash = encodeShare({
+        farm: state.farmId, mode: state.twinMode, field: state.twinFieldId,
+        a: state.compareA, b: state.compareB, divider: state.divider,
+        surface: state.twinSurface, look: state.look, camera: null,
+        scenario: state.scenarioId,
+        inputs: state.scenarioId ? state.scenarioInputs[state.scenarioId] : undefined,
+        detail: state.detail, scenarioRotation: state.scenarioRotation,
+        scenarioProgress: state.scenarioProgress, twinYear: state.twinYear,
+        twinMonth: state.twinMonth, showCropFills: state.showCropFills,
+        panelsHidden: state.panelsHidden, leftOpen: state.leftOpen, rightOpen: state.rightOpen,
+      });
+      // Keep the recovery message truthful even when clipboard access is denied.
+      history.replaceState(null, "", hash);
+    } else {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
     const url = window.location.href;
     try {
       if (navigator.share) await navigator.share({ title: "FieldTwin", url });
@@ -157,7 +184,7 @@ function ShareButton() {
   };
   return (
     <div className="pointer-events-auto relative">
-      <button type="button" aria-label="Share this view" onClick={share} className="grid h-11 w-11 place-items-center rounded-full transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, backdropFilter: "blur(2px) saturate(1.35)" }}>
+      <button type="button" data-share-view aria-label="Share this view" onClick={share} className="grid h-11 w-11 place-items-center rounded-full transition-opacity hover:opacity-80 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, backdropFilter: "blur(2px) saturate(1.35)" }}>
         <svg viewBox="0 0 24 24" aria-hidden className="h-[18px] w-[18px]" fill="none" stroke={INK} strokeWidth="1.5">
           <circle cx="6" cy="12" r="2.5" />
           <circle cx="18" cy="5" r="2.5" />
@@ -177,10 +204,16 @@ function ShareButton() {
 function FarmPicker({ farms, selectedId, onPick }: { farms: Farm[]; selectedId: string | null; onPick(id: string): void }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => !wrap.current?.contains(e.target as Node) && setOpen(false);
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    };
     document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", esc);
     return () => {
@@ -191,6 +224,12 @@ function FarmPicker({ farms, selectedId, onPick }: { farms: Farm[]; selectedId: 
   const current = farms.find((f) => f.id === selectedId);
   return (
     <div ref={wrap} className="pointer-events-auto relative">
+      <button ref={trigger} type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="farm-picker" className="flex h-11 items-center gap-3 rounded-full px-6 text-[14px] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, color: INK }}>
+        {current ? current.name.split(/[,(]/)[0].trim() : "Choose a farm"}
+        <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 transition-transform duration-300" style={{ transform: open ? "rotate(180deg)" : "none" }} fill="none" stroke={INK} strokeWidth="1.6">
+          <path d="m5 12 5-5 5 5" />
+        </svg>
+      </button>
       <AnimatePresence>
         {open && (
           <motion.ul
@@ -208,17 +247,19 @@ function FarmPicker({ farms, selectedId, onPick }: { farms: Farm[]; selectedId: 
                   type="button"
                   onClick={() => {
                     setOpen(false);
+                    trigger.current?.focus();
                     onPick(f.id);
                   }}
                   className="flex w-full items-center gap-3 px-5 py-2 text-left transition-opacity hover:opacity-75"
                   aria-pressed={f.id === selectedId}
+                  aria-label={`${f.name} — ${f.tier === "twin" ? "Digital twin" : "Explore only"}`}
                 >
                   <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: f.id === selectedId ? "#39e6d4" : "rgba(255,253,226,0.6)" }} />
                   <span className="flex-1 truncate text-[13px] font-medium" style={{ color: INK }}>
                     {f.name.split(/[,(]/)[0].trim()}
                   </span>
-                  <span className="text-[9px] uppercase tracking-[0.22em]" style={{ color: MUTED }}>
-                    {f.tier === "twin" ? "Twin" : f.country}
+                  <span className="text-[12px] uppercase tracking-[0.22em]" style={{ color: MUTED }}>
+                    {f.tier === "twin" ? "Digital twin" : "Explore only"}
                   </span>
                 </button>
               </li>
@@ -226,12 +267,6 @@ function FarmPicker({ farms, selectedId, onPick }: { farms: Farm[]; selectedId: 
           </motion.ul>
         )}
       </AnimatePresence>
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="farm-picker" className="flex h-11 items-center gap-3 rounded-full px-6 text-[14px] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-white/70" style={{ ...GLASS, color: INK }}>
-        {current ? current.name.split(/[,(]/)[0].trim() : "Choose a farm"}
-        <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4 transition-transform duration-300" style={{ transform: open ? "rotate(180deg)" : "none" }} fill="none" stroke={INK} strokeWidth="1.6">
-          <path d="m5 12 5-5 5 5" />
-        </svg>
-      </button>
     </div>
   );
 }

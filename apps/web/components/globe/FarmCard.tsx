@@ -53,7 +53,7 @@ export function FarmCard({ farm, onClose, onOpen, className = "" }: { farm: Farm
           Source (opens in a new tab)
         </a>
       </p>
-      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}. You can still fly in and look around.</p>}
+      {farm.tier === "explore" && <p className="mt-2 text-sm text-ink-muted">{EXPLORE_NOTE}.{onOpen ? " You can fly in and look around." : " Farm metadata and source links remain available here."}</p>}
       {onOpen ? (
         <div className="mt-3">
           <button type="button" onClick={onOpen} className={PRIMARY_BTN}>

@@ -207,6 +207,62 @@ def series(grid: np.ndarray, years: list[int], unit: str, basis: str, descriptio
     return out
 
 
+def weekly_seed_grid(doc: dict | None) -> tuple[list[int], np.ndarray]:
+    """Stack a seed weekly list into (years, 52). Null stays NaN. Nothing is filled.
+
+    The seed contract is a list of ``{year, values, n_obs}``. A short or missing
+    document returns an empty grid.
+    """
+
+    rows = doc.get("weekly") if isinstance(doc, dict) else None
+    years: list[int] = []
+    grid: list[list[float]] = []
+    if not isinstance(rows, list):
+        return years, np.zeros((0, C.WEEKS), dtype=np.float64)
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        values = row.get("values")
+        if not isinstance(values, list) or len(values) != C.WEEKS:
+            continue
+        try:
+            year = int(row["year"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        years.append(year)
+        grid.append([np.nan if value is None else float(value) for value in values])
+    if not years:
+        return [], np.zeros((0, C.WEEKS), dtype=np.float64)
+    return years, np.asarray(grid, dtype=np.float64)
+
+
+def sign_agreement(left: np.ndarray, left_years: list[int], right: np.ndarray, right_years: list[int]) -> float | None:
+    """Share of overlapping year-weeks whose anomaly signs match.
+
+    Weeks where either value is missing or zero are skipped. None when no
+    overlapping week remains. The caller compares the share with
+    ``THRESHOLDS['smap_agree_share']``.
+    """
+
+    index = {year: row for row, year in enumerate(left_years)}
+    matched = 0
+    total = 0
+    for row, year in enumerate(right_years):
+        left_row = index.get(year)
+        if left_row is None:
+            continue
+        a = np.asarray(left[left_row], dtype=np.float64)
+        b = np.asarray(right[row], dtype=np.float64)
+        both = np.isfinite(a) & np.isfinite(b) & (a != 0) & (b != 0)
+        if not both.any():
+            continue
+        total += int(both.sum())
+        matched += int(np.sum(np.sign(a[both]) == np.sign(b[both])))
+    if total == 0:
+        return None
+    return matched / total
+
+
 def anomaly(grid: np.ndarray, base: np.ndarray) -> np.ndarray:
     """(x - weekly normal) / weekly std of the baseline grid; 0 where std is 0."""
     st = _stats(base)

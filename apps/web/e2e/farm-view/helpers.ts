@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 /** Route to the farm view. TODO(Oscar): confirm; today it is the globe dive (#farm=…). */
-export const FARM_URL = process.env.FARM_VIEW_URL ?? "/#farm=agroscope-reckenholz";
+export const FARM_URL = process.env.FARM_VIEW_URL ?? "/#farm=cornell-ruminant";
 
 /**
  * data-testid contract the tester needs from the coder (not yet agreed):
@@ -15,14 +15,14 @@ export const tid = (page: Page, id: string) => page.getByTestId(id);
 
 /** Dev-only sound call log. Needs Oscar to push {name, t} to window.__soundLog inside lib/ui/sound.ts when NEXT_PUBLIC_E2E=1. */
 export async function soundLog(page: Page): Promise<{ name: string; t: number }[]> {
-  return page.evaluate(() => (window as any).__soundLog ?? []);
+  return page.evaluate(() => (window as Window & { __soundLog?: { name: string; t: number }[] }).__soundLog ?? []);
 }
-export const clearSoundLog = (page: Page) => page.evaluate(() => { (window as any).__soundLog = []; });
+export const clearSoundLog = (page: Page) => page.evaluate(() => { (window as Window & { __soundLog?: { name: string; t: number }[] }).__soundLog = []; });
 
 export async function openFarm(page: Page) {
-  await page.addInitScript(() => { (window as any).__soundLog = []; });
+  await page.addInitScript(() => { (window as Window & { __soundLog?: { name: string; t: number }[] }).__soundLog = []; });
   await page.goto(FARM_URL);
-  await tid(page, "timeline").waitFor();
+  await tid(page, "farm-view").waitFor();
 }
 
 /** Count visible pop-ups: condition cards + field popover + Twin answer. Rule: never more than 1. */

@@ -15,6 +15,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { useScenarioRun } from "@/components/farm/useScenarioRun";
 import { FarmView } from "@/components/farm-view/FarmView";
+import { Non3dFarmWorkspace } from "@/components/farm-view/Non3dFarmWorkspace";
 import { ArrivalTitle } from "@/components/hero/Arrival";
 import { cameraBus, hoverBus, loadBus, trackBus } from "@/components/hero/buses";
 import { CloudLoader, type CloudLoaderPhase } from "@/components/hero/CloudLoader";
@@ -35,6 +36,7 @@ import { useZoneOverlays, ZoneToggle } from "@/components/rotation/fe2/ZoneOverl
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { FARMS, farmById, type TwinConfig, twinConfig } from "@/lib/farms";
 import { hasModifier, isTextEntry, RESET_EVENT } from "@/lib/keys";
+import { resetFutureInvestigation } from "@/lib/farm-future/store";
 import { decodeShare } from "@/lib/share";
 import { selectFarm, useAppStore, useChrome } from "@/lib/store";
 import { cropsForSeason, rotationById } from "@/lib/twin/rotations";
@@ -52,13 +54,15 @@ type HeroState = "hero" | "dragging" | "centred" | "ui";
 
 // Cesium's credit line ("Earth API" attribution: logo + data attribution) stays fully visible, as its terms require.
 // It is moved into its own slot above every overlay and set in the accent colour; the logo is tinted with a CSS
-// filter, nothing is hidden. Farm view: one small line in the bottom-right corner, clear of the Twin button and
-// the timeline labels.
+// filter, nothing is hidden.
 const CREDITS_CSS = `
-.hero-root .ft-credits { color: ${color.accent} !important; font-size: 10px; display: flex !important; flex-wrap: wrap; justify-content: flex-end; align-items: center; column-gap: 0.8em; row-gap: 0.1em; width: max-content; max-width: 46vw; line-height: 1.3; opacity: 0.8; }
-.hero-root .ft-credits .cesium-credit-logoContainer, .hero-root .ft-credits .cesium-credit-textContainer { display: inline-flex !important; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 0.8em; margin: 0 !important; }
+.hero-root .ft-credits .cesium-widget-credits { position: static !important; display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; width: max-content; max-width: 94vw; }
+.hero-root .ft-credits .cesium-credit-wrapper { display: inline-flex !important; white-space: nowrap; align-items: center; }
+
+.hero-root .ft-credits { color: ${color.accent} !important; font-size: 11px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 0.9em; row-gap: 0.2em; width: max-content; max-width: 94vw; line-height: 1.3; }
+.hero-root .ft-credits .cesium-credit-logoContainer, .hero-root .ft-credits .cesium-credit-textContainer { display: inline-flex !important; align-items: center; flex-wrap: wrap; justify-content: center; gap: 0.9em; margin: 0 !important; }
 .hero-root .ft-credits .cesium-credit-delimiter { margin: 0 0.4em; }
-.hero-root .cesium-credit-logoContainer img { max-height: 12px; width: auto; vertical-align: middle; }
+.hero-root .cesium-credit-logoContainer img { max-height: 20px; width: auto; vertical-align: middle; }
 .hero-root .ft-credits a, .hero-root .cesium-credit-textContainer, .hero-root .cesium-credit-textContainer * { color: ${color.accent} !important; }
 .hero-root .cesium-credit-logoContainer img { filter: brightness(0) saturate(100%) invert(80%) sepia(14%) saturate(900%) hue-rotate(185deg) brightness(98%); opacity: 0.9; }
 `;
@@ -148,6 +152,7 @@ type Phase = "dive" | "hold" | "explore";
 export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource } = {}) {
   const farmId = useAppStore((s) => s.farmId);
   const view = useAppStore((s) => s.globeView);
+  useEffect(() => resetFutureInvestigation(), [farmId]);
   const reducedMotion = !!useReducedMotion();
   const wide = useWide();
   const globe = useRef<GlobeHandle>(null);
@@ -395,10 +400,10 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   // (`lastView` still holds the previous view on the render where the dive starts, before the phase effect runs.)
   const diving = phase === "dive" || (view === "farm" && lastView.current === "globe");
   // Farm twin (only "twin" farms with a twin config): fields + the season of the rotation chosen in Compare.
-  const twin = view === "farm" && !diving ? twinConfig(farm?.id ?? null) : undefined;
+  const twin = view === "farm" && (!showGlobe || !diving) ? twinConfig(farm?.id ?? null) : undefined;
   const fields = twin?.fields;
-  const inTwin = inFarm && !!twin;
-  const zoneOverlays = useZoneOverlays(inTwin ? (farm?.id ?? null) : null);
+  const inTwin = !!farm && view === "farm" && !!twin;
+  const zoneOverlays = useZoneOverlays(inTwin && showGlobe ? (farm?.id ?? null) : null);
   const { twinFieldId, twinMode, compareA, compareB, divider, twinYear, twinMonth, exaggeration, twinSurface, look, showCropFills, detail } = useAppStore(
     useShallow((s) => ({ twinFieldId: s.twinFieldId, twinMode: s.twinMode, compareA: s.compareA, compareB: s.compareB, divider: s.divider, twinYear: s.twinYear, twinMonth: s.twinMonth, exaggeration: s.exaggeration, twinSurface: s.twinSurface, look: s.look, showCropFills: s.showCropFills, detail: s.detail })),
   );
@@ -413,15 +418,18 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
 
   // Slim header while the twin workspace is on screen.
   useEffect(() => {
-    useChrome.setState({ twinFarm: inTwin ? farm.name : null });
+    useChrome.setState({ twinFarm: inTwin && showGlobe ? farm.name : null });
     return () => useChrome.setState({ twinFarm: null });
-  }, [inTwin, farm?.name]);
+  }, [inTwin, showGlobe, farm?.name]);
 
   // Share link (#farm=…): restore the view once on load; the camera follows after the fly-in.
   useEffect(() => {
     const d = decodeShare(window.location.hash);
     if (!d) return;
     sharedCamera.current = d.camera ?? null;
+    const scenarioRotation = d.scenarioRotation ?? d.rotation;
+    const scenarioProgress = d.scenarioProgress ?? d.time;
+    const twinYear = d.twinYear ?? d.year;
     useAppStore.setState({
       farmId: d.farm,
       globeView: "farm",
@@ -433,12 +441,18 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       ...(d.surface && { twinSurface: d.surface }),
       ...(d.look && { look: d.look }),
       ...(d.detail && { detail: d.detail }),
-      ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
-      ...(d.rotation && { scenarioRotation: d.rotation }),
-      ...(d.time !== undefined && { scenarioProgress: d.time }),
-      ...(d.year !== undefined && { twinYear: d.year }),
-      ...(d.month !== undefined && { twinMonth: d.month }),
+      scenarioPlaying: false,
+      ...(scenarioRotation && { scenarioRotation }),
+      ...(scenarioProgress !== undefined && { scenarioProgress }),
+      ...(twinYear !== undefined && { twinYear }),
+      ...(d.twinMonth !== undefined && { twinMonth: d.twinMonth }),
+      ...(d.showCropFills !== undefined && { showCropFills: d.showCropFills }),
+      ...(d.panelsHidden !== undefined && { panelsHidden: d.panelsHidden }),
       ...(d.panel && { leftOpen: d.panel !== "none" }),
+      ...(d.leftOpen !== undefined && { leftOpen: d.leftOpen }),
+      ...(d.rightOpen !== undefined && { rightOpen: d.rightOpen }),
+      ...(d.scenario && { scenarioId: d.scenario, scenarioInputs: { [d.scenario]: d.inputs ?? {} } }),
+
     });
   }, []);
   useEffect(() => {
@@ -459,7 +473,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   }, []);
 
   // Escape clears the selected farm on the globe (popovers handle their own Escape first).
-  const selectedOnGlobe = !!farm && !inFarm;
+  const selectedOnGlobe = !!farm && view === "globe";
   useEffect(() => {
     if (!selectedOnGlobe) return;
     const onKey = (e: KeyboardEvent) => {
@@ -469,7 +483,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedOnGlobe]);
 
-  const status = !wide ? "The 3D globe is not shown on small screens. Use the farm list." : load === "error" ? "The 3D globe could not load. The farm list still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
+  const status = !wide ? "The 3D globe is not shown on small screens. Choose a farm to open its non-3D workspace." : load === "error" ? "The 3D globe could not load. The non-3D workspace still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
   const live = (
     <p aria-live="polite" className="sr-only">
       {status}
@@ -484,13 +498,16 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           {wide ? (
             <div role="alert" className="rounded-lg border border-line bg-surface p-4">
               <p className="font-semibold">The 3D globe could not load</p>
-              <p className="mt-1 text-sm text-ink-muted">You can still pick a farm from the list below.</p>
+              <p className="mt-1 text-sm text-ink-muted">You can use scenarios and comparisons without the map. Select a digital twin below.</p>
             </div>
           ) : (
-            <p className="rounded-lg border border-line bg-surface p-3 text-sm">Best on a larger screen: the 3D globe is shown on screens at least 768 px wide.</p>
+            <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Digital twins still offer scenarios, comparisons, and evidence here.</p>
           )}
-          {farm && <FarmCard farm={farm} onClose={() => select(null)} />}
-          <FarmList farms={FARMS} selectedId={farmId} onSelect={select} />
+          {wide && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
+          {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
+            {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => useAppStore.setState({globeView:"farm",twinMode:"simulate"}) : undefined} />}
+            <FarmList farms={FARMS} selectedId={farmId} onSelect={select} />
+          </>}
         </div>
         {live}
       </div>
@@ -702,7 +719,8 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           Earth imagery: NASA Blue Marble &amp; Earth at Night
         </p>
       )}
-      <div ref={creditSlot} className="ft-credits absolute z-10" style={{ right: 40, bottom: 6, display: onGlobe ? "none" : undefined }} />
+
+      <div ref={creditSlot} className="ft-credits absolute z-10 -translate-x-1/2" style={{ left: "50%", bottom: "0.5rem", display: onGlobe ? "none" : undefined }} />
 
       {/* Dive film: above the globe, below the attribution, the title and the panels. */}
       {ready &&
@@ -741,14 +759,16 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           transition={{ duration: farmControlsIn.ms / 1000, ease: "easeOut" }}
         >
           <ErrorBoundary fallbackTitle="Farm view error" onReset={() => useAppStore.setState({ globeView: "globe", farmId: null })}>
-            <FarmView
-              farmName={farm.name}
-              place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
-              onBack={() => useAppStore.setState({ globeView: "globe" })}
-              onReset={() => globe.current?.resetView()}
-              zoneToggle={inTwin ? <ZoneToggle /> : undefined}
-              sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
-            />
+          <FarmView
+            key={farm.id}
+            farmName={farm.name}
+            place={farm.locality ? `${farm.locality}, ${farm.country}` : farm.country}
+            onBack={() => useAppStore.setState({ globeView: "globe" })}
+            onReset={() => globe.current?.resetView()}
+            onCamera={(action) => globe.current?.moveCamera(action)}
+            zoneControl={inTwin ? <ZoneToggle /> : undefined}
+            sim={inTwin ? { farm, fields: twin.fields, cropA, cropB, pending, runSource, frame, getCamera: () => globe.current?.getCamera() ?? null } : undefined}
+          />
           </ErrorBoundary>
         </motion.div>
       )}

@@ -34,6 +34,18 @@ test.describe("farm view: future features", () => {
     await expect(tid(page, "lens-button")).toBeVisible();
   });
 
+  test("lens menu remains clickable outside the scrollable toolbar", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await tid(page, "mode-future").click();
+    await tid(page, "lens-button").click();
+    await tid(page, "lens-soiltest").click();
+    await expect(tid(page, "lens-chip")).toContainText("Soil tests");
+    await page.getByRole("button", { name: "Hide farm controls" }).click();
+    await expect(tid(page, "lens-chip")).toBeHidden();
+    await page.getByRole("button", { name: "Show farm controls" }).click();
+    await expect(tid(page, "lens-chip")).toBeVisible();
+  });
+
   test("what-if changes propagate to the pills", async ({ page }) => {
     await tid(page, "mode-future").click();
     const before = await tid(page, "future-pill-rain").innerText();

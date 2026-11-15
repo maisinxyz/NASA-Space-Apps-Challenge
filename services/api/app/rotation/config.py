@@ -52,6 +52,15 @@ WEIGHT_PRESETS = {
 
 # Existing rotation per curated site (`existing_rotation: "preset"`). Typical regional rotations, not this farm's records.
 # TODO(verify) each with the farm or a local extension agronomist (PRD §22).
+# BC twins: neither farm publishes its crop list (checked 2026-11-15). The cash-crop order is not a
+# quoted rotation. Fall rye after a late vegetable harvest is Table 18 of the Soil Management
+# Handbook for the Lower Fraser Valley (BC Ministry of Agriculture, Fisheries and Food, 1991, 2nd ed.):
+# https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/agriculture-and-seafood/agricultural-land-and-environment/soil-nutrients/610000-1_soil_mgmt_handbook_fraservalley.pdf
+# Cabbage and lettuce planting months are from WSU Snohomish, Fall and Winter Vegetable Gardens
+# for Western Washington (read 2026-11-15): ballhead cabbage uses the Brussels-sprout culture
+# (direct seed by 1 July or transplant by 1 August); head and romaine lettuce are sown in July.
+# https://extension.wsu.edu/snohomish/2013/12/18/fall-and-winter-vegetable-gardens-for-western-washington/
+# TODO(verify) the year order and the Fraser Valley dates with the farms. Western Washington is not Langley.
 F = "fallow"
 SITE_PRESETS = {
     "site_usda_barc": {"name": "Corn, soybean, winter wheat (no cover crops)", "slots": [
@@ -60,6 +69,10 @@ SITE_PRESETS = {
         (1, "crop_maize", F), (2, "crop_alfalfa", F), (3, "crop_alfalfa", F)]},
     "site_ucdavis_oakville": {"name": "Winter wheat then fallow (dryland)", "slots": [
         (1, "crop_wheat_winter", F), (2, F, F)]},
+    "site_ubc_farm": {"name": "Typical vegetable rotation (not this farm's records)", "slots": [
+        (1, "crop_cabbage", "crop_rye_cover"), (2, "crop_lettuce", "crop_rye_cover")]},
+    "site_kpu_langley": {"name": "Typical vegetable rotation (not this farm's records)", "slots": [
+        (1, "crop_cabbage", "crop_rye_cover"), (2, "crop_lettuce", "crop_rye_cover")]},
 }
 DEFAULT_PRESET = {"name": "Corn, soybean (no cover crops)", "slots": [(1, "crop_maize", F), (2, "crop_soybean", F)]}
 

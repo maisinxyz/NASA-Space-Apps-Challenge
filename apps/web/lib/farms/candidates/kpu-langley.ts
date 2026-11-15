@@ -15,13 +15,17 @@ export const KPU_LANGLEY: Candidate = {
     owner: "Kwantlen Polytechnic University",
     country: "Canada",
     locality: "Langley, British Columbia",
-    lon: -122.645172,
-    lat: 49.109162,
+    lon: -122.639547,
+    lat: 49.120367,
     tier: "explore",
     sourceUrl: "https://www.kpu.ca/",
     coordsVerified: false,
     radiusM: 1500,
     pin: "plot-grid",
+    // Start view on the horticulture field, not the campus buildings. Target 49°07'13.32"N 122°38'22.37"W (user-supplied
+    // from a map, 2026-11-14), ~1.3 km NNE of the campus point; the farm centre/pin were moved there so the framing
+    // target stays inside the camera box. TODO(verify) heading/range in /dev/trace (Set framing).
+    framing: { lon: -122.639547, lat: 49.120367, rangeM: 1300, pitchDeg: -30, headingDeg: 30 },
   },
   privacy: "public",
   expected3d: "high",

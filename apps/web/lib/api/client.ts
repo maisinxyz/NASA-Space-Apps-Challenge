@@ -2,11 +2,16 @@
 //   NEXT_PUBLIC_API_MODE=mock (default): static fixtures under /mock (copied by `pnpm sync-mocks`).
 //   NEXT_PUBLIC_API_MODE=live: NEXT_PUBLIC_API_BASE (default http://localhost:8000/api/v1).
 import type {
+  ClimateOutlook,
+  CropCatalog,
   CropTemplate,
   DiffStats,
   ErrorBody,
   ErrorCode,
   EvidenceBundle,
+  Forecast,
+  ForecastExposure,
+  ForecastRequest,
   Insight,
   LayerCatalog,
   Note,
@@ -14,9 +19,11 @@ import type {
   ProgressEvent,
   Provenance,
   Rotation,
+  Scenario,
   ScanCreated,
   ScanStatus,
   SimulationRequest,
+  SensitivityGrid,
   SimulationStatus,
   Site,
   Storm,
@@ -286,4 +293,67 @@ export async function createNote(body: NoteCreate): Promise<Note> {
   const note: Note = { ...body, id: `note_${String(mockNotes.length + 1).padStart(3, "0")}`, created_at: new Date().toISOString() };
   mockNotes.push(note);
   return note;
+}
+
+// ---------------------------------------------------------------- forecast (v1.2)
+// Mock mode serves the fixtures under /mock/forecast (one per curated site, e.g. site_usda_barc);
+// other sites 404 like the API would for an unknown site.
+const sid = (id: string) => encodeURIComponent(id);
+
+export const getClimateOutlook = (siteId: string, scenario?: Scenario): Promise<ClimateOutlook> =>
+  isMock ? mock(`forecast/${siteId}_climate_outlook.json`) : live(`/sites/${sid(siteId)}/climate-outlook${scenario ? `?${q({ scenario })}` : ""}`);
+
+export const getForecastExposure = (siteId: string, crops?: string[]): Promise<ForecastExposure> =>
+  isMock ? mock(`forecast/${siteId}_exposure.json`) : live(`/sites/${sid(siteId)}/exposure${crops?.length ? `?${q({ crops: crops.join(",") })}` : ""}`);
+
+export const getCropCatalog = (opts: { category?: string; siteId?: string } = {}): Promise<CropCatalog> => {
+  if (isMock) return mock("crop_catalog.json");
+  const params: Record<string, string> = {};
+  if (opts.category) params.category = opts.category;
+  if (opts.siteId) params.site_id = opts.siteId;
+  return live(`/crop-catalog${Object.keys(params).length ? `?${q(params)}` : ""}`);
+};
+
+// The response is deterministic for a given request, so identical requests reuse the first result.
+const forecastCache = new Map<string, Promise<unknown>>();
+const MAX_CACHED = 50;
+
+function cached<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const hit = forecastCache.get(key);
+  if (hit) return hit as Promise<T>;
+  const p = run().catch((err) => {
+    forecastCache.delete(key); // never cache a failure
+    throw err;
+  });
+  if (forecastCache.size >= MAX_CACHED) forecastCache.delete(forecastCache.keys().next().value as string);
+  forecastCache.set(key, p);
+  return p;
+}
+
+export const getForecast = (siteId: string, body: ForecastRequest): Promise<Forecast> =>
+  cached(`f:${siteId}:${JSON.stringify(body)}`, () =>
+    isMock ? mock<Forecast>(`forecast/${siteId}_forecast.json`) : live<Forecast>(`/sites/${sid(siteId)}/forecast`, postJson(body)),
+  );
+
+/**
+ * Pre-built engine output served as a static file (apps/web/public/prebuilt, written by scripts/build_*_prebuilt.py).
+ * It is real engine output from seeded data, not a mock fixture; the UI labels it "Pre-built". 404 = none for this site.
+ */
+export const getPrebuiltForecast = (siteId: string): Promise<Forecast> =>
+  cached(`p:${siteId}`, () => request<Forecast>(`/prebuilt/${siteId}_forecast.json`));
+
+export const getSensitivity = (siteId: string, body: ForecastRequest): Promise<SensitivityGrid> =>
+  cached(`s:${siteId}:${JSON.stringify(body)}`, () =>
+    isMock ? mock<SensitivityGrid>(`forecast/${siteId}_sensitivity.json`) : live<SensitivityGrid>(`/sites/${sid(siteId)}/forecast/sensitivity`, postJson(body)),
+  );
+
+/** Trailing-edge debounce for slider and input changes. Call `.cancel()` on unmount. */
+export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms = 250) {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const d = (...args: A) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+  d.cancel = () => clearTimeout(t);
+  return d;
 }

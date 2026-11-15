@@ -16,6 +16,8 @@ import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { type MutableRefObject, Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
+import { cameraActionForKey, type CameraAction } from "@/lib/farm-view/camera-controls";
+
 import type { Farm, PinHover } from "@/components/globe/types";
 
 import { Pin3D, pinBox } from "./Pin3D";
@@ -824,8 +826,8 @@ export function HeroEarth(props: Props) {
     motion.current.tilt = a.tilt;
   }, []);
 
-  // Turn a farm to face the viewer (eased arc along the shortest way round); the selected farm turns on selection.
-  const { selectedId, farms } = props;
+  // Turn a farm to face the viewer (eased arc along the shortest way round).
+  const { farms } = props;
   const face = (f: Farm | undefined) => {
     if (!f) return;
     const m = motion.current;
@@ -908,7 +910,7 @@ export function HeroEarth(props: Props) {
 
   // Drag: rotate under the cursor (1 / radius-in-px radians per px), inertia after release.
   const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("[data-pin]")) return;
+    if ((e.target as HTMLElement).closest("[data-pin], [data-camera-controls]")) return;
     const m = motion.current;
     if (m.dive) return;
     m.dragging = true;
@@ -979,10 +981,33 @@ export function HeroEarth(props: Props) {
     if (started.current) props.onDragEnd();
   };
 
+  const moveCamera = (action: CameraAction) => {
+    const m = motion.current;
+    if (m.dive) return;
+    m.fly = null;
+    m.vSpin = 0;
+    m.vTilt = 0;
+    if (action.endsWith("left")) m.spin -= 0.14;
+    if (action.endsWith("right")) m.spin += 0.14;
+    if (action.endsWith("up")) m.tilt = THREE.MathUtils.clamp(m.tilt + 0.12, -MAX_TILT, MAX_TILT);
+    if (action.endsWith("down")) m.tilt = THREE.MathUtils.clamp(m.tilt - 0.12, -MAX_TILT, MAX_TILT);
+    if (props.zoomEnabled && action === "zoom-in") m.zoomTo = THREE.MathUtils.clamp(m.zoomTo * 0.85, ZOOM.min, ZOOM.max);
+    if (props.zoomEnabled && action === "zoom-out") m.zoomTo = THREE.MathUtils.clamp(m.zoomTo * 1.18, ZOOM.min, ZOOM.max);
+    props.onDragStart();
+    props.onDragEnd();
+  };
+
   return (
     <div
       ref={wrap}
       className="absolute inset-0 cursor-grab touch-none bg-black active:cursor-grabbing"
+      tabIndex={props.zoomEnabled ? 0 : -1}
+      aria-label="Earth camera. Arrow keys rotate, plus and minus zoom."
+      onKeyDown={(e) => {
+        if (!props.zoomEnabled || e.altKey || e.ctrlKey || e.metaKey || (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-camera-controls]"))) return;
+        const action = cameraActionForKey(e.key, e.shiftKey);
+        if (action) { e.preventDefault(); moveCamera(action); }
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -997,6 +1022,17 @@ export function HeroEarth(props: Props) {
           <Scene {...props} motion={motion} pinEls={pinEls} pinAlpha={pinAlpha} pinOff={pinOff} leaderEls={leaderEls} labels={labels} hovered={hovered} places={places} />
         </Suspense>
       </Canvas>
+      {props.zoomEnabled && (
+        <details data-camera-controls className="absolute right-6 bottom-[140px] z-[120] max-w-[21rem] rounded-xl border border-white/20 bg-black/85 p-3 text-xs text-white">
+          <summary className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">Earth camera controls</summary>
+          <p className="mt-2 mb-2">Arrow keys rotate · + / − zoom</p>
+          <div className="flex flex-wrap gap-1">
+            {([ ["pan-left", "Rotate left"], ["pan-right", "Rotate right"], ["pan-up", "Rotate up"], ["pan-down", "Rotate down"], ["zoom-in", "Zoom in"], ["zoom-out", "Zoom out"] ] as const).map(([action, label]) => (
+              <button key={action} type="button" onClick={() => moveCamera(action)} className="rounded border border-white/25 px-2 py-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{label}</button>
+            ))}
+          </div>
+        </details>
+      )}
       {/* Vignette: darkens the frame edges so the Earth holds the centre. */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.32) 100%)" }} aria-hidden />
       {/* Glass cursor: a small lens ring over the Earth (brightens and saturates what is under it). */}
@@ -1014,7 +1050,7 @@ export function HeroEarth(props: Props) {
             ref={(el) => {
               if (el) places.current.els[i] = el;
             }}
-            className="absolute left-0 top-0 whitespace-nowrap pb-3 text-[10.5px] font-medium uppercase tracking-[0.12em] text-[rgba(255,253,226,0.74)] after:absolute after:bottom-0 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-[rgba(255,253,226,0.7)] after:content-['']"
+            className="absolute left-0 top-0 whitespace-nowrap pb-3 text-[12px] font-medium uppercase tracking-[0.12em] text-[rgba(255,253,226,0.74)] after:absolute after:bottom-0 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-[rgba(255,253,226,0.7)] after:content-['']"
             style={{ opacity: 0, textShadow: "0 1px 3px rgba(0,0,0,0.9)", fontFamily: "'Satoshi', var(--font-hero-ui), sans-serif" }}
           />
         ))}

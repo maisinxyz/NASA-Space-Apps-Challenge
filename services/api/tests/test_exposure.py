@@ -17,20 +17,123 @@ def test_spatial_limits_do_not_invent_a_value():
 
 
 def test_ubc_exposure_is_limited_and_has_no_zones():
+    from app.features import seeds
+    from app.features.zones import read_elevation
+
     doc = exposure_report("site_ubc_farm")
     contract.validate_schema(doc, "ForecastExposure")
-    assert doc["data_mode"] == "limited_data"
-    assert doc["crops"] == ["crop_maize", "crop_soybean"]
-    assert doc["zones"] == []
+    assert doc["crops"] == ["crop_cabbage", "crop_rye_cover", "crop_lettuce"]
     assert doc["bare_field_windows"]
-    assert {w["source"] for w in doc["bare_field_windows"]} == {"rotation_plan"}
-    assert all(w["scene_count"] is None for w in doc["bare_field_windows"])
+    ndvi = seeds.load_ndvi("site_ubc_farm")
+    dem, _which = read_elevation("site_ubc_farm")
+    if ndvi is None and dem is None and seeds.load_smap("site_ubc_farm") is None and seeds.load_ecostress("site_ubc_farm") is None and seeds.load_grace("site_ubc_farm") is None:
+        assert doc["data_mode"] == "limited_data"
+        assert doc["zones"] == []
+        assert {w["source"] for w in doc["bare_field_windows"]} == {"rotation_plan"}
+        assert all(w["scene_count"] is None for w in doc["bare_field_windows"])
+    else:
+        if ndvi is not None:
+            assert any(w["source"] == "ndvi" for w in doc["bare_field_windows"])
+        if dem is not None:
+            assert doc["zones"]
+            assert any(z["kind"] in {"erosion_risk", "frost_pocket"} for z in doc["zones"])
+        if seeds.load_smap("site_ubc_farm") is not None:
+            assert sum(z["kind"] == "water_stress" for z in doc["zones"]) == 1
     hazards = {h for row in doc["vulnerable_seasons"] for h in row["hazards"]}
     assert hazards <= {"heat", "drought", "frost"}
     assert "waterlogging" not in hazards
     assert all(row["growth_stage"] == "in_ground" for row in doc["vulnerable_seasons"])
-    assert any("not drawn" in note.lower() or "were not drawn" in note for note in doc["resolution_notes"])
-    assert any("water-stress" in note for note in doc["resolution_notes"])
+    if dem is None:
+        assert any("not drawn" in note.lower() or "were not drawn" in note for note in doc["resolution_notes"])
+    if seeds.load_smap("site_ubc_farm") is None and seeds.load_ecostress("site_ubc_farm") is None:
+        assert any("water-stress" in note for note in doc["resolution_notes"])
+
+
+def _hill() -> dict:
+    import numpy as np
+
+    elev = np.full((8, 8), 40.0)
+    elev[6:8, 4:8] = 5.0
+    elev[0:3, 0:3] = 80.0
+    return {
+        "elevation": elev.tolist(),
+        "res_m": 30.0,
+        "origin": [-76.12, 39.03],
+        "crs": "EPSG:4326",
+        "bare_earth": False,
+        "native_resolution_m": 30,
+    }
+
+
+def _weekly(low_weeks: int, low: float, high: float) -> dict:
+    values = [low if week < low_weeks else high for week in range(52)]
+    return {
+        "unit": "m3/m3",
+        "native_resolution_m": 9000,
+        "weekly": [{"year": 2020, "values": values, "n_obs": [4] * 52}],
+    }
+
+
+def test_dem_zones_cover_slope_frost_and_one_coarse_moisture_value(monkeypatch):
+    from app.features.zones import zones_from_elevation
+    from app.services import features as features_svc
+
+    smap = _weekly(12, 0.05, 0.3)
+    zones, caveats = zones_from_elevation(_hill(), smap)
+    kinds = [zone["kind"] for zone in zones]
+    assert "erosion_risk" in kinds and "frost_pocket" in kinds
+    water = [zone for zone in zones if zone["kind"] == "water_stress"]
+    assert len(water) == 1
+    assert "9000" in water[0]["resolution_note"] and "Sub-field" in water[0]["resolution_note"]
+    assert water[0]["outline"]["type"] == "Polygon"
+    assert any("Canopy or buildings" in line for line in caveats)
+    for zone in zones:
+        assert zone["id"] and zone["area_ha"] >= 0.05
+        ring = zone["outline"]["coordinates"][0]
+        assert len(ring) >= 4 and ring[0] == ring[-1]
+
+    monkeypatch.setattr("app.features.seeds.load_dem", lambda _site: _hill())
+    monkeypatch.setattr("app.features.seeds.load_smap", lambda _site: smap)
+    body = features_svc.zones("site_ubc_farm")
+    contract.validate_schema(body, "ZoneCollection")
+    assert sum(zone["kind"] == "water_stress" for zone in body["zones"]) == 1
+
+
+def test_bare_earth_true_has_no_canopy_caveat():
+    from app.features.zones import zones_from_elevation
+
+    doc = _hill()
+    doc["bare_earth"] = True
+    _zones, caveats = zones_from_elevation(doc, None)
+    assert not any("Canopy or buildings" in line for line in caveats)
+    assert not any(zone["kind"] == "water_stress" for zone in _zones)
+
+
+def test_ndvi_cross_check_counts_cloud_free_scenes(monkeypatch):
+    from app.features import seeds
+
+    values = [0.1 if week < 10 else 0.8 for week in range(52)]
+    ndvi = {"unit": "1", "weekly": [{"year": 2020, "values": values, "n_obs": [2] * 52}]}
+    monkeypatch.setattr(seeds, "load_ndvi", lambda _site: ndvi)
+    doc = exposure_report("site_ubc_farm")
+    contract.validate_schema(doc, "ForecastExposure")
+    ndvi_windows = [row for row in doc["bare_field_windows"] if row["source"] == "ndvi"]
+    assert len(ndvi_windows) == 1
+    assert ndvi_windows[0]["weeks"] == list(range(10))
+    assert ndvi_windows[0]["scene_count"] == 20
+    assert any(row["source"] == "rotation_plan" for row in doc["bare_field_windows"])
+    assert doc["zones"] == []
+
+
+def test_smap_dryness_is_supporting_evidence_only(monkeypatch):
+    from app.features import seeds
+
+    monkeypatch.setattr(seeds, "load_smap", lambda _site: _weekly(8, 0.05, 0.4))
+    doc = exposure_report("site_ubc_farm")
+    assert doc["vulnerable_seasons"]
+    assert any("SMAP" in line for line in doc["caveats"])
+    assert all("waterlogging" not in row["hazards"] for row in doc["vulnerable_seasons"])
+    assert doc["zones"] == []
 
 
 def test_exposure_route_rejects_unknown_crop_and_site():

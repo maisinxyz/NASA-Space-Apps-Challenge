@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from app.features import config as C
 from app.twin import config as TC
-from app.twin.explain.uncertainty import gap_notes
+from app.twin.explain.uncertainty import gap_notes, quality_issues
 from app.twin.score import review_flags, unrated_crops
 from app.twin.types import Plan, ForecastRequest
 
@@ -81,6 +81,14 @@ def site_flags(strategy_id: str, site_id: str) -> list[dict]:
             "severity": "info",
             "text": note,
             "trigger": {"layer": "satellite_seed", "rule": "layer_not_retrieved"},
+        })
+    for index, issue in enumerate(quality_issues(site_id)):
+        flags.append({
+            "id": f"{strategy_id}_quality_{issue['rule']}_{index}",
+            "strategy_id": strategy_id,
+            "severity": "info",
+            "text": issue["text"],
+            "trigger": {"layer": issue["layer"], "rule": issue["rule"]},
         })
     return flags
 

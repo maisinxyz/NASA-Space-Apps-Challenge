@@ -92,3 +92,43 @@ Catalog rows with a null season window or null Kc (most of the new vegetable row
 ## 2026-11-15 — Session C work, W9 fixture note
 
 `POST /forecast` and `POST /forecast/sensitivity` are mounted, and health reports `1.2.0`. The shape examples in `packages/contracts/fixtures/forecast/` were left in place. `test_forecast_contract.py` requires those files to match `fixtures_lib` and to include a `yield_t_ha` series and a CAD `income_estimate`. The engine omits yield when `reference_yield` is null and leaves income null when no per-tonne price was entered. Replacing the fixture with engine output fails that test. `scripts/build_forecast_fixtures.py` writes the engine documents under `data/cache/forecast/engine/`.
+
+## 2026-11-15 — Session B, EB1 satellite features
+
+`ndvi`, `ndvi_anomaly`, and `smap_anomaly` are filled only when `load_ndvi` / `load_smap` return a weekly list with a unit. `sources_agree` stays null until SMAP overlaps POWER. ECOSTRESS is used for `limited_data` and a source row when the sidecar has a licence. It is not a feature id, because the contract names only the three series above. Please do not add an ET feature id without a contract change.
+
+A source row is copied from `<layer>.meta.json` and only when `source_name`, `license`, and `attribution` are already filled. Session A: those three sidecar fields are what puts the product on `sources`.
+
+## 2026-11-15 — Session B, EB2 elevation filename
+
+Zones prefer `data/seed/<site_id>/dem_hrdem.json.gz` when that file exists, then `dem.json.gz` via `load_dem`. No new loader was added in `seeds.py`. The object needs `elevation`, `res_m`, `origin` (lon, lat of the upper-left cell centre), and `bare_earth`. SMAP water stress is one farm polygon. A native resolution coarser than the clip is stated in `resolution_note`.
+
+## 2026-11-15 — Session B, EB3 hindcast placement
+
+Correlation and bias for SMAP, ECOSTRESS, and IMERG are sentences inside `UncertaintyLayer.resolution_note` (unit, basis derived, confidence low, week count). `ForecastUncertainty` has no hindcast field, and the contract was not changed. GRACE is a layer when the file has `native_resolution_m`, and it is not scored. `imerg.json.gz` is read from disk because `seeds.py` has no `load_imerg`. A loader is optional. The file uses the same weekly object as NDVI.
+
+## 2026-11-15 — Session B, EB4 climate deltas are not wired through forecast.py
+
+`build_members` now takes keyword `site_id` and `climate_source`. When `climate_source` is `cmip6_delta` and `data/seed/<site_id>/cmip6_delta.json.gz` exists, the ramp uses that file's seasonal p50. `forecast.py` does not pass those keywords yet, so a forecast still uses the slider. Please pass `site_id=prepared` site and `climate_source=req.climate_source` into `build_members`. `explain/grid.py` should keep the slider, because the sensitivity axes are the slider.
+
+Contract scenario names stay `baseline`, `wetter_winters`, `drier_summers`, and `both`. Requested names that the contract does not have: `ssp245` and `ssp585`. Until those exist, `drier_summers` and `wetter_winters` read the file key `ssp245`, and `both` reads `ssp585`. `baseline` applies no stored delta.
+
+No `cmip6_delta.json.gz` was written. The AWS registry says CC0 as of September 2022 and the June 2025 tech note still says a file's `cmip6_license` may restrict use. `scripts/seed_cmip6/build.py` exits 2.
+
+## 2026-11-15 — Session C, EC1 KPU Langley
+
+`site_kpu_langley` is in `CURATED_SITES`. POWER geometry is [-122.645, 49.109, 148.97]. UBC Farm is [-123.238, 49.252, 565.27]. The 1991 `T2M` series differ. There is no `shares_power_cell_with` flag.
+
+SoilGrids 2.0 returned null means at 49.1093, -122.6454 (`data/seed/site_kpu_langley/soil.json`). The feature table has `soil: null` and `quality.limited_data: true`. Session B owns `tests/test_features.py`. One assertion there now accepts that case so a real empty SoilGrids cell is not treated as a failed seed. Please keep that branch if you edit the test.
+
+`GET /api/v1/sites/site_kpu_langley` is 404 because the id is not in the mock `sites.json`. `/features` and `/zones` return `data_mode: seed`. No mock body won.
+
+`forecast()` in `app/services/forecast.py` raises `DATA_SOURCE_UNAVAILABLE` ("No soil seed and no soil override for this site.") when `load_soil` is null. That is the KPU case. Please let a curated site with a stored null SoilGrids summary run, and say the soil is missing, instead of refusing the forecast. `tests/test_climate_outlook.py` skips a site with no soil summary in the budget loop until that exists.
+
+## 2026-11-15 — Session C, EC2 presets and the mock site card
+
+`SITE_PRESETS` for `site_ubc_farm` and `site_kpu_langley` is `Typical vegetable rotation (not this farm's records)`: year 1 `crop_cabbage` + `crop_rye_cover`, year 2 `crop_lettuce` + `crop_rye_cover`. The cash-crop order is **TODO(verify)**. Sources are the 1991 Fraser Valley handbook Table 18 and the WSU Snohomish fall-vegetable page, cited in `app/rotation/config.py`.
+
+`packages/contracts/fixtures/sites.json` lists both ids as `(mock)` with `terr_mock_hills`. `GET /api/v1/sites/site_kpu_langley` returns that card (HTTP 200). The earlier EC1 sentence that this route was 404 is no longer true. `/features` and `/zones` stay `data_mode: seed` because the site is curated. The fixture was not edited. Please decide whether the site resource should stop returning the mock card for a curated id.
+
+`app/rotation/engine.py` and `app/rotation/evidence.py` now skip a crop that is not in `traits.json` instead of raising `KeyError`. Cabbage and lettuce have no day-of-year window yet, so the v1.1 scorer does not time them. Fall rye still is. `forecast._assumptions` adds one line with the preset name. Please keep that line.

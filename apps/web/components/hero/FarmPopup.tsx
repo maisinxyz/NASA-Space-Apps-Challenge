@@ -24,7 +24,7 @@ const photoOf = (f: FarmInfo) => f.image ?? null;
 function TierChip({ farm }: { farm: FarmInfo }) {
   const twin = farm.tier === "twin";
   return (
-    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[10.5px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#ffc857" : "rgba(255,255,255,0.78)" }}>
+    <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/[0.14] bg-black/60 px-2 py-[3px] text-[12px] font-semibold tracking-[0.06em] uppercase backdrop-blur-md" style={{ color: twin ? "#ffc857" : "rgba(255,255,255,0.78)" }}>
       <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: twin ? "#ffc857" : "rgba(255,255,255,0.55)" }} />
       {twin ? "Digital twin" : "Explore only"}
     </span>
@@ -47,7 +47,7 @@ function Photo({ farm }: { farm: FarmInfo }) {
       )}
       <TierChip farm={farm} />
       {photo && !failed && photo.credit && (
-        <p className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent px-2.5 pt-5 pb-1.5 text-[10px] leading-tight text-white/[0.72]" title={photo.credit}>
+        <p className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent px-2.5 pt-5 pb-1.5 text-[12px] leading-tight text-white/[0.72]" title={photo.credit}>
           {photo.credit}
         </p>
       )}
@@ -74,9 +74,30 @@ function useWarmPhotoOnHover() {
 
 export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInfo | null; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
   useWarmPhotoOnHover();
+  const opener = useRef<HTMLElement | null>(null);
+  const previousFarm = useRef<string | null>(null);
+  const pressedPin = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const rememberPin = (event: PointerEvent) => {
+      pressedPin.current = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-pin]") : null;
+    };
+    const clearPin = () => { pressedPin.current = null; };
+    window.addEventListener("pointerdown", rememberPin, true);
+    window.addEventListener("keydown", clearPin, true);
+    return () => {
+      window.removeEventListener("pointerdown", rememberPin, true);
+      window.removeEventListener("keydown", clearPin, true);
+    };
+  }, []);
+  if (farm && farm.id !== previousFarm.current && typeof document !== "undefined") {
+    opener.current = pressedPin.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    pressedPin.current = null;
+  }
+  previousFarm.current = farm?.id ?? null;
+  const close = () => { onClose(); opener.current?.focus(); };
   return (
     <AnimatePresence>
-      {farm && <Card key={farm.id} farm={farm} reduced={reduced} onClose={onClose} onDescend={onDescend} />}
+      {farm && <Card key={farm.id} farm={farm} reduced={reduced} onClose={close} onDescend={onDescend} />}
     </AnimatePresence>
   );
 }
@@ -84,14 +105,9 @@ export function FarmPopup({ farm, reduced, onClose, onDescend }: { farm: FarmInf
 function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: boolean; onClose(): void; onDescend(id: string): void }) {
   const box = useRef<HTMLDivElement>(null);
   const pointer = useRef<HTMLSpanElement>(null);
-  const descendBtn = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (farm) {
-      const frame = requestAnimationFrame(() => descendBtn.current?.focus());
-      return () => cancelAnimationFrame(frame);
-    }
-  }, [farm]);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const focused = useRef(false);
+  const focusFrame = useRef<number | null>(null);
   const last = useRef<{ x: number; y: number } | null>(null);
 
   // Follow this farm's pin (not another's: a replaced card keeps its last spot while it leaves).
@@ -104,6 +120,17 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       const p = last.current;
       // Hidden while the pin is round the back of the Earth.
       el.style.visibility = p && t?.id === farm.id ? "visible" : "hidden";
+      if (p && t?.id === farm.id && !focused.current) {
+        if (focusFrame.current === null) {
+          focusFrame.current = requestAnimationFrame(() => {
+            focusFrame.current = null;
+            const button = closeButton.current;
+            if (!button || button.closest("[inert]")) return;
+            button.focus({ preventScroll: true });
+            focused.current = document.activeElement === button;
+          });
+        }
+      }
       if (!p) return;
       // The card and its button move as one unit; `h` is the whole unit.
       const h = el.offsetHeight;
@@ -131,22 +158,31 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       el.style.setProperty("--oy", above ? "100%" : "0%");
     };
     place();
-    return trackBus.subscribe(place);
+    const unsubscribe = trackBus.subscribe(place);
+    return () => {
+      unsubscribe();
+      if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
+    };
   }, [farm.id]);
 
-  // Escape or a press anywhere outside the card (and outside a pin, which swaps the card) closes it.
+  // Escape or a press outside closes the card. Sharing keeps the selected farm intact.
   useEffect(() => {
     const down = (e: PointerEvent) => {
       const el = e.target instanceof Element ? e.target : null;
-      if (!el || box.current?.contains(el) || el.closest("[data-pin]")) return;
+      if (!el || box.current?.contains(el) || el.closest("[data-pin], [data-share-view]")) return;
       onClose();
     };
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    };
     window.addEventListener("pointerdown", down, true);
-    window.addEventListener("keydown", key);
+    document.addEventListener("keydown", key, true);
     return () => {
       window.removeEventListener("pointerdown", down, true);
-      window.removeEventListener("keydown", key);
+      document.removeEventListener("keydown", key, true);
     };
   }, [onClose]);
 
@@ -163,6 +199,7 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
       >
         <section aria-label={`${farm.name}, ${where}`} className="relative block w-full overflow-hidden rounded-[16px] border border-white/[0.1] bg-[#07090d]/92 text-left shadow-[0_18px_44px_rgba(0,0,0,0.55)] backdrop-blur-md">
           <Photo farm={farm} />
+          <button ref={closeButton} type="button" onClick={onClose} aria-label="Close farm details" className="absolute top-2 right-2 rounded-full bg-black/90 px-3 py-2 text-xs text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">Close</button>
           <span className="block px-4 pt-3.5 pb-4">
             <span className="line-clamp-2 text-[15px] leading-snug font-semibold tracking-[-0.005em] text-white/[0.96]">{farm.name}</span>
             <span className="mt-1 flex items-center gap-1.5 text-[12px] leading-snug" style={{ color: color.accent }}>
@@ -172,13 +209,14 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
               </svg>
               <span className="truncate">{where}</span>
             </span>
+            <span className="mt-2 block text-[12px] font-semibold text-white">{farm.tier === "twin" ? "Digital twin · scenarios and comparison" : "Explore landscape · no simulation"}</span>
             <span className="mt-2.5 line-clamp-2 text-[12px] leading-[1.5] text-white/[0.62]">{line}</span>
             {farm.tier === "explore" && (
               <span className="mt-2 block rounded bg-amber-500/10 px-2 py-1 text-[11px] leading-snug font-medium text-amber-200/90 border border-amber-500/20">
                 Simulation available on Cornell &amp; Beltsville only (2 of 14 farms).
               </span>
             )}
-            <span className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.07] pt-2.5 text-[11px] text-white/[0.5]">
+            <span className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.07] pt-2.5 text-[12px] text-white/[0.5]">
               <span className="tabular-nums">
                 {deg(farm.lat, "N", "S")}, {deg(farm.lon, "E", "W")}
               </span>
@@ -187,7 +225,6 @@ function Card({ farm, reduced, onClose, onDescend }: { farm: FarmInfo; reduced: 
           </span>
         </section>
         <motion.button
-          ref={descendBtn}
           type="button"
           onClick={() => onDescend(farm.id)}
           aria-label={farm.tier === "twin" ? `Enter digital twin for ${farm.name}` : `Explore ${farm.name} in 3D (simulation unavailable)`}

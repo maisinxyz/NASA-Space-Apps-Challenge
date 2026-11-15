@@ -27,7 +27,7 @@ IMMUTABLE = "public, max-age=31536000, immutable"
 JSON_GETS = [
     ("/health", "/health"),
     ("/sites", "/sites"),
-    ("/sites/site_mock_okanagan", "/sites/{siteId}"),
+    ("/sites/site_ubc_farm", "/sites/{siteId}"),
     ("/scans/scan_mock_001", "/scans/{scanId}"),
     ("/scans/scan_mock_fail", "/scans/{scanId}"),
     (f"/terrain/{T}", "/terrain/{terrainId}"),

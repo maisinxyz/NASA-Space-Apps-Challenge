@@ -2,16 +2,20 @@
 
 Decision D2 (2026-11-15): NASA NEX-GDDP-CMIP6 publishes daily ``pr``, ``tasmax`` and
 ``tasmin`` on a 0.25 degree grid that includes UBC Farm. The license statements do
-not agree (see ``docs/progress/FT-W3.md``), so no delta seed is stored and this
-module does not apply ``cmip6_delta``. The scenario is ``history_resample``:
-observed years, shifted by the preset, with a linear ramp from year 0 to year 10
-on the heat-stress series. Observed Theil-Sen trends are context only.
+not agree (see ``docs/progress/FT-W3.md`` and ``docs/progress/FT-EB4.md``), so no
+delta seed is stored. When ``climate_source`` is ``cmip6_delta`` and
+``cmip6_delta.json.gz`` exists, stored seasonal deltas replace the slider.
+Otherwise the scenario stays ``history_resample``: observed years, shifted by the
+preset, with a linear ramp from year 0 to year 10 on the heat-stress series.
 """
 
 from __future__ import annotations
 
+import gzip
 import json
 import math
+from dataclasses import replace
+from functools import lru_cache
 
 import numpy as np
 from scipy import stats
@@ -39,6 +43,15 @@ SIGNIFICANCE_ALPHA = 0.05
 # history_resample until a verified per-year delta file exists. Do not switch
 # this without the license note in docs/progress/FT-W3.md.
 CLIMATE_SOURCE = "history_resample"
+# Contract presets only. SSP names are not scenario enums. See forecast-requests.md.
+# baseline applies no stored delta. The other three pick a key inside the file.
+_PRESET_DELTA_KEY = {
+    "baseline": None,
+    "drier_summers": "ssp245",
+    "wetter_winters": "ssp245",
+    "both": "ssp585",
+}
+_SEASON_ORDER = ("winter", "spring", "summer", "fall")
 # Northern last-spring / first-fall split. Southern hemisphere uses 1 January,
 # six months from 1 July, the same shift as pipeline.season_months.
 # TODO(verify) this calendar split. The 0 degC day itself is THRESHOLDS["frost_c"].
@@ -87,7 +100,7 @@ def preset_crop_ids(site_id: str) -> list[str]:
     """Crops in the site's existing-rotation preset, fallow removed, first-seen order.
 
     ``GET /climate-outlook`` has no crops query. This is the same preset exposure
-    uses when ``crops`` is omitted. UBC Farm is not in ``SITE_PRESETS``.
+    uses when ``crops`` is omitted. UBC Farm and KPU Langley use the vegetable preset.
     """
 
     preset = SITE_PRESETS.get(site_id, DEFAULT_PRESET)
@@ -138,12 +151,107 @@ def frost_dates_for_year(month: np.ndarray, tmin: np.ndarray, frost_c: float, la
     return last_spring, first_fall
 
 
-def build_climate_outlook(site_id: str, scenario_name: str = "baseline") -> dict:
+@lru_cache(maxsize=32)
+def load_cmip6_delta(site_id: str) -> dict | None:
+    """Stored seasonal deltas, or None. A missing file is not a zero-change climate."""
+
+    path = seeds.SEED_DIR / site_id / "cmip6_delta.json.gz"
+    if not path.is_file():
+        return None
+    with gzip.open(path, "rt", encoding="utf-8") as handle:
+        doc = json.load(handle)
+    if not isinstance(doc, dict) or not isinstance(doc.get("scenarios"), dict):
+        return None
+    return doc
+
+
+def _p50(value) -> float | None:
+    raw = value.get("p50") if isinstance(value, dict) else value
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        return None
+    if not math.isfinite(float(raw)):
+        return None
+    return float(raw)
+
+
+def season_deltas(doc: dict | None, preset: str) -> tuple[dict[str, float], dict[str, float]] | None:
+    """Seasonal temperature (degC) and precipitation (percent) p50 for one contract preset.
+
+    None when the preset is baseline, the file has no matching scenario, or a
+    value sits outside the contract slider. The caller then keeps the slider.
+    """
+
+    key = _PRESET_DELTA_KEY.get(preset)
+    if doc is None or key is None:
+        return None
+    block = (doc.get("scenarios") or {}).get(key)
+    if not isinstance(block, dict):
+        return None
+    temp: dict[str, float] = {}
+    rain: dict[str, float] = {}
+    lo, hi = C.RAIN_SCALE_RANGE
+    t_lo, t_hi = C.TEMP_OFFSET_RANGE
+    for season in _SEASON_ORDER:
+        cell = block.get(season)
+        if not isinstance(cell, dict):
+            continue
+        t_value = _p50(cell.get("temp_delta_c"))
+        r_value = _p50(cell.get("precip_delta_pct"))
+        if t_value is not None and not t_lo <= t_value <= t_hi:
+            return None
+        if r_value is not None and not lo <= r_value <= hi:
+            return None
+        if t_value is not None:
+            temp[season] = t_value
+        if r_value is not None:
+            rain[season] = r_value
+    if not temp and not rain:
+        return None
+    return temp, rain
+
+
+def _add_season_temp(daily: P.Daily, season_temp: dict[str, float]) -> P.Daily:
+    if not season_temp:
+        return daily
+    v = dict(daily.v)
+    for name in (P.T2M, P.TMAX, P.TMIN):
+        shifted = np.array(daily.v[name], copy=True)
+        for season, delta in season_temp.items():
+            shifted[np.isin(daily.month, P.season_months(season, daily.lat))] += float(delta)
+        v[name] = shifted
+    return replace(daily, v=v)
+
+
+def build_climate_outlook(site_id: str, scenario_name: str = "baseline", climate_source: str = CLIMATE_SOURCE) -> dict:
     """ClimateOutlook for one curated (or located) site and one scenario preset."""
 
     daily, power_mode, _soil, info = base(site_id)
     scenario = P.resolve_scenario(scenario_name)
     adjusted = P.apply_scenario(daily, scenario)
+    season_temp = None
+    if climate_source == "cmip6_delta":
+        parsed = season_deltas(load_cmip6_delta(site_id), scenario_name)
+        if parsed is None:
+            scenario = {
+                **scenario,
+                "note": "cmip6_delta was requested and no stored seasonal delta was applied, so the linear slider ramp was kept.",
+            }
+        else:
+            season_temp, season_rain = parsed
+            rain_arg = season_rain or None
+            applied = P.resolve_scenario(scenario_name, 0.0, 0.0, rain_arg)
+            adjusted = _add_season_temp(P.apply_scenario(daily, applied), season_temp)
+            mean_temp = sum(season_temp.values()) / len(season_temp) if season_temp else 0.0
+            scenario = {
+                **applied,
+                "temp_offset_c": round(mean_temp, 3) + 0.0,
+                "note": (
+                    "Stored seasonal deltas from cmip6_delta.json.gz. "
+                    "Each season uses its own p50. temp_offset_c is the mean of those seasonal temperatures "
+                    "because the scenario object has one temperature number. "
+                    "The daily series uses the seasonal values. Basis modeled. Not a forecast."
+                ),
+            }
     thresholds = P.baseline_thresholds(daily)
     frost_c = float(thresholds["frost_c"])
     extreme_mm = float(thresholds["extreme_rain_mm"])
@@ -151,7 +259,7 @@ def build_climate_outlook(site_id: str, scenario_name: str = "baseline") -> dict
     baseline_weekly = computed(site_id, P.resolve_scenario("baseline"))
 
     seasonal_temperature = _seasonal_temperature(daily, adjusted, years, info["lat"])
-    heat = _heat_stress(site_id, daily, years, scenario, info["lat"])
+    heat = _heat_stress(site_id, daily, years, scenario, info["lat"], season_temp=season_temp, climate_source=climate_source)
     frost = _frost_windows(daily, adjusted, years, frost_c, info["lat"])
     rainfall = _rainfall(daily, adjusted, years, info["lat"], extreme_mm)
     et = _et_trend(daily, years)
@@ -201,18 +309,27 @@ def _trend(slope: float, p: float, unit: str, basis: str) -> dict:
     }
 
 
-def _heat_stress(site_id: str, daily: P.Daily, years: np.ndarray, scenario: dict, lat: float) -> list[dict]:
-    """Days at or above the catalog heat limit. Year 1 is 1/10 of the preset offset; year 10 is the full offset."""
+def _heat_stress(
+    site_id: str,
+    daily: P.Daily,
+    years: np.ndarray,
+    scenario: dict,
+    lat: float,
+    *,
+    season_temp: dict[str, float] | None = None,
+    climate_source: str = CLIMATE_SOURCE,
+) -> list[dict]:
+    """Days at or above the catalog heat limit. Year 1 is 1/10 of the offset; year 10 is the full offset."""
 
-    del lat  # heat days use the daily maximum, not a seasonal window
     limits = heat_limits(preset_crop_ids(site_id))
     if not limits:
         return []
     by_year = [daily.v[P.TMAX][daily.year == int(y)] for y in years]
+    by_month = [daily.month[daily.year == int(y)] for y in years]
     horizon = HORIZON_YEARS_DEFAULT
     offsets = [float(scenario["temp_offset_c"]) * (year / horizon) for year in range(1, horizon + 1)]
     digest = request_hash({
-        "climate_source": CLIMATE_SOURCE,
+        "climate_source": climate_source,
         "horizon_years": horizon,
         "members": ENSEMBLE_MEMBERS,
         "product": "climate_outlook",
@@ -225,7 +342,10 @@ def _heat_stress(site_id: str, daily: P.Daily, years: np.ndarray, scenario: dict
         picks[member] = rng.choice(len(by_year), size=horizon, replace=True)
     series: list[dict] = []
     for crop_id, limit in limits:
-        table = _heat_table(by_year, limit, offsets)
+        if season_temp:
+            table = _heat_table_seasonal(by_year, by_month, limit, season_temp, lat, horizon)
+        else:
+            table = _heat_table(by_year, limit, offsets)
         points = []
         for year_index in range(horizon):
             member_counts = table[picks[:, year_index], year_index]
@@ -244,6 +364,30 @@ def _heat_stress(site_id: str, daily: P.Daily, years: np.ndarray, scenario: dict
             },
         })
     return series
+
+
+def _heat_table_seasonal(
+    by_year: list[np.ndarray],
+    by_month: list[np.ndarray],
+    limit: float,
+    season_temp: dict[str, float],
+    lat: float,
+    horizon: int,
+) -> np.ndarray:
+    """Hot days with a seasonal delta ramped from year 1 to the horizon."""
+
+    month_delta = {}
+    for season, delta in season_temp.items():
+        for month in P.season_months(season, lat):
+            month_delta[int(month)] = float(delta)
+    table = np.zeros((len(by_year), horizon), dtype=np.float64)
+    for i, tmax in enumerate(by_year):
+        months = by_month[i]
+        finite = np.isfinite(tmax)
+        offset = np.array([month_delta.get(int(month), 0.0) for month in months], dtype=np.float64)
+        for year_index in range(1, horizon + 1):
+            table[i, year_index - 1] = float(np.count_nonzero(finite & (tmax >= (limit - offset * (year_index / horizon)))))
+    return table
 
 
 def _heat_table(by_year: list[np.ndarray], limit: float, offsets: list[float]) -> np.ndarray:
