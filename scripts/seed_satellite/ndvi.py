@@ -17,18 +17,27 @@ from __future__ import annotations
 
 import argparse
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 
 from edl import EarthdataClient, EarthdataRejected, data_hrefs, read_token, select_sites
 from sample import RADIUS_M, href_named, read_window, scene_ndvi_mean
-from series import RETRIEVED_ON, scrub, weekly_from_observations, write_gap, write_series
+from series import (
+    RETRIEVED_ON,
+    SERIES_YEAR_END,
+    SERIES_YEAR_START,
+    scrub,
+    weekly_from_observations,
+    write_gap,
+    write_series,
+)
 
-# Bounded record. The user guide says L30 starts with Landsat 8 in 2013 and
-# S30 with Sentinel-2 in 2015 (HLS User Guide V2, section 2 and section 6).
-# The run stops at 2025 so it stays finite. TODO(verify) is closed for the
-# product start years by that guide; the 2016 bound is a choice.
-YEAR_START = 2016
-YEAR_END = 2025
+# The user guide says L30 starts with Landsat 8 in 2013 and S30 with
+# Sentinel-2 in 2015 (HLS User Guide V2, section 2 and section 6).
+# A 2016-2025 read of every scene did not fit the two-connection cap, so the
+# stored record is SERIES_YEAR_START-SERIES_YEAR_END. Earlier years are not filled.
+YEAR_START = SERIES_YEAR_START
+YEAR_END = SERIES_YEAR_END
 PRODUCTS = (
     ("HLSL30", "2.0", ".B05.tif", "HLS Landsat Operational Land Imager Surface Reflectance and TOA Brightness Daily Global 30m v2.0"),
     ("HLSS30", "2.0", ".B8A.tif", "HLS Sentinel-2 Multi-spectral Instrument Surface Reflectance Daily Global 30m v2.0"),
@@ -66,6 +75,17 @@ def _meta(notes: str) -> dict:
     }
 
 
+def cloud_percent(entry: dict) -> float | None:
+    """CMR ``cloud_cover`` as a percent, or None when the field is absent."""
+    raw = entry.get("cloud_cover")
+    if raw is None or raw == "":
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 def _parse_time(entry: dict) -> date | None:
     raw = entry.get("time_start")
     if not isinstance(raw, str) or len(raw) < 10:
@@ -94,13 +114,16 @@ def _one_scene(client: EarthdataClient, token: str, entry: dict, nir_suffix: str
     qa_url = href_named(hrefs, ".Fmask.tif")
     if not red_url or not nir_url or not qa_url:
         return None
-    bands = []
-    for url in (red_url, nir_url, qa_url):
-        final = client.resolve(url)
-        window = read_window(final, lon, lat, RADIUS_M, _gdal_config(token, final))
-        if window is None:
-            return None
-        bands.append(window)
+
+    def read_one(url: str):
+        # confirm=False stops at the signed object URL and does not download it twice.
+        final = client.resolve(url, confirm=False)
+        return read_window(final, lon, lat, RADIUS_M, _gdal_config(token, final))
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        bands = list(pool.map(read_one, (red_url, nir_url, qa_url)))
+    if any(window is None for window in bands):
+        return None
     red, nir, qa = bands
     if red["data"].shape != nir["data"].shape or red["data"].shape != qa["data"].shape:
         return None
@@ -118,6 +141,7 @@ def build_site(client: EarthdataClient, token: str, site_id: str, info: dict) ->
     counts: dict[int, int] = {year: 0 for year in range(YEAR_START, YEAR_END + 1)}
     considered = 0
     skipped_files = 0
+    fully_cloudy = 0
     for short, version, nir_suffix, _title in PRODUCTS:
         entries = client.search_granules(
             short_name=short, version=version, start=start, end=end, point=(lon, lat), page_size=500,
@@ -128,6 +152,18 @@ def build_site(client: EarthdataClient, token: str, site_id: str, info: dict) ->
             if when is None or when < start or when > end:
                 continue
             considered += 1
+            if considered % 20 == 0:
+                print(
+                    f"{site_id} {short} considered={considered} clear={sum(counts.values())} "
+                    f"cloudy100={fully_cloudy} failed={skipped_files}",
+                    flush=True,
+                )
+            cover = cloud_percent(entry)
+            # CMR cloud_cover of 100 means the tile has no clear pixel, so the
+            # farm window cannot add a scene. Those granules are not opened.
+            if cover is not None and cover >= 100:
+                fully_cloudy += 1
+                continue
             try:
                 mean = _one_scene(client, token, entry, nir_suffix, lon, lat)
             except EarthdataRejected:
@@ -152,9 +188,12 @@ def build_site(client: EarthdataClient, token: str, site_id: str, info: dict) ->
         "Weekly value is the unweighted mean of scene means. n_obs is the scene count. "
         "No gap fill. HLS-VI was not used: the product page states an NDVI layer but the "
         "equation is an image, so the NDVI filename was not verified. MOD13Q1 was not retrieved. "
-        f"Record bounded to {YEAR_START}-{YEAR_END}. L30 temporal coverage starts in 2013 and "
-        "S30 in 2015 (same user guide). "
-        f"Scenes considered {considered}. Scenes with a clear pixel {sum(counts.values())}. "
+        f"Record bounded to {YEAR_START}-{YEAR_END} because a 2016-2025 read of every scene "
+        "did not fit the two-connection cap. 2016-2022 was not retrieved and is not filled. "
+        "L30 temporal coverage starts in 2013 and S30 in 2015 (same user guide). "
+        "Granules whose CMR cloud_cover is 100 were not opened. "
+        f"Scenes considered {considered}. Fully cloudy skipped {fully_cloudy}. "
+        f"Scenes with a clear pixel {sum(counts.values())}. "
         f"Scenes that failed to read {skipped_files}. "
         f"Cloud-free scene counts by year: {counts}."
     )

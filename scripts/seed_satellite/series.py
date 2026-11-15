@@ -16,6 +16,10 @@ from edl import WEEKS, week_of
 
 SEED = Path(__file__).resolve().parents[2] / "data" / "seed"
 RETRIEVED_ON = "2026-11-15"
+# Shared bound for pulls that read one file per scene or per day.
+# A 2016-2025 pull did not fit the two-connection cap. Earlier years are not filled.
+SERIES_YEAR_START = 2023
+SERIES_YEAR_END = 2025
 
 
 def scrub(text: str, secret: str | None) -> str:
@@ -30,13 +34,18 @@ def weekly_from_observations(
     years: list[int],
     *,
     ndigits: int,
+    how: str = "mean",
 ) -> list[dict]:
-    """Mean of scene values in each week. An empty week is null with n_obs 0.
+    """Aggregate scene or day values in each week. An empty week is null with n_obs 0.
 
-    ``n_obs`` counts scenes, not pixels. Days 358-366 share week 51 via
-    ``edl.week_of``. Years are the years that were searched, including a year
-    whose every week is null. Nothing is interpolated.
+    ``how="mean"`` is the unweighted mean. ``how="sum"`` adds the days and does
+    not scale a partial week up to seven days. ``n_obs`` counts scenes or days,
+    not pixels. Days 358-366 share week 51 via ``edl.week_of``. Years are the
+    years that were searched, including a year whose every week is null.
+    Nothing is interpolated.
     """
+    if how not in {"mean", "sum"}:
+        raise ValueError("how must be mean or sum")
     buckets: dict[tuple[int, int], list[float]] = {}
     allowed = set(years)
     for when, value in observations:
@@ -53,7 +62,8 @@ def weekly_from_observations(
                 values.append(None)
                 n_obs.append(0)
                 continue
-            values.append(round(sum(found) / len(found), ndigits) + 0.0)
+            total = sum(found)
+            values.append(round(total if how == "sum" else total / len(found), ndigits) + 0.0)
             n_obs.append(len(found))
         rows.append({"year": int(year), "values": values, "n_obs": n_obs})
     return rows

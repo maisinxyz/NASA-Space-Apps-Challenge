@@ -34,6 +34,14 @@ FMASK_FILL = 255
 RADIUS_M = 150.0
 
 
+def inside_radius(east_m: np.ndarray, north_m: np.ndarray, radius_m: float) -> np.ndarray:
+    """True where cell centres fall inside a circle of ``radius_m`` metres."""
+    east = np.asarray(east_m, dtype=np.float64)
+    north = np.asarray(north_m, dtype=np.float64)
+    limit = float(radius_m) * float(radius_m)
+    return (east * east + north * north) <= limit
+
+
 def fmask_clear(qa: np.ndarray) -> np.ndarray:
     """True where the pixel is not fill, not cloud/shadow/snow/water/adjacent, and not high aerosol."""
     values = np.asarray(qa)
@@ -74,7 +82,7 @@ def scene_ndvi_mean(
         & (red_a < SATURATION)
         & (nir_a < SATURATION)
     )
-    inside = (east * east + north * north) <= float(radius_m) * float(radius_m)
+    inside = inside_radius(east, north, radius_m)
     red_f = red_a.astype(np.float64)
     nir_f = nir_a.astype(np.float64)
     denom = nir_f + red_f

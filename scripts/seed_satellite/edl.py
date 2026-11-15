@@ -470,13 +470,17 @@ class EarthdataClient:
             return result
         raise EarthdataError(f"stopped after {self.max_redirects} redirects from {_hostname(url)}")
 
-    def resolve(self, url: str, *, cap: int = 4096) -> str:
+    def resolve(self, url: str, *, cap: int = 4096, confirm: bool = True) -> str:
         """Follow redirects and return the URL that served the object.
 
         A one-byte range is requested. If the final host ignores ``Range`` and
         starts sending the object, reading stops after ``cap`` bytes and that
         URL is still returned. The bearer token is attached only on Earthdata
         hosts, including redirect hops, and it is never written into the result.
+
+        ``confirm=False`` returns the first redirect whose host is not an
+        Earthdata host, without requesting that object. The default still
+        requests it so a caller can see that the URL answers.
         """
         if cap < 1:
             raise ValueError("cap must be at least 1")
@@ -492,7 +496,10 @@ class EarthdataClient:
                 location = _header(result.headers, "Location")
                 if not location:
                     raise EarthdataError(f"redirect from {_hostname(current)} had no Location header")
-                current = urljoin(current, location.strip())
+                nxt = urljoin(current, location.strip())
+                if not confirm and not is_earthdata_host(urlparse(nxt).hostname):
+                    return nxt
+                current = nxt
                 continue
             if result.status in AUTH_STATUSES:
                 raise EarthdataRejected(
