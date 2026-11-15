@@ -122,19 +122,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   const root = useRef<HTMLDivElement>(null);
   const creditSlot = useRef<HTMLDivElement>(null);
   const [load, setLoad] = useState<"loading" | "ready" | "error">("loading");
-  const [listMode, setListMode] = useState(false);
-  const viewButton = useRef<HTMLButtonElement>(null);
-  const moveViewFocus = useRef(false);
-  const switchView = () => {
-    moveViewFocus.current = true;
-    setListMode((current) => !current);
-  };
-  useEffect(() => {
-    if (moveViewFocus.current) {
-      viewButton.current?.focus();
-      moveViewFocus.current = false;
-    }
-  }, [listMode]);
   const [pending, setPending] = useState(0);
   const sharedCamera = useRef<CameraState | null>(null);
   // The hero Earth's own readiness (textures loaded). The hero shows as soon as it is ready; Cesium loads behind it.
@@ -253,7 +240,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
   }, [hoverId, cardFor, farmId, view]);
   const farm = farmById(farmId);
   const runSource = runSourceFor(farm, runSourceProp);
-  const showGlobe = wide && !listMode && load !== "error";
+  const showGlobe = wide && load !== "error";
   const inFarm = showGlobe && view === "farm" && !!farm;
   const twin = view === "farm" ? twinConfig(farm?.id ?? null) : undefined;
   const fields = twin?.fields;
@@ -346,7 +333,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedOnGlobe]);
 
-  const status = listMode ? "Farm list view is active." : !wide ? "The 3D globe is not shown on small screens. Choose a farm to open its non-3D workspace." : load === "error" ? "The 3D globe could not load. The non-3D workspace still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
+  const status = !wide ? "The 3D globe is not shown on small screens. Choose a farm to open its non-3D workspace." : load === "error" ? "The 3D globe could not load. The non-3D workspace still works." : load === "ready" ? "3D globe ready." : "Loading the 3D globe.";
   const live = (
     <p aria-live="polite" className="sr-only">
       {status}
@@ -381,9 +368,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
       <div className={`theme-dark min-h-[calc(100dvh-5.5rem)] ${SPACE_BG} px-4 py-8 text-ink`}>
         <div className="mx-auto grid max-w-3xl gap-4">
           <h1 className="font-display text-2xl leading-tight md:text-3xl">{PITCH}</h1>
-          {wide && listMode ? (
-            <button ref={viewButton} type="button" className="min-h-11 w-fit rounded border border-line px-3 py-2" onClick={switchView}>Switch to 3D map</button>
-          ) : wide ? (
+          {wide ? (
             <div role="alert" className="rounded-lg border border-line bg-surface p-4">
               <p className="font-semibold">The 3D globe could not load</p>
               <p className="mt-1 text-sm text-ink-muted">You can use scenarios and comparisons without the map. Select an explorable farm below.</p>
@@ -391,7 +376,7 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           ) : (
             <p className="rounded-lg border border-line bg-surface p-3 text-sm">The interactive map needs a larger screen. Explorable farms still offer scenarios, comparisons, and evidence here.</p>
           )}
-          {wide && !listMode && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
+          {wide && <button type="button" className="w-fit rounded border border-line px-3 py-2" onClick={() => { setLoad("loading"); setEarthReady(false); }}>Retry interactive map</button>}
           <p className="text-sm text-ink-muted">Compare what could happen under different rotations with illustrative crops and simulated weather.</p>
           {inTwin && farm && twin ? <Non3dFarmWorkspace key={farm.id} navigation={navigation} sim={{farm,fields:twin.fields,cropA,cropB,pending:0,runSource,frame,getCamera:()=>null}} onBack={()=>{select(null);useAppStore.setState({globeView:"globe"});}}/> : <>
             {farm && <FarmCard farm={farm} onClose={() => select(null)} onOpen={farm.tier === "twin" ? () => openFarm(farm.id) : undefined} />}
@@ -523,9 +508,6 @@ export function GlobeHome({ runSource: runSourceProp }: { runSource?: RunSource 
           <>
             <ControlCluster farms={FARMS} ready={ready} selectedId={farmId} onPickFarm={openFarm} settings={settings} onSettings={setSettings} />
             <p className="mt-3 max-w-52 text-xs text-white/75">Drag to rotate. Click the globe to use arrow keys. Scroll or press + / − to zoom.</p>
-            <button ref={viewButton} type="button" onClick={switchView} className="mt-3 rounded border border-white/25 px-3 py-2 text-sm">
-              Browse farms without 3D
-            </button>
           </>
         } />
       )}
