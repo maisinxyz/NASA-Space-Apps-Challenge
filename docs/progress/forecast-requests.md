@@ -106,3 +106,11 @@ Zones prefer `data/seed/<site_id>/dem_hrdem.json.gz` when that file exists, then
 ## 2026-11-15 — Session B, EB3 hindcast placement
 
 Correlation and bias for SMAP, ECOSTRESS, and IMERG are sentences inside `UncertaintyLayer.resolution_note` (unit, basis derived, confidence low, week count). `ForecastUncertainty` has no hindcast field, and the contract was not changed. GRACE is a layer when the file has `native_resolution_m`, and it is not scored. `imerg.json.gz` is read from disk because `seeds.py` has no `load_imerg`. A loader is optional. The file uses the same weekly object as NDVI.
+
+## 2026-11-15 — Session B, EB4 climate deltas are not wired through forecast.py
+
+`build_members` now takes keyword `site_id` and `climate_source`. When `climate_source` is `cmip6_delta` and `data/seed/<site_id>/cmip6_delta.json.gz` exists, the ramp uses that file's seasonal p50. `forecast.py` does not pass those keywords yet, so a forecast still uses the slider. Please pass `site_id=prepared` site and `climate_source=req.climate_source` into `build_members`. `explain/grid.py` should keep the slider, because the sensitivity axes are the slider.
+
+Contract scenario names stay `baseline`, `wetter_winters`, `drier_summers`, and `both`. Requested names that the contract does not have: `ssp245` and `ssp585`. Until those exist, `drier_summers` and `wetter_winters` read the file key `ssp245`, and `both` reads `ssp585`. `baseline` applies no stored delta.
+
+No `cmip6_delta.json.gz` was written. The AWS registry says CC0 as of September 2022 and the June 2025 tech note still says a file's `cmip6_license` may restrict use. `scripts/seed_cmip6/build.py` exits 2.
