@@ -1048,7 +1048,7 @@ export function HeroEarth(props: Props) {
         ref={lens}
         aria-hidden
         className="pointer-events-none absolute top-0 left-0 rounded-full transition-opacity duration-300"
-        style={{ width: 72, height: 72, opacity: 0, border: "1px solid rgba(255,255,255,0.35)", boxShadow: "inset 0 1px 1px rgba(255,255,255,0.35), 0 8px 24px rgba(0,0,0,0.35)", backdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)", WebkitBackdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)" }}
+        style={{ width: 40, height: 40, opacity: 0, border: "1px solid rgba(255,255,255,0.35)", boxShadow: "inset 0 1px 1px rgba(255,255,255,0.35), 0 8px 24px rgba(0,0,0,0.35)", backdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)", WebkitBackdropFilter: "brightness(1.18) saturate(1.4) contrast(1.05)" }}
       />
       {/* Major city names: placed every frame by the scene, brighter near the cursor and as you zoom in. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>

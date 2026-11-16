@@ -15,6 +15,8 @@ export const UBC_FARM: Candidate = {
     lat: 49.249786,
     tier: "twin",
     sourceUrl: "https://ubcfarm.ubc.ca/about/",
+    // https://commons.wikimedia.org/wiki/File:UBC_Farm_tractor.jpg (public/farms/CREDITS.md)
+    image: { src: "/farms/ubc-farm.jpg", alt: "A green tractor on the grass at UBC Farm, Vancouver, with forest behind", credit: "Photo: Roland Tanglao, CC BY 2.0" },
     coordsVerified: false,
     radiusM: 1500,
     pin: "plot-grid",

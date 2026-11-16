@@ -42,3 +42,4 @@ data/uploads/
 
 # Earthdata token file dropped in the repo root: never commit
 EarthDataToken*
+.vercel

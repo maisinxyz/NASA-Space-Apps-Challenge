@@ -11,6 +11,7 @@ vi.mock("@/lib/forecast/store", () => {
 import { useFarmForecast } from "./ForecastPanel";
 beforeEach(() => { vi.useFakeTimers(); mock.effects = []; mock.rain = 15; mock.status = "loading"; mock.request = null; mock.run.mockReset(); mock.load.mockReset(); });
 afterEach(() => vi.useRealTimers());
+// eslint-disable-next-line react-hooks/rules-of-hooks -- calls the hook directly against the mocked React above
 const renderEffects = () => { mock.effects = []; useFarmForecast(); return mock.effects.map((effect) => effect()); };
 it("loads the current scenario on entry and applies slider edits after a pending run completes", () => {
   // A different site causes the initial effect to load the selected slider values.
